@@ -1,0 +1,29 @@
+# JavaScript
+node_modules/
+.next/
+out/
+coverage/
+npm-debug.log*
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+db.sqlite3
+*.egg-info/
+
+# Environment and local services
+.env
+.env.local
+.env.*.local
+.data/
+media/
+staticfiles/
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/

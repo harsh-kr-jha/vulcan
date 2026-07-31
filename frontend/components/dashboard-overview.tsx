@@ -19,8 +19,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { Chart } from "@/components/charts/chart";
 import { CommandFilters } from "@/components/command-filters";
 import { useFactory } from "@/lib/factory-context";
-import { answerOperationalQuestion } from "@/lib/intelligence";
-import { downloadBlob } from "@/lib/ingestion";
+import { downloadBlob } from "@/lib/browser-files";
 
 const questions = [
   "Which orders are at risk?",
@@ -87,7 +86,7 @@ function AlertsWidget() {
   const { intelligence, updateAlertStatus, createAction, state } = useFactory();
   const [message, setMessage] = useState("");
   const priorityAlerts = intelligence.alerts.filter((alert) => alert.status !== "resolved").slice(0, 3);
-  return <section className="panel command-widget alerts-command-widget"><PanelHeader number={7} title="Priority alerts & recommended actions" subtitle="What the factory owner should act on first" href="/alerts" /><div className="priority-alerts">{priorityAlerts.map((alert) => <article key={alert.id}><i className={`alert-indicator ${alert.severity}`} /><div><span><b>{alert.title}</b><small>{alert.asset} · {alert.observed}</small></span><p>{alert.recommendation}</p><div><button onClick={() => { updateAlertStatus(alert.id, "acknowledged"); setMessage("Alert acknowledged"); }}><CheckCircle2 size={12} /> Acknowledge</button><button onClick={() => { createAction(alert.id, alert.title); setMessage("Action created for Harsh Kumar"); }}><Sparkles size={12} /> Create action</button><Link href="/alerts"><FileSearch size={12} /> Evidence</Link></div></div></article>)}{!priorityAlerts.length && <div className="all-clear"><CheckCircle2 size={24} /><strong>No priority alerts</strong><span>All configured rules are within range.</span></div>}</div>{message && <button className="inline-toast" onClick={() => setMessage("")}>{message} · {state.actions.filter((action) => action.status === "open").length} open action(s) <span>×</span></button>}</section>;
+  return <section className="panel command-widget alerts-command-widget"><PanelHeader number={7} title="Priority alerts & recommended actions" subtitle="What the factory owner should act on first" href="/alerts" /><div className="priority-alerts">{priorityAlerts.map((alert) => <article key={alert.id}><i className={`alert-indicator ${alert.severity}`} /><div><span><b>{alert.title}</b><small>{alert.asset} · {alert.observed}</small></span><p>{alert.recommendation}</p><div><button onClick={() => { void updateAlertStatus(alert.id, "acknowledged"); setMessage("Alert acknowledged"); }}><CheckCircle2 size={12} /> Acknowledge</button><button onClick={() => { void createAction(alert.id, alert.title); setMessage("Action created for the factory team"); }}><Sparkles size={12} /> Create action</button><Link href="/alerts"><FileSearch size={12} /> Evidence</Link></div></div></article>)}{!priorityAlerts.length && <div className="all-clear"><CheckCircle2 size={24} /><strong>No priority alerts</strong><span>All configured rules are within range.</span></div>}</div>{message && <button className="inline-toast" onClick={() => setMessage("")}>{message} · {state.actions.filter((action) => action.status === "open").length} open action(s) <span>×</span></button>}</section>;
 }
 
 function EmptyData({ type }: { type: string }) {
@@ -95,14 +94,13 @@ function EmptyData({ type }: { type: string }) {
 }
 
 function OperationsTerminal() {
-  const { state, filters } = useFactory();
+  const { askQuestion } = useFactory();
   const [question, setQuestion] = useState("What should the factory owner act on first?");
-  const [history, setHistory] = useState<string[]>(["What should the factory owner act on first?"]);
-  function ask(value = question) { const trimmed = value.trim(); if (!trimmed) return; setHistory((current) => [...current.slice(-2), trimmed]); setQuestion(""); }
-  function submit(event: FormEvent) { event.preventDefault(); ask(); }
-  const latestQuestion = history[history.length - 1];
-  const latest = { question: latestQuestion, answer: answerOperationalQuestion(latestQuestion, state, filters) };
-  return <section className="operations-terminal"><div className="terminal-heading"><span><Bot size={17} /></span><div><strong>Ask Vulcan</strong><small>Rule-based operational answers · no AI required</small></div><i><b /> Live from selected data</i></div><div className="terminal-body"><div className="terminal-question"><span>factory-owner@pune:~$</span> {latest.question}</div><div className="terminal-answer"><strong>{latest.answer.answer}</strong><p>{latest.answer.reasoning}</p><div>{latest.answer.evidence.map((item) => <span key={item}>{item}</span>)}</div></div></div><div className="question-chips">{questions.slice(0, 4).map((item) => <button key={item} onClick={() => { setQuestion(item); ask(item); }}>{item}</button>)}</div><form className="terminal-input" onSubmit={submit}><span>›</span><input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ask an operational question…" /><button aria-label="Ask question"><Send size={14} /></button></form></section>;
+  const [latest, setLatest] = useState({ question: "Ask a question about the selected factory data.", answer: { answer: "Your answer will be calculated in Django.", reasoning: "Only validated database records are used.", evidence: [] as string[] } });
+  const [loading, setLoading] = useState(false);
+  async function ask(value = question) { const trimmed = value.trim(); if (!trimmed) return; setLoading(true); try { const answer = await askQuestion(trimmed); setLatest({ question: trimmed, answer }); setQuestion(""); } finally { setLoading(false); } }
+  function submit(event: FormEvent) { event.preventDefault(); void ask(); }
+  return <section className="operations-terminal"><div className="terminal-heading"><span><Bot size={17} /></span><div><strong>Ask Vulcan</strong><small>Rule-based answer calculated by Django</small></div><i><b /> Live from validated records</i></div><div className="terminal-body"><div className="terminal-question"><span>factory-owner:~$</span> {latest.question}</div><div className="terminal-answer"><strong>{loading ? "Calculating…" : latest.answer.answer}</strong><p>{latest.answer.reasoning}</p><div>{latest.answer.evidence.map((item) => <span key={item}>{item}</span>)}</div></div></div><div className="question-chips">{questions.slice(0, 4).map((item) => <button key={item} onClick={() => void ask(item)}>{item}</button>)}</div><form className="terminal-input" onSubmit={submit}><span>›</span><input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ask an operational question…" /><button aria-label="Ask question" disabled={loading}><Send size={14} /></button></form></section>;
 }
 
 export function DashboardOverview() {

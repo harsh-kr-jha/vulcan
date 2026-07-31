@@ -1,4 +1,10 @@
-import type { UploadStatus } from "@/lib/types";
+type UploadStatus =
+  | "COMPLETED"
+  | "VALIDATION_REVIEW"
+  | "VALIDATING"
+  | "MAPPING_REQUIRED"
+  | "INSPECTING"
+  | "FAILED";
 
 const uploadStatusLabels: Record<UploadStatus, string> = {
   COMPLETED: "Completed",

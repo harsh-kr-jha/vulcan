@@ -6,8 +6,9 @@ Vulcan is a modular monolith with independently scalable background workers.
 
 ```mermaid
 flowchart LR
-    Browser[Next.js browser app] -->|small JSON requests| API[Django + DRF]
-    Browser -->|presigned upload| S3[(S3 / MinIO)]
+    Browser[Next.js display layer] -->|same-origin requests| Next[Next.js server]
+    Next -->|JSON and multipart files| API[Django + DRF]
+    API -->|optional large objects| S3[(S3 / MinIO)]
     API --> DB[(PostgreSQL)]
     API --> Queue[(Redis)]
     Queue --> Inspect[Inspection workers]
@@ -87,8 +88,21 @@ Charts consume aggregate responses with fewer than 5,000 visible points. KPI res
 their inputs and definition version. The API never returns raw operational histories merely to
 calculate a chart in the browser.
 
-The frontend's `lib/api.ts` is the boundary between UI and backend. Its local fallback is a demo
-adapter, not a second business-logic implementation.
+The frontend's `lib/api-client.ts` is the only data boundary. There is no browser database,
+local-storage fallback, validation engine, or KPI engine. Django returns presentation-ready
+aggregates; the frontend formats and visualises them.
+
+## Current lightweight data shape
+
+Factory identity and master data are relational and factory-scoped. Each upload preserves its
+headers, raw rows, approved mapping, omitted columns, validation issues and lineage in Django.
+Approved rows become searchable `StandardRecord` rows with common dimensions plus typed JSON
+values. This keeps the MVP schema small while preserving a clean migration path to dedicated
+production, downtime, quality, inventory and order fact tables once their grains stabilize.
+
+Authentication is intentionally bypassed through a single implicit workspace identity in this
+slice. This is a temporary boundary, not an authorization design; tenant and factory foreign keys
+remain in place so user validation can be restored without moving operational data.
 
 ## Next delivery slices
 

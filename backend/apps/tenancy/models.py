@@ -115,3 +115,35 @@ class Machine(UUIDModel, TimestampedModel):
             )
         ]
         indexes = [models.Index(fields=["tenant", "factory", "line", "is_active"])]
+
+
+class FactoryMaster(UUIDModel, TimestampedModel):
+    """Small, factory-owned reference records used during import validation."""
+
+    class Kind(models.TextChoices):
+        LINE = "lines", "Production line"
+        MACHINE = "machines", "Machine"
+        SKU = "skus", "Product / SKU"
+        MATERIAL = "materials", "Material"
+        SUPPLIER = "suppliers", "Supplier"
+        SHIFT = "shifts", "Shift"
+        REASON_CODE = "reasonCodes", "Reason code"
+
+    tenant = models.ForeignKey(Tenant, on_delete=models.PROTECT, related_name="factory_masters")
+    factory = models.ForeignKey(Factory, on_delete=models.CASCADE, related_name="master_records")
+    kind = models.CharField(max_length=30, choices=Kind.choices)
+    name = models.CharField(max_length=160)
+    code = models.CharField(max_length=60)
+    parent = models.ForeignKey(
+        "self", on_delete=models.PROTECT, null=True, blank=True, related_name="children"
+    )
+    metadata = models.JSONField(default=dict, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["factory", "kind", "code"], name="unique_factory_master_code"
+            )
+        ]
+        indexes = [models.Index(fields=["tenant", "factory", "kind", "is_active"])]

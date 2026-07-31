@@ -1,7 +1,25 @@
 from apps.alerts.views import AlertViewSet
 from apps.analytics.views import PerformanceSummaryView
+from apps.analytics.workspace_views import (
+    WorkspaceActionView,
+    WorkspaceConfigurationView,
+    WorkspaceQuestionView,
+    WorkspaceView,
+)
+from apps.operations.import_views import (
+    ImportCancelView,
+    ImportCommitView,
+    ImportInspectView,
+    ImportValidationView,
+)
 from apps.operations.views import UploadViewSet
-from apps.tenancy.views import FactoryViewSet, MeView, SessionLoginView, SessionLogoutView
+from apps.tenancy.views import (
+    FactoryMasterViewSet,
+    FactoryViewSet,
+    MeView,
+    SessionLoginView,
+    SessionLogoutView,
+)
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
@@ -10,6 +28,7 @@ from config.views import HealthView
 
 router = DefaultRouter()
 router.register("factories", FactoryViewSet, basename="factory")
+router.register("factory-masters", FactoryMasterViewSet, basename="factory-master")
 router.register("uploads", UploadViewSet, basename="upload")
 router.register("alerts", AlertViewSet, basename="alert")
 
@@ -21,5 +40,26 @@ urlpatterns = [
     path("api/auth/me/", MeView.as_view(), name="me"),
     path("api/auth/", include("rest_framework.urls")),
     path("api/performance/summary/", PerformanceSummaryView.as_view(), name="performance-summary"),
+    path("api/workspace/", WorkspaceView.as_view(), name="workspace"),
+    path(
+        "api/workspace/configuration/",
+        WorkspaceConfigurationView.as_view(),
+        name="workspace-configuration",
+    ),
+    path("api/workspace/actions/", WorkspaceActionView.as_view(), name="workspace-actions"),
+    path(
+        "api/workspace/actions/<uuid:action_id>/",
+        WorkspaceActionView.as_view(),
+        name="workspace-action",
+    ),
+    path("api/workspace/ask/", WorkspaceQuestionView.as_view(), name="workspace-question"),
+    path("api/imports/inspect/", ImportInspectView.as_view(), name="import-inspect"),
+    path(
+        "api/imports/<uuid:upload_id>/validate/",
+        ImportValidationView.as_view(),
+        name="import-validate",
+    ),
+    path("api/imports/<uuid:upload_id>/commit/", ImportCommitView.as_view(), name="import-commit"),
+    path("api/imports/<uuid:upload_id>/cancel/", ImportCancelView.as_view(), name="import-cancel"),
     path("api/", include(router.urls)),
 ]

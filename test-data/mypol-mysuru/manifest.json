@@ -1,0 +1,62 @@
+{
+  "dataset": "MYPOL Mysuru synthetic Vulcan test pack",
+  "synthetic": true,
+  "disclaimer": "Generated test data; not actual MYPOL operational, customer, supplier, or financial records.",
+  "generator_seed": 1981,
+  "period": {
+    "from": "2026-06-01",
+    "to": "2026-07-31",
+    "days": 61
+  },
+  "factory": {
+    "company": "Mysore Polymers and Rubber Products Pvt. Ltd.",
+    "factory_name": "MYPOL Mysuru Plant",
+    "code": "MYP-MYS",
+    "timezone": "Asia/Kolkata",
+    "currency": "INR"
+  },
+  "files": [
+    {
+      "file": "production.csv",
+      "rows": 1464,
+      "sha256": "f1928f320a4920a0817dd3d8cae3ff859081de32d52d9d9dd6457715170bc5ff"
+    },
+    {
+      "file": "downtime.csv",
+      "rows": 1464,
+      "sha256": "27c5524f38c5d0857233facbd80d1218c904b555d184b9025dc3ac5fe611b211"
+    },
+    {
+      "file": "quality.csv",
+      "rows": 1464,
+      "sha256": "632eb11156275a87cbf088f67fc23e3c7413e858933dfb8ebf03cfbf93f3f157"
+    },
+    {
+      "file": "inventory.csv",
+      "rows": 915,
+      "sha256": "ca6754b7baffd236621db67a8c3ee2f630044949a54e4b76b58cc8bf4df61dc2"
+    },
+    {
+      "file": "orders.csv",
+      "rows": 116,
+      "sha256": "8ee82ce4798d2bbd6e1797729206607c17a2c2ecf412de2411cc76a1249cb7f9"
+    },
+    {
+      "file": "factory_master_reference.csv",
+      "rows": 68,
+      "sha256": "b74975392334069042a963a7a686b4a5e029edf51cc3dab9a215c6cc4a8655c4"
+    }
+  ],
+  "expected_results_file": "expected_results.json",
+  "totals": {
+    "importable_rows": 5423,
+    "reference_rows": 68
+  },
+  "expected_signals_for_2026-07-25_to_2026-07-31": [
+    "Tube Cure Press HC-02 should rank as the largest downtime bottleneck.",
+    "MYP-ORD-AT-RISK-01 and MYP-ORD-AT-RISK-02 should be critical because they remain open one day before due date.",
+    "Butyl Rubber IIR Grade A and Valve Stem Assembly TR78A should show low stock cover with delayed receipts.",
+    "MYP-TUBE-1100-20 should show elevated rejection led by valve base leak.",
+    "Production should remain below plan and OEE below the configured target during the final week."
+  ]
+}

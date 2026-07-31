@@ -1,0 +1,117 @@
+order_id,sku,line,required_quantity,produced_quantity,due_date,priority,status
+MYP-ORD-00001,MYP-TUBE-250-18,Automotive Tube Line - 2W,5400,5400,2026-06-08,normal,completed
+MYP-ORD-00002,MYP-TUBE-100-90-17,Automotive Tube Line - 2W,5740,5740,2026-06-04,normal,completed
+MYP-ORD-00003,MYP-TUBE-1100-20,Automotive Tube Line - Heavy,855,855,2026-06-05,normal,completed
+MYP-ORD-00004,MYP-TUBE-600-16,Automotive Tube Line - Heavy,1020,1020,2026-06-08,medium,completed
+MYP-ORD-00005,MYP-CBAG-PCR,Tyre Industry Products Line,525,525,2026-06-07,normal,completed
+MYP-ORD-00006,MYP-CBAG-TBR,Tyre Industry Products Line,390,390,2026-06-09,normal,completed
+MYP-ORD-00007,MYP-ENV-TBR,Tyre Industry Products Line,276,276,2026-06-10,normal,completed
+MYP-ORD-00008,MYP-FLAP-1100-20,Tyre Industry Products Line,2520,2520,2026-06-09,medium,completed
+MYP-ORD-00009,MYP-RWD-2W,Engineered Rubber Products Line,3540,3540,2026-06-11,normal,completed
+MYP-ORD-00010,MYP-NVH-MOUNT-45,Engineered Rubber Products Line,4760,4760,2026-06-08,normal,completed
+MYP-ORD-00011,MYP-TUBE-250-18,Automotive Tube Line - 2W,2700,2700,2026-06-10,normal,completed
+MYP-ORD-00012,MYP-TUBE-100-90-17,Automotive Tube Line - 2W,2460,2460,2026-06-13,medium,completed
+MYP-ORD-00013,MYP-TUBE-1100-20,Automotive Tube Line - Heavy,1995,1995,2026-06-10,high,completed
+MYP-ORD-00014,MYP-TUBE-600-16,Automotive Tube Line - Heavy,1020,1020,2026-06-14,normal,completed
+MYP-ORD-00015,MYP-CBAG-PCR,Tyre Industry Products Line,315,315,2026-06-12,normal,completed
+MYP-ORD-00016,MYP-CBAG-TBR,Tyre Industry Products Line,468,468,2026-06-12,medium,completed
+MYP-ORD-00017,MYP-ENV-TBR,Tyre Industry Products Line,276,276,2026-06-13,normal,completed
+MYP-ORD-00018,MYP-FLAP-1100-20,Tyre Industry Products Line,2940,2940,2026-06-14,normal,completed
+MYP-ORD-00019,MYP-RWD-2W,Engineered Rubber Products Line,7080,7080,2026-06-14,normal,completed
+MYP-ORD-00020,MYP-NVH-MOUNT-45,Engineered Rubber Products Line,2720,2720,2026-06-14,medium,completed
+MYP-ORD-00021,MYP-TUBE-250-18,Automotive Tube Line - 2W,3600,3600,2026-06-14,normal,completed
+MYP-ORD-00022,MYP-TUBE-100-90-17,Automotive Tube Line - 2W,2460,2460,2026-06-18,normal,completed
+MYP-ORD-00023,MYP-TUBE-1100-20,Automotive Tube Line - Heavy,1140,1140,2026-06-17,normal,completed
+MYP-ORD-00024,MYP-TUBE-600-16,Automotive Tube Line - Heavy,1020,1020,2026-06-19,medium,completed
+MYP-ORD-00025,MYP-CBAG-PCR,Tyre Industry Products Line,630,630,2026-06-20,normal,completed
+MYP-ORD-00026,MYP-CBAG-TBR,Tyre Industry Products Line,234,234,2026-06-20,high,completed
+MYP-ORD-00027,MYP-ENV-TBR,Tyre Industry Products Line,368,368,2026-06-18,normal,completed
+MYP-ORD-00028,MYP-FLAP-1100-20,Tyre Industry Products Line,2940,2940,2026-06-17,medium,completed
+MYP-ORD-00029,MYP-RWD-2W,Engineered Rubber Products Line,3540,3540,2026-06-20,normal,completed
+MYP-ORD-00030,MYP-NVH-MOUNT-45,Engineered Rubber Products Line,2040,2040,2026-06-22,normal,completed
+MYP-ORD-00031,MYP-TUBE-250-18,Automotive Tube Line - 2W,3600,3600,2026-06-21,normal,completed
+MYP-ORD-00032,MYP-TUBE-100-90-17,Automotive Tube Line - 2W,4100,4100,2026-06-20,medium,completed
+MYP-ORD-00033,MYP-TUBE-1100-20,Automotive Tube Line - Heavy,855,855,2026-06-22,normal,completed
+MYP-ORD-00034,MYP-TUBE-600-16,Automotive Tube Line - Heavy,2040,2040,2026-06-24,normal,completed
+MYP-ORD-00035,MYP-CBAG-PCR,Tyre Industry Products Line,630,630,2026-06-21,normal,completed
+MYP-ORD-00036,MYP-CBAG-TBR,Tyre Industry Products Line,468,468,2026-06-21,medium,completed
+MYP-ORD-00037,MYP-ENV-TBR,Tyre Industry Products Line,460,460,2026-06-25,normal,completed
+MYP-ORD-00038,MYP-FLAP-1100-20,Tyre Industry Products Line,2520,2520,2026-06-23,normal,completed
+MYP-ORD-00039,MYP-RWD-2W,Engineered Rubber Products Line,8260,8260,2026-06-24,high,completed
+MYP-ORD-00040,MYP-NVH-MOUNT-45,Engineered Rubber Products Line,4760,4760,2026-06-26,medium,completed
+MYP-ORD-00041,MYP-TUBE-250-18,Automotive Tube Line - 2W,5400,5400,2026-06-26,normal,completed
+MYP-ORD-00042,MYP-TUBE-100-90-17,Automotive Tube Line - 2W,5740,5740,2026-06-27,normal,completed
+MYP-ORD-00043,MYP-TUBE-1100-20,Automotive Tube Line - Heavy,1995,1995,2026-06-25,normal,completed
+MYP-ORD-00044,MYP-TUBE-600-16,Automotive Tube Line - Heavy,1360,1360,2026-06-26,medium,completed
+MYP-ORD-00045,MYP-CBAG-PCR,Tyre Industry Products Line,420,420,2026-06-29,normal,completed
+MYP-ORD-00046,MYP-CBAG-TBR,Tyre Industry Products Line,234,234,2026-06-27,normal,completed
+MYP-ORD-00047,MYP-ENV-TBR,Tyre Industry Products Line,644,644,2026-06-28,normal,completed
+MYP-ORD-00048,MYP-FLAP-1100-20,Tyre Industry Products Line,1260,1260,2026-06-28,medium,completed
+MYP-ORD-00049,MYP-RWD-2W,Engineered Rubber Products Line,3540,3540,2026-06-28,normal,completed
+MYP-ORD-00050,MYP-NVH-MOUNT-45,Engineered Rubber Products Line,4760,4760,2026-06-28,normal,completed
+MYP-ORD-00051,MYP-TUBE-250-18,Automotive Tube Line - 2W,2700,2700,2026-07-02,normal,completed
+MYP-ORD-00052,MYP-TUBE-100-90-17,Automotive Tube Line - 2W,4100,4100,2026-07-03,high,completed
+MYP-ORD-00053,MYP-TUBE-1100-20,Automotive Tube Line - Heavy,1995,1995,2026-07-02,normal,completed
+MYP-ORD-00054,MYP-TUBE-600-16,Automotive Tube Line - Heavy,2380,2380,2026-06-30,normal,completed
+MYP-ORD-00055,MYP-CBAG-PCR,Tyre Industry Products Line,630,630,2026-07-03,normal,completed
+MYP-ORD-00056,MYP-CBAG-TBR,Tyre Industry Products Line,234,234,2026-07-04,medium,completed
+MYP-ORD-00057,MYP-ENV-TBR,Tyre Industry Products Line,368,368,2026-07-05,normal,completed
+MYP-ORD-00058,MYP-FLAP-1100-20,Tyre Industry Products Line,2940,2940,2026-07-04,normal,completed
+MYP-ORD-00059,MYP-RWD-2W,Engineered Rubber Products Line,4720,4720,2026-07-03,normal,completed
+MYP-ORD-00060,MYP-NVH-MOUNT-45,Engineered Rubber Products Line,3400,3400,2026-07-07,medium,completed
+MYP-ORD-00061,MYP-TUBE-250-18,Automotive Tube Line - 2W,6300,6300,2026-07-06,normal,completed
+MYP-ORD-00062,MYP-TUBE-100-90-17,Automotive Tube Line - 2W,4100,4100,2026-07-08,normal,completed
+MYP-ORD-00063,MYP-TUBE-1100-20,Automotive Tube Line - Heavy,855,855,2026-07-08,normal,completed
+MYP-ORD-00064,MYP-TUBE-600-16,Automotive Tube Line - Heavy,1020,1020,2026-07-05,medium,completed
+MYP-ORD-00065,MYP-CBAG-PCR,Tyre Industry Products Line,420,420,2026-07-10,high,completed
+MYP-ORD-00066,MYP-CBAG-TBR,Tyre Industry Products Line,234,234,2026-07-10,normal,completed
+MYP-ORD-00067,MYP-ENV-TBR,Tyre Industry Products Line,460,460,2026-07-10,normal,completed
+MYP-ORD-00068,MYP-FLAP-1100-20,Tyre Industry Products Line,1260,1260,2026-07-07,medium,completed
+MYP-ORD-00069,MYP-RWD-2W,Engineered Rubber Products Line,4720,4720,2026-07-12,normal,completed
+MYP-ORD-00070,MYP-NVH-MOUNT-45,Engineered Rubber Products Line,4080,4080,2026-07-10,normal,completed
+MYP-ORD-00071,MYP-TUBE-250-18,Automotive Tube Line - 2W,3600,3600,2026-07-10,normal,completed
+MYP-ORD-00072,MYP-TUBE-100-90-17,Automotive Tube Line - 2W,4920,4920,2026-07-11,medium,completed
+MYP-ORD-00073,MYP-TUBE-1100-20,Automotive Tube Line - Heavy,1710,1710,2026-07-11,normal,completed
+MYP-ORD-00074,MYP-TUBE-600-16,Automotive Tube Line - Heavy,1700,1700,2026-07-10,normal,completed
+MYP-ORD-00075,MYP-CBAG-PCR,Tyre Industry Products Line,630,630,2026-07-12,normal,completed
+MYP-ORD-00076,MYP-CBAG-TBR,Tyre Industry Products Line,468,468,2026-07-11,medium,completed
+MYP-ORD-00077,MYP-ENV-TBR,Tyre Industry Products Line,460,460,2026-07-13,normal,completed
+MYP-ORD-00078,MYP-FLAP-1100-20,Tyre Industry Products Line,2520,2520,2026-07-13,high,completed
+MYP-ORD-00079,MYP-RWD-2W,Engineered Rubber Products Line,4720,4720,2026-07-15,normal,completed
+MYP-ORD-00080,MYP-NVH-MOUNT-45,Engineered Rubber Products Line,2720,2720,2026-07-15,medium,completed
+MYP-ORD-00081,MYP-TUBE-250-18,Automotive Tube Line - 2W,6300,6300,2026-07-18,normal,completed
+MYP-ORD-00082,MYP-TUBE-100-90-17,Automotive Tube Line - 2W,2460,2460,2026-07-18,normal,completed
+MYP-ORD-00083,MYP-TUBE-1100-20,Automotive Tube Line - Heavy,1425,1425,2026-07-15,normal,completed
+MYP-ORD-00084,MYP-TUBE-600-16,Automotive Tube Line - Heavy,2380,2380,2026-07-19,medium,completed
+MYP-ORD-00085,MYP-CBAG-PCR,Tyre Industry Products Line,525,525,2026-07-18,normal,completed
+MYP-ORD-00086,MYP-CBAG-TBR,Tyre Industry Products Line,234,234,2026-07-17,normal,completed
+MYP-ORD-00087,MYP-ENV-TBR,Tyre Industry Products Line,552,552,2026-07-17,normal,completed
+MYP-ORD-00088,MYP-FLAP-1100-20,Tyre Industry Products Line,2940,2940,2026-07-19,medium,completed
+MYP-ORD-00089,MYP-RWD-2W,Engineered Rubber Products Line,5900,5900,2026-07-21,normal,completed
+MYP-ORD-00090,MYP-NVH-MOUNT-45,Engineered Rubber Products Line,3400,3400,2026-07-19,normal,completed
+MYP-ORD-00091,MYP-TUBE-250-18,Automotive Tube Line - 2W,3600,3600,2026-07-22,high,completed
+MYP-ORD-00092,MYP-TUBE-100-90-17,Automotive Tube Line - 2W,5740,5740,2026-07-20,medium,completed
+MYP-ORD-00093,MYP-TUBE-1100-20,Automotive Tube Line - Heavy,1710,1710,2026-07-23,normal,completed
+MYP-ORD-00094,MYP-TUBE-600-16,Automotive Tube Line - Heavy,2040,2040,2026-07-24,normal,completed
+MYP-ORD-00095,MYP-CBAG-PCR,Tyre Industry Products Line,420,420,2026-07-25,normal,completed
+MYP-ORD-00096,MYP-CBAG-TBR,Tyre Industry Products Line,312,312,2026-07-23,medium,completed
+MYP-ORD-00097,MYP-ENV-TBR,Tyre Industry Products Line,460,460,2026-07-25,normal,completed
+MYP-ORD-00098,MYP-FLAP-1100-20,Tyre Industry Products Line,1260,1260,2026-07-24,normal,completed
+MYP-ORD-00099,MYP-RWD-2W,Engineered Rubber Products Line,4720,4720,2026-07-23,normal,completed
+MYP-ORD-00100,MYP-NVH-MOUNT-45,Engineered Rubber Products Line,2720,2720,2026-07-24,medium,completed
+MYP-ORD-00101,MYP-TUBE-250-18,Automotive Tube Line - 2W,2700,2700,2026-07-28,normal,completed
+MYP-ORD-00102,MYP-TUBE-100-90-17,Automotive Tube Line - 2W,4100,4100,2026-07-25,normal,completed
+MYP-ORD-00103,MYP-TUBE-1100-20,Automotive Tube Line - Heavy,855,855,2026-07-29,normal,completed
+MYP-ORD-00104,MYP-TUBE-600-16,Automotive Tube Line - Heavy,1020,1020,2026-07-27,high,completed
+MYP-ORD-00105,MYP-CBAG-PCR,Tyre Industry Products Line,630,630,2026-07-29,normal,completed
+MYP-ORD-00106,MYP-CBAG-TBR,Tyre Industry Products Line,312,312,2026-07-28,normal,completed
+MYP-ORD-00107,MYP-ENV-TBR,Tyre Industry Products Line,276,276,2026-07-30,normal,completed
+MYP-ORD-00108,MYP-FLAP-1100-20,Tyre Industry Products Line,1680,1680,2026-07-29,medium,completed
+MYP-ORD-AT-RISK-01,MYP-TUBE-1100-20,Automotive Tube Line - Heavy,12000,6900,2026-08-01,high,open
+MYP-ORD-AT-RISK-02,MYP-CBAG-TBR,Tyre Industry Products Line,1400,840,2026-08-01,high,open
+MYP-ORD-OPEN-03,MYP-TUBE-250-18,Automotive Tube Line - 2W,22000,18600,2026-08-03,high,open
+MYP-ORD-OPEN-04,MYP-RWD-2W,Engineered Rubber Products Line,30000,25500,2026-08-04,medium,open
+MYP-ORD-OPEN-05,MYP-ENV-TBR,Tyre Industry Products Line,1800,1280,2026-08-05,medium,open
+MYP-ORD-HOLD-06,MYP-NVH-MOUNT-45,Engineered Rubber Products Line,8500,4100,2026-08-06,normal,hold
+MYP-ORD-OPEN-07,MYP-TUBE-600-16,Automotive Tube Line - Heavy,7200,5900,2026-08-07,normal,open
+MYP-ORD-OPEN-08,MYP-FLAP-1100-20,Tyre Industry Products Line,9500,8800,2026-08-08,normal,open

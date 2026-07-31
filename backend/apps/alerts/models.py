@@ -59,3 +59,18 @@ class Alert(UUIDModel, TenantScopedModel):
             models.Index(fields=["tenant", "factory", "status", "-generated_at"]),
             models.Index(fields=["tenant", "severity", "status"]),
         ]
+
+
+class ActionItem(UUIDModel, TenantScopedModel):
+    factory = models.ForeignKey(Factory, on_delete=models.CASCADE, related_name="action_items")
+    alert_key = models.CharField(max_length=220)
+    title = models.CharField(max_length=240)
+    owner = models.CharField(max_length=160, default="Factory team")
+    due_date = models.DateField()
+    status = models.CharField(
+        max_length=20, choices=[("open", "Open"), ("done", "Done")], default="open"
+    )
+
+    class Meta:
+        ordering = ["status", "due_date", "-created_at"]
+        indexes = [models.Index(fields=["tenant", "factory", "status"])]

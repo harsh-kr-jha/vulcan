@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.db import models, transaction
-from django.db.models import Q
 
 from apps.common.models import TenantScopedModel, UUIDModel
 from apps.tenancy.models import Factory
@@ -77,16 +76,15 @@ class Upload(UUIDModel, TenantScopedModel):
         max_length=40, choices=UploadState.choices, default=UploadState.CREATED
     )
     failure_reason = models.TextField(blank=True)
+    dataset_type = models.CharField(max_length=30, blank=True)
+    source_type = models.CharField(max_length=30, default="file")
+    headers = models.JSONField(default=list, blank=True)
+    raw_rows = models.JSONField(default=list, blank=True)
+    mapping = models.JSONField(default=dict, blank=True)
+    omitted_fields = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
-        constraints = [
-            models.UniqueConstraint(
-                fields=["tenant", "factory", "checksum"],
-                condition=~Q(checksum=""),
-                name="unique_upload_checksum_per_factory",
-            )
-        ]
         indexes = [
             models.Index(fields=["tenant", "factory", "status", "-created_at"]),
             models.Index(fields=["tenant", "checksum"]),
@@ -158,4 +156,30 @@ class ValidationIssue(UUIDModel, TenantScopedModel):
         indexes = [
             models.Index(fields=["tenant", "upload", "severity"]),
             models.Index(fields=["tenant", "rule_code"]),
+        ]
+
+
+class StandardRecord(UUIDModel, TenantScopedModel):
+    """A validated operational row with searchable dimensions and preserved lineage."""
+
+    upload = models.ForeignKey(Upload, on_delete=models.CASCADE, related_name="standard_records")
+    factory = models.ForeignKey(Factory, on_delete=models.CASCADE, related_name="standard_records")
+    dataset_type = models.CharField(max_length=30)
+    source_row = models.PositiveBigIntegerField()
+    operational_date = models.DateField(null=True, blank=True)
+    line = models.CharField(max_length=160, blank=True)
+    machine = models.CharField(max_length=160, blank=True)
+    sku = models.CharField(max_length=160, blank=True)
+    shift = models.CharField(max_length=160, blank=True)
+    values = models.JSONField(default=dict)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["upload", "source_row"], name="unique_standard_record_source_row"
+            )
+        ]
+        indexes = [
+            models.Index(fields=["tenant", "factory", "dataset_type", "operational_date"]),
+            models.Index(fields=["tenant", "factory", "line", "machine"]),
         ]

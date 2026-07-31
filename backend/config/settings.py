@@ -58,6 +58,7 @@ TEMPLATES = [
 
 DATABASES = {
     "default": dj_database_url.config(
+        env="DJANGO_DATABASE_URL",
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=60,
     )
@@ -118,6 +119,7 @@ AWS_S3_PUBLIC_ENDPOINT_URL = os.getenv("AWS_S3_PUBLIC_ENDPOINT_URL", AWS_S3_ENDP
 UPLOAD_URL_TTL_SECONDS = int(os.getenv("UPLOAD_URL_TTL_SECONDS", "900"))
 MAX_EXCEL_UPLOAD_BYTES = int(os.getenv("MAX_EXCEL_UPLOAD_BYTES", str(50 * 1024 * 1024)))
 MAX_CSV_UPLOAD_BYTES = int(os.getenv("MAX_CSV_UPLOAD_BYTES", str(500 * 1024 * 1024)))
+MAX_SYNC_UPLOAD_BYTES = int(os.getenv("MAX_SYNC_UPLOAD_BYTES", str(10 * 1024 * 1024)))
 
 if not DEBUG:
     SECURE_SSL_REDIRECT = True

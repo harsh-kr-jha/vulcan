@@ -9,7 +9,6 @@ import {
   Factory,
   Gauge,
   LayoutDashboard,
-  LogOut,
   Menu,
   Plus,
   Settings2,
@@ -31,7 +30,6 @@ const navGroups = [
   ] },
   { label: "Manage", items: [
     { href: "/settings", label: "Factory setup", icon: Building2 },
-    { href: "/settings?tab=rules", label: "Rules & targets", icon: Settings2 },
   ] },
 ];
 
@@ -65,7 +63,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
         {navGroups.map((group) => <div className="nav-group" key={group.label}><p>{group.label}</p>{group.items.map((item) => { const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href.split("?")[0]); const Icon = item.icon; return <Link className={`nav-item ${active ? "active" : ""}`} href={item.href} key={item.href} onClick={onClose}><Icon size={18} /><span>{item.label}</span>{item.href === "/alerts" && newAlerts > 0 && <span className="nav-badge">{newAlerts}</span>}</Link>; })}</div>)}
       </nav>
       <div className="sidebar-footer">
-        <Link className="nav-item" href="/settings?tab=support"><CircleHelp size={18} /><span>Help & support</span></Link>
+        <Link className="nav-item" href="/settings"><CircleHelp size={18} /><span>Setup help</span></Link>
         <div className="data-health-mini"><div className="data-health-mini-top"><span>Data health</span><strong>{intelligence.dataQuality.toFixed(1)}%</strong></div><div className="mini-progress"><span style={{ width: `${intelligence.dataQuality}%` }} /></div><small>{state.uploads.length} preserved source dataset{state.uploads.length === 1 ? "" : "s"}</small></div>
       </div>
     </aside>
@@ -89,8 +87,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="topbar-actions">
           <button className="icon-button notification-button" aria-label="Notifications" onClick={() => { setNotificationsOpen((value) => !value); setProfileOpen(false); }}><Bell size={19} />{intelligence.alerts.some((alert) => alert.status === "new") && <span />}</button>
           {notificationsOpen && <div className="topbar-popover notification-popover"><div><strong>Priority signals</strong><Link href="/alerts" onClick={() => setNotificationsOpen(false)}>View all</Link></div>{intelligence.alerts.filter((alert) => alert.status !== "resolved").slice(0, 3).map((alert) => <Link href="/alerts" key={alert.id} onClick={() => setNotificationsOpen(false)}><i className={`alert-indicator ${alert.severity}`} /><span><b>{alert.title}</b><small>{alert.observed}</small></span></Link>)}{!intelligence.alerts.some((alert) => alert.status !== "resolved") && <p>No open alerts for this selection.</p>}</div>}
-          <button className="profile-button" aria-label="Open account menu" onClick={() => { setProfileOpen((value) => !value); setNotificationsOpen(false); }}><span className="profile-avatar">HK</span><span className="profile-copy"><strong>Harsh Kumar</strong><small>Factory manager</small></span><ChevronDown size={15} /></button>
-          {profileOpen && <div className="topbar-popover profile-popover"><Link href="/settings" onClick={() => setProfileOpen(false)}><Settings2 size={14} /> Factory setup</Link><Link href="/login" onClick={() => setProfileOpen(false)}><LogOut size={14} /> Sign out</Link></div>}
+          <button className="profile-button" aria-label="Open workspace menu" onClick={() => { setProfileOpen((value) => !value); setNotificationsOpen(false); }}><span className="profile-avatar">FT</span><span className="profile-copy"><strong>Factory team</strong><small>Open workspace</small></span><ChevronDown size={15} /></button>
+          {profileOpen && <div className="topbar-popover profile-popover"><Link href="/settings" onClick={() => setProfileOpen(false)}><Settings2 size={14} /> Factory setup</Link></div>}
         </div>
       </header>
       <main className="page-content">{children}</main>

@@ -54,7 +54,9 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    env_file: .env
+    env_file: backend/.env
+    environment:
+      DJANGO_DATABASE_URL: postgresql://vulcan:vulcan@postgres:5432/vulcan
     ports:
       - "8000:8000"
     depends_on:
@@ -73,7 +75,9 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    env_file: .env
+    env_file: backend/.env
+    environment:
+      DJANGO_DATABASE_URL: postgresql://vulcan:vulcan@postgres:5432/vulcan
     depends_on:
       backend:
         condition: service_started
@@ -85,10 +89,9 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8000
+        BACKEND_URL: http://backend:8000
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
-      API_URL: http://backend:8000
+      BACKEND_URL: http://backend:8000
     ports:
       - "3000:3000"
     depends_on:

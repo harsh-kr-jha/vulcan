@@ -1,0 +1,916 @@
+date,material,supplier,available_quantity,daily_consumption,safety_stock,expected_receipt_date,required_date,receipt_status
+2026-06-01,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,1812,1450,4350,2026-06-05,2026-06-04,on_time
+2026-06-01,Natural Rubber RSS-4,Approved Rubber Supplier B,8315,780,2340,2026-06-07,2026-06-04,on_time
+2026-06-01,Carbon Black N660,Approved Carbon Supplier C,7673,690,2070,2026-06-05,2026-06-04,on_time
+2026-06-01,Carbon Black N330,Approved Carbon Supplier C,6511,410,1230,2026-06-03,2026-06-04,on_time
+2026-06-01,Paraffinic Process Oil,Approved Chemical Supplier D,5236,260,780,2026-06-06,2026-06-04,on_time
+2026-06-01,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1159,95,285,2026-06-03,2026-06-04,on_time
+2026-06-01,Sulphur Rubber Grade,Approved Chemical Supplier D,1030,82,246,2026-06-05,2026-06-04,on_time
+2026-06-01,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,507,44,132,2026-06-06,2026-06-04,on_time
+2026-06-01,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,944,58,174,2026-06-07,2026-06-04,on_time
+2026-06-01,Valve Stem Assembly TR29,Approved Valve Supplier E,40584,2850,8550,2026-06-05,2026-06-04,on_time
+2026-06-01,Valve Stem Assembly TR78A,Approved Valve Supplier E,2006,1180,3540,2026-06-03,2026-06-04,on_time
+2026-06-01,Nylon Reinforcement Fabric,Approved Textile Supplier F,1377,220,660,2026-06-07,2026-06-04,on_time
+2026-06-01,Steel Insert - NVH Components,Approved Insert Supplier G,21976,2050,6150,2026-06-05,2026-06-04,on_time
+2026-06-01,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,862,90,270,2026-06-04,2026-06-04,on_time
+2026-06-01,Finished Goods Packaging Cartons,Approved Packaging Supplier H,12494,760,2280,2026-06-05,2026-06-04,on_time
+2026-06-02,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,16428,1450,4350,2026-06-05,2026-06-05,on_time
+2026-06-02,Natural Rubber RSS-4,Approved Rubber Supplier B,7753,780,2340,2026-06-08,2026-06-05,on_time
+2026-06-02,Carbon Black N660,Approved Carbon Supplier C,7176,690,2070,2026-06-04,2026-06-05,on_time
+2026-06-02,Carbon Black N330,Approved Carbon Supplier C,6216,410,1230,2026-06-06,2026-06-05,on_time
+2026-06-02,Paraffinic Process Oil,Approved Chemical Supplier D,5049,260,780,2026-06-05,2026-06-05,on_time
+2026-06-02,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,2117,95,285,2026-06-08,2026-06-05,on_time
+2026-06-02,Sulphur Rubber Grade,Approved Chemical Supplier D,971,82,246,2026-06-07,2026-06-05,on_time
+2026-06-02,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,475,44,132,2026-06-08,2026-06-05,on_time
+2026-06-02,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,902,58,174,2026-06-07,2026-06-05,on_time
+2026-06-02,Valve Stem Assembly TR29,Approved Valve Supplier E,38532,2850,8550,2026-06-06,2026-06-05,on_time
+2026-06-02,Valve Stem Assembly TR78A,Approved Valve Supplier E,13900,1180,3540,2026-06-05,2026-06-05,on_time
+2026-06-02,Nylon Reinforcement Fabric,Approved Textile Supplier F,1219,220,660,2026-06-07,2026-06-05,on_time
+2026-06-02,Steel Insert - NVH Components,Approved Insert Supplier G,20500,2050,6150,2026-06-08,2026-06-05,on_time
+2026-06-02,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,797,90,270,2026-06-05,2026-06-05,on_time
+2026-06-02,Finished Goods Packaging Cartons,Approved Packaging Supplier H,11947,760,2280,2026-06-08,2026-06-05,on_time
+2026-06-03,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,15384,1450,4350,2026-06-08,2026-06-06,on_time
+2026-06-03,Natural Rubber RSS-4,Approved Rubber Supplier B,7192,780,2340,2026-06-09,2026-06-06,on_time
+2026-06-03,Carbon Black N660,Approved Carbon Supplier C,6679,690,2070,2026-06-07,2026-06-06,on_time
+2026-06-03,Carbon Black N330,Approved Carbon Supplier C,5920,410,1230,2026-06-08,2026-06-06,on_time
+2026-06-03,Paraffinic Process Oil,Approved Chemical Supplier D,4862,260,780,2026-06-08,2026-06-06,on_time
+2026-06-03,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,2048,95,285,2026-06-09,2026-06-06,on_time
+2026-06-03,Sulphur Rubber Grade,Approved Chemical Supplier D,912,82,246,2026-06-09,2026-06-06,on_time
+2026-06-03,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,444,44,132,2026-06-09,2026-06-06,on_time
+2026-06-03,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,861,58,174,2026-06-09,2026-06-06,on_time
+2026-06-03,Valve Stem Assembly TR29,Approved Valve Supplier E,36480,2850,8550,2026-06-09,2026-06-06,on_time
+2026-06-03,Valve Stem Assembly TR78A,Approved Valve Supplier E,13051,1180,3540,2026-06-08,2026-06-06,on_time
+2026-06-03,Nylon Reinforcement Fabric,Approved Textile Supplier F,1060,220,660,2026-06-07,2026-06-06,on_time
+2026-06-03,Steel Insert - NVH Components,Approved Insert Supplier G,19024,2050,6150,2026-06-09,2026-06-06,on_time
+2026-06-03,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,733,90,270,2026-06-06,2026-06-06,on_time
+2026-06-03,Finished Goods Packaging Cartons,Approved Packaging Supplier H,11400,760,2280,2026-06-09,2026-06-06,on_time
+2026-06-04,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,14340,1450,4350,2026-06-09,2026-06-07,on_time
+2026-06-04,Natural Rubber RSS-4,Approved Rubber Supplier B,6630,780,2340,2026-06-08,2026-06-07,on_time
+2026-06-04,Carbon Black N660,Approved Carbon Supplier C,6182,690,2070,2026-06-09,2026-06-07,on_time
+2026-06-04,Carbon Black N330,Approved Carbon Supplier C,5625,410,1230,2026-06-10,2026-06-07,on_time
+2026-06-04,Paraffinic Process Oil,Approved Chemical Supplier D,4675,260,780,2026-06-08,2026-06-07,on_time
+2026-06-04,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1980,95,285,2026-06-09,2026-06-07,on_time
+2026-06-04,Sulphur Rubber Grade,Approved Chemical Supplier D,853,82,246,2026-06-09,2026-06-07,on_time
+2026-06-04,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,412,44,132,2026-06-06,2026-06-07,on_time
+2026-06-04,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,819,58,174,2026-06-08,2026-06-07,on_time
+2026-06-04,Valve Stem Assembly TR29,Approved Valve Supplier E,34428,2850,8550,2026-06-10,2026-06-07,on_time
+2026-06-04,Valve Stem Assembly TR78A,Approved Valve Supplier E,12201,1180,3540,2026-06-10,2026-06-07,on_time
+2026-06-04,Nylon Reinforcement Fabric,Approved Textile Supplier F,902,220,660,2026-06-07,2026-06-07,on_time
+2026-06-04,Steel Insert - NVH Components,Approved Insert Supplier G,17548,2050,6150,2026-06-06,2026-06-07,on_time
+2026-06-04,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,668,90,270,2026-06-06,2026-06-07,on_time
+2026-06-04,Finished Goods Packaging Cartons,Approved Packaging Supplier H,10853,760,2280,2026-06-07,2026-06-07,on_time
+2026-06-05,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,13296,1450,4350,2026-06-09,2026-06-08,on_time
+2026-06-05,Natural Rubber RSS-4,Approved Rubber Supplier B,14492,780,2340,2026-06-11,2026-06-08,on_time
+2026-06-05,Carbon Black N660,Approved Carbon Supplier C,5686,690,2070,2026-06-09,2026-06-08,on_time
+2026-06-05,Carbon Black N330,Approved Carbon Supplier C,5330,410,1230,2026-06-09,2026-06-08,on_time
+2026-06-05,Paraffinic Process Oil,Approved Chemical Supplier D,4488,260,780,2026-06-08,2026-06-08,on_time
+2026-06-05,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1911,95,285,2026-06-08,2026-06-08,on_time
+2026-06-05,Sulphur Rubber Grade,Approved Chemical Supplier D,1679,82,246,2026-06-10,2026-06-08,on_time
+2026-06-05,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,380,44,132,2026-06-08,2026-06-08,on_time
+2026-06-05,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,777,58,174,2026-06-09,2026-06-08,on_time
+2026-06-05,Valve Stem Assembly TR29,Approved Valve Supplier E,32376,2850,8550,2026-06-11,2026-06-08,on_time
+2026-06-05,Valve Stem Assembly TR78A,Approved Valve Supplier E,11352,1180,3540,2026-06-09,2026-06-08,on_time
+2026-06-05,Nylon Reinforcement Fabric,Approved Textile Supplier F,3120,220,660,2026-06-10,2026-06-08,on_time
+2026-06-05,Steel Insert - NVH Components,Approved Insert Supplier G,16072,2050,6150,2026-06-08,2026-06-08,on_time
+2026-06-05,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,603,90,270,2026-06-09,2026-06-08,on_time
+2026-06-05,Finished Goods Packaging Cartons,Approved Packaging Supplier H,10306,760,2280,2026-06-08,2026-06-08,on_time
+2026-06-06,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,12252,1450,4350,2026-06-09,2026-06-09,on_time
+2026-06-06,Natural Rubber RSS-4,Approved Rubber Supplier B,13931,780,2340,2026-06-12,2026-06-09,on_time
+2026-06-06,Carbon Black N660,Approved Carbon Supplier C,5189,690,2070,2026-06-11,2026-06-09,on_time
+2026-06-06,Carbon Black N330,Approved Carbon Supplier C,5035,410,1230,2026-06-10,2026-06-09,on_time
+2026-06-06,Paraffinic Process Oil,Approved Chemical Supplier D,4300,260,780,2026-06-10,2026-06-09,on_time
+2026-06-06,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1843,95,285,2026-06-10,2026-06-09,on_time
+2026-06-06,Sulphur Rubber Grade,Approved Chemical Supplier D,1620,82,246,2026-06-11,2026-06-09,on_time
+2026-06-06,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,348,44,132,2026-06-12,2026-06-09,on_time
+2026-06-06,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,735,58,174,2026-06-08,2026-06-09,on_time
+2026-06-06,Valve Stem Assembly TR29,Approved Valve Supplier E,30324,2850,8550,2026-06-11,2026-06-09,on_time
+2026-06-06,Valve Stem Assembly TR78A,Approved Valve Supplier E,10502,1180,3540,2026-06-10,2026-06-09,on_time
+2026-06-06,Nylon Reinforcement Fabric,Approved Textile Supplier F,2961,220,660,2026-06-09,2026-06-09,on_time
+2026-06-06,Steel Insert - NVH Components,Approved Insert Supplier G,14596,2050,6150,2026-06-12,2026-06-09,on_time
+2026-06-06,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,538,90,270,2026-06-08,2026-06-09,on_time
+2026-06-06,Finished Goods Packaging Cartons,Approved Packaging Supplier H,9758,760,2280,2026-06-09,2026-06-09,on_time
+2026-06-07,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,11208,1450,4350,2026-06-10,2026-06-10,on_time
+2026-06-07,Natural Rubber RSS-4,Approved Rubber Supplier B,13369,780,2340,2026-06-13,2026-06-10,on_time
+2026-06-07,Carbon Black N660,Approved Carbon Supplier C,4692,690,2070,2026-06-13,2026-06-10,on_time
+2026-06-07,Carbon Black N330,Approved Carbon Supplier C,4740,410,1230,2026-06-12,2026-06-10,on_time
+2026-06-07,Paraffinic Process Oil,Approved Chemical Supplier D,4113,260,780,2026-06-10,2026-06-10,on_time
+2026-06-07,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1775,95,285,2026-06-10,2026-06-10,on_time
+2026-06-07,Sulphur Rubber Grade,Approved Chemical Supplier D,1561,82,246,2026-06-09,2026-06-10,on_time
+2026-06-07,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,317,44,132,2026-06-10,2026-06-10,on_time
+2026-06-07,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,694,58,174,2026-06-11,2026-06-10,on_time
+2026-06-07,Valve Stem Assembly TR29,Approved Valve Supplier E,28272,2850,8550,2026-06-12,2026-06-10,on_time
+2026-06-07,Valve Stem Assembly TR78A,Approved Valve Supplier E,9652,1180,3540,2026-06-10,2026-06-10,on_time
+2026-06-07,Nylon Reinforcement Fabric,Approved Textile Supplier F,2803,220,660,2026-06-09,2026-06-10,on_time
+2026-06-07,Steel Insert - NVH Components,Approved Insert Supplier G,13120,2050,6150,2026-06-13,2026-06-10,on_time
+2026-06-07,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,473,90,270,2026-06-12,2026-06-10,on_time
+2026-06-07,Finished Goods Packaging Cartons,Approved Packaging Supplier H,9211,760,2280,2026-06-10,2026-06-10,on_time
+2026-06-08,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,10164,1450,4350,2026-06-12,2026-06-11,on_time
+2026-06-08,Natural Rubber RSS-4,Approved Rubber Supplier B,12808,780,2340,2026-06-14,2026-06-11,on_time
+2026-06-08,Carbon Black N660,Approved Carbon Supplier C,11647,690,2070,2026-06-11,2026-06-11,on_time
+2026-06-08,Carbon Black N330,Approved Carbon Supplier C,4444,410,1230,2026-06-14,2026-06-11,on_time
+2026-06-08,Paraffinic Process Oil,Approved Chemical Supplier D,3926,260,780,2026-06-10,2026-06-11,on_time
+2026-06-08,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1706,95,285,2026-06-13,2026-06-11,on_time
+2026-06-08,Sulphur Rubber Grade,Approved Chemical Supplier D,1502,82,246,2026-06-11,2026-06-11,on_time
+2026-06-08,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,760,44,132,2026-06-12,2026-06-11,on_time
+2026-06-08,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,652,58,174,2026-06-11,2026-06-11,on_time
+2026-06-08,Valve Stem Assembly TR29,Approved Valve Supplier E,26220,2850,8550,2026-06-13,2026-06-11,on_time
+2026-06-08,Valve Stem Assembly TR78A,Approved Valve Supplier E,8803,1180,3540,2026-06-13,2026-06-11,on_time
+2026-06-08,Nylon Reinforcement Fabric,Approved Textile Supplier F,2644,220,660,2026-06-13,2026-06-11,on_time
+2026-06-08,Steel Insert - NVH Components,Approved Insert Supplier G,33784,2050,6150,2026-06-13,2026-06-11,on_time
+2026-06-08,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,409,90,270,2026-06-13,2026-06-11,on_time
+2026-06-08,Finished Goods Packaging Cartons,Approved Packaging Supplier H,8664,760,2280,2026-06-14,2026-06-11,on_time
+2026-06-09,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,9120,1450,4350,2026-06-13,2026-06-12,on_time
+2026-06-09,Natural Rubber RSS-4,Approved Rubber Supplier B,12246,780,2340,2026-06-12,2026-06-12,on_time
+2026-06-09,Carbon Black N660,Approved Carbon Supplier C,11150,690,2070,2026-06-13,2026-06-12,on_time
+2026-06-09,Carbon Black N330,Approved Carbon Supplier C,4149,410,1230,2026-06-14,2026-06-12,on_time
+2026-06-09,Paraffinic Process Oil,Approved Chemical Supplier D,3739,260,780,2026-06-11,2026-06-12,on_time
+2026-06-09,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1638,95,285,2026-06-15,2026-06-12,on_time
+2026-06-09,Sulphur Rubber Grade,Approved Chemical Supplier D,1443,82,246,2026-06-15,2026-06-12,on_time
+2026-06-09,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,729,44,132,2026-06-14,2026-06-12,on_time
+2026-06-09,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,610,58,174,2026-06-14,2026-06-12,on_time
+2026-06-09,Valve Stem Assembly TR29,Approved Valve Supplier E,24168,2850,8550,2026-06-11,2026-06-12,on_time
+2026-06-09,Valve Stem Assembly TR78A,Approved Valve Supplier E,7953,1180,3540,2026-06-12,2026-06-12,on_time
+2026-06-09,Nylon Reinforcement Fabric,Approved Textile Supplier F,2486,220,660,2026-06-13,2026-06-12,on_time
+2026-06-09,Steel Insert - NVH Components,Approved Insert Supplier G,32308,2050,6150,2026-06-12,2026-06-12,on_time
+2026-06-09,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,344,90,270,2026-06-14,2026-06-12,on_time
+2026-06-09,Finished Goods Packaging Cartons,Approved Packaging Supplier H,8117,760,2280,2026-06-12,2026-06-12,on_time
+2026-06-10,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,8076,1450,4350,2026-06-16,2026-06-13,on_time
+2026-06-10,Natural Rubber RSS-4,Approved Rubber Supplier B,11684,780,2340,2026-06-16,2026-06-13,on_time
+2026-06-10,Carbon Black N660,Approved Carbon Supplier C,10654,690,2070,2026-06-16,2026-06-13,on_time
+2026-06-10,Carbon Black N330,Approved Carbon Supplier C,3854,410,1230,2026-06-14,2026-06-13,on_time
+2026-06-10,Paraffinic Process Oil,Approved Chemical Supplier D,3552,260,780,2026-06-15,2026-06-13,on_time
+2026-06-10,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1569,95,285,2026-06-15,2026-06-13,on_time
+2026-06-10,Sulphur Rubber Grade,Approved Chemical Supplier D,1384,82,246,2026-06-12,2026-06-13,on_time
+2026-06-10,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,697,44,132,2026-06-16,2026-06-13,on_time
+2026-06-10,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,568,58,174,2026-06-16,2026-06-13,on_time
+2026-06-10,Valve Stem Assembly TR29,Approved Valve Supplier E,22116,2850,8550,2026-06-15,2026-06-13,on_time
+2026-06-10,Valve Stem Assembly TR78A,Approved Valve Supplier E,7104,1180,3540,2026-06-13,2026-06-13,on_time
+2026-06-10,Nylon Reinforcement Fabric,Approved Textile Supplier F,2328,220,660,2026-06-12,2026-06-13,on_time
+2026-06-10,Steel Insert - NVH Components,Approved Insert Supplier G,30832,2050,6150,2026-06-16,2026-06-13,on_time
+2026-06-10,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,279,90,270,2026-06-16,2026-06-13,on_time
+2026-06-10,Finished Goods Packaging Cartons,Approved Packaging Supplier H,7570,760,2280,2026-06-15,2026-06-13,on_time
+2026-06-11,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,7032,1450,4350,2026-06-16,2026-06-14,on_time
+2026-06-11,Natural Rubber RSS-4,Approved Rubber Supplier B,11123,780,2340,2026-06-16,2026-06-14,on_time
+2026-06-11,Carbon Black N660,Approved Carbon Supplier C,10157,690,2070,2026-06-14,2026-06-14,on_time
+2026-06-11,Carbon Black N330,Approved Carbon Supplier C,7987,410,1230,2026-06-16,2026-06-14,on_time
+2026-06-11,Paraffinic Process Oil,Approved Chemical Supplier D,3364,260,780,2026-06-17,2026-06-14,on_time
+2026-06-11,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1501,95,285,2026-06-15,2026-06-14,on_time
+2026-06-11,Sulphur Rubber Grade,Approved Chemical Supplier D,1325,82,246,2026-06-16,2026-06-14,on_time
+2026-06-11,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,665,44,132,2026-06-15,2026-06-14,on_time
+2026-06-11,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1153,58,174,2026-06-15,2026-06-14,on_time
+2026-06-11,Valve Stem Assembly TR29,Approved Valve Supplier E,20064,2850,8550,2026-06-14,2026-06-14,on_time
+2026-06-11,Valve Stem Assembly TR78A,Approved Valve Supplier E,6254,1180,3540,2026-06-17,2026-06-14,on_time
+2026-06-11,Nylon Reinforcement Fabric,Approved Textile Supplier F,2169,220,660,2026-06-14,2026-06-14,on_time
+2026-06-11,Steel Insert - NVH Components,Approved Insert Supplier G,29356,2050,6150,2026-06-15,2026-06-14,on_time
+2026-06-11,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,1186,90,270,2026-06-17,2026-06-14,on_time
+2026-06-11,Finished Goods Packaging Cartons,Approved Packaging Supplier H,7022,760,2280,2026-06-16,2026-06-14,on_time
+2026-06-12,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,5988,1450,4350,2026-06-16,2026-06-15,on_time
+2026-06-12,Natural Rubber RSS-4,Approved Rubber Supplier B,10561,780,2340,2026-06-17,2026-06-15,on_time
+2026-06-12,Carbon Black N660,Approved Carbon Supplier C,9660,690,2070,2026-06-17,2026-06-15,on_time
+2026-06-12,Carbon Black N330,Approved Carbon Supplier C,7692,410,1230,2026-06-14,2026-06-15,on_time
+2026-06-12,Paraffinic Process Oil,Approved Chemical Supplier D,3177,260,780,2026-06-15,2026-06-15,on_time
+2026-06-12,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1433,95,285,2026-06-14,2026-06-15,on_time
+2026-06-12,Sulphur Rubber Grade,Approved Chemical Supplier D,1266,82,246,2026-06-16,2026-06-15,on_time
+2026-06-12,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,634,44,132,2026-06-15,2026-06-15,on_time
+2026-06-12,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1111,58,174,2026-06-14,2026-06-15,on_time
+2026-06-12,Valve Stem Assembly TR29,Approved Valve Supplier E,18012,2850,8550,2026-06-14,2026-06-15,on_time
+2026-06-12,Valve Stem Assembly TR78A,Approved Valve Supplier E,5404,1180,3540,2026-06-16,2026-06-15,on_time
+2026-06-12,Nylon Reinforcement Fabric,Approved Textile Supplier F,2011,220,660,2026-06-18,2026-06-15,on_time
+2026-06-12,Steel Insert - NVH Components,Approved Insert Supplier G,27880,2050,6150,2026-06-18,2026-06-15,on_time
+2026-06-12,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,1121,90,270,2026-06-18,2026-06-15,on_time
+2026-06-12,Finished Goods Packaging Cartons,Approved Packaging Supplier H,6475,760,2280,2026-06-15,2026-06-15,on_time
+2026-06-13,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,4944,1450,4350,2026-06-16,2026-06-16,on_time
+2026-06-13,Natural Rubber RSS-4,Approved Rubber Supplier B,10000,780,2340,2026-06-17,2026-06-16,on_time
+2026-06-13,Carbon Black N660,Approved Carbon Supplier C,9163,690,2070,2026-06-16,2026-06-16,on_time
+2026-06-13,Carbon Black N330,Approved Carbon Supplier C,7396,410,1230,2026-06-16,2026-06-16,on_time
+2026-06-13,Paraffinic Process Oil,Approved Chemical Supplier D,2990,260,780,2026-06-18,2026-06-16,on_time
+2026-06-13,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1364,95,285,2026-06-17,2026-06-16,on_time
+2026-06-13,Sulphur Rubber Grade,Approved Chemical Supplier D,1207,82,246,2026-06-15,2026-06-16,on_time
+2026-06-13,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,602,44,132,2026-06-16,2026-06-16,on_time
+2026-06-13,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1070,58,174,2026-06-18,2026-06-16,on_time
+2026-06-13,Valve Stem Assembly TR29,Approved Valve Supplier E,15960,2850,8550,2026-06-17,2026-06-16,on_time
+2026-06-13,Valve Stem Assembly TR78A,Approved Valve Supplier E,4555,1180,3540,2026-06-16,2026-06-16,on_time
+2026-06-13,Nylon Reinforcement Fabric,Approved Textile Supplier F,1852,220,660,2026-06-18,2026-06-16,on_time
+2026-06-13,Steel Insert - NVH Components,Approved Insert Supplier G,26404,2050,6150,2026-06-17,2026-06-16,on_time
+2026-06-13,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,1057,90,270,2026-06-15,2026-06-16,on_time
+2026-06-13,Finished Goods Packaging Cartons,Approved Packaging Supplier H,5928,760,2280,2026-06-15,2026-06-16,on_time
+2026-06-14,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,3900,1450,4350,2026-06-17,2026-06-17,on_time
+2026-06-14,Natural Rubber RSS-4,Approved Rubber Supplier B,9438,780,2340,2026-06-16,2026-06-17,on_time
+2026-06-14,Carbon Black N660,Approved Carbon Supplier C,8666,690,2070,2026-06-19,2026-06-17,on_time
+2026-06-14,Carbon Black N330,Approved Carbon Supplier C,7101,410,1230,2026-06-16,2026-06-17,on_time
+2026-06-14,Paraffinic Process Oil,Approved Chemical Supplier D,5611,260,780,2026-06-20,2026-06-17,on_time
+2026-06-14,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1296,95,285,2026-06-17,2026-06-17,on_time
+2026-06-14,Sulphur Rubber Grade,Approved Chemical Supplier D,1148,82,246,2026-06-17,2026-06-17,on_time
+2026-06-14,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,570,44,132,2026-06-17,2026-06-17,on_time
+2026-06-14,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1028,58,174,2026-06-16,2026-06-17,on_time
+2026-06-14,Valve Stem Assembly TR29,Approved Valve Supplier E,44688,2850,8550,2026-06-16,2026-06-17,on_time
+2026-06-14,Valve Stem Assembly TR78A,Approved Valve Supplier E,3705,1180,3540,2026-06-18,2026-06-17,on_time
+2026-06-14,Nylon Reinforcement Fabric,Approved Textile Supplier F,1694,220,660,2026-06-16,2026-06-17,on_time
+2026-06-14,Steel Insert - NVH Components,Approved Insert Supplier G,24928,2050,6150,2026-06-19,2026-06-17,on_time
+2026-06-14,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,992,90,270,2026-06-19,2026-06-17,on_time
+2026-06-14,Finished Goods Packaging Cartons,Approved Packaging Supplier H,13589,760,2280,2026-06-19,2026-06-17,on_time
+2026-06-15,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,2856,1450,4350,2026-06-20,2026-06-18,on_time
+2026-06-15,Natural Rubber RSS-4,Approved Rubber Supplier B,8876,780,2340,2026-06-21,2026-06-18,on_time
+2026-06-15,Carbon Black N660,Approved Carbon Supplier C,8170,690,2070,2026-06-18,2026-06-18,on_time
+2026-06-15,Carbon Black N330,Approved Carbon Supplier C,6806,410,1230,2026-06-19,2026-06-18,on_time
+2026-06-15,Paraffinic Process Oil,Approved Chemical Supplier D,5424,260,780,2026-06-17,2026-06-18,on_time
+2026-06-15,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1227,95,285,2026-06-18,2026-06-18,on_time
+2026-06-15,Sulphur Rubber Grade,Approved Chemical Supplier D,1089,82,246,2026-06-20,2026-06-18,on_time
+2026-06-15,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,539,44,132,2026-06-18,2026-06-18,on_time
+2026-06-15,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,986,58,174,2026-06-17,2026-06-18,on_time
+2026-06-15,Valve Stem Assembly TR29,Approved Valve Supplier E,42636,2850,8550,2026-06-18,2026-06-18,on_time
+2026-06-15,Valve Stem Assembly TR78A,Approved Valve Supplier E,2856,1180,3540,2026-06-18,2026-06-18,on_time
+2026-06-15,Nylon Reinforcement Fabric,Approved Textile Supplier F,1536,220,660,2026-06-20,2026-06-18,on_time
+2026-06-15,Steel Insert - NVH Components,Approved Insert Supplier G,23452,2050,6150,2026-06-20,2026-06-18,on_time
+2026-06-15,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,927,90,270,2026-06-18,2026-06-18,on_time
+2026-06-15,Finished Goods Packaging Cartons,Approved Packaging Supplier H,13042,760,2280,2026-06-20,2026-06-18,on_time
+2026-06-16,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,1812,1450,4350,2026-06-18,2026-06-19,on_time
+2026-06-16,Natural Rubber RSS-4,Approved Rubber Supplier B,8315,780,2340,2026-06-21,2026-06-19,on_time
+2026-06-16,Carbon Black N660,Approved Carbon Supplier C,7673,690,2070,2026-06-21,2026-06-19,on_time
+2026-06-16,Carbon Black N330,Approved Carbon Supplier C,6511,410,1230,2026-06-20,2026-06-19,on_time
+2026-06-16,Paraffinic Process Oil,Approved Chemical Supplier D,5236,260,780,2026-06-20,2026-06-19,on_time
+2026-06-16,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1159,95,285,2026-06-21,2026-06-19,on_time
+2026-06-16,Sulphur Rubber Grade,Approved Chemical Supplier D,1030,82,246,2026-06-22,2026-06-19,on_time
+2026-06-16,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,507,44,132,2026-06-22,2026-06-19,on_time
+2026-06-16,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,944,58,174,2026-06-21,2026-06-19,on_time
+2026-06-16,Valve Stem Assembly TR29,Approved Valve Supplier E,40584,2850,8550,2026-06-20,2026-06-19,on_time
+2026-06-16,Valve Stem Assembly TR78A,Approved Valve Supplier E,2006,1180,3540,2026-06-19,2026-06-19,on_time
+2026-06-16,Nylon Reinforcement Fabric,Approved Textile Supplier F,1377,220,660,2026-06-20,2026-06-19,on_time
+2026-06-16,Steel Insert - NVH Components,Approved Insert Supplier G,21976,2050,6150,2026-06-21,2026-06-19,on_time
+2026-06-16,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,862,90,270,2026-06-21,2026-06-19,on_time
+2026-06-16,Finished Goods Packaging Cartons,Approved Packaging Supplier H,12494,760,2280,2026-06-21,2026-06-19,on_time
+2026-06-17,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,16428,1450,4350,2026-06-21,2026-06-20,on_time
+2026-06-17,Natural Rubber RSS-4,Approved Rubber Supplier B,7753,780,2340,2026-06-22,2026-06-20,on_time
+2026-06-17,Carbon Black N660,Approved Carbon Supplier C,7176,690,2070,2026-06-23,2026-06-20,on_time
+2026-06-17,Carbon Black N330,Approved Carbon Supplier C,6216,410,1230,2026-06-23,2026-06-20,on_time
+2026-06-17,Paraffinic Process Oil,Approved Chemical Supplier D,5049,260,780,2026-06-19,2026-06-20,on_time
+2026-06-17,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,2117,95,285,2026-06-19,2026-06-20,on_time
+2026-06-17,Sulphur Rubber Grade,Approved Chemical Supplier D,971,82,246,2026-06-22,2026-06-20,on_time
+2026-06-17,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,475,44,132,2026-06-23,2026-06-20,on_time
+2026-06-17,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,902,58,174,2026-06-21,2026-06-20,on_time
+2026-06-17,Valve Stem Assembly TR29,Approved Valve Supplier E,38532,2850,8550,2026-06-21,2026-06-20,on_time
+2026-06-17,Valve Stem Assembly TR78A,Approved Valve Supplier E,13900,1180,3540,2026-06-22,2026-06-20,on_time
+2026-06-17,Nylon Reinforcement Fabric,Approved Textile Supplier F,1219,220,660,2026-06-20,2026-06-20,on_time
+2026-06-17,Steel Insert - NVH Components,Approved Insert Supplier G,20500,2050,6150,2026-06-19,2026-06-20,on_time
+2026-06-17,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,797,90,270,2026-06-19,2026-06-20,on_time
+2026-06-17,Finished Goods Packaging Cartons,Approved Packaging Supplier H,11947,760,2280,2026-06-20,2026-06-20,on_time
+2026-06-18,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,15384,1450,4350,2026-06-21,2026-06-21,on_time
+2026-06-18,Natural Rubber RSS-4,Approved Rubber Supplier B,7192,780,2340,2026-06-24,2026-06-21,on_time
+2026-06-18,Carbon Black N660,Approved Carbon Supplier C,6679,690,2070,2026-06-23,2026-06-21,on_time
+2026-06-18,Carbon Black N330,Approved Carbon Supplier C,5920,410,1230,2026-06-23,2026-06-21,on_time
+2026-06-18,Paraffinic Process Oil,Approved Chemical Supplier D,4862,260,780,2026-06-24,2026-06-21,on_time
+2026-06-18,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,2048,95,285,2026-06-24,2026-06-21,on_time
+2026-06-18,Sulphur Rubber Grade,Approved Chemical Supplier D,912,82,246,2026-06-21,2026-06-21,on_time
+2026-06-18,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,444,44,132,2026-06-22,2026-06-21,on_time
+2026-06-18,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,861,58,174,2026-06-21,2026-06-21,on_time
+2026-06-18,Valve Stem Assembly TR29,Approved Valve Supplier E,36480,2850,8550,2026-06-20,2026-06-21,on_time
+2026-06-18,Valve Stem Assembly TR78A,Approved Valve Supplier E,13051,1180,3540,2026-06-24,2026-06-21,on_time
+2026-06-18,Nylon Reinforcement Fabric,Approved Textile Supplier F,1060,220,660,2026-06-22,2026-06-21,on_time
+2026-06-18,Steel Insert - NVH Components,Approved Insert Supplier G,19024,2050,6150,2026-06-21,2026-06-21,on_time
+2026-06-18,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,733,90,270,2026-06-22,2026-06-21,on_time
+2026-06-18,Finished Goods Packaging Cartons,Approved Packaging Supplier H,11400,760,2280,2026-06-20,2026-06-21,on_time
+2026-06-19,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,14340,1450,4350,2026-06-22,2026-06-22,on_time
+2026-06-19,Natural Rubber RSS-4,Approved Rubber Supplier B,6630,780,2340,2026-06-24,2026-06-22,on_time
+2026-06-19,Carbon Black N660,Approved Carbon Supplier C,6182,690,2070,2026-06-24,2026-06-22,on_time
+2026-06-19,Carbon Black N330,Approved Carbon Supplier C,5625,410,1230,2026-06-24,2026-06-22,on_time
+2026-06-19,Paraffinic Process Oil,Approved Chemical Supplier D,4675,260,780,2026-06-23,2026-06-22,on_time
+2026-06-19,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1980,95,285,2026-06-25,2026-06-22,on_time
+2026-06-19,Sulphur Rubber Grade,Approved Chemical Supplier D,853,82,246,2026-06-25,2026-06-22,on_time
+2026-06-19,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,412,44,132,2026-06-22,2026-06-22,on_time
+2026-06-19,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,819,58,174,2026-06-23,2026-06-22,on_time
+2026-06-19,Valve Stem Assembly TR29,Approved Valve Supplier E,34428,2850,8550,2026-06-23,2026-06-22,on_time
+2026-06-19,Valve Stem Assembly TR78A,Approved Valve Supplier E,12201,1180,3540,2026-06-24,2026-06-22,on_time
+2026-06-19,Nylon Reinforcement Fabric,Approved Textile Supplier F,902,220,660,2026-06-23,2026-06-22,on_time
+2026-06-19,Steel Insert - NVH Components,Approved Insert Supplier G,17548,2050,6150,2026-06-23,2026-06-22,on_time
+2026-06-19,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,668,90,270,2026-06-23,2026-06-22,on_time
+2026-06-19,Finished Goods Packaging Cartons,Approved Packaging Supplier H,10853,760,2280,2026-06-25,2026-06-22,on_time
+2026-06-20,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,13296,1450,4350,2026-06-24,2026-06-23,on_time
+2026-06-20,Natural Rubber RSS-4,Approved Rubber Supplier B,14492,780,2340,2026-06-26,2026-06-23,on_time
+2026-06-20,Carbon Black N660,Approved Carbon Supplier C,5686,690,2070,2026-06-22,2026-06-23,on_time
+2026-06-20,Carbon Black N330,Approved Carbon Supplier C,5330,410,1230,2026-06-24,2026-06-23,on_time
+2026-06-20,Paraffinic Process Oil,Approved Chemical Supplier D,4488,260,780,2026-06-26,2026-06-23,on_time
+2026-06-20,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1911,95,285,2026-06-24,2026-06-23,on_time
+2026-06-20,Sulphur Rubber Grade,Approved Chemical Supplier D,1679,82,246,2026-06-24,2026-06-23,on_time
+2026-06-20,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,380,44,132,2026-06-23,2026-06-23,on_time
+2026-06-20,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,777,58,174,2026-06-22,2026-06-23,on_time
+2026-06-20,Valve Stem Assembly TR29,Approved Valve Supplier E,32376,2850,8550,2026-06-26,2026-06-23,on_time
+2026-06-20,Valve Stem Assembly TR78A,Approved Valve Supplier E,11352,1180,3540,2026-06-24,2026-06-23,on_time
+2026-06-20,Nylon Reinforcement Fabric,Approved Textile Supplier F,3120,220,660,2026-06-22,2026-06-23,on_time
+2026-06-20,Steel Insert - NVH Components,Approved Insert Supplier G,16072,2050,6150,2026-06-25,2026-06-23,on_time
+2026-06-20,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,603,90,270,2026-06-23,2026-06-23,on_time
+2026-06-20,Finished Goods Packaging Cartons,Approved Packaging Supplier H,10306,760,2280,2026-06-24,2026-06-23,on_time
+2026-06-21,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,12252,1450,4350,2026-06-23,2026-06-24,on_time
+2026-06-21,Natural Rubber RSS-4,Approved Rubber Supplier B,13931,780,2340,2026-06-23,2026-06-24,on_time
+2026-06-21,Carbon Black N660,Approved Carbon Supplier C,5189,690,2070,2026-06-24,2026-06-24,on_time
+2026-06-21,Carbon Black N330,Approved Carbon Supplier C,5035,410,1230,2026-06-23,2026-06-24,on_time
+2026-06-21,Paraffinic Process Oil,Approved Chemical Supplier D,4300,260,780,2026-06-27,2026-06-24,on_time
+2026-06-21,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1843,95,285,2026-06-27,2026-06-24,on_time
+2026-06-21,Sulphur Rubber Grade,Approved Chemical Supplier D,1620,82,246,2026-06-25,2026-06-24,on_time
+2026-06-21,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,348,44,132,2026-06-25,2026-06-24,on_time
+2026-06-21,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,735,58,174,2026-06-25,2026-06-24,on_time
+2026-06-21,Valve Stem Assembly TR29,Approved Valve Supplier E,30324,2850,8550,2026-06-27,2026-06-24,on_time
+2026-06-21,Valve Stem Assembly TR78A,Approved Valve Supplier E,10502,1180,3540,2026-06-26,2026-06-24,on_time
+2026-06-21,Nylon Reinforcement Fabric,Approved Textile Supplier F,2961,220,660,2026-06-24,2026-06-24,on_time
+2026-06-21,Steel Insert - NVH Components,Approved Insert Supplier G,14596,2050,6150,2026-06-24,2026-06-24,on_time
+2026-06-21,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,538,90,270,2026-06-26,2026-06-24,on_time
+2026-06-21,Finished Goods Packaging Cartons,Approved Packaging Supplier H,9758,760,2280,2026-06-27,2026-06-24,on_time
+2026-06-22,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,11208,1450,4350,2026-06-28,2026-06-25,on_time
+2026-06-22,Natural Rubber RSS-4,Approved Rubber Supplier B,13369,780,2340,2026-06-28,2026-06-25,on_time
+2026-06-22,Carbon Black N660,Approved Carbon Supplier C,4692,690,2070,2026-06-27,2026-06-25,on_time
+2026-06-22,Carbon Black N330,Approved Carbon Supplier C,4740,410,1230,2026-06-27,2026-06-25,on_time
+2026-06-22,Paraffinic Process Oil,Approved Chemical Supplier D,4113,260,780,2026-06-25,2026-06-25,on_time
+2026-06-22,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1775,95,285,2026-06-27,2026-06-25,on_time
+2026-06-22,Sulphur Rubber Grade,Approved Chemical Supplier D,1561,82,246,2026-06-26,2026-06-25,on_time
+2026-06-22,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,317,44,132,2026-06-24,2026-06-25,on_time
+2026-06-22,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,694,58,174,2026-06-28,2026-06-25,on_time
+2026-06-22,Valve Stem Assembly TR29,Approved Valve Supplier E,28272,2850,8550,2026-06-28,2026-06-25,on_time
+2026-06-22,Valve Stem Assembly TR78A,Approved Valve Supplier E,9652,1180,3540,2026-06-28,2026-06-25,on_time
+2026-06-22,Nylon Reinforcement Fabric,Approved Textile Supplier F,2803,220,660,2026-06-25,2026-06-25,on_time
+2026-06-22,Steel Insert - NVH Components,Approved Insert Supplier G,13120,2050,6150,2026-06-25,2026-06-25,on_time
+2026-06-22,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,473,90,270,2026-06-26,2026-06-25,on_time
+2026-06-22,Finished Goods Packaging Cartons,Approved Packaging Supplier H,9211,760,2280,2026-06-25,2026-06-25,on_time
+2026-06-23,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,10164,1450,4350,2026-06-25,2026-06-26,on_time
+2026-06-23,Natural Rubber RSS-4,Approved Rubber Supplier B,12808,780,2340,2026-06-26,2026-06-26,on_time
+2026-06-23,Carbon Black N660,Approved Carbon Supplier C,11647,690,2070,2026-06-29,2026-06-26,on_time
+2026-06-23,Carbon Black N330,Approved Carbon Supplier C,4444,410,1230,2026-06-28,2026-06-26,on_time
+2026-06-23,Paraffinic Process Oil,Approved Chemical Supplier D,3926,260,780,2026-06-29,2026-06-26,on_time
+2026-06-23,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1706,95,285,2026-06-27,2026-06-26,on_time
+2026-06-23,Sulphur Rubber Grade,Approved Chemical Supplier D,1502,82,246,2026-06-26,2026-06-26,on_time
+2026-06-23,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,760,44,132,2026-06-28,2026-06-26,on_time
+2026-06-23,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,652,58,174,2026-06-27,2026-06-26,on_time
+2026-06-23,Valve Stem Assembly TR29,Approved Valve Supplier E,26220,2850,8550,2026-06-26,2026-06-26,on_time
+2026-06-23,Valve Stem Assembly TR78A,Approved Valve Supplier E,8803,1180,3540,2026-06-25,2026-06-26,on_time
+2026-06-23,Nylon Reinforcement Fabric,Approved Textile Supplier F,2644,220,660,2026-06-25,2026-06-26,on_time
+2026-06-23,Steel Insert - NVH Components,Approved Insert Supplier G,33784,2050,6150,2026-06-26,2026-06-26,on_time
+2026-06-23,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,409,90,270,2026-06-28,2026-06-26,on_time
+2026-06-23,Finished Goods Packaging Cartons,Approved Packaging Supplier H,8664,760,2280,2026-06-29,2026-06-26,on_time
+2026-06-24,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,9120,1450,4350,2026-06-30,2026-06-27,on_time
+2026-06-24,Natural Rubber RSS-4,Approved Rubber Supplier B,12246,780,2340,2026-06-26,2026-06-27,on_time
+2026-06-24,Carbon Black N660,Approved Carbon Supplier C,11150,690,2070,2026-06-26,2026-06-27,on_time
+2026-06-24,Carbon Black N330,Approved Carbon Supplier C,4149,410,1230,2026-06-30,2026-06-27,on_time
+2026-06-24,Paraffinic Process Oil,Approved Chemical Supplier D,3739,260,780,2026-06-30,2026-06-27,on_time
+2026-06-24,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1638,95,285,2026-06-28,2026-06-27,on_time
+2026-06-24,Sulphur Rubber Grade,Approved Chemical Supplier D,1443,82,246,2026-06-28,2026-06-27,on_time
+2026-06-24,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,729,44,132,2026-06-30,2026-06-27,on_time
+2026-06-24,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,610,58,174,2026-06-29,2026-06-27,on_time
+2026-06-24,Valve Stem Assembly TR29,Approved Valve Supplier E,24168,2850,8550,2026-06-29,2026-06-27,on_time
+2026-06-24,Valve Stem Assembly TR78A,Approved Valve Supplier E,7953,1180,3540,2026-06-29,2026-06-27,on_time
+2026-06-24,Nylon Reinforcement Fabric,Approved Textile Supplier F,2486,220,660,2026-06-30,2026-06-27,on_time
+2026-06-24,Steel Insert - NVH Components,Approved Insert Supplier G,32308,2050,6150,2026-06-26,2026-06-27,on_time
+2026-06-24,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,344,90,270,2026-06-26,2026-06-27,on_time
+2026-06-24,Finished Goods Packaging Cartons,Approved Packaging Supplier H,8117,760,2280,2026-06-26,2026-06-27,on_time
+2026-06-25,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,8076,1450,4350,2026-06-29,2026-06-28,on_time
+2026-06-25,Natural Rubber RSS-4,Approved Rubber Supplier B,11684,780,2340,2026-07-01,2026-06-28,on_time
+2026-06-25,Carbon Black N660,Approved Carbon Supplier C,10654,690,2070,2026-06-28,2026-06-28,on_time
+2026-06-25,Carbon Black N330,Approved Carbon Supplier C,3854,410,1230,2026-06-30,2026-06-28,on_time
+2026-06-25,Paraffinic Process Oil,Approved Chemical Supplier D,3552,260,780,2026-06-29,2026-06-28,on_time
+2026-06-25,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1569,95,285,2026-06-27,2026-06-28,on_time
+2026-06-25,Sulphur Rubber Grade,Approved Chemical Supplier D,1384,82,246,2026-06-30,2026-06-28,on_time
+2026-06-25,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,697,44,132,2026-06-29,2026-06-28,on_time
+2026-06-25,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,568,58,174,2026-06-30,2026-06-28,on_time
+2026-06-25,Valve Stem Assembly TR29,Approved Valve Supplier E,22116,2850,8550,2026-06-28,2026-06-28,on_time
+2026-06-25,Valve Stem Assembly TR78A,Approved Valve Supplier E,7104,1180,3540,2026-07-01,2026-06-28,on_time
+2026-06-25,Nylon Reinforcement Fabric,Approved Textile Supplier F,2328,220,660,2026-06-29,2026-06-28,on_time
+2026-06-25,Steel Insert - NVH Components,Approved Insert Supplier G,30832,2050,6150,2026-06-29,2026-06-28,on_time
+2026-06-25,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,279,90,270,2026-07-01,2026-06-28,on_time
+2026-06-25,Finished Goods Packaging Cartons,Approved Packaging Supplier H,7570,760,2280,2026-06-29,2026-06-28,on_time
+2026-06-26,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,7032,1450,4350,2026-06-28,2026-06-29,on_time
+2026-06-26,Natural Rubber RSS-4,Approved Rubber Supplier B,11123,780,2340,2026-07-02,2026-06-29,on_time
+2026-06-26,Carbon Black N660,Approved Carbon Supplier C,10157,690,2070,2026-07-01,2026-06-29,on_time
+2026-06-26,Carbon Black N330,Approved Carbon Supplier C,7987,410,1230,2026-07-01,2026-06-29,on_time
+2026-06-26,Paraffinic Process Oil,Approved Chemical Supplier D,3364,260,780,2026-07-01,2026-06-29,on_time
+2026-06-26,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1501,95,285,2026-06-29,2026-06-29,on_time
+2026-06-26,Sulphur Rubber Grade,Approved Chemical Supplier D,1325,82,246,2026-07-01,2026-06-29,on_time
+2026-06-26,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,665,44,132,2026-07-01,2026-06-29,on_time
+2026-06-26,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1153,58,174,2026-06-30,2026-06-29,on_time
+2026-06-26,Valve Stem Assembly TR29,Approved Valve Supplier E,20064,2850,8550,2026-06-30,2026-06-29,on_time
+2026-06-26,Valve Stem Assembly TR78A,Approved Valve Supplier E,6254,1180,3540,2026-06-28,2026-06-29,on_time
+2026-06-26,Nylon Reinforcement Fabric,Approved Textile Supplier F,2169,220,660,2026-06-28,2026-06-29,on_time
+2026-06-26,Steel Insert - NVH Components,Approved Insert Supplier G,29356,2050,6150,2026-07-02,2026-06-29,on_time
+2026-06-26,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,1186,90,270,2026-06-29,2026-06-29,on_time
+2026-06-26,Finished Goods Packaging Cartons,Approved Packaging Supplier H,7022,760,2280,2026-06-29,2026-06-29,on_time
+2026-06-27,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,5988,1450,4350,2026-06-29,2026-06-30,on_time
+2026-06-27,Natural Rubber RSS-4,Approved Rubber Supplier B,10561,780,2340,2026-06-30,2026-06-30,on_time
+2026-06-27,Carbon Black N660,Approved Carbon Supplier C,9660,690,2070,2026-07-03,2026-06-30,on_time
+2026-06-27,Carbon Black N330,Approved Carbon Supplier C,7692,410,1230,2026-06-30,2026-06-30,on_time
+2026-06-27,Paraffinic Process Oil,Approved Chemical Supplier D,3177,260,780,2026-06-30,2026-06-30,on_time
+2026-06-27,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1433,95,285,2026-07-03,2026-06-30,on_time
+2026-06-27,Sulphur Rubber Grade,Approved Chemical Supplier D,1266,82,246,2026-07-03,2026-06-30,on_time
+2026-06-27,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,634,44,132,2026-07-03,2026-06-30,on_time
+2026-06-27,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1111,58,174,2026-06-30,2026-06-30,on_time
+2026-06-27,Valve Stem Assembly TR29,Approved Valve Supplier E,18012,2850,8550,2026-06-29,2026-06-30,on_time
+2026-06-27,Valve Stem Assembly TR78A,Approved Valve Supplier E,5404,1180,3540,2026-06-29,2026-06-30,on_time
+2026-06-27,Nylon Reinforcement Fabric,Approved Textile Supplier F,2011,220,660,2026-07-03,2026-06-30,on_time
+2026-06-27,Steel Insert - NVH Components,Approved Insert Supplier G,27880,2050,6150,2026-06-29,2026-06-30,on_time
+2026-06-27,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,1121,90,270,2026-07-03,2026-06-30,on_time
+2026-06-27,Finished Goods Packaging Cartons,Approved Packaging Supplier H,6475,760,2280,2026-06-30,2026-06-30,on_time
+2026-06-28,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,4944,1450,4350,2026-06-30,2026-07-01,on_time
+2026-06-28,Natural Rubber RSS-4,Approved Rubber Supplier B,10000,780,2340,2026-07-03,2026-07-01,on_time
+2026-06-28,Carbon Black N660,Approved Carbon Supplier C,9163,690,2070,2026-07-01,2026-07-01,on_time
+2026-06-28,Carbon Black N330,Approved Carbon Supplier C,7396,410,1230,2026-07-03,2026-07-01,on_time
+2026-06-28,Paraffinic Process Oil,Approved Chemical Supplier D,2990,260,780,2026-07-02,2026-07-01,on_time
+2026-06-28,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1364,95,285,2026-06-30,2026-07-01,on_time
+2026-06-28,Sulphur Rubber Grade,Approved Chemical Supplier D,1207,82,246,2026-07-01,2026-07-01,on_time
+2026-06-28,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,602,44,132,2026-07-04,2026-07-01,on_time
+2026-06-28,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1070,58,174,2026-07-04,2026-07-01,on_time
+2026-06-28,Valve Stem Assembly TR29,Approved Valve Supplier E,15960,2850,8550,2026-07-02,2026-07-01,on_time
+2026-06-28,Valve Stem Assembly TR78A,Approved Valve Supplier E,4555,1180,3540,2026-07-04,2026-07-01,on_time
+2026-06-28,Nylon Reinforcement Fabric,Approved Textile Supplier F,1852,220,660,2026-07-03,2026-07-01,on_time
+2026-06-28,Steel Insert - NVH Components,Approved Insert Supplier G,26404,2050,6150,2026-07-01,2026-07-01,on_time
+2026-06-28,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,1057,90,270,2026-07-03,2026-07-01,on_time
+2026-06-28,Finished Goods Packaging Cartons,Approved Packaging Supplier H,5928,760,2280,2026-07-04,2026-07-01,on_time
+2026-06-29,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,3900,1450,4350,2026-07-01,2026-07-02,on_time
+2026-06-29,Natural Rubber RSS-4,Approved Rubber Supplier B,9438,780,2340,2026-07-01,2026-07-02,on_time
+2026-06-29,Carbon Black N660,Approved Carbon Supplier C,8666,690,2070,2026-07-05,2026-07-02,on_time
+2026-06-29,Carbon Black N330,Approved Carbon Supplier C,7101,410,1230,2026-07-02,2026-07-02,on_time
+2026-06-29,Paraffinic Process Oil,Approved Chemical Supplier D,5611,260,780,2026-07-03,2026-07-02,on_time
+2026-06-29,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1296,95,285,2026-07-02,2026-07-02,on_time
+2026-06-29,Sulphur Rubber Grade,Approved Chemical Supplier D,1148,82,246,2026-07-01,2026-07-02,on_time
+2026-06-29,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,570,44,132,2026-07-01,2026-07-02,on_time
+2026-06-29,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1028,58,174,2026-07-05,2026-07-02,on_time
+2026-06-29,Valve Stem Assembly TR29,Approved Valve Supplier E,44688,2850,8550,2026-07-02,2026-07-02,on_time
+2026-06-29,Valve Stem Assembly TR78A,Approved Valve Supplier E,3705,1180,3540,2026-07-03,2026-07-02,on_time
+2026-06-29,Nylon Reinforcement Fabric,Approved Textile Supplier F,1694,220,660,2026-07-01,2026-07-02,on_time
+2026-06-29,Steel Insert - NVH Components,Approved Insert Supplier G,24928,2050,6150,2026-07-03,2026-07-02,on_time
+2026-06-29,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,992,90,270,2026-07-01,2026-07-02,on_time
+2026-06-29,Finished Goods Packaging Cartons,Approved Packaging Supplier H,13589,760,2280,2026-07-04,2026-07-02,on_time
+2026-06-30,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,2856,1450,4350,2026-07-02,2026-07-03,on_time
+2026-06-30,Natural Rubber RSS-4,Approved Rubber Supplier B,8876,780,2340,2026-07-03,2026-07-03,on_time
+2026-06-30,Carbon Black N660,Approved Carbon Supplier C,8170,690,2070,2026-07-02,2026-07-03,on_time
+2026-06-30,Carbon Black N330,Approved Carbon Supplier C,6806,410,1230,2026-07-03,2026-07-03,on_time
+2026-06-30,Paraffinic Process Oil,Approved Chemical Supplier D,5424,260,780,2026-07-04,2026-07-03,on_time
+2026-06-30,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1227,95,285,2026-07-03,2026-07-03,on_time
+2026-06-30,Sulphur Rubber Grade,Approved Chemical Supplier D,1089,82,246,2026-07-06,2026-07-03,on_time
+2026-06-30,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,539,44,132,2026-07-04,2026-07-03,on_time
+2026-06-30,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,986,58,174,2026-07-04,2026-07-03,on_time
+2026-06-30,Valve Stem Assembly TR29,Approved Valve Supplier E,42636,2850,8550,2026-07-02,2026-07-03,on_time
+2026-06-30,Valve Stem Assembly TR78A,Approved Valve Supplier E,2856,1180,3540,2026-07-03,2026-07-03,on_time
+2026-06-30,Nylon Reinforcement Fabric,Approved Textile Supplier F,1536,220,660,2026-07-06,2026-07-03,on_time
+2026-06-30,Steel Insert - NVH Components,Approved Insert Supplier G,23452,2050,6150,2026-07-02,2026-07-03,on_time
+2026-06-30,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,927,90,270,2026-07-06,2026-07-03,on_time
+2026-06-30,Finished Goods Packaging Cartons,Approved Packaging Supplier H,13042,760,2280,2026-07-02,2026-07-03,on_time
+2026-07-01,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,1812,1450,4350,2026-07-05,2026-07-04,on_time
+2026-07-01,Natural Rubber RSS-4,Approved Rubber Supplier B,8315,780,2340,2026-07-04,2026-07-04,on_time
+2026-07-01,Carbon Black N660,Approved Carbon Supplier C,7673,690,2070,2026-07-07,2026-07-04,on_time
+2026-07-01,Carbon Black N330,Approved Carbon Supplier C,6511,410,1230,2026-07-04,2026-07-04,on_time
+2026-07-01,Paraffinic Process Oil,Approved Chemical Supplier D,5236,260,780,2026-07-07,2026-07-04,on_time
+2026-07-01,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1159,95,285,2026-07-06,2026-07-04,on_time
+2026-07-01,Sulphur Rubber Grade,Approved Chemical Supplier D,1030,82,246,2026-07-06,2026-07-04,on_time
+2026-07-01,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,507,44,132,2026-07-07,2026-07-04,on_time
+2026-07-01,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,944,58,174,2026-07-04,2026-07-04,on_time
+2026-07-01,Valve Stem Assembly TR29,Approved Valve Supplier E,40584,2850,8550,2026-07-03,2026-07-04,on_time
+2026-07-01,Valve Stem Assembly TR78A,Approved Valve Supplier E,2006,1180,3540,2026-07-04,2026-07-04,on_time
+2026-07-01,Nylon Reinforcement Fabric,Approved Textile Supplier F,1377,220,660,2026-07-03,2026-07-04,on_time
+2026-07-01,Steel Insert - NVH Components,Approved Insert Supplier G,21976,2050,6150,2026-07-07,2026-07-04,on_time
+2026-07-01,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,862,90,270,2026-07-06,2026-07-04,on_time
+2026-07-01,Finished Goods Packaging Cartons,Approved Packaging Supplier H,12494,760,2280,2026-07-06,2026-07-04,on_time
+2026-07-02,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,16428,1450,4350,2026-07-08,2026-07-05,on_time
+2026-07-02,Natural Rubber RSS-4,Approved Rubber Supplier B,7753,780,2340,2026-07-08,2026-07-05,on_time
+2026-07-02,Carbon Black N660,Approved Carbon Supplier C,7176,690,2070,2026-07-06,2026-07-05,on_time
+2026-07-02,Carbon Black N330,Approved Carbon Supplier C,6216,410,1230,2026-07-06,2026-07-05,on_time
+2026-07-02,Paraffinic Process Oil,Approved Chemical Supplier D,5049,260,780,2026-07-04,2026-07-05,on_time
+2026-07-02,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,2117,95,285,2026-07-05,2026-07-05,on_time
+2026-07-02,Sulphur Rubber Grade,Approved Chemical Supplier D,971,82,246,2026-07-04,2026-07-05,on_time
+2026-07-02,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,475,44,132,2026-07-08,2026-07-05,on_time
+2026-07-02,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,902,58,174,2026-07-04,2026-07-05,on_time
+2026-07-02,Valve Stem Assembly TR29,Approved Valve Supplier E,38532,2850,8550,2026-07-05,2026-07-05,on_time
+2026-07-02,Valve Stem Assembly TR78A,Approved Valve Supplier E,13900,1180,3540,2026-07-08,2026-07-05,on_time
+2026-07-02,Nylon Reinforcement Fabric,Approved Textile Supplier F,1219,220,660,2026-07-04,2026-07-05,on_time
+2026-07-02,Steel Insert - NVH Components,Approved Insert Supplier G,20500,2050,6150,2026-07-04,2026-07-05,on_time
+2026-07-02,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,797,90,270,2026-07-07,2026-07-05,on_time
+2026-07-02,Finished Goods Packaging Cartons,Approved Packaging Supplier H,11947,760,2280,2026-07-05,2026-07-05,on_time
+2026-07-03,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,15384,1450,4350,2026-07-09,2026-07-06,on_time
+2026-07-03,Natural Rubber RSS-4,Approved Rubber Supplier B,7192,780,2340,2026-07-08,2026-07-06,on_time
+2026-07-03,Carbon Black N660,Approved Carbon Supplier C,6679,690,2070,2026-07-09,2026-07-06,on_time
+2026-07-03,Carbon Black N330,Approved Carbon Supplier C,5920,410,1230,2026-07-09,2026-07-06,on_time
+2026-07-03,Paraffinic Process Oil,Approved Chemical Supplier D,4862,260,780,2026-07-09,2026-07-06,on_time
+2026-07-03,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,2048,95,285,2026-07-06,2026-07-06,on_time
+2026-07-03,Sulphur Rubber Grade,Approved Chemical Supplier D,912,82,246,2026-07-07,2026-07-06,on_time
+2026-07-03,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,444,44,132,2026-07-09,2026-07-06,on_time
+2026-07-03,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,861,58,174,2026-07-06,2026-07-06,on_time
+2026-07-03,Valve Stem Assembly TR29,Approved Valve Supplier E,36480,2850,8550,2026-07-07,2026-07-06,on_time
+2026-07-03,Valve Stem Assembly TR78A,Approved Valve Supplier E,13051,1180,3540,2026-07-06,2026-07-06,on_time
+2026-07-03,Nylon Reinforcement Fabric,Approved Textile Supplier F,1060,220,660,2026-07-05,2026-07-06,on_time
+2026-07-03,Steel Insert - NVH Components,Approved Insert Supplier G,19024,2050,6150,2026-07-08,2026-07-06,on_time
+2026-07-03,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,733,90,270,2026-07-08,2026-07-06,on_time
+2026-07-03,Finished Goods Packaging Cartons,Approved Packaging Supplier H,11400,760,2280,2026-07-07,2026-07-06,on_time
+2026-07-04,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,14340,1450,4350,2026-07-06,2026-07-07,on_time
+2026-07-04,Natural Rubber RSS-4,Approved Rubber Supplier B,6630,780,2340,2026-07-07,2026-07-07,on_time
+2026-07-04,Carbon Black N660,Approved Carbon Supplier C,6182,690,2070,2026-07-10,2026-07-07,on_time
+2026-07-04,Carbon Black N330,Approved Carbon Supplier C,5625,410,1230,2026-07-07,2026-07-07,on_time
+2026-07-04,Paraffinic Process Oil,Approved Chemical Supplier D,4675,260,780,2026-07-07,2026-07-07,on_time
+2026-07-04,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1980,95,285,2026-07-07,2026-07-07,on_time
+2026-07-04,Sulphur Rubber Grade,Approved Chemical Supplier D,853,82,246,2026-07-10,2026-07-07,on_time
+2026-07-04,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,412,44,132,2026-07-06,2026-07-07,on_time
+2026-07-04,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,819,58,174,2026-07-07,2026-07-07,on_time
+2026-07-04,Valve Stem Assembly TR29,Approved Valve Supplier E,34428,2850,8550,2026-07-08,2026-07-07,on_time
+2026-07-04,Valve Stem Assembly TR78A,Approved Valve Supplier E,12201,1180,3540,2026-07-10,2026-07-07,on_time
+2026-07-04,Nylon Reinforcement Fabric,Approved Textile Supplier F,902,220,660,2026-07-08,2026-07-07,on_time
+2026-07-04,Steel Insert - NVH Components,Approved Insert Supplier G,17548,2050,6150,2026-07-10,2026-07-07,on_time
+2026-07-04,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,668,90,270,2026-07-08,2026-07-07,on_time
+2026-07-04,Finished Goods Packaging Cartons,Approved Packaging Supplier H,10853,760,2280,2026-07-07,2026-07-07,on_time
+2026-07-05,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,13296,1450,4350,2026-07-11,2026-07-08,on_time
+2026-07-05,Natural Rubber RSS-4,Approved Rubber Supplier B,14492,780,2340,2026-07-07,2026-07-08,on_time
+2026-07-05,Carbon Black N660,Approved Carbon Supplier C,5686,690,2070,2026-07-09,2026-07-08,on_time
+2026-07-05,Carbon Black N330,Approved Carbon Supplier C,5330,410,1230,2026-07-09,2026-07-08,on_time
+2026-07-05,Paraffinic Process Oil,Approved Chemical Supplier D,4488,260,780,2026-07-10,2026-07-08,on_time
+2026-07-05,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1911,95,285,2026-07-07,2026-07-08,on_time
+2026-07-05,Sulphur Rubber Grade,Approved Chemical Supplier D,1679,82,246,2026-07-09,2026-07-08,on_time
+2026-07-05,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,380,44,132,2026-07-08,2026-07-08,on_time
+2026-07-05,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,777,58,174,2026-07-07,2026-07-08,on_time
+2026-07-05,Valve Stem Assembly TR29,Approved Valve Supplier E,32376,2850,8550,2026-07-07,2026-07-08,on_time
+2026-07-05,Valve Stem Assembly TR78A,Approved Valve Supplier E,11352,1180,3540,2026-07-09,2026-07-08,on_time
+2026-07-05,Nylon Reinforcement Fabric,Approved Textile Supplier F,3120,220,660,2026-07-08,2026-07-08,on_time
+2026-07-05,Steel Insert - NVH Components,Approved Insert Supplier G,16072,2050,6150,2026-07-11,2026-07-08,on_time
+2026-07-05,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,603,90,270,2026-07-10,2026-07-08,on_time
+2026-07-05,Finished Goods Packaging Cartons,Approved Packaging Supplier H,10306,760,2280,2026-07-11,2026-07-08,on_time
+2026-07-06,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,12252,1450,4350,2026-07-10,2026-07-09,on_time
+2026-07-06,Natural Rubber RSS-4,Approved Rubber Supplier B,13931,780,2340,2026-07-08,2026-07-09,on_time
+2026-07-06,Carbon Black N660,Approved Carbon Supplier C,5189,690,2070,2026-07-12,2026-07-09,on_time
+2026-07-06,Carbon Black N330,Approved Carbon Supplier C,5035,410,1230,2026-07-09,2026-07-09,on_time
+2026-07-06,Paraffinic Process Oil,Approved Chemical Supplier D,4300,260,780,2026-07-09,2026-07-09,on_time
+2026-07-06,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1843,95,285,2026-07-12,2026-07-09,on_time
+2026-07-06,Sulphur Rubber Grade,Approved Chemical Supplier D,1620,82,246,2026-07-11,2026-07-09,on_time
+2026-07-06,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,348,44,132,2026-07-08,2026-07-09,on_time
+2026-07-06,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,735,58,174,2026-07-11,2026-07-09,on_time
+2026-07-06,Valve Stem Assembly TR29,Approved Valve Supplier E,30324,2850,8550,2026-07-12,2026-07-09,on_time
+2026-07-06,Valve Stem Assembly TR78A,Approved Valve Supplier E,10502,1180,3540,2026-07-12,2026-07-09,on_time
+2026-07-06,Nylon Reinforcement Fabric,Approved Textile Supplier F,2961,220,660,2026-07-12,2026-07-09,on_time
+2026-07-06,Steel Insert - NVH Components,Approved Insert Supplier G,14596,2050,6150,2026-07-10,2026-07-09,on_time
+2026-07-06,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,538,90,270,2026-07-10,2026-07-09,on_time
+2026-07-06,Finished Goods Packaging Cartons,Approved Packaging Supplier H,9758,760,2280,2026-07-09,2026-07-09,on_time
+2026-07-07,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,11208,1450,4350,2026-07-13,2026-07-10,on_time
+2026-07-07,Natural Rubber RSS-4,Approved Rubber Supplier B,13369,780,2340,2026-07-12,2026-07-10,on_time
+2026-07-07,Carbon Black N660,Approved Carbon Supplier C,4692,690,2070,2026-07-12,2026-07-10,on_time
+2026-07-07,Carbon Black N330,Approved Carbon Supplier C,4740,410,1230,2026-07-12,2026-07-10,on_time
+2026-07-07,Paraffinic Process Oil,Approved Chemical Supplier D,4113,260,780,2026-07-09,2026-07-10,on_time
+2026-07-07,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1775,95,285,2026-07-09,2026-07-10,on_time
+2026-07-07,Sulphur Rubber Grade,Approved Chemical Supplier D,1561,82,246,2026-07-11,2026-07-10,on_time
+2026-07-07,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,317,44,132,2026-07-13,2026-07-10,on_time
+2026-07-07,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,694,58,174,2026-07-10,2026-07-10,on_time
+2026-07-07,Valve Stem Assembly TR29,Approved Valve Supplier E,28272,2850,8550,2026-07-12,2026-07-10,on_time
+2026-07-07,Valve Stem Assembly TR78A,Approved Valve Supplier E,9652,1180,3540,2026-07-10,2026-07-10,on_time
+2026-07-07,Nylon Reinforcement Fabric,Approved Textile Supplier F,2803,220,660,2026-07-10,2026-07-10,on_time
+2026-07-07,Steel Insert - NVH Components,Approved Insert Supplier G,13120,2050,6150,2026-07-13,2026-07-10,on_time
+2026-07-07,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,473,90,270,2026-07-09,2026-07-10,on_time
+2026-07-07,Finished Goods Packaging Cartons,Approved Packaging Supplier H,9211,760,2280,2026-07-12,2026-07-10,on_time
+2026-07-08,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,10164,1450,4350,2026-07-13,2026-07-11,on_time
+2026-07-08,Natural Rubber RSS-4,Approved Rubber Supplier B,12808,780,2340,2026-07-10,2026-07-11,on_time
+2026-07-08,Carbon Black N660,Approved Carbon Supplier C,11647,690,2070,2026-07-14,2026-07-11,on_time
+2026-07-08,Carbon Black N330,Approved Carbon Supplier C,4444,410,1230,2026-07-11,2026-07-11,on_time
+2026-07-08,Paraffinic Process Oil,Approved Chemical Supplier D,3926,260,780,2026-07-11,2026-07-11,on_time
+2026-07-08,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1706,95,285,2026-07-11,2026-07-11,on_time
+2026-07-08,Sulphur Rubber Grade,Approved Chemical Supplier D,1502,82,246,2026-07-11,2026-07-11,on_time
+2026-07-08,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,760,44,132,2026-07-12,2026-07-11,on_time
+2026-07-08,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,652,58,174,2026-07-14,2026-07-11,on_time
+2026-07-08,Valve Stem Assembly TR29,Approved Valve Supplier E,26220,2850,8550,2026-07-12,2026-07-11,on_time
+2026-07-08,Valve Stem Assembly TR78A,Approved Valve Supplier E,8803,1180,3540,2026-07-12,2026-07-11,on_time
+2026-07-08,Nylon Reinforcement Fabric,Approved Textile Supplier F,2644,220,660,2026-07-13,2026-07-11,on_time
+2026-07-08,Steel Insert - NVH Components,Approved Insert Supplier G,33784,2050,6150,2026-07-14,2026-07-11,on_time
+2026-07-08,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,409,90,270,2026-07-11,2026-07-11,on_time
+2026-07-08,Finished Goods Packaging Cartons,Approved Packaging Supplier H,8664,760,2280,2026-07-11,2026-07-11,on_time
+2026-07-09,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,9120,1450,4350,2026-07-14,2026-07-12,on_time
+2026-07-09,Natural Rubber RSS-4,Approved Rubber Supplier B,12246,780,2340,2026-07-13,2026-07-12,on_time
+2026-07-09,Carbon Black N660,Approved Carbon Supplier C,11150,690,2070,2026-07-12,2026-07-12,on_time
+2026-07-09,Carbon Black N330,Approved Carbon Supplier C,4149,410,1230,2026-07-14,2026-07-12,on_time
+2026-07-09,Paraffinic Process Oil,Approved Chemical Supplier D,3739,260,780,2026-07-15,2026-07-12,on_time
+2026-07-09,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1638,95,285,2026-07-13,2026-07-12,on_time
+2026-07-09,Sulphur Rubber Grade,Approved Chemical Supplier D,1443,82,246,2026-07-11,2026-07-12,on_time
+2026-07-09,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,729,44,132,2026-07-15,2026-07-12,on_time
+2026-07-09,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,610,58,174,2026-07-13,2026-07-12,on_time
+2026-07-09,Valve Stem Assembly TR29,Approved Valve Supplier E,24168,2850,8550,2026-07-11,2026-07-12,on_time
+2026-07-09,Valve Stem Assembly TR78A,Approved Valve Supplier E,7953,1180,3540,2026-07-12,2026-07-12,on_time
+2026-07-09,Nylon Reinforcement Fabric,Approved Textile Supplier F,2486,220,660,2026-07-12,2026-07-12,on_time
+2026-07-09,Steel Insert - NVH Components,Approved Insert Supplier G,32308,2050,6150,2026-07-13,2026-07-12,on_time
+2026-07-09,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,344,90,270,2026-07-14,2026-07-12,on_time
+2026-07-09,Finished Goods Packaging Cartons,Approved Packaging Supplier H,8117,760,2280,2026-07-15,2026-07-12,on_time
+2026-07-10,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,8076,1450,4350,2026-07-12,2026-07-13,on_time
+2026-07-10,Natural Rubber RSS-4,Approved Rubber Supplier B,11684,780,2340,2026-07-14,2026-07-13,on_time
+2026-07-10,Carbon Black N660,Approved Carbon Supplier C,10654,690,2070,2026-07-14,2026-07-13,on_time
+2026-07-10,Carbon Black N330,Approved Carbon Supplier C,3854,410,1230,2026-07-16,2026-07-13,on_time
+2026-07-10,Paraffinic Process Oil,Approved Chemical Supplier D,3552,260,780,2026-07-16,2026-07-13,on_time
+2026-07-10,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1569,95,285,2026-07-13,2026-07-13,on_time
+2026-07-10,Sulphur Rubber Grade,Approved Chemical Supplier D,1384,82,246,2026-07-16,2026-07-13,on_time
+2026-07-10,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,697,44,132,2026-07-15,2026-07-13,on_time
+2026-07-10,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,568,58,174,2026-07-16,2026-07-13,on_time
+2026-07-10,Valve Stem Assembly TR29,Approved Valve Supplier E,22116,2850,8550,2026-07-12,2026-07-13,on_time
+2026-07-10,Valve Stem Assembly TR78A,Approved Valve Supplier E,7104,1180,3540,2026-07-12,2026-07-13,on_time
+2026-07-10,Nylon Reinforcement Fabric,Approved Textile Supplier F,2328,220,660,2026-07-16,2026-07-13,on_time
+2026-07-10,Steel Insert - NVH Components,Approved Insert Supplier G,30832,2050,6150,2026-07-12,2026-07-13,on_time
+2026-07-10,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,279,90,270,2026-07-15,2026-07-13,on_time
+2026-07-10,Finished Goods Packaging Cartons,Approved Packaging Supplier H,7570,760,2280,2026-07-15,2026-07-13,on_time
+2026-07-11,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,7032,1450,4350,2026-07-13,2026-07-14,on_time
+2026-07-11,Natural Rubber RSS-4,Approved Rubber Supplier B,11123,780,2340,2026-07-13,2026-07-14,on_time
+2026-07-11,Carbon Black N660,Approved Carbon Supplier C,10157,690,2070,2026-07-13,2026-07-14,on_time
+2026-07-11,Carbon Black N330,Approved Carbon Supplier C,7987,410,1230,2026-07-14,2026-07-14,on_time
+2026-07-11,Paraffinic Process Oil,Approved Chemical Supplier D,3364,260,780,2026-07-14,2026-07-14,on_time
+2026-07-11,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1501,95,285,2026-07-16,2026-07-14,on_time
+2026-07-11,Sulphur Rubber Grade,Approved Chemical Supplier D,1325,82,246,2026-07-13,2026-07-14,on_time
+2026-07-11,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,665,44,132,2026-07-13,2026-07-14,on_time
+2026-07-11,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1153,58,174,2026-07-15,2026-07-14,on_time
+2026-07-11,Valve Stem Assembly TR29,Approved Valve Supplier E,20064,2850,8550,2026-07-14,2026-07-14,on_time
+2026-07-11,Valve Stem Assembly TR78A,Approved Valve Supplier E,6254,1180,3540,2026-07-16,2026-07-14,on_time
+2026-07-11,Nylon Reinforcement Fabric,Approved Textile Supplier F,2169,220,660,2026-07-14,2026-07-14,on_time
+2026-07-11,Steel Insert - NVH Components,Approved Insert Supplier G,29356,2050,6150,2026-07-13,2026-07-14,on_time
+2026-07-11,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,1186,90,270,2026-07-17,2026-07-14,on_time
+2026-07-11,Finished Goods Packaging Cartons,Approved Packaging Supplier H,7022,760,2280,2026-07-17,2026-07-14,on_time
+2026-07-12,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,5988,1450,4350,2026-07-14,2026-07-15,on_time
+2026-07-12,Natural Rubber RSS-4,Approved Rubber Supplier B,10561,780,2340,2026-07-14,2026-07-15,on_time
+2026-07-12,Carbon Black N660,Approved Carbon Supplier C,9660,690,2070,2026-07-18,2026-07-15,on_time
+2026-07-12,Carbon Black N330,Approved Carbon Supplier C,7692,410,1230,2026-07-17,2026-07-15,on_time
+2026-07-12,Paraffinic Process Oil,Approved Chemical Supplier D,3177,260,780,2026-07-15,2026-07-15,on_time
+2026-07-12,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1433,95,285,2026-07-14,2026-07-15,on_time
+2026-07-12,Sulphur Rubber Grade,Approved Chemical Supplier D,1266,82,246,2026-07-14,2026-07-15,on_time
+2026-07-12,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,634,44,132,2026-07-18,2026-07-15,on_time
+2026-07-12,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1111,58,174,2026-07-18,2026-07-15,on_time
+2026-07-12,Valve Stem Assembly TR29,Approved Valve Supplier E,18012,2850,8550,2026-07-17,2026-07-15,on_time
+2026-07-12,Valve Stem Assembly TR78A,Approved Valve Supplier E,5404,1180,3540,2026-07-18,2026-07-15,on_time
+2026-07-12,Nylon Reinforcement Fabric,Approved Textile Supplier F,2011,220,660,2026-07-17,2026-07-15,on_time
+2026-07-12,Steel Insert - NVH Components,Approved Insert Supplier G,27880,2050,6150,2026-07-17,2026-07-15,on_time
+2026-07-12,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,1121,90,270,2026-07-16,2026-07-15,on_time
+2026-07-12,Finished Goods Packaging Cartons,Approved Packaging Supplier H,6475,760,2280,2026-07-15,2026-07-15,on_time
+2026-07-13,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,4944,1450,4350,2026-07-17,2026-07-16,on_time
+2026-07-13,Natural Rubber RSS-4,Approved Rubber Supplier B,10000,780,2340,2026-07-15,2026-07-16,on_time
+2026-07-13,Carbon Black N660,Approved Carbon Supplier C,9163,690,2070,2026-07-15,2026-07-16,on_time
+2026-07-13,Carbon Black N330,Approved Carbon Supplier C,7396,410,1230,2026-07-17,2026-07-16,on_time
+2026-07-13,Paraffinic Process Oil,Approved Chemical Supplier D,2990,260,780,2026-07-19,2026-07-16,on_time
+2026-07-13,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1364,95,285,2026-07-19,2026-07-16,on_time
+2026-07-13,Sulphur Rubber Grade,Approved Chemical Supplier D,1207,82,246,2026-07-15,2026-07-16,on_time
+2026-07-13,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,602,44,132,2026-07-19,2026-07-16,on_time
+2026-07-13,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1070,58,174,2026-07-19,2026-07-16,on_time
+2026-07-13,Valve Stem Assembly TR29,Approved Valve Supplier E,15960,2850,8550,2026-07-15,2026-07-16,on_time
+2026-07-13,Valve Stem Assembly TR78A,Approved Valve Supplier E,4555,1180,3540,2026-07-16,2026-07-16,on_time
+2026-07-13,Nylon Reinforcement Fabric,Approved Textile Supplier F,1852,220,660,2026-07-17,2026-07-16,on_time
+2026-07-13,Steel Insert - NVH Components,Approved Insert Supplier G,26404,2050,6150,2026-07-19,2026-07-16,on_time
+2026-07-13,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,1057,90,270,2026-07-18,2026-07-16,on_time
+2026-07-13,Finished Goods Packaging Cartons,Approved Packaging Supplier H,5928,760,2280,2026-07-17,2026-07-16,on_time
+2026-07-14,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,3900,1450,4350,2026-07-18,2026-07-17,on_time
+2026-07-14,Natural Rubber RSS-4,Approved Rubber Supplier B,9438,780,2340,2026-07-16,2026-07-17,on_time
+2026-07-14,Carbon Black N660,Approved Carbon Supplier C,8666,690,2070,2026-07-20,2026-07-17,on_time
+2026-07-14,Carbon Black N330,Approved Carbon Supplier C,7101,410,1230,2026-07-20,2026-07-17,on_time
+2026-07-14,Paraffinic Process Oil,Approved Chemical Supplier D,5611,260,780,2026-07-18,2026-07-17,on_time
+2026-07-14,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1296,95,285,2026-07-18,2026-07-17,on_time
+2026-07-14,Sulphur Rubber Grade,Approved Chemical Supplier D,1148,82,246,2026-07-19,2026-07-17,on_time
+2026-07-14,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,570,44,132,2026-07-19,2026-07-17,on_time
+2026-07-14,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1028,58,174,2026-07-19,2026-07-17,on_time
+2026-07-14,Valve Stem Assembly TR29,Approved Valve Supplier E,44688,2850,8550,2026-07-19,2026-07-17,on_time
+2026-07-14,Valve Stem Assembly TR78A,Approved Valve Supplier E,3705,1180,3540,2026-07-18,2026-07-17,on_time
+2026-07-14,Nylon Reinforcement Fabric,Approved Textile Supplier F,1694,220,660,2026-07-18,2026-07-17,on_time
+2026-07-14,Steel Insert - NVH Components,Approved Insert Supplier G,24928,2050,6150,2026-07-17,2026-07-17,on_time
+2026-07-14,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,992,90,270,2026-07-19,2026-07-17,on_time
+2026-07-14,Finished Goods Packaging Cartons,Approved Packaging Supplier H,13589,760,2280,2026-07-17,2026-07-17,on_time
+2026-07-15,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,2856,1450,4350,2026-07-19,2026-07-18,on_time
+2026-07-15,Natural Rubber RSS-4,Approved Rubber Supplier B,8876,780,2340,2026-07-17,2026-07-18,on_time
+2026-07-15,Carbon Black N660,Approved Carbon Supplier C,8170,690,2070,2026-07-18,2026-07-18,on_time
+2026-07-15,Carbon Black N330,Approved Carbon Supplier C,6806,410,1230,2026-07-21,2026-07-18,on_time
+2026-07-15,Paraffinic Process Oil,Approved Chemical Supplier D,5424,260,780,2026-07-19,2026-07-18,on_time
+2026-07-15,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1227,95,285,2026-07-21,2026-07-18,on_time
+2026-07-15,Sulphur Rubber Grade,Approved Chemical Supplier D,1089,82,246,2026-07-20,2026-07-18,on_time
+2026-07-15,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,539,44,132,2026-07-21,2026-07-18,on_time
+2026-07-15,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,986,58,174,2026-07-21,2026-07-18,on_time
+2026-07-15,Valve Stem Assembly TR29,Approved Valve Supplier E,42636,2850,8550,2026-07-18,2026-07-18,on_time
+2026-07-15,Valve Stem Assembly TR78A,Approved Valve Supplier E,2856,1180,3540,2026-07-21,2026-07-18,on_time
+2026-07-15,Nylon Reinforcement Fabric,Approved Textile Supplier F,1536,220,660,2026-07-17,2026-07-18,on_time
+2026-07-15,Steel Insert - NVH Components,Approved Insert Supplier G,23452,2050,6150,2026-07-19,2026-07-18,on_time
+2026-07-15,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,927,90,270,2026-07-20,2026-07-18,on_time
+2026-07-15,Finished Goods Packaging Cartons,Approved Packaging Supplier H,13042,760,2280,2026-07-21,2026-07-18,on_time
+2026-07-16,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,1812,1450,4350,2026-07-20,2026-07-19,on_time
+2026-07-16,Natural Rubber RSS-4,Approved Rubber Supplier B,8315,780,2340,2026-07-22,2026-07-19,on_time
+2026-07-16,Carbon Black N660,Approved Carbon Supplier C,7673,690,2070,2026-07-20,2026-07-19,on_time
+2026-07-16,Carbon Black N330,Approved Carbon Supplier C,6511,410,1230,2026-07-20,2026-07-19,on_time
+2026-07-16,Paraffinic Process Oil,Approved Chemical Supplier D,5236,260,780,2026-07-20,2026-07-19,on_time
+2026-07-16,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1159,95,285,2026-07-20,2026-07-19,on_time
+2026-07-16,Sulphur Rubber Grade,Approved Chemical Supplier D,1030,82,246,2026-07-22,2026-07-19,on_time
+2026-07-16,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,507,44,132,2026-07-20,2026-07-19,on_time
+2026-07-16,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,944,58,174,2026-07-20,2026-07-19,on_time
+2026-07-16,Valve Stem Assembly TR29,Approved Valve Supplier E,40584,2850,8550,2026-07-20,2026-07-19,on_time
+2026-07-16,Valve Stem Assembly TR78A,Approved Valve Supplier E,2006,1180,3540,2026-07-21,2026-07-19,on_time
+2026-07-16,Nylon Reinforcement Fabric,Approved Textile Supplier F,1377,220,660,2026-07-19,2026-07-19,on_time
+2026-07-16,Steel Insert - NVH Components,Approved Insert Supplier G,21976,2050,6150,2026-07-19,2026-07-19,on_time
+2026-07-16,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,862,90,270,2026-07-19,2026-07-19,on_time
+2026-07-16,Finished Goods Packaging Cartons,Approved Packaging Supplier H,12494,760,2280,2026-07-19,2026-07-19,on_time
+2026-07-17,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,16428,1450,4350,2026-07-21,2026-07-20,on_time
+2026-07-17,Natural Rubber RSS-4,Approved Rubber Supplier B,7753,780,2340,2026-07-21,2026-07-20,on_time
+2026-07-17,Carbon Black N660,Approved Carbon Supplier C,7176,690,2070,2026-07-20,2026-07-20,on_time
+2026-07-17,Carbon Black N330,Approved Carbon Supplier C,6216,410,1230,2026-07-21,2026-07-20,on_time
+2026-07-17,Paraffinic Process Oil,Approved Chemical Supplier D,5049,260,780,2026-07-21,2026-07-20,on_time
+2026-07-17,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,2117,95,285,2026-07-23,2026-07-20,on_time
+2026-07-17,Sulphur Rubber Grade,Approved Chemical Supplier D,971,82,246,2026-07-22,2026-07-20,on_time
+2026-07-17,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,475,44,132,2026-07-22,2026-07-20,on_time
+2026-07-17,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,902,58,174,2026-07-20,2026-07-20,on_time
+2026-07-17,Valve Stem Assembly TR29,Approved Valve Supplier E,38532,2850,8550,2026-07-20,2026-07-20,on_time
+2026-07-17,Valve Stem Assembly TR78A,Approved Valve Supplier E,13900,1180,3540,2026-07-23,2026-07-20,on_time
+2026-07-17,Nylon Reinforcement Fabric,Approved Textile Supplier F,1219,220,660,2026-07-23,2026-07-20,on_time
+2026-07-17,Steel Insert - NVH Components,Approved Insert Supplier G,20500,2050,6150,2026-07-21,2026-07-20,on_time
+2026-07-17,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,797,90,270,2026-07-19,2026-07-20,on_time
+2026-07-17,Finished Goods Packaging Cartons,Approved Packaging Supplier H,11947,760,2280,2026-07-23,2026-07-20,on_time
+2026-07-18,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,15384,1450,4350,2026-07-22,2026-07-21,on_time
+2026-07-18,Natural Rubber RSS-4,Approved Rubber Supplier B,7192,780,2340,2026-07-24,2026-07-21,on_time
+2026-07-18,Carbon Black N660,Approved Carbon Supplier C,6679,690,2070,2026-07-23,2026-07-21,on_time
+2026-07-18,Carbon Black N330,Approved Carbon Supplier C,5920,410,1230,2026-07-24,2026-07-21,on_time
+2026-07-18,Paraffinic Process Oil,Approved Chemical Supplier D,4862,260,780,2026-07-20,2026-07-21,on_time
+2026-07-18,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,2048,95,285,2026-07-23,2026-07-21,on_time
+2026-07-18,Sulphur Rubber Grade,Approved Chemical Supplier D,912,82,246,2026-07-21,2026-07-21,on_time
+2026-07-18,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,444,44,132,2026-07-24,2026-07-21,on_time
+2026-07-18,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,861,58,174,2026-07-23,2026-07-21,on_time
+2026-07-18,Valve Stem Assembly TR29,Approved Valve Supplier E,36480,2850,8550,2026-07-22,2026-07-21,on_time
+2026-07-18,Valve Stem Assembly TR78A,Approved Valve Supplier E,13051,1180,3540,2026-07-21,2026-07-21,on_time
+2026-07-18,Nylon Reinforcement Fabric,Approved Textile Supplier F,1060,220,660,2026-07-20,2026-07-21,on_time
+2026-07-18,Steel Insert - NVH Components,Approved Insert Supplier G,19024,2050,6150,2026-07-21,2026-07-21,on_time
+2026-07-18,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,733,90,270,2026-07-22,2026-07-21,on_time
+2026-07-18,Finished Goods Packaging Cartons,Approved Packaging Supplier H,11400,760,2280,2026-07-21,2026-07-21,on_time
+2026-07-19,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,14340,1450,4350,2026-07-24,2026-07-22,on_time
+2026-07-19,Natural Rubber RSS-4,Approved Rubber Supplier B,6630,780,2340,2026-07-21,2026-07-22,on_time
+2026-07-19,Carbon Black N660,Approved Carbon Supplier C,6182,690,2070,2026-07-23,2026-07-22,on_time
+2026-07-19,Carbon Black N330,Approved Carbon Supplier C,5625,410,1230,2026-07-24,2026-07-22,on_time
+2026-07-19,Paraffinic Process Oil,Approved Chemical Supplier D,4675,260,780,2026-07-22,2026-07-22,on_time
+2026-07-19,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1980,95,285,2026-07-21,2026-07-22,on_time
+2026-07-19,Sulphur Rubber Grade,Approved Chemical Supplier D,853,82,246,2026-07-24,2026-07-22,on_time
+2026-07-19,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,412,44,132,2026-07-25,2026-07-22,on_time
+2026-07-19,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,819,58,174,2026-07-21,2026-07-22,on_time
+2026-07-19,Valve Stem Assembly TR29,Approved Valve Supplier E,34428,2850,8550,2026-07-22,2026-07-22,on_time
+2026-07-19,Valve Stem Assembly TR78A,Approved Valve Supplier E,12201,1180,3540,2026-07-22,2026-07-22,on_time
+2026-07-19,Nylon Reinforcement Fabric,Approved Textile Supplier F,902,220,660,2026-07-21,2026-07-22,on_time
+2026-07-19,Steel Insert - NVH Components,Approved Insert Supplier G,17548,2050,6150,2026-07-25,2026-07-22,on_time
+2026-07-19,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,668,90,270,2026-07-25,2026-07-22,on_time
+2026-07-19,Finished Goods Packaging Cartons,Approved Packaging Supplier H,10853,760,2280,2026-07-23,2026-07-22,on_time
+2026-07-20,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,13296,1450,4350,2026-07-23,2026-07-23,on_time
+2026-07-20,Natural Rubber RSS-4,Approved Rubber Supplier B,14492,780,2340,2026-07-26,2026-07-23,on_time
+2026-07-20,Carbon Black N660,Approved Carbon Supplier C,5686,690,2070,2026-07-25,2026-07-23,on_time
+2026-07-20,Carbon Black N330,Approved Carbon Supplier C,5330,410,1230,2026-07-23,2026-07-23,on_time
+2026-07-20,Paraffinic Process Oil,Approved Chemical Supplier D,4488,260,780,2026-07-24,2026-07-23,on_time
+2026-07-20,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1911,95,285,2026-07-22,2026-07-23,on_time
+2026-07-20,Sulphur Rubber Grade,Approved Chemical Supplier D,1679,82,246,2026-07-22,2026-07-23,on_time
+2026-07-20,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,380,44,132,2026-07-25,2026-07-23,on_time
+2026-07-20,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,777,58,174,2026-07-24,2026-07-23,on_time
+2026-07-20,Valve Stem Assembly TR29,Approved Valve Supplier E,32376,2850,8550,2026-07-24,2026-07-23,on_time
+2026-07-20,Valve Stem Assembly TR78A,Approved Valve Supplier E,11352,1180,3540,2026-07-23,2026-07-23,on_time
+2026-07-20,Nylon Reinforcement Fabric,Approved Textile Supplier F,3120,220,660,2026-07-25,2026-07-23,on_time
+2026-07-20,Steel Insert - NVH Components,Approved Insert Supplier G,16072,2050,6150,2026-07-24,2026-07-23,on_time
+2026-07-20,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,603,90,270,2026-07-25,2026-07-23,on_time
+2026-07-20,Finished Goods Packaging Cartons,Approved Packaging Supplier H,10306,760,2280,2026-07-23,2026-07-23,on_time
+2026-07-21,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,12252,1450,4350,2026-07-23,2026-07-24,on_time
+2026-07-21,Natural Rubber RSS-4,Approved Rubber Supplier B,13931,780,2340,2026-07-24,2026-07-24,on_time
+2026-07-21,Carbon Black N660,Approved Carbon Supplier C,5189,690,2070,2026-07-24,2026-07-24,on_time
+2026-07-21,Carbon Black N330,Approved Carbon Supplier C,5035,410,1230,2026-07-26,2026-07-24,on_time
+2026-07-21,Paraffinic Process Oil,Approved Chemical Supplier D,4300,260,780,2026-07-25,2026-07-24,on_time
+2026-07-21,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1843,95,285,2026-07-23,2026-07-24,on_time
+2026-07-21,Sulphur Rubber Grade,Approved Chemical Supplier D,1620,82,246,2026-07-25,2026-07-24,on_time
+2026-07-21,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,348,44,132,2026-07-26,2026-07-24,on_time
+2026-07-21,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,735,58,174,2026-07-23,2026-07-24,on_time
+2026-07-21,Valve Stem Assembly TR29,Approved Valve Supplier E,30324,2850,8550,2026-07-23,2026-07-24,on_time
+2026-07-21,Valve Stem Assembly TR78A,Approved Valve Supplier E,10502,1180,3540,2026-07-24,2026-07-24,on_time
+2026-07-21,Nylon Reinforcement Fabric,Approved Textile Supplier F,2961,220,660,2026-07-27,2026-07-24,on_time
+2026-07-21,Steel Insert - NVH Components,Approved Insert Supplier G,14596,2050,6150,2026-07-23,2026-07-24,on_time
+2026-07-21,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,538,90,270,2026-07-24,2026-07-24,on_time
+2026-07-21,Finished Goods Packaging Cartons,Approved Packaging Supplier H,9758,760,2280,2026-07-25,2026-07-24,on_time
+2026-07-22,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,11208,1450,4350,2026-07-25,2026-07-25,on_time
+2026-07-22,Natural Rubber RSS-4,Approved Rubber Supplier B,13369,780,2340,2026-07-27,2026-07-25,on_time
+2026-07-22,Carbon Black N660,Approved Carbon Supplier C,4692,690,2070,2026-07-28,2026-07-25,on_time
+2026-07-22,Carbon Black N330,Approved Carbon Supplier C,4740,410,1230,2026-07-27,2026-07-25,on_time
+2026-07-22,Paraffinic Process Oil,Approved Chemical Supplier D,4113,260,780,2026-07-26,2026-07-25,on_time
+2026-07-22,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1775,95,285,2026-07-27,2026-07-25,on_time
+2026-07-22,Sulphur Rubber Grade,Approved Chemical Supplier D,1561,82,246,2026-07-27,2026-07-25,on_time
+2026-07-22,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,317,44,132,2026-07-27,2026-07-25,on_time
+2026-07-22,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,694,58,174,2026-07-27,2026-07-25,on_time
+2026-07-22,Valve Stem Assembly TR29,Approved Valve Supplier E,28272,2850,8550,2026-07-28,2026-07-25,on_time
+2026-07-22,Valve Stem Assembly TR78A,Approved Valve Supplier E,9652,1180,3540,2026-07-25,2026-07-25,on_time
+2026-07-22,Nylon Reinforcement Fabric,Approved Textile Supplier F,2803,220,660,2026-07-27,2026-07-25,on_time
+2026-07-22,Steel Insert - NVH Components,Approved Insert Supplier G,13120,2050,6150,2026-07-27,2026-07-25,on_time
+2026-07-22,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,473,90,270,2026-07-26,2026-07-25,on_time
+2026-07-22,Finished Goods Packaging Cartons,Approved Packaging Supplier H,9211,760,2280,2026-07-28,2026-07-25,on_time
+2026-07-23,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,10164,1450,4350,2026-07-25,2026-07-26,on_time
+2026-07-23,Natural Rubber RSS-4,Approved Rubber Supplier B,12808,780,2340,2026-07-28,2026-07-26,on_time
+2026-07-23,Carbon Black N660,Approved Carbon Supplier C,11647,690,2070,2026-07-28,2026-07-26,on_time
+2026-07-23,Carbon Black N330,Approved Carbon Supplier C,4444,410,1230,2026-07-29,2026-07-26,on_time
+2026-07-23,Paraffinic Process Oil,Approved Chemical Supplier D,3926,260,780,2026-07-27,2026-07-26,on_time
+2026-07-23,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1706,95,285,2026-07-28,2026-07-26,on_time
+2026-07-23,Sulphur Rubber Grade,Approved Chemical Supplier D,1502,82,246,2026-07-28,2026-07-26,on_time
+2026-07-23,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,760,44,132,2026-07-26,2026-07-26,on_time
+2026-07-23,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,652,58,174,2026-07-26,2026-07-26,on_time
+2026-07-23,Valve Stem Assembly TR29,Approved Valve Supplier E,26220,2850,8550,2026-07-25,2026-07-26,on_time
+2026-07-23,Valve Stem Assembly TR78A,Approved Valve Supplier E,8803,1180,3540,2026-07-29,2026-07-26,on_time
+2026-07-23,Nylon Reinforcement Fabric,Approved Textile Supplier F,2644,220,660,2026-07-25,2026-07-26,on_time
+2026-07-23,Steel Insert - NVH Components,Approved Insert Supplier G,33784,2050,6150,2026-07-28,2026-07-26,on_time
+2026-07-23,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,409,90,270,2026-07-29,2026-07-26,on_time
+2026-07-23,Finished Goods Packaging Cartons,Approved Packaging Supplier H,8664,760,2280,2026-07-29,2026-07-26,on_time
+2026-07-24,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,9120,1450,4350,2026-07-30,2026-07-27,on_time
+2026-07-24,Natural Rubber RSS-4,Approved Rubber Supplier B,12246,780,2340,2026-07-30,2026-07-27,on_time
+2026-07-24,Carbon Black N660,Approved Carbon Supplier C,11150,690,2070,2026-07-26,2026-07-27,on_time
+2026-07-24,Carbon Black N330,Approved Carbon Supplier C,4149,410,1230,2026-07-29,2026-07-27,on_time
+2026-07-24,Paraffinic Process Oil,Approved Chemical Supplier D,3739,260,780,2026-07-29,2026-07-27,on_time
+2026-07-24,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1638,95,285,2026-07-29,2026-07-27,on_time
+2026-07-24,Sulphur Rubber Grade,Approved Chemical Supplier D,1443,82,246,2026-07-27,2026-07-27,on_time
+2026-07-24,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,729,44,132,2026-07-29,2026-07-27,on_time
+2026-07-24,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,610,58,174,2026-07-29,2026-07-27,on_time
+2026-07-24,Valve Stem Assembly TR29,Approved Valve Supplier E,24168,2850,8550,2026-07-29,2026-07-27,on_time
+2026-07-24,Valve Stem Assembly TR78A,Approved Valve Supplier E,7953,1180,3540,2026-07-27,2026-07-27,on_time
+2026-07-24,Nylon Reinforcement Fabric,Approved Textile Supplier F,2486,220,660,2026-07-28,2026-07-27,on_time
+2026-07-24,Steel Insert - NVH Components,Approved Insert Supplier G,32308,2050,6150,2026-07-27,2026-07-27,on_time
+2026-07-24,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,344,90,270,2026-07-26,2026-07-27,on_time
+2026-07-24,Finished Goods Packaging Cartons,Approved Packaging Supplier H,8117,760,2280,2026-07-27,2026-07-27,on_time
+2026-07-25,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,8076,1450,4350,2026-07-29,2026-07-28,on_time
+2026-07-25,Natural Rubber RSS-4,Approved Rubber Supplier B,11684,780,2340,2026-07-29,2026-07-28,on_time
+2026-07-25,Carbon Black N660,Approved Carbon Supplier C,10654,690,2070,2026-07-28,2026-07-28,on_time
+2026-07-25,Carbon Black N330,Approved Carbon Supplier C,3854,410,1230,2026-07-29,2026-07-28,on_time
+2026-07-25,Paraffinic Process Oil,Approved Chemical Supplier D,3552,260,780,2026-07-30,2026-07-28,on_time
+2026-07-25,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1569,95,285,2026-07-30,2026-07-28,on_time
+2026-07-25,Sulphur Rubber Grade,Approved Chemical Supplier D,1384,82,246,2026-07-29,2026-07-28,on_time
+2026-07-25,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,697,44,132,2026-07-31,2026-07-28,on_time
+2026-07-25,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,568,58,174,2026-07-28,2026-07-28,on_time
+2026-07-25,Valve Stem Assembly TR29,Approved Valve Supplier E,22116,2850,8550,2026-07-29,2026-07-28,on_time
+2026-07-25,Valve Stem Assembly TR78A,Approved Valve Supplier E,7104,1180,3540,2026-07-29,2026-07-28,on_time
+2026-07-25,Nylon Reinforcement Fabric,Approved Textile Supplier F,2328,220,660,2026-07-29,2026-07-28,on_time
+2026-07-25,Steel Insert - NVH Components,Approved Insert Supplier G,30832,2050,6150,2026-07-28,2026-07-28,on_time
+2026-07-25,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,279,90,270,2026-07-29,2026-07-28,on_time
+2026-07-25,Finished Goods Packaging Cartons,Approved Packaging Supplier H,7570,760,2280,2026-07-30,2026-07-28,on_time
+2026-07-26,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,7032,1450,4350,2026-07-28,2026-07-29,on_time
+2026-07-26,Natural Rubber RSS-4,Approved Rubber Supplier B,11123,780,2340,2026-07-30,2026-07-29,on_time
+2026-07-26,Carbon Black N660,Approved Carbon Supplier C,10157,690,2070,2026-07-30,2026-07-29,on_time
+2026-07-26,Carbon Black N330,Approved Carbon Supplier C,7987,410,1230,2026-07-28,2026-07-29,on_time
+2026-07-26,Paraffinic Process Oil,Approved Chemical Supplier D,3364,260,780,2026-07-30,2026-07-29,on_time
+2026-07-26,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1501,95,285,2026-07-31,2026-07-29,on_time
+2026-07-26,Sulphur Rubber Grade,Approved Chemical Supplier D,1325,82,246,2026-08-01,2026-07-29,on_time
+2026-07-26,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,665,44,132,2026-07-30,2026-07-29,on_time
+2026-07-26,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1153,58,174,2026-07-30,2026-07-29,on_time
+2026-07-26,Valve Stem Assembly TR29,Approved Valve Supplier E,20064,2850,8550,2026-08-01,2026-07-29,on_time
+2026-07-26,Valve Stem Assembly TR78A,Approved Valve Supplier E,6254,1180,3540,2026-08-01,2026-07-29,on_time
+2026-07-26,Nylon Reinforcement Fabric,Approved Textile Supplier F,2169,220,660,2026-08-01,2026-07-29,on_time
+2026-07-26,Steel Insert - NVH Components,Approved Insert Supplier G,29356,2050,6150,2026-08-01,2026-07-29,on_time
+2026-07-26,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,1186,90,270,2026-07-29,2026-07-29,on_time
+2026-07-26,Finished Goods Packaging Cartons,Approved Packaging Supplier H,7022,760,2280,2026-07-31,2026-07-29,on_time
+2026-07-27,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,6815,1450,4350,2026-08-01,2026-07-30,on_time
+2026-07-27,Natural Rubber RSS-4,Approved Rubber Supplier B,10561,780,2340,2026-08-02,2026-07-30,on_time
+2026-07-27,Carbon Black N660,Approved Carbon Supplier C,9660,690,2070,2026-08-02,2026-07-30,on_time
+2026-07-27,Carbon Black N330,Approved Carbon Supplier C,7692,410,1230,2026-08-01,2026-07-30,on_time
+2026-07-27,Paraffinic Process Oil,Approved Chemical Supplier D,3177,260,780,2026-07-30,2026-07-30,on_time
+2026-07-27,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1433,95,285,2026-07-29,2026-07-30,on_time
+2026-07-27,Sulphur Rubber Grade,Approved Chemical Supplier D,1266,82,246,2026-08-02,2026-07-30,on_time
+2026-07-27,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,634,44,132,2026-07-30,2026-07-30,on_time
+2026-07-27,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1111,58,174,2026-08-02,2026-07-30,on_time
+2026-07-27,Valve Stem Assembly TR29,Approved Valve Supplier E,18012,2850,8550,2026-07-29,2026-07-30,on_time
+2026-07-27,Valve Stem Assembly TR78A,Approved Valve Supplier E,5404,1180,3540,2026-08-02,2026-07-30,on_time
+2026-07-27,Nylon Reinforcement Fabric,Approved Textile Supplier F,2011,220,660,2026-07-31,2026-07-30,on_time
+2026-07-27,Steel Insert - NVH Components,Approved Insert Supplier G,27880,2050,6150,2026-08-02,2026-07-30,on_time
+2026-07-27,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,1121,90,270,2026-08-02,2026-07-30,on_time
+2026-07-27,Finished Goods Packaging Cartons,Approved Packaging Supplier H,6475,760,2280,2026-07-30,2026-07-30,on_time
+2026-07-28,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,5568,1450,4350,2026-08-01,2026-07-31,on_time
+2026-07-28,Natural Rubber RSS-4,Approved Rubber Supplier B,10000,780,2340,2026-08-03,2026-07-31,on_time
+2026-07-28,Carbon Black N660,Approved Carbon Supplier C,9163,690,2070,2026-07-30,2026-07-31,on_time
+2026-07-28,Carbon Black N330,Approved Carbon Supplier C,7396,410,1230,2026-07-30,2026-07-31,on_time
+2026-07-28,Paraffinic Process Oil,Approved Chemical Supplier D,2990,260,780,2026-08-02,2026-07-31,on_time
+2026-07-28,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1364,95,285,2026-07-30,2026-07-31,on_time
+2026-07-28,Sulphur Rubber Grade,Approved Chemical Supplier D,1207,82,246,2026-07-31,2026-07-31,on_time
+2026-07-28,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,602,44,132,2026-07-31,2026-07-31,on_time
+2026-07-28,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1070,58,174,2026-07-31,2026-07-31,on_time
+2026-07-28,Valve Stem Assembly TR29,Approved Valve Supplier E,15960,2850,8550,2026-07-30,2026-07-31,on_time
+2026-07-28,Valve Stem Assembly TR78A,Approved Valve Supplier E,5428,1180,3540,2026-08-03,2026-07-31,on_time
+2026-07-28,Nylon Reinforcement Fabric,Approved Textile Supplier F,1852,220,660,2026-07-30,2026-07-31,on_time
+2026-07-28,Steel Insert - NVH Components,Approved Insert Supplier G,26404,2050,6150,2026-08-03,2026-07-31,on_time
+2026-07-28,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,1057,90,270,2026-08-02,2026-07-31,on_time
+2026-07-28,Finished Goods Packaging Cartons,Approved Packaging Supplier H,5928,760,2280,2026-08-03,2026-07-31,on_time
+2026-07-29,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,4321,1450,4350,2026-08-03,2026-08-01,delayed
+2026-07-29,Natural Rubber RSS-4,Approved Rubber Supplier B,9438,780,2340,2026-08-04,2026-08-01,on_time
+2026-07-29,Carbon Black N660,Approved Carbon Supplier C,8666,690,2070,2026-08-02,2026-08-01,on_time
+2026-07-29,Carbon Black N330,Approved Carbon Supplier C,7101,410,1230,2026-08-03,2026-08-01,on_time
+2026-07-29,Paraffinic Process Oil,Approved Chemical Supplier D,5611,260,780,2026-07-31,2026-08-01,on_time
+2026-07-29,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1296,95,285,2026-08-01,2026-08-01,on_time
+2026-07-29,Sulphur Rubber Grade,Approved Chemical Supplier D,1148,82,246,2026-08-01,2026-08-01,on_time
+2026-07-29,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,570,44,132,2026-08-04,2026-08-01,on_time
+2026-07-29,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,1028,58,174,2026-08-02,2026-08-01,on_time
+2026-07-29,Valve Stem Assembly TR29,Approved Valve Supplier E,44688,2850,8550,2026-08-04,2026-08-01,on_time
+2026-07-29,Valve Stem Assembly TR78A,Approved Valve Supplier E,4295,1180,3540,2026-08-03,2026-08-01,delayed
+2026-07-29,Nylon Reinforcement Fabric,Approved Textile Supplier F,1694,220,660,2026-08-03,2026-08-01,delayed
+2026-07-29,Steel Insert - NVH Components,Approved Insert Supplier G,24928,2050,6150,2026-08-02,2026-08-01,on_time
+2026-07-29,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,992,90,270,2026-08-01,2026-08-01,on_time
+2026-07-29,Finished Goods Packaging Cartons,Approved Packaging Supplier H,13589,760,2280,2026-07-31,2026-08-01,on_time
+2026-07-30,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,3074,1450,4350,2026-08-04,2026-08-02,delayed
+2026-07-30,Natural Rubber RSS-4,Approved Rubber Supplier B,8876,780,2340,2026-08-04,2026-08-02,on_time
+2026-07-30,Carbon Black N660,Approved Carbon Supplier C,8170,690,2070,2026-08-05,2026-08-02,on_time
+2026-07-30,Carbon Black N330,Approved Carbon Supplier C,6806,410,1230,2026-08-02,2026-08-02,on_time
+2026-07-30,Paraffinic Process Oil,Approved Chemical Supplier D,5424,260,780,2026-08-05,2026-08-02,on_time
+2026-07-30,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1227,95,285,2026-08-02,2026-08-02,on_time
+2026-07-30,Sulphur Rubber Grade,Approved Chemical Supplier D,1089,82,246,2026-08-01,2026-08-02,on_time
+2026-07-30,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,539,44,132,2026-08-05,2026-08-02,on_time
+2026-07-30,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,986,58,174,2026-08-03,2026-08-02,on_time
+2026-07-30,Valve Stem Assembly TR29,Approved Valve Supplier E,42636,2850,8550,2026-08-01,2026-08-02,on_time
+2026-07-30,Valve Stem Assembly TR78A,Approved Valve Supplier E,3162,1180,3540,2026-08-04,2026-08-02,delayed
+2026-07-30,Nylon Reinforcement Fabric,Approved Textile Supplier F,1536,220,660,2026-08-04,2026-08-02,delayed
+2026-07-30,Steel Insert - NVH Components,Approved Insert Supplier G,23452,2050,6150,2026-08-01,2026-08-02,on_time
+2026-07-30,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,927,90,270,2026-08-01,2026-08-02,on_time
+2026-07-30,Finished Goods Packaging Cartons,Approved Packaging Supplier H,13042,760,2280,2026-08-05,2026-08-02,on_time
+2026-07-31,Butyl Rubber IIR Grade A,Approved Polymer Supplier A,1827,1450,4350,2026-08-05,2026-08-03,delayed
+2026-07-31,Natural Rubber RSS-4,Approved Rubber Supplier B,8315,780,2340,2026-08-04,2026-08-03,on_time
+2026-07-31,Carbon Black N660,Approved Carbon Supplier C,7673,690,2070,2026-08-02,2026-08-03,on_time
+2026-07-31,Carbon Black N330,Approved Carbon Supplier C,6511,410,1230,2026-08-03,2026-08-03,on_time
+2026-07-31,Paraffinic Process Oil,Approved Chemical Supplier D,5236,260,780,2026-08-04,2026-08-03,on_time
+2026-07-31,Zinc Oxide Rubber Grade,Approved Chemical Supplier D,1159,95,285,2026-08-04,2026-08-03,on_time
+2026-07-31,Sulphur Rubber Grade,Approved Chemical Supplier D,1030,82,246,2026-08-04,2026-08-03,on_time
+2026-07-31,Accelerator MBTS / TMTD Blend,Approved Chemical Supplier D,507,44,132,2026-08-05,2026-08-03,on_time
+2026-07-31,Antioxidant / Antiozonant 6PPD,Approved Chemical Supplier D,944,58,174,2026-08-03,2026-08-03,on_time
+2026-07-31,Valve Stem Assembly TR29,Approved Valve Supplier E,40584,2850,8550,2026-08-05,2026-08-03,on_time
+2026-07-31,Valve Stem Assembly TR78A,Approved Valve Supplier E,2030,1180,3540,2026-08-05,2026-08-03,delayed
+2026-07-31,Nylon Reinforcement Fabric,Approved Textile Supplier F,1377,220,660,2026-08-05,2026-08-03,delayed
+2026-07-31,Steel Insert - NVH Components,Approved Insert Supplier G,21976,2050,6150,2026-08-02,2026-08-03,on_time
+2026-07-31,Rubber-to-Metal Bonding Agent,Approved Chemical Supplier D,862,90,270,2026-08-06,2026-08-03,on_time
+2026-07-31,Finished Goods Packaging Cartons,Approved Packaging Supplier H,12494,760,2280,2026-08-05,2026-08-03,on_time

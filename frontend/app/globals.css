@@ -3842,3 +3842,267 @@ a {
     border-bottom: 0;
   }
 }
+/* Keep server and client output stable while browser-owned factory data hydrates. */
+.application-loading {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  color: #42504a;
+  background: #f4f6f3;
+}
+
+.application-loading span {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #d8dfda;
+  border-top-color: #247a57;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.api-error-banner {
+  position: fixed;
+  z-index: 3000;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: min(620px, calc(100vw - 28px));
+  padding: 10px 14px;
+  border: 1px solid #e8b4ab;
+  border-radius: 8px;
+  color: #8f3326;
+  background: #fff5f3;
+  box-shadow: 0 8px 28px rgba(62, 30, 24, 0.14);
+  font-size: 12px;
+}
+
+/* Database import wizard -------------------------------------------------- */
+.upload-modal {
+  max-width: 780px;
+  overflow: hidden;
+}
+
+.upload-modal .modal-header {
+  padding: 24px 28px 20px;
+}
+
+.upload-modal .modal-step {
+  font-size: 10px;
+  letter-spacing: 0.13em;
+}
+
+.upload-modal .modal-header h2 {
+  font-size: 24px;
+}
+
+.upload-modal .modal-header p {
+  font-size: 13px;
+  max-width: 600px;
+}
+
+.upload-modal .modal-body {
+  max-height: min(62vh, 650px);
+  overflow: auto;
+  padding: 24px 28px;
+}
+
+.wizard-error {
+  align-items: flex-start;
+  background: #fff5f2;
+  border-bottom: 1px solid #efc6bd;
+  color: #a43d2f;
+  display: flex;
+  gap: 10px;
+  padding: 12px 28px;
+}
+
+.wizard-error svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.wizard-error strong,
+.wizard-error span {
+  display: block;
+}
+
+.wizard-error strong {
+  font-size: 12px;
+}
+
+.wizard-error span {
+  color: #78473f;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 2px;
+}
+
+.upload-modal .dataset-selector {
+  border: 1px solid #e5e9e5;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  padding: 14px;
+}
+
+.upload-modal .dataset-selector label,
+.upload-modal .dataset-selector > div span {
+  font-size: 10px;
+}
+
+.upload-modal .dataset-selector select {
+  font-size: 12px;
+  height: 42px;
+}
+
+.upload-modal .dataset-selector > div strong {
+  font-size: 12px;
+  margin: 9px 0 10px;
+}
+
+.upload-modal .drop-zone {
+  border-color: #9cb6a5;
+  margin-top: 0;
+  min-height: 190px;
+  padding: 28px 22px;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+
+.upload-modal .drop-zone:hover {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(36, 122, 87, .08);
+}
+
+.upload-modal .drop-zone input {
+  display: none;
+}
+
+.drop-zone-icon {
+  align-items: center;
+  background: var(--green-soft);
+  border-radius: 12px;
+  color: var(--green);
+  display: flex;
+  height: 48px;
+  justify-content: center;
+  margin-bottom: 13px;
+  width: 48px;
+}
+
+.upload-modal .drop-zone strong {
+  font-size: 14px;
+}
+
+.upload-modal .drop-zone > span:not(.drop-zone-icon) {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.upload-modal .drop-zone small {
+  font-size: 10px;
+  margin-top: 10px;
+}
+
+.template-shortcut {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-size: 11px;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.upload-modal .modal-footer {
+  background: #fbfcfa;
+  padding: 16px 28px;
+}
+
+.upload-complete {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 42px !important;
+  padding-top: 42px !important;
+  text-align: center;
+}
+
+.upload-complete > span {
+  align-items: center;
+  background: var(--green-soft);
+  border-radius: 50%;
+  color: var(--green);
+  display: flex;
+  height: 58px;
+  justify-content: center;
+  width: 58px;
+}
+
+.upload-complete h3 {
+  font-size: 22px;
+  margin: 15px 0 5px;
+}
+
+.upload-complete p {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 0;
+}
+
+.lineage-flow {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.lineage-flow span {
+  background: #f3f7f4;
+  border-radius: 7px;
+  font-size: 11px;
+  padding: 8px 10px;
+}
+
+@media (max-width: 640px) {
+  .upload-modal .modal-header,
+  .upload-modal .modal-body,
+  .upload-modal .modal-footer {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .upload-modal .dataset-selector {
+    grid-template-columns: 1fr;
+  }
+
+  .template-shortcut {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+.validation-directions {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid #d9e3dc;
+  border-radius: 8px;
+  background: #f7faf8;
+}
+
+.validation-directions p {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  color: #52615a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.validation-issues article p {
+  margin: 4px 0 0;
+  color: #416f57;
+  font-size: 11px;
+}

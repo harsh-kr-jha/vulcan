@@ -1,5 +1,6 @@
 import csv
 from dataclasses import dataclass
+from datetime import date, datetime
 from pathlib import Path
 
 from openpyxl import load_workbook
@@ -28,6 +29,39 @@ def inspect_file(path: str | Path, sample_size: int = 8) -> FileInspection:
     if extension == ".xlsx":
         return _inspect_xlsx(source, sample_size)
     raise ValueError(f"Unsupported file extension: {extension}")
+
+
+def read_rows(path: str | Path) -> tuple[list[str], list[dict[str, object]]]:
+    """Read the first tabular sheet without evaluating spreadsheet formulas."""
+    source = Path(path)
+    if source.suffix.lower() == ".csv":
+        with source.open("r", encoding="utf-8-sig", newline="") as handle:
+            reader = csv.DictReader(handle)
+            return list(reader.fieldnames or []), [dict(row) for row in reader]
+    if source.suffix.lower() == ".xlsx":
+        workbook = load_workbook(source, read_only=True, data_only=True, keep_links=False)
+        try:
+            worksheet = workbook.worksheets[0]
+            iterator = worksheet.iter_rows(values_only=True)
+            headers = [
+                str(value).strip() if value is not None else "" for value in next(iterator, ())
+            ]
+            return headers, [
+                {
+                    header: _serializable_cell(value)
+                    for header, value in zip(headers, row, strict=False)
+                }
+                for row in iterator
+            ]
+        finally:
+            workbook.close()
+    raise ValueError(f"Unsupported file extension: {source.suffix.lower()}")
+
+
+def _serializable_cell(value):
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    return "" if value is None else value
 
 
 def _inspect_csv(path: Path, sample_size: int) -> FileInspection:

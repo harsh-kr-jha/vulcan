@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Chart } from "@/components/charts/chart";
 import { CommandFilters } from "@/components/command-filters";
 import { useFactory } from "@/lib/factory-context";
-import { downloadBlob } from "@/lib/ingestion";
+import { downloadBlob } from "@/lib/browser-files";
 
 const tabs = ["OEE", "Production", "Downtime", "Quality", "Inventory"] as const;
 type Tab = (typeof tabs)[number];
@@ -21,8 +21,7 @@ function PerformancePanel({ title, subtitle, option, empty }: { title: string; s
 function OeeView() {
   const { intelligence, state } = useFactory();
   const components = [{ label: "Availability", value: intelligence.oee.availability, target: state.targets.availability, color: colors.amber }, { label: "Performance", value: intelligence.oee.performance, target: state.targets.performance, color: colors.blue }, { label: "Quality", value: intelligence.oee.quality, target: state.targets.quality, color: colors.green }];
-  const dates = [...new Set(intelligence.production.map((row) => row.date))].sort();
-  const daily = dates.map((date) => { const rows = intelligence.production.filter((row) => row.date === date); const planned = rows.reduce((sum, row) => sum + row.plannedMinutes, 0); const down = rows.reduce((sum, row) => sum + row.downtimeMinutes, 0); const run = planned - down; const actual = rows.reduce((sum, row) => sum + row.actualQuantity, 0); const good = rows.reduce((sum, row) => sum + row.goodQuantity, 0); const ideal = rows.reduce((sum, row) => sum + row.idealCycleMinutes * row.actualQuantity, 0); const value = planned && run && actual ? (run / planned) * (ideal / run) * (good / actual) * 100 : 0; return { date: date.slice(5), value }; });
+  const daily = intelligence.dailyOee.map((point) => ({ ...point, date: point.date.slice(5) }));
   const option: EChartsOption = { grid: { left: 42, right: 20, top: 28, bottom: 32 }, tooltip: { ...tooltip, valueFormatter: (value) => `${Number(value).toFixed(1)}%` }, xAxis: { type: "category", data: daily.map((row) => row.date), ...axis }, yAxis: { type: "value", min: 40, max: 100, axisLabel: { color: colors.text, fontSize: 9, formatter: "{value}%" }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } }, series: [{ name: "OEE", type: "line", smooth: true, symbolSize: 6, data: daily.map((row) => row.value.toFixed(1)), lineStyle: { color: colors.green, width: 2.5 }, itemStyle: { color: colors.green }, areaStyle: { color: "rgba(65,111,87,.12)" }, markLine: { silent: true, symbol: "none", lineStyle: { color: colors.amber, type: "dashed" }, data: [{ yAxis: 78 }] } }] };
   return <><section className="breakdown-grid performance-breakdown">{components.map((component) => <div className="breakdown-card" key={component.label}><div><span>{component.label}</span><Info size={12} /></div><strong>{component.value.toFixed(1)}%</strong><p>Target {component.target}%</p><i><b style={{ width: `${Math.min(component.value, 100)}%`, background: component.color }} /></i></div>)}<div className="formula-card"><span><Target size={11} /> OEE formula · v1</span><p><b>{intelligence.oee.availability.toFixed(1)}%</b> × <b>{intelligence.oee.performance.toFixed(1)}%</b> × <b>{intelligence.oee.quality.toFixed(1)}%</b></p><strong>= {intelligence.oee.value.toFixed(1)}%</strong></div></section><PerformancePanel title="OEE over time" subtitle={`Daily result with ${state.targets.oee}% factory target`} option={option} empty={!daily.length} /></>;
 }
@@ -65,6 +64,6 @@ export function PerformanceExplorer() {
     return () => window.clearTimeout(queryTimer);
   }, []);
   function selectTab(tab: Tab) { setActiveTab(tab); window.history.replaceState(null, "", `/performance?tab=${tab}`); }
-  function exportData() { const data = activeTab === "Production" ? intelligence.production : activeTab === "Downtime" ? intelligence.downtime : activeTab === "Quality" ? intelligence.quality : activeTab === "Inventory" ? intelligence.inventory : intelligence.oee; downloadBlob(JSON.stringify({ filters, module: activeTab, data }, null, 2), `vulcan-${activeTab.toLowerCase()}-${filters.to}.json`, "application/json"); }
+  function exportData() { downloadBlob(JSON.stringify({ filters, module: activeTab, intelligence }, null, 2), `vulcan-${activeTab.toLowerCase()}-${filters.to}.json`, "application/json"); }
   return <><header className="page-header"><div><p className="eyebrow">Performance intelligence · explainable</p><h1>Understand the result. <span>Find the cause.</span></h1><p className="page-subtitle">Drill from factory KPIs into the assets, products and source records that created them.</p></div><button className="button button-secondary" onClick={exportData}><Download size={14} /> Export {activeTab}</button></header><CommandFilters /><nav className="performance-tabs" aria-label="Performance module">{tabs.map((tab) => <button className={activeTab === tab ? "active" : ""} key={tab} onClick={() => selectTab(tab)}>{tab}</button>)}</nav>{activeTab === "OEE" ? <OeeView /> : activeTab === "Production" ? <ProductionView /> : activeTab === "Downtime" ? <DowntimeView /> : activeTab === "Quality" ? <QualityView /> : <InventoryView />}</>;
 }

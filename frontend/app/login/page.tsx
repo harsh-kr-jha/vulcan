@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("vulcan-demo");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function submit(event: FormEvent) {
@@ -83,7 +84,8 @@ export default function LoginPage() {
             </span>
           </label>
           {error && <p className="login-error">{error}</p>}
-          <div className="login-options"><label><input type="checkbox" defaultChecked /> Remember me</label><button type="button">Forgot password?</button></div>
+          {notice && <p className="login-demo-note">{notice}</p>}
+          <div className="login-options"><label><input type="checkbox" defaultChecked /> Remember me</label><button type="button" onClick={() => setNotice(API_URL ? "Password resets are managed by your organisation administrator." : "Demo access uses harsh / vulcan-demo.")}>Forgot password?</button></div>
           <button className="button button-accent login-submit" disabled={loading}>
             {loading ? "Signing in…" : "Sign in"} <ArrowRight size={15} />
           </button>

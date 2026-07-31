@@ -14,9 +14,10 @@ specification:
 - Deterministic mapping, validation, safe spreadsheet inspection, and OEE calculation primitives
 - PostgreSQL, Redis, and MinIO local environment through Docker Compose
 
-The UI includes a realistic fallback dataset when `NEXT_PUBLIC_API_URL` is not set, which
-makes product review possible without standing up infrastructure. When the API URL is set,
-the same typed boundary reads from Django.
+The product preview is fully interactive without standing up infrastructure. Its browser-side
+provider preserves raw rows, approved mappings, standardised records, factory configuration,
+alerts, and actions in local storage. The provider is the UI boundary that can be replaced by
+the Django APIs and asynchronous workers for a shared production deployment.
 
 ## Quick start
 
@@ -27,7 +28,10 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The dashboard uses local demo data.
+Open [http://localhost:3000](http://localhost:3000). The dashboard starts with validated demo
+data and supports CSV/XLSX import, Google Sheets, manual entry, mapping, validation, master-data
+editing, filters, actions, and traceable rule-based answers. Imported data persists in the
+browser until **Factory setup → Help & data reset → Restore demo data** is used.
 The login page is available at `/login`; without an API configured it enters preview mode.
 
 ### Full local stack
@@ -71,8 +75,17 @@ NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev
 npm run typecheck
 npm run lint
 npm run build
-.venv/bin/ruff check backend processing
-.venv/bin/pytest
+UV_CACHE_DIR=/tmp/vulcan-uv-cache uv run ruff check .
+UV_CACHE_DIR=/tmp/vulcan-uv-cache uv run pytest
+```
+
+For an end-to-end browser check, start the production build and run the smoke suite in another
+terminal. It uses an installed Chrome/Chromium binary (or `CHROME_BIN`) and covers the seven
+widgets, CSV mapping/import, alert actions, and factory creation.
+
+```bash
+npm start --workspace frontend -- -p 3100
+VULCAN_BASE_URL=http://127.0.0.1:3100 npm run smoke:ui
 ```
 
 ## Repository map

@@ -1,361 +1,120 @@
 "use client";
 
 import type { EChartsOption } from "echarts";
-import { ArrowRight, CalendarDays, ChevronDown, Download, ExternalLink } from "lucide-react";
+import {
+  ArrowRight,
+  Bot,
+  CheckCircle2,
+  Download,
+  ExternalLink,
+  FileSearch,
+  Lightbulb,
+  Send,
+  ShieldAlert,
+  Sparkles,
+  Target,
+} from "lucide-react";
 import Link from "next/link";
+import { FormEvent, useMemo, useState } from "react";
 import { Chart } from "@/components/charts/chart";
-import { KpiCard } from "@/components/kpi-card";
-import type {
-  InventoryRisk,
-  KpiMetric,
-  LossCategory,
-  OperationalAlert,
-  TrendPoint,
-} from "@/lib/types";
+import { CommandFilters } from "@/components/command-filters";
+import { useFactory } from "@/lib/factory-context";
+import { answerOperationalQuestion } from "@/lib/intelligence";
+import { downloadBlob } from "@/lib/ingestion";
 
-interface DashboardOverviewProps {
-  kpis: KpiMetric[];
-  trend: TrendPoint[];
-  losses: LossCategory[];
-  inventoryRisks: InventoryRisk[];
-  alerts: OperationalAlert[];
+const questions = [
+  "Which orders are at risk?",
+  "Why is production below plan?",
+  "Which machine is the biggest bottleneck?",
+  "Which material may run out soon?",
+  "What caused the most loss this week?",
+  "Which product has the highest rejection?",
+];
+
+const colors = { plan: "#b9c0bc", actual: "#416f57", good: "#9abb55", red: "#d95443", amber: "#d8932e", blue: "#577fbc" };
+
+function PanelHeader({ number, title, subtitle, href }: { number: number; title: string; subtitle: string; href?: string }) {
+  return <div className="panel-header command-panel-header"><div className="widget-number">{number}</div><div className="panel-title-group"><h2 className="panel-title">{title}</h2><p className="panel-subtitle">{subtitle}</p></div>{href && <Link className="panel-action" href={href}>Explore <ArrowRight size={12} /></Link>}</div>;
 }
 
-const chartText = {
-  fontFamily: "Inter, ui-sans-serif, sans-serif",
-  color: "#7c8781",
-  fontSize: 9,
-};
-
-function ProductionPanel({ trend }: { trend: TrendPoint[] }) {
-  const option: EChartsOption = {
-    animationDuration: 650,
-    grid: { left: 42, right: 18, top: 28, bottom: 30 },
-    tooltip: {
-      trigger: "axis",
-      backgroundColor: "#17211d",
-      borderWidth: 0,
-      textStyle: { color: "#fff", fontSize: 10 },
-      valueFormatter: (value) => Number(value).toLocaleString("en-IN"),
-    },
-    xAxis: {
-      type: "category",
-      boundaryGap: false,
-      data: trend.map((point) => point.label),
-      axisLine: { lineStyle: { color: "#e3e6e1" } },
-      axisTick: { show: false },
-      axisLabel: chartText,
-    },
-    yAxis: {
-      type: "value",
-      min: 16000,
-      max: 22000,
-      interval: 2000,
-      splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } },
-      axisLabel: {
-        ...chartText,
-        formatter: (value: number) => `${Math.round(value / 1000)}k`,
-      },
-    },
+function ProductionWidget() {
+  const { intelligence } = useFactory();
+  const option = useMemo<EChartsOption>(() => ({
+    animationDuration: 500,
+    grid: { left: 43, right: 15, top: 24, bottom: 30 },
+    tooltip: { trigger: "axis", backgroundColor: "#17211d", borderWidth: 0, textStyle: { color: "#fff", fontSize: 10 } },
+    legend: { top: 0, right: 5, itemWidth: 8, itemHeight: 8, textStyle: { color: "#7c8781", fontSize: 8 } },
+    xAxis: { type: "category", data: intelligence.productionTrend.map((row) => row.date.slice(5)), axisLine: { lineStyle: { color: "#e3e6e1" } }, axisTick: { show: false }, axisLabel: { color: "#7c8781", fontSize: 8 } },
+    yAxis: { type: "value", axisLabel: { color: "#7c8781", fontSize: 8, formatter: (value: number) => `${Math.round(value / 1000)}k` }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } },
     series: [
-      {
-        name: "Planned",
-        type: "line",
-        data: trend.map((point) => point.planned),
-        symbol: "none",
-        lineStyle: { color: "#aeb6b1", type: "dashed", width: 1.5 },
-      },
-      {
-        name: "Actual",
-        type: "line",
-        smooth: 0.28,
-        data: trend.map((point) => point.actual),
-        symbol: "circle",
-        symbolSize: 5,
-        itemStyle: { color: "#315d47", borderColor: "#fff", borderWidth: 2 },
-        lineStyle: { color: "#315d47", width: 2.5 },
-        areaStyle: {
-          color: {
-            type: "linear",
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: "rgba(67, 120, 91, 0.22)" },
-              { offset: 1, color: "rgba(67, 120, 91, 0.01)" },
-            ],
-          },
-        },
-      },
+      { name: "Planned", type: "line", symbol: "none", lineStyle: { color: colors.plan, type: "dashed", width: 1.5 }, data: intelligence.productionTrend.map((row) => row.planned) },
+      { name: "Actual", type: "line", smooth: true, symbolSize: 5, lineStyle: { color: colors.actual, width: 2.5 }, itemStyle: { color: colors.actual }, areaStyle: { color: "rgba(65,111,87,.09)" }, data: intelligence.productionTrend.map((row) => row.actual) },
+      { name: "Good", type: "line", smooth: true, symbol: "none", lineStyle: { color: colors.good, width: 2 }, data: intelligence.productionTrend.map((row) => row.good) },
     ],
-  };
-
-  return (
-    <section className="panel">
-      <div className="panel-header">
-        <div className="panel-title-group">
-          <h2 className="panel-title">Production attainment</h2>
-          <p className="panel-subtitle">Daily planned versus actual output</p>
-        </div>
-        <div className="chart-legend" aria-label="Chart legend">
-          <span><i style={{ background: "#aeb6b1" }} /> Planned</span>
-          <span><i style={{ background: "#315d47" }} /> Actual</span>
-        </div>
-      </div>
-      <div className="chart-wrap"><Chart option={option} height={236} /></div>
-      <div className="chart-summary">
-        <div className="chart-summary-item">
-          <small>Total output</small><strong>130,670</strong><span>units</span>
-        </div>
-        <div className="chart-summary-item">
-          <small>Plan attainment</small><strong>93.2%</strong><span className="text-good">+2.8%</span>
-        </div>
-        <div className="chart-summary-item">
-          <small>Gap to plan</small><strong>9,230</strong><span>units</span>
-        </div>
-      </div>
-    </section>
-  );
+  }), [intelligence.productionTrend]);
+  return <section className="panel command-widget production-widget"><PanelHeader number={1} title="Production plan vs actual" subtitle="Planned, produced and good output" href="/performance?tab=Production" /><div className="command-metric-row"><div><span>Plan</span><strong>{intelligence.totals.planned.toLocaleString("en-IN")}</strong></div><div><span>Actual</span><strong>{intelligence.totals.actual.toLocaleString("en-IN")}</strong></div><div><span>Good</span><strong>{intelligence.totals.good.toLocaleString("en-IN")}</strong></div><div><span>Attainment</span><strong className={intelligence.totals.planAttainment < 90 ? "text-danger" : "text-good"}>{intelligence.totals.planAttainment.toFixed(1)}%</strong></div></div>{intelligence.productionTrend.length ? <Chart option={option} height={240} /> : <EmptyData type="production" />}</section>;
 }
 
-function OeePanel({ trend }: { trend: TrendPoint[] }) {
-  const option: EChartsOption = {
-    grid: { left: 34, right: 12, top: 22, bottom: 26 },
-    tooltip: {
-      trigger: "axis",
-      backgroundColor: "#17211d",
-      borderWidth: 0,
-      textStyle: { color: "#fff", fontSize: 9 },
-      valueFormatter: (value) => `${value}%`,
-    },
-    xAxis: {
-      type: "category",
-      data: trend.map((point) => point.label.replace(" Jul", "")),
-      axisLine: { lineStyle: { color: "#e3e6e1" } },
-      axisTick: { show: false },
-      axisLabel: chartText,
-    },
-    yAxis: {
-      type: "value",
-      min: 55,
-      max: 100,
-      axisLabel: { ...chartText, formatter: "{value}%" },
-      splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } },
-    },
-    series: [
-      {
-        name: "OEE",
-        type: "bar",
-        barWidth: "47%",
-        data: trend.map((point) => ({
-          value: point.oee,
-          itemStyle: {
-            color: point.oee >= 78 ? "#4f8067" : point.oee >= 70 ? "#dca04a" : "#dc6b58",
-            borderRadius: [4, 4, 0, 0],
-          },
-        })),
-        markLine: {
-          silent: true,
-          symbol: "none",
-          label: {
-            formatter: "78% target",
-            position: "insideEndTop",
-            color: "#87908b",
-            fontSize: 8,
-          },
-          lineStyle: { color: "#87908b", type: "dashed", width: 1 },
-          data: [{ yAxis: 78 }],
-        },
-      },
-    ],
-  };
-
-  return (
-    <section className="panel">
-      <div className="panel-header">
-        <div className="panel-title-group">
-          <h2 className="panel-title">OEE trend</h2>
-          <p className="panel-subtitle">Target versus actual · last 7 days</p>
-        </div>
-        <Link className="panel-action" href="/performance">
-          Explore <ArrowRight size={12} />
-        </Link>
-      </div>
-      <div className="chart-wrap"><Chart option={option} height={216} /></div>
-    </section>
-  );
+function OeeWidget() {
+  const { intelligence } = useFactory();
+  const metrics = [{ label: "Availability", value: intelligence.oee.availability, color: colors.amber }, { label: "Performance", value: intelligence.oee.performance, color: colors.blue }, { label: "Quality", value: intelligence.oee.quality, color: colors.actual }, { label: "OEE", value: intelligence.oee.value, color: intelligence.oee.value < 65 ? colors.red : colors.actual }];
+  return <section className="panel command-widget"><PanelHeader number={2} title="OEE & factory performance" subtitle="Explainable operating effectiveness" href="/performance?tab=OEE" /><div className="oee-rings">{metrics.map((metric) => <div key={metric.label}><div className="oee-ring" style={{ background: `conic-gradient(${metric.color} ${Math.min(metric.value, 100)}%, #e9ece8 0)` }}><span><strong>{metric.value.toFixed(1)}%</strong></span></div><b>{metric.label}</b></div>)}</div><div className="formula-trace"><span><Target size={13} /> Formula v1</span><p><b>{intelligence.oee.availability.toFixed(1)}%</b> × <b>{intelligence.oee.performance.toFixed(1)}%</b> × <b>{intelligence.oee.quality.toFixed(1)}%</b> = <strong>{intelligence.oee.value.toFixed(1)}%</strong></p><small>Run {Math.round(intelligence.oee.runMinutes).toLocaleString("en-IN")} of {intelligence.oee.plannedMinutes.toLocaleString("en-IN")} planned minutes</small></div></section>;
 }
 
-function LossPanel({ losses }: { losses: LossCategory[] }) {
-  const option: EChartsOption = {
-    tooltip: {
-      trigger: "item",
-      backgroundColor: "#17211d",
-      borderWidth: 0,
-      textStyle: { color: "#fff", fontSize: 9 },
-      formatter: "{b}: {c}% ({d}%)",
-    },
-    series: [
-      {
-        name: "Loss",
-        type: "pie",
-        radius: ["55%", "76%"],
-        center: ["36%", "50%"],
-        avoidLabelOverlap: true,
-        padAngle: 2,
-        itemStyle: { borderRadius: 3 },
-        label: { show: false },
-        data: losses.map((loss) => ({
-          name: loss.category,
-          value: loss.value,
-          itemStyle: { color: loss.color },
-        })),
-      },
-    ],
-    graphic: [
-      {
-        type: "text",
-        left: "28%",
-        top: "41%",
-        style: { text: "455", fill: "#17211d", font: "700 19px Inter" },
-      },
-      {
-        type: "text",
-        left: "25.5%",
-        top: "55%",
-        style: { text: "min lost", fill: "#87908b", font: "9px Inter" },
-      },
-    ],
-  };
-
-  return (
-    <section className="panel loss-panel">
-      <div className="panel-header">
-        <div className="panel-title-group">
-          <h2 className="panel-title">Loss composition</h2>
-          <p className="panel-subtitle">Quantified operational loss today</p>
-        </div>
-      </div>
-      <div className="loss-content">
-        <div className="loss-chart"><Chart option={option} height={216} /></div>
-        <div className="loss-legend">
-          {losses.slice(0, 4).map((loss) => (
-            <div key={loss.category}>
-              <span><i style={{ background: loss.color }} />{loss.category}</span>
-              <strong>{loss.value}%</strong>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+function OrdersWidget() {
+  const { intelligence } = useFactory();
+  return <section className="panel command-widget"><PanelHeader number={3} title="Orders at risk" subtitle="Projected delay based on remaining output and constraints" /><div className="risk-table">{intelligence.orderRisks.slice(0, 4).map((order) => <div className="risk-order-row" key={order.orderId}><div><span className={`risk-badge risk-${order.risk}`}>{order.risk}</span><strong>{order.orderId}</strong><small>{order.sku} · due {order.dueDate}</small></div><div className="completion-cell"><span><b style={{ width: `${Math.min(order.completion, 100)}%` }} /></span><strong>{order.completion.toFixed(0)}%</strong></div><p>{order.reason}</p><b>{order.remaining.toLocaleString("en-IN")} units left</b></div>)}{!intelligence.orderRisks.length && <EmptyData type="orders" />}</div></section>;
 }
 
-export function DashboardOverview({
-  kpis,
-  trend,
-  losses,
-  inventoryRisks,
-  alerts,
-}: DashboardOverviewProps) {
-  return (
-    <>
-      <header className="page-header">
-        <div>
-          <p className="eyebrow">Wednesday, 29 July 2026</p>
-          <h1>Good afternoon, Harsh. <span>Here’s the pulse.</span></h1>
-          <p className="page-subtitle">Pune Plant 01 · Data consolidated through 12:18 IST</p>
-        </div>
-        <div className="page-actions">
-          <div className="filter-control">
-            <CalendarDays size={14} />
-            <select aria-label="Dashboard period" defaultValue="today">
-              <option value="today">Today</option>
-              <option value="week">Last 7 days</option>
-              <option value="month">This month</option>
-            </select>
-            <ChevronDown size={13} />
-          </div>
-          <button className="button button-secondary"><Download size={14} /> Export</button>
-        </div>
-      </header>
+function DowntimeWidget() {
+  const { intelligence } = useFactory();
+  const max = intelligence.machineLoss[0]?.minutes || 1;
+  return <section className="panel command-widget"><PanelHeader number={4} title="Downtime & bottlenecks" subtitle="Assets creating the most production loss" href="/performance?tab=Downtime" /><div className="ranked-bars">{intelligence.machineLoss.slice(0, 5).map((item, index) => <div key={item.machine}><span className="rank-number">{index + 1}</span><div><span><strong>{item.machine}</strong><small>{item.line} · {item.occurrences} stops</small></span><i><b style={{ width: `${item.minutes / max * 100}%` }} /></i></div><strong>{item.minutes} min</strong></div>)}{!intelligence.machineLoss.length && <EmptyData type="downtime" />}</div><div className="widget-insight"><Lightbulb size={14} /><span><b>Largest reason:</b> {intelligence.reasonLoss[0]?.reason ?? "No classified loss"}{intelligence.reasonLoss[0] ? ` · ${intelligence.reasonLoss[0].minutes} min` : ""}</span></div></section>;
+}
 
-      <section className="kpi-grid" aria-label="Key performance indicators">
-        {kpis.map((metric) => <KpiCard metric={metric} key={metric.code} />)}
-      </section>
+function QualityWidget() {
+  const { intelligence } = useFactory();
+  const max = intelligence.defectLoss[0]?.rejected || 1;
+  return <section className="panel command-widget"><PanelHeader number={5} title="Quality losses" subtitle="Rejection, rework and first-pass yield" href="/performance?tab=Quality" /><div className="quality-hero"><div><span>First-pass yield</span><strong>{intelligence.totals.firstPassYield.toFixed(1)}%</strong></div><div><span>Rejected</span><strong>{intelligence.totals.rejected.toLocaleString("en-IN")}</strong></div><div><span>Reworked</span><strong>{intelligence.totals.reworked.toLocaleString("en-IN")}</strong></div></div><div className="defect-bars">{intelligence.defectLoss.slice(0, 4).map((defect) => <div key={defect.reason}><span><b>{defect.reason}</b><strong>{defect.rejected}</strong></span><i><b style={{ width: `${defect.rejected / max * 100}%` }} /></i></div>)}{!intelligence.defectLoss.length && <EmptyData type="quality" />}</div></section>;
+}
 
-      <div className="dashboard-grid">
-        <div className="dashboard-column">
-          <ProductionPanel trend={trend} />
-          <div className="split-panels">
-            <OeePanel trend={trend} />
-            <LossPanel losses={losses} />
-          </div>
-        </div>
+function InventoryWidget() {
+  const { intelligence } = useFactory();
+  return <section className="panel command-widget"><PanelHeader number={6} title="Inventory & material risk" subtitle="Stock cover, projected stock-outs and receipts" href="/performance?tab=Inventory" /><div className="material-risk-list">{intelligence.inventoryRisks.slice(0, 4).map((item) => <div key={item.id}><span className={`material-state ${item.stockDays < 2 ? "critical" : item.stockDays < 4 ? "high" : "watch"}`}><b>{item.stockDays.toFixed(1)}</b><small>days</small></span><div><strong>{item.material}</strong><span>{item.supplier} · stock-out {item.projectedStockout}</span><small className={item.receiptStatus === "delayed" ? "text-danger" : "text-good"}>{item.receiptStatus === "delayed" ? `Receipt delayed to ${item.expectedReceiptDate}` : `Receipt expected ${item.expectedReceiptDate ?? "unconfirmed"}`}</small></div></div>)}{!intelligence.inventoryRisks.length && <EmptyData type="inventory" />}</div></section>;
+}
 
-        <div className="dashboard-column">
-          <section className="panel">
-            <div className="panel-header">
-              <div className="panel-title-group">
-                <h2 className="panel-title">Critical attention</h2>
-                <p className="panel-subtitle">Alerts requiring action this shift</p>
-              </div>
-              <Link className="panel-action" href="/alerts">View all <ArrowRight size={12} /></Link>
-            </div>
-            <div className="alert-list">
-              {alerts.slice(0, 3).map((alert) => (
-                <Link href="/alerts" className="alert-row" key={alert.id}>
-                  <i className={`alert-indicator ${alert.severity}`} />
-                  <div className="alert-copy">
-                    <strong>{alert.title}</strong><span>{alert.asset}</span>
-                  </div>
-                  <time className="alert-time">{alert.relativeTime}</time>
-                </Link>
-              ))}
-            </div>
-          </section>
+function AlertsWidget() {
+  const { intelligence, updateAlertStatus, createAction, state } = useFactory();
+  const [message, setMessage] = useState("");
+  const priorityAlerts = intelligence.alerts.filter((alert) => alert.status !== "resolved").slice(0, 3);
+  return <section className="panel command-widget alerts-command-widget"><PanelHeader number={7} title="Priority alerts & recommended actions" subtitle="What the factory owner should act on first" href="/alerts" /><div className="priority-alerts">{priorityAlerts.map((alert) => <article key={alert.id}><i className={`alert-indicator ${alert.severity}`} /><div><span><b>{alert.title}</b><small>{alert.asset} · {alert.observed}</small></span><p>{alert.recommendation}</p><div><button onClick={() => { updateAlertStatus(alert.id, "acknowledged"); setMessage("Alert acknowledged"); }}><CheckCircle2 size={12} /> Acknowledge</button><button onClick={() => { createAction(alert.id, alert.title); setMessage("Action created for Harsh Kumar"); }}><Sparkles size={12} /> Create action</button><Link href="/alerts"><FileSearch size={12} /> Evidence</Link></div></div></article>)}{!priorityAlerts.length && <div className="all-clear"><CheckCircle2 size={24} /><strong>No priority alerts</strong><span>All configured rules are within range.</span></div>}</div>{message && <button className="inline-toast" onClick={() => setMessage("")}>{message} · {state.actions.filter((action) => action.status === "open").length} open action(s) <span>×</span></button>}</section>;
+}
 
-          <section className="panel">
-            <div className="panel-header">
-              <div className="panel-title-group">
-                <h2 className="panel-title">Inventory at risk</h2>
-                <p className="panel-subtitle">Materials below target stock cover</p>
-              </div>
-              <button className="panel-action">Details <ExternalLink size={11} /></button>
-            </div>
-            <div className="inventory-list">
-              {inventoryRisks.map((risk) => (
-                <div className="inventory-row" key={risk.code}>
-                  <div className="inventory-row-top">
-                    <strong>{risk.material}</strong>
-                    <span className={`risk-${risk.status}`}>
-                      {risk.status === "stockout" ? "Stock-out" : risk.status}
-                    </span>
-                  </div>
-                  <div className="inventory-row-bottom">
-                    <span>{risk.code} · required {risk.requiredDate}</span>
-                    <span><b>{risk.stockDays}</b> days</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+function EmptyData({ type }: { type: string }) {
+  return <div className="widget-empty"><FileSearch size={18} /><span>No {type} data matches these filters.</span><Link href="/uploads">Add data <ArrowRight size={11} /></Link></div>;
+}
 
-          <section className="panel data-quality-card">
-            <div className="data-quality-top">
-              <div><h3>Data quality</h3><p>Across today’s approved uploads</p></div>
-              <strong className="quality-score">98.7%</strong>
-            </div>
-            <div className="quality-bar"><span /></div>
-            <div className="quality-stats">
-              <div><strong>28,546</strong><span>accepted rows</span></div>
-              <div><strong>54</strong><span>warnings</span></div>
-              <div><strong>23</strong><span>rejected</span></div>
-            </div>
-          </section>
-        </div>
-      </div>
-    </>
-  );
+function OperationsTerminal() {
+  const { state, filters } = useFactory();
+  const [question, setQuestion] = useState("What should the factory owner act on first?");
+  const [history, setHistory] = useState<string[]>(["What should the factory owner act on first?"]);
+  function ask(value = question) { const trimmed = value.trim(); if (!trimmed) return; setHistory((current) => [...current.slice(-2), trimmed]); setQuestion(""); }
+  function submit(event: FormEvent) { event.preventDefault(); ask(); }
+  const latestQuestion = history[history.length - 1];
+  const latest = { question: latestQuestion, answer: answerOperationalQuestion(latestQuestion, state, filters) };
+  return <section className="operations-terminal"><div className="terminal-heading"><span><Bot size={17} /></span><div><strong>Ask Vulcan</strong><small>Rule-based operational answers · no AI required</small></div><i><b /> Live from selected data</i></div><div className="terminal-body"><div className="terminal-question"><span>factory-owner@pune:~$</span> {latest.question}</div><div className="terminal-answer"><strong>{latest.answer.answer}</strong><p>{latest.answer.reasoning}</p><div>{latest.answer.evidence.map((item) => <span key={item}>{item}</span>)}</div></div></div><div className="question-chips">{questions.slice(0, 4).map((item) => <button key={item} onClick={() => { setQuestion(item); ask(item); }}>{item}</button>)}</div><form className="terminal-input" onSubmit={submit}><span>›</span><input value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ask an operational question…" /><button aria-label="Ask question"><Send size={14} /></button></form></section>;
+}
+
+export function DashboardOverview() {
+  const { state, filters, intelligence } = useFactory();
+  const activeFactory = state.factories.find((factory) => factory.id === state.activeFactoryId);
+  function exportSnapshot() { downloadBlob(JSON.stringify({ generatedAt: new Date().toISOString(), factory: activeFactory, filters, intelligence }, null, 2), `vulcan-command-centre-${filters.to}.json`, "application/json"); }
+  return <>
+    <header className="page-header command-centre-header"><div><p className="eyebrow">Factory command centre · {new Date(`${filters.to}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</p><h1>See the loss. <span>Change the outcome.</span></h1><p className="page-subtitle">{activeFactory?.name} · every answer linked to its source records and calculation</p></div><div className="page-actions"><Link href="/uploads" className="button button-accent">Add factory data <ArrowRight size={14} /></Link><button className="button button-secondary" onClick={exportSnapshot}><Download size={14} /> Export snapshot</button></div></header>
+    <CommandFilters />
+    <div className="answer-summary-strip"><div><span>Production gap</span><strong>{Math.max(intelligence.totals.planned - intelligence.totals.actual, 0).toLocaleString("en-IN")} units</strong></div><div><span>OEE</span><strong>{intelligence.oee.value.toFixed(1)}%</strong></div><div><span>At-risk orders</span><strong>{intelligence.orderRisks.filter((order) => order.risk !== "watch").length}</strong></div><div><span>Top bottleneck</span><strong>{intelligence.machineLoss[0]?.machine ?? "—"}</strong></div><div><span>Materials at risk</span><strong>{intelligence.inventoryRisks.length}</strong></div><div><span>Open actions</span><strong>{state.actions.filter((action) => action.status === "open").length}</strong></div></div>
+    <OperationsTerminal />
+    <div className="command-centre-grid"><ProductionWidget /><OeeWidget /><OrdersWidget /><DowntimeWidget /><QualityWidget /><InventoryWidget /><AlertsWidget /></div>
+    <div className="traceability-footer"><ShieldAlert size={14} /><span>Raw inputs are preserved. Calculations use approved mapped records only.</span><Link href="/uploads">Inspect data lineage <ExternalLink size={11} /></Link></div>
+  </>;
 }

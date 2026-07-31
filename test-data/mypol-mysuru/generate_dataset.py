@@ -413,7 +413,7 @@ def create_inventory() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for day in daterange(START_DATE, END_DATE):
         days_to_end = (END_DATE - day).days
-        for material_index, (_, material, _, consumption, final_cover, supplier) in enumerate(
+        for material_index, (_, material, unit, consumption, final_cover, supplier) in enumerate(
             MATERIALS
         ):
             replenishment_wave = ((days_to_end + material_index * 3) % 15) * 0.72
@@ -440,6 +440,7 @@ def create_inventory() -> list[dict[str, Any]]:
                     "date": day.isoformat(),
                     "material": material,
                     "supplier": supplier,
+                    "unit": unit,
                     "available_quantity": available,
                     "daily_consumption": consumption,
                     "safety_stock": round(consumption * 3),
@@ -897,6 +898,7 @@ def main() -> None:
                 "date",
                 "material",
                 "supplier",
+                "unit",
                 "available_quantity",
                 "daily_consumption",
                 "safety_stock",
@@ -905,6 +907,7 @@ def main() -> None:
                 "receipt_status",
             ],
             inventory,
+            line_terminator="\n",
         ),
         write_csv(
             "orders.csv",

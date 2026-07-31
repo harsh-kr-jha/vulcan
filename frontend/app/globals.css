@@ -4373,7 +4373,42 @@ a {
 .supplier-watch { background: var(--amber-soft); color: #9a641b; }
 .supplier-critical { background: var(--red-soft); color: var(--red); }
 
+.data-health-notice {
+  align-items: start;
+  border-color: #ead7ad;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(210px, .7fr) minmax(0, 1.8fr);
+  margin-bottom: 13px;
+  padding: 18px;
+}
+.data-health-notice-heading { display: flex; gap: 11px; }
+.data-health-notice-heading > svg { color: #a56b19; flex: 0 0 auto; margin-top: 2px; }
+.data-health-notice-heading h2 { font-size: 15px; margin: 0; }
+.data-health-notice-heading p { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 4px 0 0; }
+.data-health-notice-list { display: grid; gap: 8px; }
+.data-health-notice-list article { align-items: center; background: #fcfaf5; border: 1px solid #eee4cd; border-radius: 10px; display: flex; gap: 12px; justify-content: space-between; padding: 10px 11px 10px 13px; }
+.data-health-notice-list article > div { min-width: 0; }
+.data-health-notice-list article strong,
+.data-health-notice-list article span { display: block; }
+.data-health-notice-list article strong { font-size: 12px; }
+.data-health-notice-list article span { color: var(--muted); font-size: 10px; line-height: 1.4; margin-top: 2px; }
+.data-health-notice-list .button { flex: 0 0 auto; min-height: 34px; }
+
+.inventory-balance-list { padding: 0 18px 18px; }
+.inventory-balance-list article { align-items: center; border-top: 1px solid var(--line); display: grid; gap: 16px; grid-template-columns: minmax(200px, 1.5fr) repeat(3, minmax(110px, .65fr)); min-height: 66px; padding: 11px 12px; }
+.inventory-balance-list article > div strong,
+.inventory-balance-list article > div small,
+.inventory-balance-list article > div span { display: block; }
+.inventory-balance-list article > div > span { color: var(--muted-2); font-size: 9px; font-weight: 700; letter-spacing: .04em; margin-bottom: 4px; text-transform: uppercase; }
+.inventory-balance-list article > div strong { font-size: 12px; text-transform: capitalize; }
+.inventory-balance-list article > div:first-child strong { font-size: 13px; text-transform: none; }
+.inventory-balance-list article > div small { color: var(--muted); font-size: 10px; margin-top: 3px; }
+
 @media (max-width: 900px) {
+  .data-health-notice { grid-template-columns: 1fr; }
+  .inventory-balance-list { overflow-x: auto; }
+  .inventory-balance-list article { min-width: 680px; }
   .supplier-score-list { grid-template-columns: 1fr; }
   .performance-metric-strip { grid-template-columns: repeat(2, 1fr) !important; }
   .performance-metric-strip > div:nth-child(2n) { border-right: 0; }

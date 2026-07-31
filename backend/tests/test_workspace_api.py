@@ -247,4 +247,49 @@ def test_supplier_sheet_is_scored_from_agreed_delivery_facts(api_client):
     assert result["supplierScores"][0]["score"] == pytest.approx(71.9)
     assert result["supplierScores"][1]["score"] == pytest.approx(99.8)
     assert result["supplierScore"] == pytest.approx(85.85)
+    assert result["dataHealth"]["supplier"]["status"] == "current"
     assert any(alert["id"] == "supplier-Late Supply" for alert in result["alerts"])
+
+
+@pytest.mark.django_db
+def test_inventory_reports_actual_unit_and_stale_data(api_client):
+    workspace = api_client.get("/api/workspace/")
+    factory_id = workspace.data["state"]["activeFactoryId"]
+    assert workspace.data["intelligence"]["dataHealth"]["inventory"]["status"] == "absent"
+    content = (
+        b"date,material,supplier,unit,available_quantity,daily_consumption,safety_stock,"
+        b"expected_receipt_date,required_date,receipt_status\n"
+        b"2026-07-20,Butyl Rubber,Reliable Supply,kg,1250,1000,3000,"
+        b"2026-07-24,2026-07-23,delayed\n"
+    )
+    inspection = api_client.post(
+        "/api/imports/inspect/",
+        {
+            "factory": factory_id,
+            "datasetType": "inventory",
+            "file": SimpleUploadedFile("inventory.csv", content, content_type="text/csv"),
+        },
+        format="multipart",
+    )
+    upload_id = inspection.data["upload"]["id"]
+    validation = api_client.post(
+        f"/api/imports/{upload_id}/validate/",
+        {"mapping": inspection.data["mapping"]},
+        format="json",
+    )
+    assert validation.data["canImport"] is True
+    assert (
+        api_client.post(f"/api/imports/{upload_id}/commit/", {}, format="json").status_code == 200
+    )
+
+    result = api_client.get(
+        f"/api/workspace/?factory={factory_id}&from=2026-07-20&to=2026-07-31"
+    ).data["intelligence"]
+    assert result["inventoryRisks"][0]["availableQuantity"] == 1250
+    assert result["inventoryRisks"][0]["unit"] == "kg"
+    assert result["dataHealth"]["inventory"] == {
+        "status": "stale",
+        "latestDate": "2026-07-20",
+        "ageDays": 11,
+        "staleAfterDays": 3,
+    }

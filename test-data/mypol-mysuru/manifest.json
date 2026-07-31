@@ -34,7 +34,7 @@
     {
       "file": "inventory.csv",
       "rows": 915,
-      "sha256": "ca6754b7baffd236621db67a8c3ee2f630044949a54e4b76b58cc8bf4df61dc2"
+      "sha256": "d5996c064bc3d2a496ff731a447a9c5284c4b5e7038c947d4021c10572044318"
     },
     {
       "file": "orders.csv",

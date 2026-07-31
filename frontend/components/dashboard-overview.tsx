@@ -4,6 +4,7 @@ import type { EChartsOption } from "echarts";
 import {
   ArrowRight,
   CheckCircle2,
+  CircleAlert,
   Download,
   ExternalLink,
   FileSearch,
@@ -17,6 +18,7 @@ import { Chart } from "@/components/charts/chart";
 import { CommandFilters } from "@/components/command-filters";
 import { downloadBlob } from "@/lib/browser-files";
 import { useFactory } from "@/lib/factory-context";
+import { datasetLabels, type DatasetType } from "@/lib/factory-domain";
 
 const colors = {
   plan: "#b9c0bc",
@@ -60,6 +62,28 @@ function EmptyData({ type }: { type: string }) {
         Add data <ArrowRight size={11} />
       </Link>
     </div>
+  );
+}
+
+const monitoredDatasets = ["production", "downtime", "quality", "inventory", "supplier"] as const;
+
+function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof useFactory>["intelligence"] }) {
+  const issues = monitoredDatasets.flatMap((datasetType) => {
+    const health = intelligence.dataHealth[datasetType];
+    return health && health.status !== "current" ? [{ datasetType, ...health }] : [];
+  });
+  if (!issues.length) return null;
+  return (
+    <section className="panel data-health-notice">
+      <div className="data-health-notice-heading"><CircleAlert size={20} /><div><h2>Data needs attention</h2><p>Refresh these sheets so decisions use current factory facts.</p></div></div>
+      <div className="data-health-notice-list">
+        {issues.map((issue) => {
+          const label = datasetLabels[issue.datasetType as DatasetType];
+          const detail = issue.status === "absent" ? `No ${label.toLowerCase()} sheet has been approved.` : `${label} is ${issue.ageDays} days old${issue.latestDate ? ` · latest ${new Date(`${issue.latestDate}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : ""}.`;
+          return <article key={issue.datasetType}><div><strong>{label}</strong><span>{detail}</span></div><Link className="button button-secondary" href={`/uploads?add=${issue.datasetType}`}>{issue.status === "absent" ? "Add" : "Refresh"} {label.toLowerCase()} <ArrowRight size={12} /></Link></article>;
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -141,7 +165,6 @@ function ProductionWidget() {
         <div><span>Plan</span><strong>{intelligence.totals.planned.toLocaleString("en-IN")}</strong></div>
         <div><span>Actual</span><strong>{intelligence.totals.actual.toLocaleString("en-IN")}</strong></div>
         <div><span>Good</span><strong>{intelligence.totals.good.toLocaleString("en-IN")}</strong></div>
-        <div><span>Attainment</span><strong>{intelligence.totals.planAttainment.toFixed(1)}%</strong></div>
       </div>
       {intelligence.productionTrend.length ? <Chart option={option} height={250} /> : <EmptyData type="production" />}
     </section>
@@ -284,7 +307,6 @@ export function DashboardOverview() {
   const hasLosses = hasProduction || available.downtime > 0 || available.quality > 0;
   const hasSupplier = available.supplier > 0;
   const summaryMetrics = [
-    hasProduction && { label: "Plan attainment", value: `${intelligence.totals.planAttainment.toFixed(1)}%`, detail: `${intelligence.totals.actual.toLocaleString("en-IN")} actual` },
     hasProduction && { label: "OEE", value: `${intelligence.oee.value.toFixed(1)}%`, detail: `A ${intelligence.oee.availability.toFixed(1)} · P ${intelligence.oee.performance.toFixed(1)} · Q ${intelligence.oee.quality.toFixed(1)}` },
     (hasProduction || available.downtime > 0) && { label: "Total downtime", value: `${intelligence.totals.totalDowntime.toLocaleString("en-IN")} min`, detail: `${intelligence.totals.downtimeFrequency} stops` },
     (hasProduction || available.quality > 0) && { label: "Rejection", value: `${intelligence.totals.rejectionRate.toFixed(1)}%`, detail: `${intelligence.totals.rejected.toLocaleString("en-IN")} units` },
@@ -319,13 +341,13 @@ export function DashboardOverview() {
         </div>
       </header>
       <CommandFilters />
+      <DataHealthNotice intelligence={intelligence} />
       {summaryMetrics.length > 0 && <div className="answer-summary-strip home-summary-strip" style={{ gridTemplateColumns: `repeat(${Math.min(summaryMetrics.length, 6)}, 1fr)` }}>{summaryMetrics.map((metric) => <div key={metric.label}><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.detail}</small></div>)}</div>}
       <div className="home-decision-grid">
         {hasProduction && <ProductionWidget />}
         {hasLosses && <MajorLossesWidget />}
         {hasSupplier && <SupplierPerformanceWidget />}
         {intelligence.alerts.length > 0 && <PriorityExceptionsWidget />}
-        {!hasProduction && !hasLosses && !hasSupplier && intelligence.alerts.length === 0 && <section className="panel dashboard-start-state"><FileSearch size={24} /><div><h2>Add the first operational sheet</h2><p>Upload production, downtime, quality, inventory or supplier deliveries. V2 will show only analysis supported by that data.</p></div><Link className="button button-primary" href="/uploads">Upload sheets <ArrowRight size={12} /></Link></section>}
       </div>
       <div className="traceability-footer">
         <ShieldAlert size={14} />

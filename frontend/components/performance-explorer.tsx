@@ -112,7 +112,6 @@ function ProductionView() {
   return (
     <>
       <MetricRow metrics={[
-        { label: "Plan attainment", value: `${intelligence.totals.planAttainment.toFixed(1)}%`, detail: `${intelligence.totals.actual.toLocaleString("en-IN")} of ${intelligence.totals.planned.toLocaleString("en-IN")}` },
         { label: "Good output", value: intelligence.totals.good.toLocaleString("en-IN"), detail: "accepted units" },
         { label: "Throughput", value: `${intelligence.totals.throughputRate.toFixed(1)}/hr`, detail: "actual units per run hour" },
         { label: "Cycle variance", value: `${intelligence.totals.cycleTimeVariance.toFixed(1)}%`, detail: "actual against ideal cycle" },
@@ -170,18 +169,11 @@ function QualityView() {
 
 function InventoryView() {
   const { intelligence } = useFactory();
-  const reversed = [...intelligence.inventoryRisks].slice(0, 10).reverse();
-  if (!reversed.length) {
+  const risks = intelligence.inventoryRisks.slice(0, 10);
+  if (!risks.length) {
     return <section className="panel positive-empty-state"><CheckCircle2 size={28} /><h2>No material risk detected</h2><p>Uploaded inventory is above the configured stock-cover threshold.</p></section>;
   }
-  const option: EChartsOption = {
-    grid: { left: 160, right: 58, top: 20, bottom: 34 },
-    tooltip,
-    xAxis: { type: "value", max: Math.max(8, ...reversed.map((item) => item.stockDays + 1)), axisLabel: { color: colors.text, fontSize: 11, formatter: "{value} days" }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } },
-    yAxis: { type: "category", data: reversed.map((item) => item.material), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: colors.text, fontSize: 11 } },
-    series: [{ type: "bar", barWidth: 17, data: reversed.map((item) => ({ value: item.stockDays.toFixed(1), itemStyle: { color: item.stockDays < 2 ? colors.red : item.stockDays < 4 ? colors.amber : colors.green, borderRadius: [0, 5, 5, 0] } })), label: { show: true, position: "right", formatter: "{c} days", fontSize: 10, color: colors.text } }],
-  };
-  return <PerformancePanel title="Material stock cover" subtitle="Only materials at risk are shown" option={option} />;
+  return <section className="panel inventory-balance-panel"><div className="panel-header"><div><h2 className="panel-title">Inventory requiring attention</h2><p className="panel-subtitle">Actual balance and unit, with calculated days of cover</p></div></div><div className="inventory-balance-list">{risks.map((item) => <article key={item.id}><div><strong>{item.material}</strong><small>{item.supplier || "Supplier not specified"}</small></div><div><span>Available</span><strong>{item.availableQuantity.toLocaleString("en-IN")} {item.unit}</strong></div><div><span>Cover</span><strong>{item.stockDays.toFixed(1)} days</strong></div><div><span>Receipt</span><strong>{item.receiptStatus.replaceAll("_", " ")}</strong><small>{item.expectedReceiptDate ?? "No date"}</small></div></article>)}</div></section>;
 }
 
 function SuppliersView() {

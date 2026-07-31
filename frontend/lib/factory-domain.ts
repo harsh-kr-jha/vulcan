@@ -20,12 +20,13 @@ export interface Intelligence {
   reasonLoss: { reason: string; minutes: number; occurrences: number }[];
   defectLoss: { reason: string; rejected: number; reworked: number }[];
   skuQuality: { sku: string; inspected: number; rejected: number; rejectionRate: number }[];
-  inventoryRisks: { id: string; material: string; supplier: string; availableQuantity: number; dailyConsumption: number; stockDays: number; projectedStockout: string; receiptStatus: string; expectedReceiptDate?: string }[];
+  inventoryRisks: { id: string; material: string; supplier: string; availableQuantity: number; unit: string; dailyConsumption: number; stockDays: number; projectedStockout: string; receiptStatus: string; expectedReceiptDate?: string }[];
   orderRisks: { orderId: string; sku: string; dueDate: string; completion: number; remaining: number; risk: "critical" | "high" | "watch"; reason: string }[];
   supplierScores: { supplier: string; score: number; status: "preferred" | "stable" | "watch" | "critical"; deliveries: number; onTimeRate: number; quantityFulfillment: number; acceptanceRate: number; termsFulfillment: number; lateDeliveries: number; averageDelayDays: number; materials: string[] }[];
   supplierScore: number;
   losses: { productionGapUnits: number; downtimeLostUnits: number; speedLostUnits: number; rejectedUnits: number; reworkUnits: number };
   dataAvailability: Record<DatasetType, number>;
+  dataHealth: Partial<Record<DatasetType, { status: "current" | "stale" | "absent"; latestDate: string | null; ageDays: number | null; staleAfterDays: number }>>;
   alerts: IntelligenceAlert[];
   dataQuality: number;
 }
@@ -41,4 +42,4 @@ export const datasetLabels: Record<DatasetType, string> = { production: "Product
 const today = new Date();
 const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 6);
 export const defaultFilters: DashboardFilters = { from: weekAgo.toISOString().slice(0, 10), to: today.toISOString().slice(0, 10), factoryId: "", line: "all", machine: "all", sku: "all", shift: "all" };
-export const emptyIntelligence: Intelligence = { totals: { planned: 0, actual: 0, good: 0, rejected: 0, reworked: 0, planAttainment: 0, firstPassYield: 0, totalDowntime: 0, downtimeFrequency: 0, averageDowntimeDuration: 0, rejectionRate: 0, reworkRate: 0, estimatedProductionLost: 0, throughputRate: 0, idealCycleMinutes: 0, actualCycleMinutes: 0, cycleTimeVariance: 0 }, oee: { availability: 0, performance: 0, quality: 0, value: 0, plannedMinutes: 0, runMinutes: 0, idealMinutes: 0 }, dailyOee: [], productionTrend: [], machineLoss: [], reasonLoss: [], defectLoss: [], skuQuality: [], inventoryRisks: [], orderRisks: [], supplierScores: [], supplierScore: 0, losses: { productionGapUnits: 0, downtimeLostUnits: 0, speedLostUnits: 0, rejectedUnits: 0, reworkUnits: 0 }, dataAvailability: { production: 0, downtime: 0, quality: 0, inventory: 0, supplier: 0, orders: 0 }, alerts: [], dataQuality: 100 };
+export const emptyIntelligence: Intelligence = { totals: { planned: 0, actual: 0, good: 0, rejected: 0, reworked: 0, planAttainment: 0, firstPassYield: 0, totalDowntime: 0, downtimeFrequency: 0, averageDowntimeDuration: 0, rejectionRate: 0, reworkRate: 0, estimatedProductionLost: 0, throughputRate: 0, idealCycleMinutes: 0, actualCycleMinutes: 0, cycleTimeVariance: 0 }, oee: { availability: 0, performance: 0, quality: 0, value: 0, plannedMinutes: 0, runMinutes: 0, idealMinutes: 0 }, dailyOee: [], productionTrend: [], machineLoss: [], reasonLoss: [], defectLoss: [], skuQuality: [], inventoryRisks: [], orderRisks: [], supplierScores: [], supplierScore: 0, losses: { productionGapUnits: 0, downtimeLostUnits: 0, speedLostUnits: 0, rejectedUnits: 0, reworkUnits: 0 }, dataAvailability: { production: 0, downtime: 0, quality: 0, inventory: 0, supplier: 0, orders: 0 }, dataHealth: {}, alerts: [], dataQuality: 100 };

@@ -68,6 +68,7 @@ TEMPLATES = {
         field("date", "Snapshot date", "date", True, ["date"]),
         field("material", "Material", required=True, aliases=["material name", "item"]),
         field("supplier", "Supplier", aliases=["vendor"]),
+        field("unit", "Unit of measure", aliases=["uom", "stock unit"]),
         field(
             "available_quantity",
             "Available quantity",

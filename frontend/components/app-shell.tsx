@@ -14,7 +14,6 @@ import {
   Settings2,
   ShieldAlert,
   UploadCloud,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -47,7 +46,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   return <>
     {open && <button className="sidebar-backdrop" onClick={onClose} aria-label="Close navigation" />}
     <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
-      <div className="sidebar-top"><Brand /><button className="mobile-close" onClick={onClose} aria-label="Close navigation"><X size={20} /></button></div>
+      <div className="sidebar-top"><Brand /><button className="mobile-close" onClick={onClose} aria-label="Close navigation"><Menu size={20} /></button></div>
       <div className="factory-switcher-wrap">
         <button className="factory-switcher" onClick={() => setFactoryMenu((value) => !value)} aria-expanded={factoryMenu}>
           <span className="factory-avatar"><Factory size={17} /></span>
@@ -82,8 +81,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
     <div className="app-main">
       <header className="topbar">
-        <div className="mobile-brand-row"><button className="icon-button menu-button" aria-label="Open navigation" onClick={() => setMenuOpen(true)}><Menu size={20} /></button><div className="mobile-brand"><span className="brand-mark"><Bolt size={16} /></span><strong>VULCAN</strong></div></div>
-        <div className="topbar-context"><span className="live-indicator"><i /> Operational answers</span><span className="topbar-separator" /><span className="shift-label">{filters.shift === "all" ? "All shifts" : filters.shift} · {filters.from} to {filters.to}</span></div>
+        <div className="mobile-brand-row"><button className="icon-button menu-button" aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><Menu size={20} /></button><div className="mobile-brand"><span className="brand-mark"><Bolt size={16} /></span><strong>VULCAN</strong></div></div>
+        <div className="topbar-context"><span className="shift-label">{filters.shift === "all" ? "All shifts" : filters.shift} · {filters.from} to {filters.to}</span></div>
         <div className="topbar-actions">
           <button className="icon-button notification-button" aria-label="Notifications" onClick={() => { setNotificationsOpen((value) => !value); setProfileOpen(false); }}><Bell size={19} />{intelligence.alerts.some((alert) => alert.status === "new") && <span />}</button>
           {notificationsOpen && <div className="topbar-popover notification-popover"><div><strong>Priority signals</strong><Link href="/alerts" onClick={() => setNotificationsOpen(false)}>View all</Link></div>{intelligence.alerts.filter((alert) => alert.status !== "resolved").slice(0, 3).map((alert) => <Link href="/alerts" key={alert.id} onClick={() => setNotificationsOpen(false)}><i className={`alert-indicator ${alert.severity}`} /><span><b>{alert.title}</b><small>{alert.observed}</small></span></Link>)}{!intelligence.alerts.some((alert) => alert.status !== "resolved") && <p>No open alerts for this selection.</p>}</div>}

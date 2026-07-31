@@ -68,8 +68,18 @@ def build_intelligence(factory, targets, filters):
     inventory_history = []
     orders = []
     supplier_deliveries = []
+    latest_dates = {}
     for record in records.iterator():
         value = record.values
+        if (
+            record.operational_date
+            and (not to_date or record.operational_date <= to_date)
+            and (
+                record.dataset_type not in latest_dates
+                or record.operational_date > latest_dates[record.dataset_type]
+            )
+        ):
+            latest_dates[record.dataset_type] = record.operational_date
         if record.dataset_type == "inventory":
             if not to_date or not record.operational_date or record.operational_date <= to_date:
                 inventory_history.append(value)
@@ -173,6 +183,7 @@ def build_intelligence(factory, targets, filters):
         rejection_rate,
     )
     uploads = Upload.objects.filter(factory=factory, status="COMPLETED")
+    uploaded_types = set(uploads.values_list("dataset_type", flat=True))
     upload_count = uploads.count()
     quality_score = (
         sum(float(item.data_quality_score) for item in uploads) / upload_count
@@ -234,6 +245,7 @@ def build_intelligence(factory, targets, filters):
             "supplier": len(supplier_deliveries),
             "orders": len(orders),
         },
+        "dataHealth": build_data_health(latest_dates, uploaded_types, to_date),
         "alerts": alerts,
         "dataQuality": quality_score,
     }
@@ -332,6 +344,7 @@ def build_inventory_risks(rows, to_value, targets):
                     "material": row.get("material", "Unassigned"),
                     "supplier": row.get("supplier", "Unknown supplier"),
                     "availableQuantity": available,
+                    "unit": str(row.get("unit") or "units"),
                     "dailyConsumption": consumption,
                     "stockDays": stock_days,
                     "projectedStockout": (end + timedelta(days=int(stock_days))).isoformat(),
@@ -340,6 +353,36 @@ def build_inventory_risks(rows, to_value, targets):
                 }
             )
     return sorted(result, key=lambda item: item["stockDays"])
+
+
+def build_data_health(latest_dates, uploaded_types, selected_end):
+    end = selected_end or date.today()
+    stale_after_days = {
+        "production": 2,
+        "downtime": 7,
+        "quality": 7,
+        "inventory": 3,
+        "supplier": 14,
+    }
+    result = {}
+    for dataset_type, threshold in stale_after_days.items():
+        latest = latest_dates.get(dataset_type)
+        if dataset_type not in uploaded_types:
+            result[dataset_type] = {
+                "status": "absent",
+                "latestDate": None,
+                "ageDays": None,
+                "staleAfterDays": threshold,
+            }
+            continue
+        age = max((end - latest).days, 0) if latest else None
+        result[dataset_type] = {
+            "status": "stale" if age is None or age > threshold else "current",
+            "latestDate": latest.isoformat() if latest else None,
+            "ageDays": age,
+            "staleAfterDays": threshold,
+        }
+    return result
 
 
 def build_order_risks(rows, to_value, average_daily_good, machine_loss):
@@ -526,7 +569,7 @@ def generated_alerts(
                 f"< {targets['oee']}%",
                 f"{oee:.1f}%",
                 end,
-                [f"Plan attainment {percent(actual, planned):.1f}%", f"OEE {oee:.1f}%"],
+                [f"Plan {planned:g}", f"Actual {actual:g}", f"OEE {oee:.1f}%"],
             )
         )
     if planned and percent(actual, planned) < targets["planAttainment"]:
@@ -677,7 +720,7 @@ def answer_question(intelligence, question):
             )
     totals = intelligence["totals"]
     return response(
-        f"Production is {totals['planAttainment']:.1f}% of plan.",
+        f"Production is {totals['actual']:g} units against a plan of {totals['planned']:g}.",
         "This answer uses only validated records in the selected factory and date range.",
         [f"Plan {totals['planned']:g}", f"Actual {totals['actual']:g}"],
     )

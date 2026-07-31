@@ -6,7 +6,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.alerts.models import ActionItem
-from apps.analytics.workspace import answer_question, build_intelligence, workspace_snapshot
+from apps.analytics.workspace import (
+    answer_question,
+    build_intelligence,
+    normalise_custom_kpis,
+    workspace_snapshot,
+)
 from apps.tenancy.models import Factory
 from apps.tenancy.services import get_or_create_default_factory, get_workspace_identity
 
@@ -34,6 +39,11 @@ class WorkspaceConfigurationView(APIView):
             configuration["targets"] = {**configuration.get("targets", {}), **targets}
         if industry := request.data.get("industry"):
             configuration["industry"] = industry
+        if "customKpis" in request.data:
+            try:
+                configuration["customKpis"] = normalise_custom_kpis(request.data["customKpis"])
+            except ValueError as exc:
+                return Response({"detail": str(exc)}, status=400)
         if company_name := request.data.get("name"):
             name_conflict = (
                 identity.tenant.companies.filter(name=company_name)

@@ -2,6 +2,54 @@
 
 All notable changes to Vulcan are documented in this file.
 
+## 2026-08-01 — V2.3 custom metrics and source visibility
+
+### Added
+
+- Database-backed custom KPI builder on Data Visualisation with approved variables from
+  production, downtime, quality, inventory, supplier, and order sheets.
+- Safe arithmetic operations, result scaling, display units, precision controls, and
+  server-side calculation without arbitrary formula execution.
+- Add to Home control for custom KPIs, persisted independently for each factory.
+- On-demand source-data preview for CSV and XLSX imports, showing up to 50 preserved rows
+  directly from Django with original headers and values.
+
+### Changed
+
+- Setup Help now appears only once at the bottom of the sidebar and opens the working FAQ
+  and documentation route.
+- FAQ rendering uses stable native disclosure controls while retaining help search.
+- Data Upload source history now provides a clear Preview action alongside lineage details.
+
+### Verification
+
+- Django tests cover preserved source preview plus custom KPI persistence, calculation,
+  available variables, and Home pin state.
+- 14 Django API and isolation tests pass.
+- Ruff, ESLint, TypeScript, and the Next.js production build pass.
+
+## 2026-07-31 — V2.2 guided setup and calculation transparency
+
+### Added
+
+- Functional Setup Help page with searchable FAQs, expandable answers, step-by-step
+  documentation, and direct links into each setup workflow.
+- Dedicated Rules & Targets page under Manage with grouped factory effectiveness,
+  operational guardrail, inventory, and supplier thresholds.
+- Data Visualisation page showing live KPI results, source inputs, exact Django formulae,
+  assumptions, configured targets, OEE decomposition, and data-source lineage.
+
+### Changed
+
+- Factory Setup now focuses only on factory identity, masters, shifts, and reason codes.
+- Manage navigation now exposes Factory Setup, Rules & Targets, Data Visualisation, and Help.
+- The topbar hamburger remains above the open mobile sidebar and toggles it closed directly.
+
+### Verification
+
+- 14 Django API and isolation tests pass.
+- Ruff, ESLint, TypeScript, and the Next.js production build pass.
+
 ## 2026-07-31 — V2.1 data freshness and inventory clarity
 
 ### Added

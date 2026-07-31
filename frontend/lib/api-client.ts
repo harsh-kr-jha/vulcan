@@ -1,4 +1,4 @@
-import type { DashboardFilters, ImportInspection, ImportValidation, WorkspacePayload } from "./factory-domain";
+import type { DashboardFilters, ImportInspection, ImportPreview, ImportValidation, WorkspacePayload } from "./factory-domain";
 
 const API_ROOT = "/api/backend/api";
 
@@ -38,6 +38,7 @@ export const api = {
   removeMaster: (factory: string, id: string) => request(`/factory-masters/${id}/?factory=${factory}`, { method: "DELETE" }),
   inspectImport: async (factory: string, datasetType: string, file: File) => { const body = new FormData(); body.set("factory", factory); body.set("datasetType", datasetType); body.set("file", file); return request<ImportInspection>("/imports/inspect/", { method: "POST", body }); },
   validateImport: (id: string, mapping: Record<string, string>) => request<ImportValidation>(`/imports/${id}/validate/`, { method: "POST", body: JSON.stringify({ mapping }) }),
+  previewImport: (id: string) => request<ImportPreview>(`/imports/${id}/preview/`),
   commitImport: (id: string) => request(`/imports/${id}/commit/`, { method: "POST", body: "{}" }),
   cancelImport: (id: string) => request(`/imports/${id}/cancel/`, { method: "POST", body: "{}" }),
   setAlertStatus: (factory: string, id: string, status: string) => request(`/workspace/configuration/?factory=${factory}`, { method: "PATCH", body: JSON.stringify({ alertStatus: { id, status } }) }),

@@ -129,6 +129,11 @@ def test_import_is_inspected_validated_and_calculated_in_django(api_client):
     assert inspection.status_code == 201
     upload_id = inspection.data["upload"]["id"]
     assert inspection.data["mapping"]["ignored"] == ""
+    preview = api_client.get(f"/api/imports/{upload_id}/preview/")
+    assert preview.status_code == 200
+    assert preview.data["headers"][0] == "date"
+    assert preview.data["rows"][0]["actual_quantity"] == "90"
+    assert preview.data["totalRows"] == 1
 
     validation = api_client.post(
         f"/api/imports/{upload_id}/validate/",
@@ -144,12 +149,39 @@ def test_import_is_inspected_validated_and_calculated_in_django(api_client):
     assert committed.data["status"] == "COMPLETED"
     assert committed.data["omittedFields"] == ["ignored"]
 
+    configured = api_client.patch(
+        f"/api/workspace/configuration/?factory={factory_id}",
+        {
+            "customKpis": [
+                {
+                    "id": "good-output-share",
+                    "name": "Good output share",
+                    "variableA": "production.good",
+                    "operation": "divide",
+                    "variableB": "production.actual",
+                    "scale": 100,
+                    "decimals": 1,
+                    "unit": "%",
+                    "pinnedToHome": True,
+                }
+            ]
+        },
+        format="json",
+    )
+    assert configured.status_code == 200
+
     result = api_client.get(f"/api/workspace/?factory={factory_id}&from=2026-07-31&to=2026-07-31")
     assert result.data["intelligence"]["totals"]["planned"] == 100
     assert result.data["intelligence"]["totals"]["actual"] == 90
     assert result.data["intelligence"]["totals"]["good"] == 88
     assert result.data["intelligence"]["totals"]["estimatedProductionLost"] == 10
     assert result.data["intelligence"]["totals"]["rejectionRate"] == 0
+    assert result.data["intelligence"]["customKpis"][0]["value"] == 97.8
+    assert result.data["intelligence"]["customKpis"][0]["pinnedToHome"] is True
+    assert any(
+        item["key"] == "downtime.minutes"
+        for item in result.data["intelligence"]["customKpiVariables"]
+    )
 
 
 @pytest.mark.django_db

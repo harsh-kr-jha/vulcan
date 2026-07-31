@@ -10,6 +10,7 @@ from apps.operations.import_views import (
     ImportCancelView,
     ImportCommitView,
     ImportInspectView,
+    ImportPreviewView,
     ImportValidationView,
 )
 from apps.operations.views import UploadViewSet
@@ -58,6 +59,11 @@ urlpatterns = [
         "api/imports/<uuid:upload_id>/validate/",
         ImportValidationView.as_view(),
         name="import-validate",
+    ),
+    path(
+        "api/imports/<uuid:upload_id>/preview/",
+        ImportPreviewView.as_view(),
+        name="import-preview",
     ),
     path("api/imports/<uuid:upload_id>/commit/", ImportCommitView.as_view(), name="import-commit"),
     path("api/imports/<uuid:upload_id>/cancel/", ImportCancelView.as_view(), name="import-cancel"),

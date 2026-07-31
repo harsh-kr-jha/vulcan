@@ -312,6 +312,7 @@ export function DashboardOverview() {
     (hasProduction || available.quality > 0) && { label: "Rejection", value: `${intelligence.totals.rejectionRate.toFixed(1)}%`, detail: `${intelligence.totals.rejected.toLocaleString("en-IN")} units` },
     available.inventory > 0 && { label: "Material risks", value: intelligence.inventoryRisks.length.toString(), detail: "requiring review" },
     hasSupplier && { label: "Supplier score", value: intelligence.supplierScore.toFixed(1), detail: "out of 100" },
+    ...intelligence.customKpis.filter((item) => item.pinnedToHome).map((item) => ({ label: item.name, value: item.value === null ? "—" : `${item.value.toLocaleString("en-IN", { minimumFractionDigits: item.decimals, maximumFractionDigits: item.decimals })}${item.unit ? ` ${item.unit}` : ""}`, detail: "Custom KPI" })),
     state.uploads.length > 0 && { label: "Data quality", value: `${intelligence.dataQuality.toFixed(1)}%`, detail: `${state.uploads.length} source sheets` },
   ].filter((item): item is { label: string; value: string; detail: string } => Boolean(item));
 

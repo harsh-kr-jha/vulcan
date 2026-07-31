@@ -102,6 +102,24 @@ class ImportValidationView(APIView):
         return Response(validate_mapping(upload, mapping))
 
 
+class ImportPreviewView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request, upload_id):
+        upload = get_upload(upload_id)
+        return Response(
+            {
+                "upload": serialize_upload(upload),
+                "headers": upload.headers,
+                "rows": upload.raw_rows[:50],
+                "totalRows": len(upload.raw_rows),
+                "mapping": upload.mapping,
+                "omittedFields": upload.omitted_fields,
+            }
+        )
+
+
 class ImportCommitView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []

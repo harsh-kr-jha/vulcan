@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Menu,
   Plus,
+  Sigma,
   Settings2,
   ShieldAlert,
   UploadCloud,
@@ -29,6 +30,8 @@ const navGroups = [
   ] },
   { label: "Manage", items: [
     { href: "/settings", label: "Factory setup", icon: Building2 },
+    { href: "/rules", label: "Rules & targets", icon: Settings2 },
+    { href: "/methodology", label: "Data visualisation", icon: Sigma },
   ] },
 ];
 
@@ -46,7 +49,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   return <>
     {open && <button className="sidebar-backdrop" onClick={onClose} aria-label="Close navigation" />}
     <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
-      <div className="sidebar-top"><Brand /><button className="mobile-close" onClick={onClose} aria-label="Close navigation"><Menu size={20} /></button></div>
+      <div className="sidebar-top"><Brand /></div>
       <div className="factory-switcher-wrap">
         <button className="factory-switcher" onClick={() => setFactoryMenu((value) => !value)} aria-expanded={factoryMenu}>
           <span className="factory-avatar"><Factory size={17} /></span>
@@ -62,7 +65,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
         {navGroups.map((group) => <div className="nav-group" key={group.label}><p>{group.label}</p>{group.items.map((item) => { const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href.split("?")[0]); const Icon = item.icon; return <Link className={`nav-item ${active ? "active" : ""}`} href={item.href} key={item.href} onClick={onClose}><Icon size={18} /><span>{item.label}</span>{item.href === "/alerts" && newAlerts > 0 && <span className="nav-badge">{newAlerts}</span>}</Link>; })}</div>)}
       </nav>
       <div className="sidebar-footer">
-        <Link className="nav-item" href="/settings"><CircleHelp size={18} /><span>Setup help</span></Link>
+        <Link className="nav-item" href="/help" onClick={onClose}><CircleHelp size={18} /><span>Setup help</span></Link>
         <div className="data-health-mini"><div className="data-health-mini-top"><span>Data health</span><strong>{intelligence.dataQuality.toFixed(1)}%</strong></div><div className="mini-progress"><span style={{ width: `${intelligence.dataQuality}%` }} /></div><small>{state.uploads.length} preserved source dataset{state.uploads.length === 1 ? "" : "s"}</small></div>
       </div>
     </aside>
@@ -80,7 +83,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return <div className="app-shell">
     <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
     <div className="app-main">
-      <header className="topbar">
+      <header className={`topbar ${menuOpen ? "menu-open" : ""}`}>
         <div className="mobile-brand-row"><button className="icon-button menu-button" aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><Menu size={20} /></button><div className="mobile-brand"><span className="brand-mark"><Bolt size={16} /></span><strong>VULCAN</strong></div></div>
         <div className="topbar-context"><span className="shift-label">{filters.shift === "all" ? "All shifts" : filters.shift} · {filters.from} to {filters.to}</span></div>
         <div className="topbar-actions">

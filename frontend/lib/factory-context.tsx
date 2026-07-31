@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api-client";
-import type { DashboardFilters, FactoryConfig, FactoryMasters, FactoryState, FactoryTargets, Intelligence, MasterItem } from "./factory-domain";
+import type { CustomKpiDefinition, DashboardFilters, FactoryConfig, FactoryMasters, FactoryState, FactoryTargets, Intelligence, MasterItem } from "./factory-domain";
 import { defaultFilters, emptyIntelligence } from "./factory-domain";
 
 type MasterCollection = keyof FactoryMasters;
@@ -12,6 +12,7 @@ interface FactoryContextValue {
   updateCompany: (updates: Partial<FactoryState["company"]>) => Promise<void>; createFactory: (factory: Omit<FactoryConfig, "id" | "companyId">) => Promise<void>; updateFactory: (id: string, updates: Partial<FactoryConfig>) => Promise<void>;
   upsertMaster: (collection: MasterCollection, item: Partial<MasterItem> & Pick<MasterItem, "name" | "code">) => Promise<void>; removeMaster: (collection: MasterCollection, id: string) => Promise<void>;
   updateAlertStatus: (id: string, status: "new" | "acknowledged" | "resolved" | "dismissed") => Promise<void>; createAction: (alertId: string, title: string, owner?: string) => Promise<void>; toggleAction: (id: string) => Promise<void>; updateTargets: (targets: Partial<FactoryTargets>) => Promise<void>;
+  updateCustomKpis: (items: CustomKpiDefinition[]) => Promise<void>;
   askQuestion: (question: string) => Promise<{ answer: string; reasoning: string; evidence: string[] }>;
 }
 
@@ -34,11 +35,12 @@ export function FactoryProvider({ children }: { children: React.ReactNode }) {
   const upsertMaster = useCallback((collection: MasterCollection, item: Partial<MasterItem> & Pick<MasterItem, "name" | "code">) => mutate(() => item.id ? api.updateMaster(activeFactoryId, item.id, { ...item, kind: collection }) : api.createMaster(activeFactoryId, { ...item, kind: collection })), [mutate, activeFactoryId]);
   const removeMaster = useCallback((_: MasterCollection, id: string) => mutate(() => api.removeMaster(activeFactoryId, id)), [mutate, activeFactoryId]);
   const updateTargets = useCallback((targets: Partial<FactoryTargets>) => mutate(() => api.updateConfiguration(activeFactoryId, { targets })), [mutate, activeFactoryId]);
+  const updateCustomKpis = useCallback((items: CustomKpiDefinition[]) => mutate(() => api.updateConfiguration(activeFactoryId, { customKpis: items })), [mutate, activeFactoryId]);
   const updateAlertStatus = useCallback((id: string, status: "new" | "acknowledged" | "resolved" | "dismissed") => mutate(() => api.setAlertStatus(activeFactoryId, id, status)), [mutate, activeFactoryId]);
   const createAction = useCallback((alertId: string, title: string, owner?: string) => mutate(() => api.createAction(activeFactoryId, alertId, title, owner)), [mutate, activeFactoryId]);
   const toggleAction = useCallback((id: string) => mutate(() => api.toggleAction(activeFactoryId, id)), [mutate, activeFactoryId]);
   const askQuestion = useCallback((question: string) => api.ask(activeFactoryId, filters, question), [activeFactoryId, filters]);
-  const value = useMemo(() => ({ state, intelligence, filters, hydrated, loading, error, setFilters, setActiveFactory, refresh, updateCompany, createFactory, updateFactory, upsertMaster, removeMaster, updateAlertStatus, createAction, toggleAction, updateTargets, askQuestion }), [state, intelligence, filters, hydrated, loading, error, refresh, updateCompany, createFactory, updateFactory, upsertMaster, removeMaster, updateAlertStatus, createAction, toggleAction, updateTargets, askQuestion, setActiveFactory]);
+  const value = useMemo(() => ({ state, intelligence, filters, hydrated, loading, error, setFilters, setActiveFactory, refresh, updateCompany, createFactory, updateFactory, upsertMaster, removeMaster, updateAlertStatus, createAction, toggleAction, updateTargets, updateCustomKpis, askQuestion }), [state, intelligence, filters, hydrated, loading, error, refresh, updateCompany, createFactory, updateFactory, upsertMaster, removeMaster, updateAlertStatus, createAction, toggleAction, updateTargets, updateCustomKpis, askQuestion, setActiveFactory]);
   if (!hydrated) return <div className="application-loading" role="status"><span /><strong>Connecting to factory database…</strong></div>;
   return <FactoryContext.Provider value={value}>{error && <div className="api-error-banner" role="alert">{error}</div>}{children}</FactoryContext.Provider>;
 }

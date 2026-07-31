@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import date, timedelta
+from uuid import uuid4
 
 from apps.operations.imports import serialize_upload
 from apps.operations.models import StandardRecord, Upload
@@ -15,6 +16,23 @@ DEFAULT_TARGETS = {
     "supplierScore": 85,
     "stockCoverDays": 3,
     "downtimeMinutes": 30,
+}
+
+CUSTOM_KPI_VARIABLES = {
+    "production.planned": ("Planned quantity", "Production", "units"),
+    "production.actual": ("Actual quantity", "Production", "units"),
+    "production.good": ("Good quantity", "Production", "units"),
+    "production.run_minutes": ("Run time", "Production", "minutes"),
+    "downtime.minutes": ("Downtime", "Downtime", "minutes"),
+    "downtime.occurrences": ("Stoppages", "Downtime", "stops"),
+    "quality.inspected": ("Inspected quantity", "Quality", "units"),
+    "quality.rejected": ("Rejected quantity", "Quality", "units"),
+    "quality.reworked": ("Reworked quantity", "Quality", "units"),
+    "inventory.risk_count": ("Materials at risk", "Inventory", "materials"),
+    "supplier.score": ("Supplier score", "Supplier deliveries", "points"),
+    "supplier.deliveries": ("Supplier deliveries", "Supplier deliveries", "deliveries"),
+    "supplier.late_deliveries": ("Late deliveries", "Supplier deliveries", "deliveries"),
+    "orders.at_risk": ("Orders at risk", "Orders", "orders"),
 }
 
 
@@ -108,6 +126,12 @@ def build_intelligence(factory, targets, filters):
     orders = [value for value in orders if matches_dimensions(value, filters, include_shift=False)]
     inventory = latest_inventory(inventory_history)
     supplier_scores = build_supplier_scores(supplier_deliveries)
+    supplier_score = (
+        sum(item["score"] * item["deliveries"] for item in supplier_scores)
+        / sum(item["deliveries"] for item in supplier_scores)
+        if supplier_scores
+        else 0
+    )
 
     planned = total(production, "planned_quantity")
     actual = total(production, "actual_quantity")
@@ -190,6 +214,24 @@ def build_intelligence(factory, targets, filters):
         if upload_count
         else 100
     )
+    custom_variables = build_custom_kpi_variables(
+        planned,
+        actual,
+        good,
+        run_minutes,
+        production_downtime,
+        downtime_frequency,
+        inspected,
+        quality_rejected if inspected else rejected,
+        quality_reworked if inspected else reworked,
+        inventory_risks,
+        supplier_score,
+        supplier_scores,
+        order_risks,
+    )
+    custom_kpis = calculate_custom_kpis(
+        factory.configuration.get("customKpis", []), custom_variables
+    )
     return {
         "totals": {
             "planned": planned,
@@ -230,12 +272,9 @@ def build_intelligence(factory, targets, filters):
         "inventoryRisks": inventory_risks,
         "orderRisks": order_risks,
         "supplierScores": supplier_scores,
-        "supplierScore": (
-            sum(item["score"] * item["deliveries"] for item in supplier_scores)
-            / sum(item["deliveries"] for item in supplier_scores)
-            if supplier_scores
-            else 0
-        ),
+        "supplierScore": supplier_score,
+        "customKpiVariables": custom_variables,
+        "customKpis": custom_kpis,
         "losses": losses,
         "dataAvailability": {
             "production": len(production),
@@ -249,6 +288,132 @@ def build_intelligence(factory, targets, filters):
         "alerts": alerts,
         "dataQuality": quality_score,
     }
+
+
+def normalise_custom_kpis(value):
+    if not isinstance(value, list):
+        raise ValueError("Custom KPIs must be provided as a list.")
+    if len(value) > 12:
+        raise ValueError("A factory can have up to 12 custom KPIs.")
+    result = []
+    seen_ids = set()
+    for item in value:
+        if not isinstance(item, dict):
+            raise ValueError("Every custom KPI must be an object.")
+        name = str(item.get("name", "")).strip()[:60]
+        variable_a = str(item.get("variableA", ""))
+        variable_b = str(item.get("variableB", ""))
+        operation = str(item.get("operation", "divide"))
+        if not name:
+            raise ValueError("Every custom KPI needs a name.")
+        if variable_a not in CUSTOM_KPI_VARIABLES or variable_b not in CUSTOM_KPI_VARIABLES:
+            raise ValueError("Choose supported variables for every custom KPI.")
+        if operation not in {"add", "subtract", "multiply", "divide"}:
+            raise ValueError("Choose a supported custom KPI operation.")
+        try:
+            scale = int(item.get("scale", 1))
+            decimals = int(item.get("decimals", 1))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Custom KPI scale and decimals must be numbers.") from exc
+        if scale not in {1, 100} or decimals not in {0, 1, 2, 3}:
+            raise ValueError("Choose a valid scale and decimal precision.")
+        item_id = str(item.get("id") or uuid4())[:80]
+        if item_id in seen_ids:
+            raise ValueError("Custom KPI identifiers must be unique.")
+        seen_ids.add(item_id)
+        result.append(
+            {
+                "id": item_id,
+                "name": name,
+                "variableA": variable_a,
+                "operation": operation,
+                "variableB": variable_b,
+                "scale": scale,
+                "decimals": decimals,
+                "unit": str(item.get("unit", "")).strip()[:20],
+                "pinnedToHome": bool(item.get("pinnedToHome", False)),
+            }
+        )
+    return result
+
+
+def build_custom_kpi_variables(
+    planned,
+    actual,
+    good,
+    run_minutes,
+    downtime_minutes,
+    downtime_frequency,
+    inspected,
+    rejected,
+    reworked,
+    inventory_risks,
+    supplier_score,
+    supplier_scores,
+    order_risks,
+):
+    values = {
+        "production.planned": planned,
+        "production.actual": actual,
+        "production.good": good,
+        "production.run_minutes": run_minutes,
+        "downtime.minutes": downtime_minutes,
+        "downtime.occurrences": downtime_frequency,
+        "quality.inspected": inspected,
+        "quality.rejected": rejected,
+        "quality.reworked": reworked,
+        "inventory.risk_count": len(inventory_risks),
+        "supplier.score": supplier_score,
+        "supplier.deliveries": sum(item["deliveries"] for item in supplier_scores),
+        "supplier.late_deliveries": sum(item["lateDeliveries"] for item in supplier_scores),
+        "orders.at_risk": len(order_risks),
+    }
+    return [
+        {
+            "key": key,
+            "label": label,
+            "dataset": dataset,
+            "sourceUnit": unit,
+            "value": values[key],
+        }
+        for key, (label, dataset, unit) in CUSTOM_KPI_VARIABLES.items()
+    ]
+
+
+def calculate_custom_kpis(definitions, variables):
+    variable_lookup = {item["key"]: item for item in variables}
+    operators = {
+        "add": ("+", lambda left, right: left + right),
+        "subtract": ("−", lambda left, right: left - right),
+        "multiply": ("×", lambda left, right: left * right),
+        "divide": ("÷", lambda left, right: left / right if right else None),
+    }
+    result = []
+    for definition in definitions if isinstance(definitions, list) else []:
+        try:
+            clean = normalise_custom_kpis([definition])[0]
+            left = variable_lookup[clean["variableA"]]
+            right = variable_lookup[clean["variableB"]]
+            symbol, operation = operators[clean["operation"]]
+            calculated = operation(number(left["value"]), number(right["value"]))
+            calculated = calculated * clean["scale"] if calculated is not None else None
+            result.append(
+                {
+                    **clean,
+                    "value": round(calculated, clean["decimals"])
+                    if calculated is not None
+                    else None,
+                    "status": "ready" if calculated is not None else "unavailable",
+                    "formulaLabel": (
+                        f"{left['label']} {symbol} {right['label']}"
+                        f"{' × 100' if clean['scale'] == 100 else ''}"
+                    ),
+                    "datasets": sorted({left["dataset"], right["dataset"]}),
+                }
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    return result
 
 
 def matches_dimensions(value, filters, include_shift=True):

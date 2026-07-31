@@ -149,7 +149,7 @@ try {
   await command("Runtime.enable");
 
   await navigate("/");
-  const requiredWidgets = ["Production plan vs actual", "OEE & factory performance", "Orders at risk", "Downtime & bottlenecks", "Quality losses", "Inventory & material risk", "Priority alerts & recommended actions"];
+  const requiredWidgets = ["Output against plan", "Major operational losses", "Priority exceptions"];
   for (const title of requiredWidgets) await waitFor(`document.body.innerText.includes(${JSON.stringify(title)})`, `widget “${title}”`);
   if (process.env.VULCAN_SCREENSHOT) {
     await command("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1100, deviceScaleFactor: 1, mobile: false });
@@ -199,7 +199,7 @@ try {
   }
   await navigate("/");
   await waitFor(
-    `document.body.innerText.includes("Priority alerts & recommended actions")`,
+    `document.body.innerText.includes("Priority exceptions")`,
     "command-centre render",
   );
   if (fixtureDir) {
@@ -214,7 +214,7 @@ try {
     }
     await navigate("/");
     await waitFor(
-      `document.body.innerText.includes("Priority alerts & recommended actions")`,
+      `document.body.innerText.includes("Priority exceptions")`,
       "command-centre render after persistence check",
     );
   }

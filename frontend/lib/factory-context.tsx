@@ -15,9 +15,9 @@ interface FactoryContextValue {
   askQuestion: (question: string) => Promise<{ answer: string; reasoning: string; evidence: string[] }>;
 }
 
-const emptyState: FactoryState = { company: { id: "", name: "", industry: "Manufacturing" }, factories: [], activeFactoryId: "", masters: { lines: [], machines: [], skus: [], materials: [], suppliers: [], shifts: [], reasonCodes: [] }, uploads: [], actions: [], targets: { oee: 78, availability: 85, performance: 95, quality: 98, stockCoverDays: 3, downtimeMinutes: 30 } };
+const emptyState: FactoryState = { company: { id: "", name: "", industry: "Manufacturing" }, factories: [], activeFactoryId: "", masters: { lines: [], machines: [], skus: [], materials: [], suppliers: [], shifts: [], reasonCodes: [] }, uploads: [], actions: [], targets: { oee: 78, availability: 85, performance: 95, quality: 98, planAttainment: 90, rejectionRate: 5, supplierScore: 85, stockCoverDays: 3, downtimeMinutes: 30 } };
 const emptyMasters: FactoryMasters = { lines: [], machines: [], skus: [], materials: [], suppliers: [], shifts: [], reasonCodes: [] };
-const defaultTargets: FactoryTargets = { oee: 78, availability: 85, performance: 95, quality: 98, stockCoverDays: 3, downtimeMinutes: 30 };
+const defaultTargets: FactoryTargets = { oee: 78, availability: 85, performance: 95, quality: 98, planAttainment: 90, rejectionRate: 5, supplierScore: 85, stockCoverDays: 3, downtimeMinutes: 30 };
 const FactoryContext = createContext<FactoryContextValue | null>(null);
 
 export function FactoryProvider({ children }: { children: React.ReactNode }) {

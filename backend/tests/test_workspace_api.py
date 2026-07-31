@@ -148,6 +148,8 @@ def test_import_is_inspected_validated_and_calculated_in_django(api_client):
     assert result.data["intelligence"]["totals"]["planned"] == 100
     assert result.data["intelligence"]["totals"]["actual"] == 90
     assert result.data["intelligence"]["totals"]["good"] == 88
+    assert result.data["intelligence"]["totals"]["estimatedProductionLost"] == 10
+    assert result.data["intelligence"]["totals"]["rejectionRate"] == 0
 
 
 @pytest.mark.django_db
@@ -202,3 +204,47 @@ def test_full_production_fixture_can_be_inspected(api_client):
     assert inspection.status_code == 201
     assert inspection.data["upload"]["acceptedRows"] == 0
     assert len(inspection.data["headers"]) == 14
+
+
+@pytest.mark.django_db
+def test_supplier_sheet_is_scored_from_agreed_delivery_facts(api_client):
+    workspace = api_client.get("/api/workspace/")
+    factory_id = workspace.data["state"]["activeFactoryId"]
+    content = (
+        b"supplier,material,purchase_order,order_date,promised_date,actual_delivery_date,"
+        b"ordered_quantity,received_quantity,accepted_quantity,terms_met\n"
+        b"Reliable Supply,Steel,PO-1,2026-07-20,2026-07-30,2026-07-30,100,100,98,yes\n"
+        b"Late Supply,Rubber,PO-2,2026-07-20,2026-07-29,2026-07-31,100,90,85,no\n"
+    )
+    inspection = api_client.post(
+        "/api/imports/inspect/",
+        {
+            "factory": factory_id,
+            "datasetType": "supplier",
+            "file": SimpleUploadedFile("suppliers.csv", content, content_type="text/csv"),
+        },
+        format="multipart",
+    )
+    assert inspection.status_code == 201
+
+    upload_id = inspection.data["upload"]["id"]
+    validation = api_client.post(
+        f"/api/imports/{upload_id}/validate/",
+        {"mapping": inspection.data["mapping"]},
+        format="json",
+    )
+    assert validation.status_code == 200
+    assert validation.data["canImport"] is True
+    assert (
+        api_client.post(f"/api/imports/{upload_id}/commit/", {}, format="json").status_code == 200
+    )
+
+    result = api_client.get(
+        f"/api/workspace/?factory={factory_id}&from=2026-07-25&to=2026-07-31"
+    ).data["intelligence"]
+    assert result["dataAvailability"]["supplier"] == 2
+    assert result["supplierScores"][0]["supplier"] == "Late Supply"
+    assert result["supplierScores"][0]["score"] == pytest.approx(71.9)
+    assert result["supplierScores"][1]["score"] == pytest.approx(99.8)
+    assert result["supplierScore"] == pytest.approx(85.85)
+    assert any(alert["id"] == "supplier-Late Supply" for alert in result["alerts"])

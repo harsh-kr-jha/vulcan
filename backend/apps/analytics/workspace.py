@@ -10,6 +10,9 @@ DEFAULT_TARGETS = {
     "availability": 85,
     "performance": 95,
     "quality": 98,
+    "planAttainment": 90,
+    "rejectionRate": 5,
+    "supplierScore": 85,
     "stockCoverDays": 3,
     "downtimeMinutes": 30,
 }
@@ -64,6 +67,7 @@ def build_intelligence(factory, targets, filters):
     scoped = []
     inventory_history = []
     orders = []
+    supplier_deliveries = []
     for record in records.iterator():
         value = record.values
         if record.dataset_type == "inventory":
@@ -72,6 +76,13 @@ def build_intelligence(factory, targets, filters):
             continue
         if record.dataset_type == "orders":
             orders.append(value)
+            continue
+        if record.dataset_type == "supplier":
+            if record.operational_date and from_date and record.operational_date < from_date:
+                continue
+            if record.operational_date and to_date and record.operational_date > to_date:
+                continue
+            supplier_deliveries.append(value)
             continue
         if record.operational_date and from_date and record.operational_date < from_date:
             continue
@@ -86,6 +97,7 @@ def build_intelligence(factory, targets, filters):
     quality = [value for kind, value in scoped if kind == "quality"]
     orders = [value for value in orders if matches_dimensions(value, filters, include_shift=False)]
     inventory = latest_inventory(inventory_history)
+    supplier_scores = build_supplier_scores(supplier_deliveries)
 
     planned = total(production, "planned_quantity")
     actual = total(production, "actual_quantity")
@@ -95,6 +107,7 @@ def build_intelligence(factory, targets, filters):
     planned_minutes = total(production, "planned_minutes")
     recorded_downtime = total(production, "downtime_minutes")
     production_downtime = recorded_downtime or total(downtime, "minutes")
+    downtime_frequency = sum(number(row.get("occurrences"), 1) for row in downtime)
     run_minutes = max(planned_minutes - production_downtime, 0)
     ideal_minutes = sum(
         number(row.get("ideal_cycle_minutes")) * number(row.get("actual_quantity"))
@@ -104,10 +117,26 @@ def build_intelligence(factory, targets, filters):
     performance = min(percent(ideal_minutes, run_minutes), 100)
     quality_rate = min(percent(good, actual), 100)
     oee = availability * performance * quality_rate / 10_000
+    weighted_ideal_cycle = ideal_minutes / actual if actual else 0
+    actual_cycle = run_minutes / actual if actual else 0
+    throughput_rate = actual / run_minutes * 60 if run_minutes else 0
+    cycle_time_variance = (
+        percent(actual_cycle - weighted_ideal_cycle, weighted_ideal_cycle)
+        if weighted_ideal_cycle
+        else 0
+    )
+    downtime_lost_units = production_downtime / weighted_ideal_cycle if weighted_ideal_cycle else 0
+    speed_lost_units = (
+        max(run_minutes / weighted_ideal_cycle - actual, 0) if weighted_ideal_cycle else 0
+    )
 
     inspected = total(quality, "inspected_quantity")
     quality_rejected = total(quality, "rejected_quantity")
     quality_reworked = total(quality, "reworked_quantity")
+    rejection_rate = (
+        percent(quality_rejected, inspected) if inspected else percent(rejected, actual)
+    )
+    rework_rate = percent(quality_reworked, inspected) if inspected else percent(reworked, actual)
     first_pass_yield = (
         percent(max(inspected - quality_rejected - quality_reworked, 0), inspected)
         if inspected
@@ -122,6 +151,13 @@ def build_intelligence(factory, targets, filters):
     order_risks = build_order_risks(
         orders, filters.get("to"), good / max(len(trend), 1), machine_loss
     )
+    losses = {
+        "productionGapUnits": max(planned - actual, 0),
+        "downtimeLostUnits": downtime_lost_units,
+        "speedLostUnits": speed_lost_units,
+        "rejectedUnits": quality_rejected if inspected else rejected,
+        "reworkUnits": quality_reworked if inspected else reworked,
+    }
     alerts = generated_alerts(
         factory,
         filters,
@@ -133,6 +169,8 @@ def build_intelligence(factory, targets, filters):
         defect_loss,
         inventory_risks,
         order_risks,
+        supplier_scores,
+        rejection_rate,
     )
     uploads = Upload.objects.filter(factory=factory, status="COMPLETED")
     upload_count = uploads.count()
@@ -150,6 +188,18 @@ def build_intelligence(factory, targets, filters):
             "reworked": quality_reworked if inspected else reworked,
             "planAttainment": percent(actual, planned),
             "firstPassYield": first_pass_yield,
+            "totalDowntime": production_downtime,
+            "downtimeFrequency": downtime_frequency,
+            "averageDowntimeDuration": (
+                production_downtime / downtime_frequency if downtime_frequency else 0
+            ),
+            "rejectionRate": rejection_rate,
+            "reworkRate": rework_rate,
+            "estimatedProductionLost": max(planned - actual, 0),
+            "throughputRate": throughput_rate,
+            "idealCycleMinutes": weighted_ideal_cycle,
+            "actualCycleMinutes": actual_cycle,
+            "cycleTimeVariance": cycle_time_variance,
         },
         "oee": {
             "availability": availability,
@@ -168,6 +218,22 @@ def build_intelligence(factory, targets, filters):
         "skuQuality": sku_quality,
         "inventoryRisks": inventory_risks,
         "orderRisks": order_risks,
+        "supplierScores": supplier_scores,
+        "supplierScore": (
+            sum(item["score"] * item["deliveries"] for item in supplier_scores)
+            / sum(item["deliveries"] for item in supplier_scores)
+            if supplier_scores
+            else 0
+        ),
+        "losses": losses,
+        "dataAvailability": {
+            "production": len(production),
+            "downtime": len(downtime),
+            "quality": len(quality),
+            "inventory": len(inventory),
+            "supplier": len(supplier_deliveries),
+            "orders": len(orders),
+        },
         "alerts": alerts,
         "dataQuality": quality_score,
     }
@@ -311,6 +377,74 @@ def build_order_risks(rows, to_value, average_daily_good, machine_loss):
     return sorted(result, key=lambda item: weights[item["risk"]])
 
 
+def build_supplier_scores(rows):
+    """Score suppliers using only agreed, auditable delivery facts."""
+    grouped = defaultdict(list)
+    for row in rows:
+        grouped[str(row.get("supplier") or "Unassigned supplier")].append(row)
+
+    scores = []
+    for supplier, deliveries in grouped.items():
+        on_time_points = []
+        quantity_rates = []
+        acceptance_rates = []
+        terms_results = []
+        delay_days = []
+        materials = set()
+        for delivery in deliveries:
+            promised = parse_date(delivery.get("promised_date"))
+            actual = parse_date(delivery.get("actual_delivery_date"))
+            delay = max((actual - promised).days, 0) if promised and actual else 30
+            ordered = number(delivery.get("ordered_quantity"))
+            received = number(delivery.get("received_quantity"))
+            accepted = number(delivery.get("accepted_quantity"))
+            terms_met = truthy(delivery.get("terms_met"))
+            on_time_points.append(max(0, 60 - delay * 10))
+            quantity_rates.append(min(received / ordered, 1) if ordered else 0)
+            acceptance_rates.append(min(accepted / received, 1) if received else 0)
+            terms_results.append(1 if terms_met else 0)
+            delay_days.append(delay)
+            if delivery.get("material"):
+                materials.add(str(delivery["material"]))
+
+        count = len(deliveries)
+        on_time_score = sum(on_time_points) / count
+        quantity_rate = sum(quantity_rates) / count
+        acceptance_rate = sum(acceptance_rates) / count
+        terms_rate = sum(terms_results) / count
+        score = on_time_score + quantity_rate * 25 + acceptance_rate * 10 + terms_rate * 5
+        scores.append(
+            {
+                "supplier": supplier,
+                "score": round(score, 1),
+                "status": supplier_status(score),
+                "deliveries": count,
+                "onTimeRate": percent(sum(delay == 0 for delay in delay_days), count),
+                "quantityFulfillment": quantity_rate * 100,
+                "acceptanceRate": acceptance_rate * 100,
+                "termsFulfillment": terms_rate * 100,
+                "lateDeliveries": sum(delay > 0 for delay in delay_days),
+                "averageDelayDays": sum(delay_days) / count,
+                "materials": sorted(materials),
+            }
+        )
+    return sorted(scores, key=lambda item: item["score"])
+
+
+def truthy(value):
+    return str(value or "").strip().casefold() in {"1", "true", "yes", "y", "met", "fulfilled"}
+
+
+def supplier_status(score):
+    if score >= 90:
+        return "preferred"
+    if score >= 75:
+        return "stable"
+    if score >= 60:
+        return "watch"
+    return "critical"
+
+
 def generated_alerts(
     factory,
     filters,
@@ -322,6 +456,8 @@ def generated_alerts(
     defect_loss,
     inventory_risks,
     order_risks,
+    supplier_scores,
+    rejection_rate,
 ):
     alerts = []
     end = filters.get("to") or date.today().isoformat()
@@ -393,6 +529,57 @@ def generated_alerts(
                 [f"Plan attainment {percent(actual, planned):.1f}%", f"OEE {oee:.1f}%"],
             )
         )
+    if planned and percent(actual, planned) < targets["planAttainment"]:
+        alerts.append(
+            alert(
+                "production-below-plan",
+                "Production is below plan",
+                f"Output reached {percent(actual, planned):.1f}% of the selected-period plan.",
+                "Factory production",
+                "high" if percent(actual, planned) < 75 else "medium",
+                "Review the largest downtime and speed losses before changing the plan.",
+                f"< {targets['planAttainment']}% attainment",
+                f"{percent(actual, planned):.1f}%",
+                end,
+                [f"Plan {planned:g}", f"Actual {actual:g}"],
+            )
+        )
+    if rejection_rate > targets["rejectionRate"]:
+        alerts.append(
+            alert(
+                "rejection-above-target",
+                "Rejection is above target",
+                f"Rejected output is {rejection_rate:.1f}% for the selected period.",
+                "Factory quality",
+                "high" if rejection_rate > targets["rejectionRate"] * 1.5 else "medium",
+                "Review the leading defect reason and affected SKU before the next run.",
+                f"> {targets['rejectionRate']}% rejection",
+                f"{rejection_rate:.1f}%",
+                end,
+                [f"Rejection rate {rejection_rate:.1f}%"],
+            )
+        )
+    if supplier_scores and supplier_scores[0]["score"] < targets["supplierScore"]:
+        supplier = supplier_scores[0]
+        alerts.append(
+            alert(
+                f"supplier-{supplier['supplier']}",
+                f"{supplier['supplier']} delivery performance needs review",
+                f"The supplier scored {supplier['score']:.1f}/100 across "
+                f"{supplier['deliveries']} deliveries.",
+                f"{supplier['supplier']} · Supply",
+                "high" if supplier["score"] < 60 else "medium",
+                "Review late deliveries, quantity shortfalls and unfulfilled terms "
+                "before placing the next order.",
+                f"< {targets['supplierScore']} supplier score",
+                f"{supplier['score']:.1f}/100",
+                end,
+                [
+                    f"{supplier['onTimeRate']:.1f}% on time",
+                    f"{supplier['quantityFulfillment']:.1f}% quantity fulfilled",
+                ],
+            )
+        )
     if defect_loss:
         defect = defect_loss[0]
         alerts.append(
@@ -448,6 +635,19 @@ def alert(
 
 def answer_question(intelligence, question):
     normalized = question.casefold()
+    if any(word in normalized for word in ["supplier", "delivery", "vendor"]):
+        items = intelligence["supplierScores"]
+        if items:
+            item = items[0]
+            return response(
+                f"{item['supplier']} has the lowest supplier score at {item['score']:.1f}/100.",
+                f"It delivered {item['onTimeRate']:.1f}% on time and fulfilled "
+                f"{item['quantityFulfillment']:.1f}% of ordered quantity.",
+                [
+                    f"{item['deliveries']} deliveries",
+                    f"{item['lateDeliveries']} late",
+                ],
+            )
     if "order" in normalized and intelligence["orderRisks"]:
         item = intelligence["orderRisks"][0]
         return response(

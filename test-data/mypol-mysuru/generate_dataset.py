@@ -271,10 +271,15 @@ def daterange(start: date, end: date):
         current += timedelta(days=1)
 
 
-def write_csv(filename: str, fieldnames: list[str], rows: list[dict[str, Any]]) -> dict[str, Any]:
+def write_csv(
+    filename: str,
+    fieldnames: list[str],
+    rows: list[dict[str, Any]],
+    line_terminator: str = "\r\n",
+) -> dict[str, Any]:
     path = OUTPUT_DIR / filename
     with path.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator=line_terminator)
         writer.writeheader()
         writer.writerows(rows)
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -613,6 +618,85 @@ def create_master_reference() -> list[dict[str, str]]:
     return rows
 
 
+def create_supplier_deliveries() -> list[dict[str, Any]]:
+    """Create varied but repeatable supplier-delivery records for V2 scoring."""
+    supplier_rng = random.Random(SEED + 77)
+    profiles = (
+        (
+            "Mysuru Rubber Compounds",
+            ("Butyl rubber compound", "Natural rubber RSS-4"),
+            0.94,
+            (0.97, 1.0),
+            (0.98, 1.0),
+            0.96,
+        ),
+        (
+            "Karnataka Valve Works",
+            ("Tube valve assembly", "Valve stem TR78A"),
+            0.62,
+            (0.88, 0.99),
+            (0.95, 0.99),
+            0.72,
+        ),
+        (
+            "Southern Carbon Supply",
+            ("Carbon black N330", "Carbon black N660"),
+            0.86,
+            (0.95, 1.0),
+            (0.97, 1.0),
+            0.90,
+        ),
+        (
+            "Deccan Process Oils",
+            ("Aromatic process oil", "Paraffinic process oil"),
+            0.76,
+            (0.92, 1.0),
+            (0.96, 1.0),
+            0.84,
+        ),
+        (
+            "Precision Fabric Reinforcement",
+            ("Nylon tyre cord", "Reinforcement fabric"),
+            0.52,
+            (0.84, 0.98),
+            (0.92, 0.99),
+            0.64,
+        ),
+    )
+    rows = []
+    for index in range(96):
+        supplier, materials, on_time_rate, fill_range, quality_range, terms_rate = (
+            supplier_rng.choice(profiles)
+        )
+        order_date = START_DATE + timedelta(days=supplier_rng.randint(0, NUMBER_OF_DAYS - 16))
+        promised_date = order_date + timedelta(days=supplier_rng.randint(4, 9))
+        delivery_offset = (
+            supplier_rng.choice((-1, 0, 0))
+            if supplier_rng.random() < on_time_rate
+            else supplier_rng.randint(1, 5)
+        )
+        actual_date = promised_date + timedelta(days=delivery_offset)
+        ordered = supplier_rng.randint(20, 240) * 50
+        received = round(ordered * supplier_rng.uniform(*fill_range))
+        accepted = round(received * supplier_rng.uniform(*quality_range))
+        terms_met = supplier_rng.random() < terms_rate and delivery_offset <= 2
+        rows.append(
+            {
+                "supplier": supplier,
+                "material": supplier_rng.choice(materials),
+                "purchase_order": f"MYP-PO-{index + 1:04d}",
+                "order_date": order_date.isoformat(),
+                "promised_date": promised_date.isoformat(),
+                "actual_delivery_date": actual_date.isoformat(),
+                "ordered_quantity": ordered,
+                "received_quantity": received,
+                "accepted_quantity": accepted,
+                "terms_met": "yes" if terms_met else "no",
+            }
+        )
+    return sorted(rows, key=lambda row: (row["actual_delivery_date"], row["supplier"]))
+
+
 def validate(
     production: list[dict[str, Any]],
     downtime: list[dict[str, Any]],
@@ -761,6 +845,7 @@ def main() -> None:
     production, downtime, quality = create_production()
     inventory = create_inventory()
     orders = create_orders()
+    supplier_deliveries = create_supplier_deliveries()
     master_reference = create_master_reference()
     validate(production, downtime, quality, inventory, orders)
     expected_results = create_expected_results(production, downtime, quality, inventory, orders)
@@ -836,6 +921,23 @@ def main() -> None:
             orders,
         ),
         write_csv(
+            "suppliers.csv",
+            [
+                "supplier",
+                "material",
+                "purchase_order",
+                "order_date",
+                "promised_date",
+                "actual_delivery_date",
+                "ordered_quantity",
+                "received_quantity",
+                "accepted_quantity",
+                "terms_met",
+            ],
+            supplier_deliveries,
+            line_terminator="\n",
+        ),
+        write_csv(
             "factory_master_reference.csv",
             ["entity_type", "code", "name", "parent_code", "uom", "notes"],
             master_reference,
@@ -864,8 +966,8 @@ def main() -> None:
         "files": files,
         "expected_results_file": "expected_results.json",
         "totals": {
-            "importable_rows": sum(item["rows"] for item in files[:5]),
-            "reference_rows": files[5]["rows"],
+            "importable_rows": sum(item["rows"] for item in files[:6]),
+            "reference_rows": files[6]["rows"],
         },
         "expected_signals_for_2026-07-25_to_2026-07-31": [
             "Tube Cure Press HC-02 should rank as the largest downtime bottleneck.",

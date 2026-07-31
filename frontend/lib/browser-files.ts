@@ -5,6 +5,7 @@ const templates: Record<DatasetType, { headers: string[]; example: string[] }> =
   downtime: { headers: ["date", "line", "machine", "shift", "reason", "minutes", "occurrences"], example: ["2026-07-31", "Line 01", "Machine 01", "Shift A", "Hydraulic failure", "52", "4"] },
   quality: { headers: ["date", "line", "machine", "sku", "shift", "inspected_quantity", "rejected_quantity", "reworked_quantity", "defect_reason"], example: ["2026-07-31", "Line 01", "Machine 01", "SKU-01", "Shift A", "1200", "35", "10", "Misalignment"] },
   inventory: { headers: ["date", "material", "supplier", "available_quantity", "daily_consumption", "safety_stock", "expected_receipt_date", "required_date", "receipt_status"], example: ["2026-07-31", "Material 01", "Supplier 01", "1300", "1000", "1800", "2026-08-02", "2026-08-01", "delayed"] },
+  supplier: { headers: ["supplier", "material", "purchase_order", "order_date", "promised_date", "actual_delivery_date", "ordered_quantity", "received_quantity", "accepted_quantity", "terms_met"], example: ["Supplier 01", "Material 01", "PO-1042", "2026-07-20", "2026-07-28", "2026-07-29", "1000", "980", "970", "yes"] },
   orders: { headers: ["order_id", "sku", "line", "required_quantity", "produced_quantity", "due_date", "priority", "status"], example: ["ORD-01", "SKU-01", "Line 01", "12000", "9100", "2026-08-01", "high", "open"] },
 };
 

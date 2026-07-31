@@ -276,7 +276,12 @@ def normalize_date(value):
 
 
 def record_date(values):
-    raw = values.get("date") or values.get("due_date")
+    raw = (
+        values.get("date")
+        or values.get("actual_delivery_date")
+        or values.get("promised_date")
+        or values.get("due_date")
+    )
     try:
         return date.fromisoformat(str(raw)) if raw else None
     except ValueError:

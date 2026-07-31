@@ -34,10 +34,11 @@ Exact row counts and SHA-256 checksums are recorded in [manifest.json](manifest.
 | `quality.csv` | Quality | Inspection, rejection, rework and defect Pareto data |
 | `inventory.csv` | Inventory | Daily material snapshots, consumption and receipt risk |
 | `orders.csv` | Orders | Completed history plus current open/held production orders |
+| `suppliers.csv` | Supplier deliveries | Promised versus actual delivery, quantity, acceptance and terms |
 | `factory_master_reference.csv` | Setup reference only | Lines, machines, SKUs, materials, suppliers, shifts and reason codes |
 | `expected_results.json` | Verification reference | Exact final-week totals, OEE components, rankings and risks |
 
-The five operational files use Vulcan’s standard field keys, so deterministic mapping should
+The six operational files use Vulcan’s standard field keys, so deterministic mapping should
 suggest every required field automatically.
 
 ## Import into Vulcan
@@ -58,6 +59,7 @@ suggest every required field automatically.
    3. `quality.csv`
    4. `inventory.csv`
    5. `orders.csv`
+   6. `suppliers.csv`
 5. Accept the suggested mappings, review validation, and approve accepted rows.
 6. On the command centre, keep the date filter at `2026-07-25` to `2026-07-31` for the designed
    stress scenario. Use a wider date range to test trends and volume.

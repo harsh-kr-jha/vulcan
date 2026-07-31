@@ -87,7 +87,7 @@ function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof us
   );
 }
 
-function ProductionWidget() {
+function ProductionWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
   const option = useMemo<EChartsOption>(
     () => ({
@@ -156,7 +156,7 @@ function ProductionWidget() {
   return (
     <section className="panel command-widget production-widget home-production-widget">
       <PanelHeader
-        number={1}
+        number={number}
         title="Output against plan"
         subtitle="Daily planned, actual and good production"
         href="/performance?tab=Production"
@@ -171,7 +171,7 @@ function ProductionWidget() {
   );
 }
 
-function MajorLossesWidget() {
+function MajorLossesWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
   const maxDowntime = intelligence.machineLoss[0]?.minutes || 1;
   const maxDefect = intelligence.defectLoss[0]?.rejected || 1;
@@ -179,7 +179,7 @@ function MajorLossesWidget() {
   return (
     <section className="panel command-widget home-loss-widget">
       <PanelHeader
-        number={2}
+        number={number}
         title="Major operational losses"
         subtitle="The largest quantified losses in the selected period"
         href="/performance?tab=Downtime"
@@ -232,14 +232,14 @@ function MajorLossesWidget() {
   );
 }
 
-function PriorityExceptionsWidget() {
+function PriorityExceptionsWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
   const alerts = intelligence.alerts.filter((alert) => alert.status !== "resolved").slice(0, 3);
 
   return (
     <section className="panel command-widget home-alert-widget">
       <PanelHeader
-        number={4}
+        number={number}
         title="Priority exceptions"
         subtitle="Only issues that need attention now"
         href="/alerts"
@@ -267,13 +267,13 @@ function PriorityExceptionsWidget() {
   );
 }
 
-function SupplierPerformanceWidget() {
+function SupplierPerformanceWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
 
   return (
     <section className="panel command-widget supplier-summary-widget">
       <PanelHeader
-        number={3}
+        number={number}
         title="Supplier delivery performance"
         subtitle="On-time delivery, quantity, accepted quality and agreed terms"
         href="/performance?tab=Suppliers"
@@ -306,6 +306,14 @@ export function DashboardOverview() {
   const hasProduction = available.production > 0;
   const hasLosses = hasProduction || available.downtime > 0 || available.quality > 0;
   const hasSupplier = available.supplier > 0;
+  const hasAlerts = intelligence.alerts.length > 0;
+  const visibleCardKeys = [
+    hasProduction && "production",
+    hasLosses && "losses",
+    hasSupplier && "supplier",
+    hasAlerts && "alerts",
+  ].filter((key): key is string => Boolean(key));
+  const cardNumber = (key: string) => visibleCardKeys.indexOf(key) + 1;
   const summaryMetrics = [
     hasProduction && { label: "OEE", value: `${intelligence.oee.value.toFixed(1)}%`, detail: `A ${intelligence.oee.availability.toFixed(1)} · P ${intelligence.oee.performance.toFixed(1)} · Q ${intelligence.oee.quality.toFixed(1)}` },
     (hasProduction || available.downtime > 0) && { label: "Total downtime", value: `${intelligence.totals.totalDowntime.toLocaleString("en-IN")} min`, detail: `${intelligence.totals.downtimeFrequency} stops` },
@@ -345,10 +353,10 @@ export function DashboardOverview() {
       <DataHealthNotice intelligence={intelligence} />
       {summaryMetrics.length > 0 && <div className="answer-summary-strip home-summary-strip" style={{ gridTemplateColumns: `repeat(${Math.min(summaryMetrics.length, 6)}, 1fr)` }}>{summaryMetrics.map((metric) => <div key={metric.label}><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.detail}</small></div>)}</div>}
       <div className="home-decision-grid">
-        {hasProduction && <ProductionWidget />}
-        {hasLosses && <MajorLossesWidget />}
-        {hasSupplier && <SupplierPerformanceWidget />}
-        {intelligence.alerts.length > 0 && <PriorityExceptionsWidget />}
+        {hasProduction && <ProductionWidget number={cardNumber("production")} />}
+        {hasLosses && <MajorLossesWidget number={cardNumber("losses")} />}
+        {hasSupplier && <SupplierPerformanceWidget number={cardNumber("supplier")} />}
+        {hasAlerts && <PriorityExceptionsWidget number={cardNumber("alerts")} />}
       </div>
       <div className="traceability-footer">
         <ShieldAlert size={14} />

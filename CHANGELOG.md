@@ -20,6 +20,9 @@ All notable changes to Vulcan are documented in this file.
   and documentation route.
 - FAQ rendering uses stable native disclosure controls while retaining help search.
 - Data Upload source history now provides a clear Preview action alongside lineage details.
+- Replaced the topbar hamburger with a dedicated sidebar-edge control that collapses and
+  restores navigation on desktop and opens or closes it on mobile.
+- Home decision cards are numbered dynamically, without gaps when data-dependent cards are hidden.
 
 ### Verification
 

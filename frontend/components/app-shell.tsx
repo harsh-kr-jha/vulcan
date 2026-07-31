@@ -9,7 +9,8 @@ import {
   Factory,
   Gauge,
   LayoutDashboard,
-  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   Sigma,
   Settings2,
@@ -39,7 +40,7 @@ function Brand() {
   return <Link className="brand" href="/" aria-label="Vulcan home"><span className="brand-mark"><Bolt size={18} strokeWidth={2.8} /></span><span><strong>VULCAN</strong><small>Factory intelligence</small></span></Link>;
 }
 
-function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+function Sidebar({ open, closed, onClose, onNavigate }: { open: boolean; closed: boolean; onClose: () => void; onNavigate: () => void }) {
   const pathname = usePathname();
   const { state, intelligence, setActiveFactory } = useFactory();
   const [factoryMenu, setFactoryMenu] = useState(false);
@@ -48,7 +49,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 
   return <>
     {open && <button className="sidebar-backdrop" onClick={onClose} aria-label="Close navigation" />}
-    <aside className={`sidebar ${open ? "sidebar-open" : ""}`}>
+    <aside className={`sidebar ${open ? "sidebar-open" : ""} ${closed ? "sidebar-closed" : ""}`}>
       <div className="sidebar-top"><Brand /></div>
       <div className="factory-switcher-wrap">
         <button className="factory-switcher" onClick={() => setFactoryMenu((value) => !value)} aria-expanded={factoryMenu}>
@@ -62,10 +63,10 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
         </div>}
       </div>
       <nav className="sidebar-nav" aria-label="Primary navigation">
-        {navGroups.map((group) => <div className="nav-group" key={group.label}><p>{group.label}</p>{group.items.map((item) => { const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href.split("?")[0]); const Icon = item.icon; return <Link className={`nav-item ${active ? "active" : ""}`} href={item.href} key={item.href} onClick={onClose}><Icon size={18} /><span>{item.label}</span>{item.href === "/alerts" && newAlerts > 0 && <span className="nav-badge">{newAlerts}</span>}</Link>; })}</div>)}
+        {navGroups.map((group) => <div className="nav-group" key={group.label}><p>{group.label}</p>{group.items.map((item) => { const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href.split("?")[0]); const Icon = item.icon; return <Link className={`nav-item ${active ? "active" : ""}`} href={item.href} key={item.href} onClick={onNavigate}><Icon size={18} /><span>{item.label}</span>{item.href === "/alerts" && newAlerts > 0 && <span className="nav-badge">{newAlerts}</span>}</Link>; })}</div>)}
       </nav>
       <div className="sidebar-footer">
-        <Link className="nav-item" href="/help" onClick={onClose}><CircleHelp size={18} /><span>Setup help</span></Link>
+        <Link className="nav-item" href="/help" onClick={onNavigate}><CircleHelp size={18} /><span>Setup help</span></Link>
         <div className="data-health-mini"><div className="data-health-mini-top"><span>Data health</span><strong>{intelligence.dataQuality.toFixed(1)}%</strong></div><div className="mini-progress"><span style={{ width: `${intelligence.dataQuality}%` }} /></div><small>{state.uploads.length} preserved source dataset{state.uploads.length === 1 ? "" : "s"}</small></div>
       </div>
     </aside>
@@ -73,18 +74,29 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarMode, setSidebarMode] = useState<"default" | "open" | "closed">("default");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const pathname = usePathname();
   const { intelligence, filters } = useFactory();
   if (pathname === "/login") return <>{children}</>;
 
-  return <div className="app-shell">
-    <Sidebar open={menuOpen} onClose={() => setMenuOpen(false)} />
+  function toggleSidebar() {
+    setSidebarMode((current) => {
+      const mobile = window.matchMedia("(max-width: 780px)").matches;
+      const currentlyOpen = current === "open" || (current === "default" && !mobile);
+      return currentlyOpen ? "closed" : "open";
+    });
+  }
+  function closeSidebar() { setSidebarMode("closed"); }
+  function closeAfterNavigation() { if (window.matchMedia("(max-width: 780px)").matches) closeSidebar(); }
+
+  return <div className={`app-shell sidebar-is-${sidebarMode}`}>
+    <Sidebar open={sidebarMode === "open"} closed={sidebarMode === "closed"} onClose={closeSidebar} onNavigate={closeAfterNavigation} />
+    <button className="sidebar-toggle" onClick={toggleSidebar} aria-label="Open or close sidebar"><PanelLeftClose className="sidebar-close-icon" size={17} /><PanelLeftOpen className="sidebar-open-icon" size={17} /></button>
     <div className="app-main">
-      <header className={`topbar ${menuOpen ? "menu-open" : ""}`}>
-        <div className="mobile-brand-row"><button className="icon-button menu-button" aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><Menu size={20} /></button><div className="mobile-brand"><span className="brand-mark"><Bolt size={16} /></span><strong>VULCAN</strong></div></div>
+      <header className="topbar">
+        <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark"><Bolt size={16} /></span><strong>VULCAN</strong></div></div>
         <div className="topbar-context"><span className="shift-label">{filters.shift === "all" ? "All shifts" : filters.shift} · {filters.from} to {filters.to}</span></div>
         <div className="topbar-actions">
           <button className="icon-button notification-button" aria-label="Notifications" onClick={() => { setNotificationsOpen((value) => !value); setProfileOpen(false); }}><Bell size={19} />{intelligence.alerts.some((alert) => alert.status === "new") && <span />}</button>

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from apps.operations.models import StandardRecord, Upload
 from apps.tenancy.models import Company
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -211,6 +212,66 @@ def test_mapping_mismatch_returns_a_specific_correction(api_client):
     )
     assert missing_machine["ruleCode"] == "required_mapping"
     assert "Map the source column" in missing_machine["suggestedCorrection"]
+
+
+@pytest.mark.django_db
+def test_completed_source_can_be_reopened_for_editing_and_deleted(api_client):
+    factory_id = api_client.get("/api/workspace/").data["state"]["activeFactoryId"]
+    inspection = api_client.post(
+        "/api/imports/inspect/",
+        {
+            "factory": factory_id,
+            "datasetType": "downtime",
+            "file": SimpleUploadedFile(
+                "editable.csv",
+                b"date,line,machine,shift,reason,minutes\n"
+                b"2026-07-31,Line 1,Mixer 1,Shift A,Failure,75\n",
+                content_type="text/csv",
+            ),
+        },
+        format="multipart",
+    )
+    upload_id = inspection.data["upload"]["id"]
+    validation = api_client.post(
+        f"/api/imports/{upload_id}/validate/",
+        {"mapping": inspection.data["mapping"]},
+        format="json",
+    )
+    assert validation.data["canImport"] is True
+    committed = api_client.post(f"/api/imports/{upload_id}/commit/", {}, format="json")
+    assert committed.status_code == 200
+
+    edit = api_client.get(f"/api/imports/{upload_id}/edit/")
+    assert edit.status_code == 200
+    assert edit.data["upload"]["status"] == "COMPLETED"
+    assert edit.data["mapping"]["minutes"] == "minutes"
+    assert edit.data["samples"][0]["minutes"] == "75"
+
+    deleted = api_client.delete(f"/api/imports/{upload_id}/delete/")
+    assert deleted.status_code == 204
+    assert not Upload.objects.filter(id=upload_id).exists()
+    assert not StandardRecord.objects.filter(upload_id=upload_id).exists()
+
+
+@pytest.mark.django_db
+def test_downtime_target_unit_is_validated_and_minutes_remain_canonical(api_client):
+    factory_id = api_client.get("/api/workspace/").data["state"]["activeFactoryId"]
+    saved = api_client.patch(
+        f"/api/workspace/configuration/?factory={factory_id}",
+        {"targets": {"downtimeMinutes": 90, "downtimeUnit": "hours"}},
+        format="json",
+    )
+    assert saved.status_code == 200
+    assert saved.data["state"]["targets"]["downtimeMinutes"] == 90
+    assert saved.data["state"]["targets"]["downtimeUnit"] == "hours"
+
+    rejected = api_client.patch(
+        f"/api/workspace/configuration/?factory={factory_id}",
+        {"targets": {"downtimeUnit": "shifts"}},
+        format="json",
+    )
+    assert rejected.status_code == 400
+    assert "minutes or hours" in rejected.data["detail"]
 
 
 @pytest.mark.django_db

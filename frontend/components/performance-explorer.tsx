@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Chart } from "@/components/charts/chart";
 import { CommandFilters } from "@/components/command-filters";
 import { downloadBlob } from "@/lib/browser-files";
+import { formatDuration } from "@/lib/formatters";
 import { useFactory } from "@/lib/factory-context";
 
 const tabs = ["OEE", "Production", "Downtime", "Quality", "Inventory", "Suppliers"] as const;
@@ -124,23 +125,26 @@ function ProductionView() {
 function DowntimeView() {
   const { intelligence } = useFactory();
   const reversed = [...intelligence.reasonLoss].slice(0, 8).reverse();
+  const showHours = reversed.some((item) => item.minutes >= 60);
+  const durationUnit = showHours ? "hr" : "min";
+  const chartValue = (minutes: number) => showHours ? Number((minutes / 60).toFixed(1)) : minutes;
   const option: EChartsOption = {
     grid: { left: 150, right: 58, top: 20, bottom: 34 },
     tooltip,
-    xAxis: { type: "value", axisLabel: { color: colors.text, fontSize: 11, formatter: "{value} min" }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } },
+    xAxis: { type: "value", axisLabel: { color: colors.text, fontSize: 11, formatter: `{value} ${durationUnit}` }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } },
     yAxis: { type: "category", data: reversed.map((item) => item.reason), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: colors.text, fontSize: 11 } },
-    series: [{ type: "bar", barWidth: 17, data: reversed.map((item, index) => ({ value: item.minutes, itemStyle: { color: index >= reversed.length - 2 ? colors.red : colors.amber, borderRadius: [0, 5, 5, 0] } })), label: { show: true, position: "right", formatter: "{c} min", fontSize: 10, color: colors.text } }],
+    series: [{ type: "bar", barWidth: 17, data: reversed.map((item, index) => ({ value: chartValue(item.minutes), itemStyle: { color: index >= reversed.length - 2 ? colors.red : colors.amber, borderRadius: [0, 5, 5, 0] } })), label: { show: true, position: "right", formatter: `{c} ${durationUnit}`, fontSize: 11, color: colors.text } }],
   };
   const metrics = [
-        { label: "Total downtime", value: `${intelligence.totals.totalDowntime.toLocaleString("en-IN")} min`, detail: "selected period" },
+        { label: "Total downtime", value: formatDuration(intelligence.totals.totalDowntime), detail: "selected period" },
         { label: "Stoppages", value: intelligence.totals.downtimeFrequency.toLocaleString("en-IN"), detail: "recorded occurrences" },
-        { label: "Average stop", value: `${intelligence.totals.averageDowntimeDuration.toFixed(1)} min`, detail: "per occurrence" },
+        { label: "Average stop", value: formatDuration(intelligence.totals.averageDowntimeDuration), detail: "per occurrence" },
         { label: "Estimated output lost", value: `${intelligence.losses.downtimeLostUnits.toFixed(0)} units`, detail: "at weighted ideal cycle" },
       ];
   return (
     <>
       <MetricRow metrics={metrics} />
-      {reversed.length > 0 ? <PerformancePanel title="Downtime reasons" subtitle="Pareto of minutes lost by standard reason" option={option} /> : <section className="panel contextual-empty-state"><Info size={22} /><div><h2>Downtime total is available</h2><p>Upload the downtime sheet to add stoppage frequency, machine ranking and reason Pareto.</p></div></section>}
+      {reversed.length > 0 ? <PerformancePanel title="Downtime reasons" subtitle={`Pareto of ${showHours ? "hours" : "minutes"} lost by standard reason`} option={option} /> : <section className="panel contextual-empty-state"><Info size={22} /><div><h2>Downtime total is available</h2><p>Upload the downtime sheet to add stoppage frequency, machine ranking and reason Pareto.</p></div></section>}
     </>
   );
 }

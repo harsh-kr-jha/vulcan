@@ -68,7 +68,7 @@ services:
         condition: service_completed_successfully
     command: >
       sh -c "python backend/manage.py migrate &&
-             python backend/manage.py seed_demo &&
+             python backend/manage.py seed_mypol &&
              gunicorn --chdir backend --bind 0.0.0.0:8000 --workers 3 config.wsgi:application"
 
   worker:

@@ -11,11 +11,24 @@ const guides = [
     summary: "Create the operating structure that imported rows map to.",
     steps: [
       "Create or select a factory from the sidebar.",
-      "Add production lines first, then assign machines to their line.",
+      "Record the site capacity, operating schedule and units used by the factory.",
+      "Add each production line, then define its processes in flow order.",
+      "Add machines to their line and associate each one with the process it performs.",
       "Add SKUs, materials, suppliers, shifts and standard reason codes.",
-      "Use consistent codes—the importer uses them to preserve clean relationships.",
     ],
     action: { href: "/settings", label: "Open factory setup" },
+  },
+  {
+    id: "twin",
+    title: "Build the Digital Twin",
+    summary: "Connect the configured process flow to its latest reported operating state.",
+    steps: [
+      "Open Factory Flow and confirm every process has a unique sequence and input/output unit.",
+      "Associate each line-owned machine with the process it performs.",
+      "From Digital Twin, choose a process and add its own CSV or XLSX processing sheet.",
+      "Hover, focus or select a process to review its latest state, KPIs and equipment.",
+    ],
+    action: { href: "/digital-twin", label: "Open Digital Twin" },
   },
   {
     id: "imports",
@@ -65,6 +78,8 @@ const faqs = [
   { question: "How is the supplier score calculated?", answer: "It combines delivery timing (60 points), delivered quantity (25), accepted quality (10), and agreed terms (5). Late days reduce timing points by 10 per day.", tags: "supplier score delivery formula" },
   { question: "How do I create and show a custom KPI?", answer: "Open Data visualisation, select Add custom KPI, choose two approved aggregate variables and an operation, then save. Use Add to Home on the saved KPI card to pin its Django-calculated result to the command centre.", tags: "custom kpi formula home visualisation" },
   { question: "Can I preview an uploaded CSV without downloading it?", answer: "Yes. On Data upload, click Preview beside a source. Vulcan retrieves up to 50 preserved original rows from Django and displays them with their source headers.", tags: "csv xlsx preview source rows" },
+  { question: "Why does each process have its own processing sheet?", answer: "A sheet is assigned to one configured process, so Django can attach its immutable process code even when the source omits a process column. Original rows remain unchanged, while accepted standardized rows drive that process in the Digital Twin.", tags: "process sheet digital twin mapping code" },
+  { question: "Is the Digital Twin a live sensor feed?", answer: "No. V3 shows the newest approved process sheet on or before the selected end date. Each process displays its latest reported date, and older reports are marked stale instead of being presented as live data.", tags: "digital twin live latest stale process state" },
   { question: "Which file formats can I upload?", answer: "The importer accepts CSV and XLSX files up to 10 MB. Downloadable templates show the standard columns and a valid example row.", tags: "csv xlsx template size" },
 ];
 

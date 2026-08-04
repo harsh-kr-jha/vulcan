@@ -1,6 +1,7 @@
 import type { DatasetType } from "./factory-domain";
 
 const templates: Record<DatasetType, { headers: string[]; example: string[] }> = {
+  process: { headers: ["date", "line", "machine", "shift", "status", "input_quantity", "output_quantity", "rejected_quantity", "run_minutes", "cycle_time_minutes", "temperature_c", "pressure_bar", "energy_kwh", "downtime_minutes", "operator", "batch_id"], example: ["2026-07-31", "Line 01", "Machine 01", "Shift A", "running", "1020", "1000", "12", "450", "0.42", "92", "4.2", "128", "30", "Operator A", "BATCH-01"] },
   production: { headers: ["date", "line", "machine", "sku", "shift", "order_id", "planned_quantity", "actual_quantity", "good_quantity", "rejected_quantity", "reworked_quantity", "planned_minutes", "downtime_minutes", "ideal_cycle_minutes"], example: ["2026-07-31", "Line 01", "Machine 01", "SKU-01", "Shift A", "ORD-01", "1200", "1120", "1085", "25", "10", "480", "42", "0.32"] },
   downtime: { headers: ["date", "line", "machine", "shift", "reason", "minutes", "occurrences"], example: ["2026-07-31", "Line 01", "Machine 01", "Shift A", "Hydraulic failure", "52", "4"] },
   quality: { headers: ["date", "line", "machine", "sku", "shift", "inspected_quantity", "rejected_quantity", "reworked_quantity", "defect_reason"], example: ["2026-07-31", "Line 01", "Machine 01", "SKU-01", "Shift A", "1200", "35", "10", "Misalignment"] },

@@ -2,6 +2,9 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from django.conf import settings
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db.models.deletion import ProtectedError
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny
@@ -16,7 +19,7 @@ from apps.operations.imports import (
     validate_mapping,
 )
 from apps.operations.models import Upload
-from apps.tenancy.models import Factory
+from apps.tenancy.models import Factory, FactoryMaster
 from apps.tenancy.services import get_workspace_identity
 from processing.readers.tabular import read_rows
 from processing.templates import TEMPLATES
@@ -54,7 +57,7 @@ class ImportInspectView(APIView):
             factory = Factory.objects.get(
                 id=request.data.get("factory"), tenant=identity.tenant, is_active=True
             )
-        except Factory.DoesNotExist:
+        except (Factory.DoesNotExist, DjangoValidationError, ValueError):
             return Response({"detail": "Choose a valid factory."}, status=400)
 
         content = file.read()
@@ -67,6 +70,23 @@ class ImportInspectView(APIView):
                 return Response({"detail": str(exc)}, status=400)
         if not headers or not rows:
             return Response({"detail": "The selected file has no data rows."}, status=400)
+
+        import_context = {}
+        if dataset_type == "process" and request.data.get("process"):
+            try:
+                process = FactoryMaster.objects.get(
+                    id=request.data["process"],
+                    factory=factory,
+                    kind="processes",
+                    is_active=True,
+                )
+            except (FactoryMaster.DoesNotExist, DjangoValidationError, ValueError):
+                return Response({"detail": "Choose a valid factory process."}, status=400)
+            import_context = {
+                "processId": str(process.id),
+                "processCode": process.code,
+                "processName": process.name,
+            }
 
         upload = Upload.objects.create(
             tenant=identity.tenant,
@@ -82,6 +102,7 @@ class ImportInspectView(APIView):
             source_type="file",
             headers=headers,
             raw_rows=rows,
+            import_context=import_context,
             record_count=len(rows),
             status="MAPPING_REQUIRED",
         )
@@ -120,6 +141,32 @@ class ImportPreviewView(APIView):
         )
 
 
+class ImportEditView(APIView):
+    """Return the stored source and mapping so it can be revalidated in place."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request, upload_id):
+        return Response(inspection_payload(get_upload(upload_id)))
+
+
+class ImportDeleteView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def delete(self, request, upload_id):
+        upload = get_upload(upload_id)
+        try:
+            upload.delete()
+        except ProtectedError:
+            return Response(
+                {"detail": "This source is used by a later import and cannot be deleted."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class ImportCommitView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []
@@ -146,6 +193,8 @@ class ImportCancelView(APIView):
 
 
 def get_upload(upload_id):
-    return Upload.objects.select_related("factory", "tenant").get(
-        id=upload_id, tenant=get_workspace_identity().tenant
+    return get_object_or_404(
+        Upload.objects.select_related("factory", "tenant"),
+        id=upload_id,
+        tenant=get_workspace_identity().tenant,
     )

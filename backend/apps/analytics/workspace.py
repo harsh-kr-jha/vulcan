@@ -16,7 +16,48 @@ DEFAULT_TARGETS = {
     "supplierScore": 85,
     "stockCoverDays": 3,
     "downtimeMinutes": 30,
+    "downtimeUnit": "minutes",
 }
+
+NUMERIC_TARGETS = set(DEFAULT_TARGETS) - {"downtimeUnit"}
+
+
+def normalise_targets(current, updates):
+    """Keep threshold calculations canonical while validating display preferences."""
+    if not isinstance(updates, dict):
+        raise ValueError("Targets must be provided as an object.")
+    unknown = set(updates) - set(DEFAULT_TARGETS)
+    if unknown:
+        raise ValueError(f"Unsupported target: {sorted(unknown)[0]}.")
+    result = {**DEFAULT_TARGETS, **(current if isinstance(current, dict) else {})}
+    for key in NUMERIC_TARGETS:
+        if key not in updates:
+            continue
+        value = updates[key]
+        if isinstance(value, bool):
+            raise ValueError(f"{key} must be a number.")
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{key} must be a number.") from exc
+        if numeric < 0:
+            raise ValueError(f"{key} cannot be negative.")
+        result[key] = numeric
+    if "downtimeUnit" in updates:
+        unit = str(updates["downtimeUnit"]).strip().lower()
+        if unit not in {"minutes", "hours"}:
+            raise ValueError("Downtime unit must be minutes or hours.")
+        result["downtimeUnit"] = unit
+    return result
+
+
+def duration_label(minutes):
+    """Use minutes for short losses and hours once a duration reaches 60 minutes."""
+    value = number(minutes)
+    if abs(value) >= 60:
+        hours = value / 60
+        return f"{hours:.1f}".rstrip("0").rstrip(".") + " hr"
+    return f"{value:g} min"
 
 CUSTOM_KPI_VARIABLES = {
     "production.planned": ("Planned quantity", "Production", "units"),
@@ -41,7 +82,16 @@ def workspace_snapshot(identity, factory, filters):
     intelligence = build_intelligence(factory, targets, filters)
     masters = {
         kind: []
-        for kind in ["lines", "machines", "skus", "materials", "suppliers", "shifts", "reasonCodes"]
+        for kind in [
+            "lines",
+            "processes",
+            "machines",
+            "skus",
+            "materials",
+            "suppliers",
+            "shifts",
+            "reasonCodes",
+        ]
     }
     for item in factory.master_records.select_related("parent").order_by("kind", "name"):
         masters[item.kind].append(FactoryMasterSerializer(item).data)
@@ -84,6 +134,7 @@ def build_intelligence(factory, targets, filters):
     to_date = parse_date(filters.get("to"))
     scoped = []
     inventory_history = []
+    process_history = []
     orders = []
     supplier_deliveries = []
     latest_dates = {}
@@ -101,6 +152,11 @@ def build_intelligence(factory, targets, filters):
         if record.dataset_type == "inventory":
             if not to_date or not record.operational_date or record.operational_date <= to_date:
                 inventory_history.append(value)
+            continue
+        if record.dataset_type == "process":
+            if record.operational_date and to_date and record.operational_date > to_date:
+                continue
+            process_history.append(value)
             continue
         if record.dataset_type == "orders":
             orders.append(value)
@@ -123,6 +179,7 @@ def build_intelligence(factory, targets, filters):
     production = [value for kind, value in scoped if kind == "production"]
     downtime = [value for kind, value in scoped if kind == "downtime"]
     quality = [value for kind, value in scoped if kind == "quality"]
+    process_runs = process_history
     orders = [value for value in orders if matches_dimensions(value, filters, include_shift=False)]
     inventory = latest_inventory(inventory_history)
     supplier_scores = build_supplier_scores(supplier_deliveries)
@@ -232,6 +289,7 @@ def build_intelligence(factory, targets, filters):
     custom_kpis = calculate_custom_kpis(
         factory.configuration.get("customKpis", []), custom_variables
     )
+    digital_twin = build_digital_twin(factory, process_runs)
     return {
         "totals": {
             "planned": planned,
@@ -275,6 +333,7 @@ def build_intelligence(factory, targets, filters):
         "supplierScore": supplier_score,
         "customKpiVariables": custom_variables,
         "customKpis": custom_kpis,
+        "digitalTwin": digital_twin,
         "losses": losses,
         "dataAvailability": {
             "production": len(production),
@@ -283,6 +342,7 @@ def build_intelligence(factory, targets, filters):
             "inventory": len(inventory),
             "supplier": len(supplier_deliveries),
             "orders": len(orders),
+            "process": len(process_runs),
         },
         "dataHealth": build_data_health(latest_dates, uploaded_types, to_date),
         "alerts": alerts,
@@ -416,6 +476,228 @@ def calculate_custom_kpis(definitions, variables):
     return result
 
 
+def build_digital_twin(factory, process_runs):
+    masters = list(
+        factory.master_records.filter(
+            is_active=True, kind__in=["lines", "processes", "machines"]
+        ).order_by("name")
+    )
+    lines = [item for item in masters if item.kind == "lines"]
+    process_masters = [item for item in masters if item.kind == "processes"]
+    machine_masters = [item for item in masters if item.kind == "machines"]
+    details = factory.configuration.get("factoryDetails", {})
+
+    def machines_for(process):
+        direct = [item for item in machine_masters if item.parent_id == process.id]
+        process_codes = {process.name.casefold(), process.code.casefold()}
+        return direct + [
+            item
+            for item in machine_masters
+            if item not in direct
+            and str(item.metadata.get("processCode", "")).casefold() in process_codes
+        ]
+
+    def rows_for_process(process, machines):
+        names = {process.name.casefold(), process.code.casefold()}
+        machine_names = {
+            value
+            for machine in machines
+            for value in [machine.name.casefold(), machine.code.casefold()]
+        }
+        return [
+            row
+            for row in process_runs
+            if str(row.get("process", "")).casefold() in names
+            or str(row.get("machine", "")).casefold() in machine_names
+        ]
+
+    line_payloads = []
+    for line in lines:
+        line_processes = [item for item in process_masters if item.parent_id == line.id]
+        line_processes.sort(
+            key=lambda item: (number(item.metadata.get("sequence"), 999), item.name)
+        )
+        if not line_processes:
+            direct_machines = [item for item in machine_masters if item.parent_id == line.id]
+            line_processes = direct_machines
+
+        process_payloads = []
+        for sequence, process in enumerate(line_processes, start=1):
+            is_machine_fallback = process.kind == "machines"
+            machines = [process] if is_machine_fallback else machines_for(process)
+            matching_rows = rows_for_process(process, machines)
+            latest_rows = latest_process_rows(matching_rows)
+            machine_payloads = [
+                build_twin_machine(machine, latest_rows, process.metadata) for machine in machines
+            ]
+            metrics = process_metrics(latest_rows)
+            status = twin_status(latest_rows, machine_payloads)
+            metadata = process.metadata or {}
+            latest_date = max((str(row.get("date", "")) for row in latest_rows), default="")
+            reported_on = parse_date(latest_date)
+            data_age_days = max((date.today() - reported_on).days, 0) if reported_on else None
+            process_payloads.append(
+                {
+                    "id": str(process.id),
+                    "name": metadata.get("processName", process.name)
+                    if is_machine_fallback
+                    else process.name,
+                    "code": process.code,
+                    "sequence": int(number(metadata.get("sequence"), sequence)),
+                    "description": metadata.get("description", "Configured production stage"),
+                    "processType": metadata.get("processType", "manufacturing"),
+                    "inputUnit": metadata.get("inputUnit", details.get("productionUnit", "units")),
+                    "outputUnit": metadata.get(
+                        "outputUnit", details.get("productionUnit", "units")
+                    ),
+                    "targetCycleMinutes": optional_number(metadata.get("targetCycleMinutes")),
+                    "targetTemperatureC": optional_number(metadata.get("targetTemperatureC")),
+                    "targetPressureBar": optional_number(metadata.get("targetPressureBar")),
+                    "capacityPerHour": optional_number(metadata.get("capacityPerHour")),
+                    "status": status,
+                    "latestDate": latest_date,
+                    "dataAgeDays": data_age_days,
+                    "dataStatus": (
+                        "absent"
+                        if data_age_days is None
+                        else "stale"
+                        if data_age_days > 2
+                        else "current"
+                    ),
+                    "hasData": bool(latest_rows),
+                    "metrics": metrics,
+                    "machines": machine_payloads,
+                }
+            )
+
+        process_payloads.sort(key=lambda item: (item["sequence"], item["name"]))
+        line_payloads.append(
+            {
+                "id": str(line.id),
+                "name": line.name,
+                "code": line.code,
+                "status": worst_twin_status([item["status"] for item in process_payloads]),
+                "processes": process_payloads,
+            }
+        )
+
+    all_processes = [process for line in line_payloads for process in line["processes"]]
+    return {
+        "factory": {
+            "id": str(factory.id),
+            "name": factory.name,
+            "code": factory.code,
+            "location": factory.address,
+            "details": details,
+        },
+        "summary": {
+            "lines": len(line_payloads),
+            "processes": len(all_processes),
+            "machines": sum(len(item["machines"]) for item in all_processes),
+            "running": sum(item["status"] == "running" for item in all_processes),
+            "attention": sum(item["status"] in {"warning", "down"} for item in all_processes),
+            "withoutData": sum(not item["hasData"] for item in all_processes),
+        },
+        "lines": line_payloads,
+    }
+
+
+def latest_process_rows(rows):
+    if not rows:
+        return []
+    latest = max((str(row.get("date", "")) for row in rows), default="")
+    return [row for row in rows if str(row.get("date", "")) == latest]
+
+
+def process_metrics(rows):
+    input_quantity = total(rows, "input_quantity")
+    output_quantity = total(rows, "output_quantity")
+    rejected_quantity = optional_total(rows, "rejected_quantity")
+    run_minutes = optional_total(rows, "run_minutes")
+    return {
+        "input": input_quantity,
+        "output": output_quantity,
+        "rejected": rejected_quantity,
+        # Rejected quantity uses the process output unit. Comparing output to input
+        # would be invalid for transforming stages such as kg -> metres.
+        "yieldRate": (
+            percent(max(output_quantity - rejected_quantity, 0), output_quantity)
+            if rejected_quantity is not None and output_quantity
+            else None
+        ),
+        "throughputPerHour": (output_quantity / run_minutes * 60 if run_minutes else None),
+        "cycleMinutes": average(rows, "cycle_time_minutes"),
+        "temperatureC": average(rows, "temperature_c"),
+        "pressureBar": average(rows, "pressure_bar"),
+        "energyKwh": optional_total(rows, "energy_kwh"),
+        "downtimeMinutes": optional_total(rows, "downtime_minutes"),
+    }
+
+
+def build_twin_machine(machine, process_rows, process_metadata):
+    names = {machine.name.casefold(), machine.code.casefold()}
+    rows = [row for row in process_rows if str(row.get("machine", "")).casefold() in names]
+    rows = latest_process_rows(rows)
+    return {
+        "id": str(machine.id),
+        "name": machine.name,
+        "code": machine.code,
+        "status": twin_status(rows, []),
+        "manufacturer": machine.metadata.get("manufacturer", ""),
+        "model": machine.metadata.get("model", ""),
+        "powerKw": number(machine.metadata.get("powerKw")),
+        "capacityPerHour": number(
+            machine.metadata.get("capacityPerHour", process_metadata.get("capacityPerHour", 0))
+        ),
+        "metrics": process_metrics(rows),
+    }
+
+
+def twin_status(rows, machines):
+    explicit = [str(row.get("status", "")).strip().casefold() for row in rows]
+    normalized = []
+    for value in explicit:
+        if not value:
+            continue
+        if value in {
+            "down",
+            "stopped",
+            "fault",
+            "offline",
+            "blocked",
+            "error",
+            "critical",
+        }:
+            normalized.append("down")
+        elif value in {"warning", "attention", "degraded"}:
+            normalized.append("warning")
+        elif value in {"idle", "standby", "maintenance", "planned stop"}:
+            normalized.append("idle")
+        elif value in {"running", "active", "operating"}:
+            normalized.append("running")
+        else:
+            normalized.append("warning")
+    normalized.extend(item["status"] for item in machines)
+    if not rows and not machines:
+        return "no_data"
+    if not normalized:
+        metrics = process_metrics(rows)
+        if (metrics["downtimeMinutes"] or 0) > 0:
+            return "warning"
+        return "running"
+    return worst_twin_status(normalized)
+
+
+def worst_twin_status(statuses):
+    priority = {"down": 0, "warning": 1, "idle": 2, "running": 3, "no_data": 4}
+    return min(statuses, key=lambda item: priority.get(item, 4)) if statuses else "no_data"
+
+
+def average(rows, key):
+    values = [number(row.get(key)) for row in rows if row.get(key) not in {None, ""}]
+    return sum(values) / len(values) if values else None
+
+
 def matches_dimensions(value, filters, include_shift=True):
     keys = ["line", "machine", "sku"] + (["shift"] if include_shift else [])
     return all(filters.get(key, "all") in {"", "all", value.get(key)} for key in keys)
@@ -523,6 +805,7 @@ def build_inventory_risks(rows, to_value, targets):
 def build_data_health(latest_dates, uploaded_types, selected_end):
     end = selected_end or date.today()
     stale_after_days = {
+        "process": 2,
         "production": 2,
         "downtime": 7,
         "quality": 7,
@@ -566,7 +849,7 @@ def build_order_risks(rows, to_value, average_daily_good, machine_loss):
             "critical" if days_left <= 1 and remaining else "high" if risk_score > 0.5 else "watch"
         )
         reason = (
-            f"{machine_loss[0]['machine']} lost {machine_loss[0]['minutes']:g} minutes"
+            f"{machine_loss[0]['machine']} lost {duration_label(machine_loss[0]['minutes'])}"
             if machine_loss
             else "Required run rate is above the recent average"
         )
@@ -692,15 +975,15 @@ def generated_alerts(
             alert(
                 f"downtime-{loss['machine']}",
                 f"{loss['machine']} is the largest bottleneck",
-                f"{loss['minutes']:g} lost minutes across {loss['occurrences']:g} stops.",
+                f"{duration_label(loss['minutes'])} lost across {loss['occurrences']:g} stops.",
                 f"{loss['machine']} · {loss['line']}",
                 "critical" if loss["minutes"] > 120 else "high",
                 "Inspect the recurring failure mode before the next planned changeover "
                 "and assign maintenance ownership.",
-                f"> {targets['downtimeMinutes']} lost min",
-                f"{loss['minutes']:g} min",
+                f"> {duration_label(targets['downtimeMinutes'])} lost",
+                duration_label(loss["minutes"]),
                 end,
-                [f"{loss['occurrences']:g} stop records", f"{loss['minutes']:g} minutes"],
+                [f"{loss['occurrences']:g} stop records", duration_label(loss["minutes"])],
             )
         )
     if inventory_risks:
@@ -870,7 +1153,7 @@ def answer_question(intelligence, question):
             item = items[0]
             return response(
                 f"{item['machine']} is creating the largest bottleneck.",
-                f"It lost {item['minutes']:g} minutes across {item['occurrences']:g} stops.",
+                f"It lost {duration_label(item['minutes'])} across {item['occurrences']:g} stops.",
                 [item["machine"], item["line"]],
             )
     if any(word in normalized for word in ["material", "stock"]):
@@ -902,8 +1185,19 @@ def number(value, fallback=0):
         return fallback
 
 
+def optional_number(value):
+    if value in {None, ""}:
+        return None
+    return number(value)
+
+
 def total(rows, key):
     return sum(number(row.get(key)) for row in rows)
+
+
+def optional_total(rows, key):
+    values = [number(row.get(key)) for row in rows if row.get(key) not in {None, ""}]
+    return sum(values) if values else None
 
 
 def percent(numerator, denominator):

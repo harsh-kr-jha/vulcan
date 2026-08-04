@@ -7,6 +7,30 @@ def field(key, label, data_type="string", required=False, aliases=()):
 
 
 TEMPLATES = {
+    "process": [
+        field("date", "Process date", "date", True, ["date", "operational date"]),
+        field("line", "Production line", required=True, aliases=["line", "line name"]),
+        field("process", "Manufacturing process", required=True, aliases=["stage", "operation"]),
+        field("machine", "Machine", required=True, aliases=["equipment", "asset"]),
+        field("shift", "Shift", required=True, aliases=["shift name"]),
+        field("status", "Process state", required=True, aliases=["state", "machine status"]),
+        field("input_quantity", "Input quantity", "decimal", True, ["input", "feed quantity"]),
+        field("output_quantity", "Output quantity", "decimal", True, ["output", "produced"]),
+        field("rejected_quantity", "Rejected quantity", "decimal", aliases=["rejects", "scrap"]),
+        field("run_minutes", "Run minutes", "decimal", aliases=["operating minutes", "runtime"]),
+        field(
+            "cycle_time_minutes",
+            "Cycle time",
+            "decimal",
+            aliases=["cycle time", "minutes per cycle"],
+        ),
+        field("temperature_c", "Temperature", "decimal", aliases=["temperature", "temp c"]),
+        field("pressure_bar", "Pressure", "decimal", aliases=["pressure"]),
+        field("energy_kwh", "Energy consumed", "decimal", aliases=["energy", "power consumption"]),
+        field("downtime_minutes", "Downtime", "decimal", aliases=["downtime", "stop minutes"]),
+        field("operator", "Operator", aliases=["operator name"]),
+        field("batch_id", "Batch ID", aliases=["batch", "lot"]),
+    ],
     "production": [
         field("date", "Production date", "date", True, ["date", "operational date"]),
         field("line", "Production line", required=True, aliases=["line", "line name"]),

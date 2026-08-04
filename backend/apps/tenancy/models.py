@@ -122,6 +122,7 @@ class FactoryMaster(UUIDModel, TimestampedModel):
 
     class Kind(models.TextChoices):
         LINE = "lines", "Production line"
+        PROCESS = "processes", "Manufacturing process"
         MACHINE = "machines", "Machine"
         SKU = "skus", "Product / SKU"
         MATERIAL = "materials", "Material"

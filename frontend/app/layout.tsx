@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AppShell } from "@/components/app-shell";
 import { FactoryProvider } from "@/lib/factory-context";
+import { ProjectProvider } from "@/lib/project-context";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,7 +14,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <FactoryProvider>
-          <AppShell>{children}</AppShell>
+          <ProjectProvider>
+            <AppShell>{children}</AppShell>
+          </ProjectProvider>
         </FactoryProvider>
       </body>
     </html>

@@ -5,7 +5,8 @@ quantified losses, and traceable recommendations.
 
 This repository contains one lightweight application:
 
-- Next.js display layer for the command centre, performance, uploads, alerts, and factory setup
+- Next.js display layer for the command centre, Digital Twin, performance, uploads, alerts, and
+  process-aware factory setup
 - Django API as the source of truth for factories, master data, files, mappings, records and rules
 - Server-side CSV/XLSX inspection, mapping suggestions, validation and KPI calculation
 - PostgreSQL-ready relational ownership with SQLite as the zero-infrastructure local default
@@ -21,6 +22,7 @@ temporarily disabled while the single-workspace model is being proven.
 npm install
 uv sync
 .venv/bin/python backend/manage.py migrate
+.venv/bin/python backend/manage.py seed_mypol
 .venv/bin/python backend/manage.py runserver
 ```
 
@@ -31,8 +33,9 @@ cp frontend/.env.example frontend/.env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Create a factory, configure its master data,
-and import CSV/XLSX files. Django inspects every file. Optional source columns may be set to
+Open [http://localhost:3000](http://localhost:3000). The idempotent seed provides the complete
+MyPol showcase factory; you can also create a factory, configure its process flow, and import
+CSV/XLSX files. Django inspects every file. Optional source columns may be set to
 **Do not import**; required-field and row mismatches include a correction, and rejected rows stay
 outside the standard record table.
 

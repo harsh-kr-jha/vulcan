@@ -7,6 +7,8 @@ import { useState } from "react";
 import { useFactory } from "@/lib/factory-context";
 import type { FactoryTargets } from "@/lib/factory-domain";
 
+type NumericTarget = Exclude<keyof FactoryTargets, "downtimeUnit">;
+
 const targetGroups = [
   {
     title: "Equipment effectiveness",
@@ -41,7 +43,7 @@ const targetGroups = [
   title: string;
   description: string;
   icon: typeof Activity;
-  rules: ReadonlyArray<{ key: keyof FactoryTargets; label: string; help: string; unit: string }>;
+    rules: ReadonlyArray<{ key: NumericTarget; label: string; help: string; unit: string }>;
 }>;
 
 function RulesEditor() {
@@ -73,7 +75,24 @@ function RulesEditor() {
                 {group.rules.map((rule) => (
                   <label key={rule.key}>
                     <span><strong>{rule.label}</strong><small>{rule.help}</small></span>
-                    <span className="target-input"><input type="number" min="0" step="0.1" value={values[rule.key]} onChange={(event) => setValues({ ...values, [rule.key]: Number(event.target.value) })} /><b>{rule.unit}</b></span>
+                    <span className={`target-input${rule.key === "downtimeMinutes" ? " downtime-target-input" : ""}`}>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={rule.key === "downtimeMinutes" && values.downtimeUnit === "hours" ? Number((values.downtimeMinutes / 60).toFixed(2)) : values[rule.key]}
+                        onChange={(event) => {
+                          const entered = Number(event.target.value);
+                          setValues({ ...values, [rule.key]: rule.key === "downtimeMinutes" && values.downtimeUnit === "hours" ? entered * 60 : entered });
+                        }}
+                      />
+                      {rule.key === "downtimeMinutes" ? (
+                        <select aria-label="Downtime target unit" value={values.downtimeUnit} onChange={(event) => setValues({ ...values, downtimeUnit: event.target.value as FactoryTargets["downtimeUnit"] })}>
+                          <option value="minutes">Minutes</option>
+                          <option value="hours">Hours</option>
+                        </select>
+                      ) : <b>{rule.unit}</b>}
+                    </span>
                   </label>
                 ))}
               </div>

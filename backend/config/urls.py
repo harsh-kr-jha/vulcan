@@ -9,6 +9,8 @@ from apps.analytics.workspace_views import (
 from apps.operations.import_views import (
     ImportCancelView,
     ImportCommitView,
+    ImportDeleteView,
+    ImportEditView,
     ImportInspectView,
     ImportPreviewView,
     ImportValidationView,
@@ -64,6 +66,16 @@ urlpatterns = [
         "api/imports/<uuid:upload_id>/preview/",
         ImportPreviewView.as_view(),
         name="import-preview",
+    ),
+    path(
+        "api/imports/<uuid:upload_id>/edit/",
+        ImportEditView.as_view(),
+        name="import-edit",
+    ),
+    path(
+        "api/imports/<uuid:upload_id>/delete/",
+        ImportDeleteView.as_view(),
+        name="import-delete",
     ),
     path("api/imports/<uuid:upload_id>/commit/", ImportCommitView.as_view(), name="import-commit"),
     path("api/imports/<uuid:upload_id>/cancel/", ImportCancelView.as_view(), name="import-cancel"),

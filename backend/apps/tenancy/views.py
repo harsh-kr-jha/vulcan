@@ -75,7 +75,10 @@ class FactoryViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         identity = get_workspace_identity()
-        configuration = {"currency": self.request.data.get("currency", "INR")}
+        configuration = {
+            "currency": self.request.data.get("currency", "INR"),
+            "factoryDetails": self.request.data.get("details", {}),
+        }
         serializer.save(
             tenant=identity.tenant, company=identity.company, configuration=configuration
         )

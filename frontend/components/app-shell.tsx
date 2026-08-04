@@ -4,18 +4,22 @@ import {
   Bell,
   Bolt,
   Building2,
+  CheckCircle2,
   ChevronDown,
   CircleHelp,
+  ClipboardList,
   Factory,
   Gauge,
   LayoutDashboard,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
+  FolderKanban,
   Sigma,
   Settings2,
   ShieldAlert,
   UploadCloud,
+  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,6 +29,8 @@ import { useFactory } from "@/lib/factory-context";
 const navGroups = [
   { label: "Workspace", items: [
     { href: "/", label: "Home", icon: LayoutDashboard },
+    { href: "/projects", label: "Projects", icon: FolderKanban },
+    { href: "/digital-twin", label: "Digital twin", icon: Workflow },
     { href: "/uploads", label: "Data upload", icon: UploadCloud },
     { href: "/performance", label: "Performance", icon: Gauge },
     { href: "/alerts", label: "Alerts", icon: ShieldAlert },
@@ -76,9 +82,12 @@ function Sidebar({ open, closed, onClose, onNavigate }: { open: boolean; closed:
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarMode, setSidebarMode] = useState<"default" | "open" | "closed">("default");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const pathname = usePathname();
-  const { intelligence, filters } = useFactory();
+  const { intelligence, filters, state, toggleAction } = useFactory();
+  const openActions = state.actions.filter((action) => action.status === "open");
+  const actionItems = [...state.actions].sort((first, second) => Number(first.status === "done") - Number(second.status === "done"));
   if (pathname === "/login") return <>{children}</>;
 
   function toggleSidebar() {
@@ -99,9 +108,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark"><Bolt size={16} /></span><strong>VULCAN</strong></div></div>
         <div className="topbar-context"><span className="shift-label">{filters.shift === "all" ? "All shifts" : filters.shift} · {filters.from} to {filters.to}</span></div>
         <div className="topbar-actions">
-          <button className="icon-button notification-button" aria-label="Notifications" onClick={() => { setNotificationsOpen((value) => !value); setProfileOpen(false); }}><Bell size={19} />{intelligence.alerts.some((alert) => alert.status === "new") && <span />}</button>
+          <button className="icon-button action-menu-button" aria-label={`${openActions.length} open action items`} onClick={() => { setActionsOpen((value) => !value); setNotificationsOpen(false); setProfileOpen(false); }}><ClipboardList size={19} />{openActions.length > 0 && <span className="action-counter">{openActions.length > 99 ? "99+" : openActions.length}</span>}</button>
+          {actionsOpen && <div className="topbar-popover action-popover"><div className="action-popover-heading"><span><strong>Action items</strong><small>{openActions.length} open for this factory</small></span><Link href="/alerts" onClick={() => setActionsOpen(false)}>View all</Link></div><div className="action-popover-list">{actionItems.slice(0, 6).map((action) => <button key={action.id} className={action.status === "done" ? "action-is-done" : ""} onClick={() => void toggleAction(action.id)}><span className="action-state-icon">{action.status === "done" ? <CheckCircle2 size={17} /> : <i />}</span><span><b>{action.title}</b><small>{action.owner} · due {new Date(`${action.dueDate}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</small></span><em>{action.status === "done" ? "Done" : "Mark done"}</em></button>)}{!state.actions.length && <p>No action items yet. Create one from an alert.</p>}</div></div>}
+          <button className="icon-button notification-button" aria-label="Notifications" onClick={() => { setNotificationsOpen((value) => !value); setActionsOpen(false); setProfileOpen(false); }}><Bell size={19} />{intelligence.alerts.some((alert) => alert.status === "new") && <span />}</button>
           {notificationsOpen && <div className="topbar-popover notification-popover"><div><strong>Priority signals</strong><Link href="/alerts" onClick={() => setNotificationsOpen(false)}>View all</Link></div>{intelligence.alerts.filter((alert) => alert.status !== "resolved").slice(0, 3).map((alert) => <Link href="/alerts" key={alert.id} onClick={() => setNotificationsOpen(false)}><i className={`alert-indicator ${alert.severity}`} /><span><b>{alert.title}</b><small>{alert.observed}</small></span></Link>)}{!intelligence.alerts.some((alert) => alert.status !== "resolved") && <p>No open alerts for this selection.</p>}</div>}
-          <button className="profile-button" aria-label="Open workspace menu" onClick={() => { setProfileOpen((value) => !value); setNotificationsOpen(false); }}><span className="profile-avatar">FT</span><span className="profile-copy"><strong>Factory team</strong><small>Open workspace</small></span><ChevronDown size={15} /></button>
+          <button className="profile-button" aria-label="Open workspace menu" onClick={() => { setProfileOpen((value) => !value); setNotificationsOpen(false); setActionsOpen(false); }}><span className="profile-avatar">FT</span><span className="profile-copy"><strong>Factory team</strong><small>Open workspace</small></span><ChevronDown size={15} /></button>
           {profileOpen && <div className="topbar-popover profile-popover"><Link href="/settings" onClick={() => setProfileOpen(false)}><Settings2 size={14} /> Factory setup</Link></div>}
         </div>
       </header>

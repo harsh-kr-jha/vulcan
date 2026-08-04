@@ -80,6 +80,7 @@ class Upload(UUIDModel, TenantScopedModel):
     source_type = models.CharField(max_length=30, default="file")
     headers = models.JSONField(default=list, blank=True)
     raw_rows = models.JSONField(default=list, blank=True)
+    import_context = models.JSONField(default=dict, blank=True)
     mapping = models.JSONField(default=dict, blank=True)
     omitted_fields = models.JSONField(default=list, blank=True)
 

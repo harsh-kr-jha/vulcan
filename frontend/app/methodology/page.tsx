@@ -1,5 +1,6 @@
 import { KpiMethodology } from "@/components/kpi-methodology";
+import { PageBack } from "@/components/page-back";
 
 export default function MethodologyPage() {
-  return <KpiMethodology />;
+  return <><PageBack /><KpiMethodology /></>;
 }

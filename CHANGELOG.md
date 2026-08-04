@@ -2,6 +2,65 @@
 
 All notable changes to Vulcan are documented in this file.
 
+## 2026-08-01 — V3.1 workflow usability
+
+### Added
+
+- Compact Preview, Edit, and Delete controls for every preserved source, backed by tenant-scoped
+  Django endpoints. Editing revalidates and replaces only that source’s standardised records;
+  deletion explicitly removes its source lineage and derived records after confirmation.
+- Factory-specific action register in the top bar, with an open-item counter and one-click status
+  updates directly from the menu.
+- Context-aware Back controls on Digital Twin, uploads, performance, alerts, setup, rules,
+  methodology, and help pages.
+- Minutes/Hours display selection for the downtime rule while keeping the stored and calculated
+  threshold canonical in minutes.
+
+### Changed
+
+- Downtime KPIs and alert values automatically switch to hours at 60 minutes or above, including
+  the downtime Pareto axis.
+- Data-health guidance no longer renders impossible `null days old` copy when a source exists but
+  has no approved record before the selected end date.
+- Small helper text, table labels, dashboard details, upload mapping copy, rules, and Digital Twin
+  labels now use readable minimum sizes.
+
+## 2026-08-01 — V3 process-aware Digital Twin
+
+### Added
+
+- Factory-specific Digital Twin directly below Home, with each production line rendered as
+  an ordered, connected process flow and its machines nested at the relevant stage.
+- Hover, keyboard-focus, and click inspection for latest-reported process state, input and
+  output quantities, yield, throughput, cycle time, downtime, energy, temperature, pressure,
+  targets, and equipment details.
+- Ordered manufacturing-process masters with line ownership, input/output units, target
+  conditions, rated throughput, descriptions, and machine associations.
+- One process-sheet workflow per configured process. The selected process is stored as import
+  context, original CSV/XLSX rows stay unchanged, and Django injects the immutable process code
+  only while validating and standardising accepted records.
+- Unit-aware factory profile fields for site type, floor area, daily capacity, output unit,
+  operating hours, shifts, electrical capacity, commissioned year, and reporting units.
+- Idempotent `seed_mypol` command with a complete six-stage MyPol rubber inner-tube line,
+  machines, masters, process sheets, operational datasets, supplier performance, and alerts.
+- Comparative MyPol supply data covering six materials and six suppliers, with varied stock
+  cover, receipt states, delivery timing, quantity fulfilment, acceptance, and contract terms.
+
+### Changed
+
+- Factory Setup now presents production lines, ordered processes, and line-owned machines as a
+  single Factory Flow section while preserving existing line-based dashboard filters.
+- Missing process readings no longer appear as zero-value KPIs; stale process reports are
+  labelled explicitly, and the twin states that it is not a live sensor feed.
+- Process yield compares good output with total output, avoiding invalid comparisons when a
+  stage transforms between unlike input and output units.
+
+### Verification
+
+- 18 Django tests pass, including process import lineage, unit/detail validation, hierarchy,
+  Digital Twin calculation, and repeatable MyPol seeding.
+- Django migration checks, Ruff, ESLint, TypeScript, and the Next.js production build pass.
+
 ## 2026-08-01 — V2.3 custom metrics and source visibility
 
 ### Added

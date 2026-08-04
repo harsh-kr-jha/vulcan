@@ -21,12 +21,13 @@ def inspection_payload(upload):
         is_active=True,
     ).first()
     suggestions = suggest_mappings(upload.headers, fields, saved.mappings if saved else None)
+    suggested_mapping = {item.source_header: item.target_key or "" for item in suggestions}
     return {
         "upload": serialize_upload(upload),
         "headers": upload.headers,
         "samples": upload.raw_rows[:3],
         "fields": serialize_fields(upload.dataset_type),
-        "mapping": {item.source_header: item.target_key or "" for item in suggestions},
+        "mapping": upload.mapping or suggested_mapping,
         "suggestions": [
             {
                 "source": item.source_header,
@@ -42,11 +43,12 @@ def inspection_payload(upload):
 def validate_mapping(upload, mapping):
     fields = {item.key: item for item in TEMPLATES[upload.dataset_type]}
     selected = [target for target in mapping.values() if target]
+    contextual = set(import_context_values(upload))
     issues = []
     directions = []
 
     for key, definition in fields.items():
-        if definition.required and key not in selected:
+        if definition.required and key not in selected and key not in contextual:
             issues.append(
                 issue(
                     0,
@@ -71,7 +73,7 @@ def validate_mapping(upload, mapping):
             )
         )
 
-    mapped_rows = [map_row(row, mapping) for row in upload.raw_rows]
+    mapped_rows = [apply_import_context(upload, map_row(row, mapping)) for row in upload.raw_rows]
     if not any(item["severity"] == Severity.REJECTION and item["row"] == 0 for item in issues):
         references = master_references(upload)
         for index, row in enumerate(mapped_rows, start=2):
@@ -88,6 +90,7 @@ def validate_mapping(upload, mapping):
                     )
                 )
             issues.extend(validate_dates(row, fields, index))
+            issues.extend(validate_import_context(upload, row, index))
             issues.extend(validate_references(row, references, index))
 
     rejected_rows = {
@@ -182,7 +185,9 @@ def import_valid_rows(upload, user):
     for source_row, raw in enumerate(upload.raw_rows, start=2):
         if source_row in rejected:
             continue
-        values = normalize_values(map_row(raw, upload.mapping), upload.dataset_type)
+        values = normalize_values(
+            apply_import_context(upload, map_row(raw, upload.mapping)), upload.dataset_type
+        )
         records.append(
             StandardRecord(
                 tenant=upload.tenant,
@@ -238,6 +243,41 @@ def serialize_upload(upload):
 
 def map_row(raw, mapping):
     return {target: raw.get(source) for source, target in mapping.items() if target}
+
+
+def import_context_values(upload):
+    context = upload.import_context if isinstance(upload.import_context, dict) else {}
+    process_code = str(context.get("processCode", "")).strip()
+    return {"process": process_code} if upload.dataset_type == "process" and process_code else {}
+
+
+def apply_import_context(upload, values):
+    result = dict(values)
+    for key, value in import_context_values(upload).items():
+        if not str(result.get(key, "") or "").strip():
+            result[key] = value
+    return result
+
+
+def validate_import_context(upload, row, row_number):
+    context = upload.import_context if isinstance(upload.import_context, dict) else {}
+    process_code = str(context.get("processCode", "")).strip()
+    process_name = str(context.get("processName", "")).strip()
+    entered = str(row.get("process", "") or "").strip()
+    accepted = {process_code.casefold(), process_name.casefold()} - {""}
+    if upload.dataset_type != "process" or not entered or entered.casefold() in accepted:
+        return []
+    return [
+        issue(
+            row_number,
+            "process",
+            Severity.REJECTION,
+            "process_sheet_mismatch",
+            f"This row names process “{entered}” but the sheet is assigned to {process_name}.",
+            f"Use {process_code} (or leave the process column out) for this process sheet.",
+            entered,
+        )
+    ]
 
 
 def normalize_values(values, dataset_type):
@@ -322,6 +362,7 @@ def master_references(upload):
 def validate_references(row, references, row_number):
     links = {
         "line": "lines",
+        "process": "processes",
         "machine": "machines",
         "sku": "skus",
         "shift": "shifts",

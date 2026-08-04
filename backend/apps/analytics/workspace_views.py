@@ -7,9 +7,11 @@ from rest_framework.views import APIView
 
 from apps.alerts.models import ActionItem
 from apps.analytics.workspace import (
+    DEFAULT_TARGETS,
     answer_question,
     build_intelligence,
     normalise_custom_kpis,
+    normalise_targets,
     workspace_snapshot,
 )
 from apps.tenancy.models import Factory
@@ -35,8 +37,13 @@ class WorkspaceConfigurationView(APIView):
         identity = get_workspace_identity()
         factory = resolve_factory(request, identity)
         configuration = {**factory.configuration}
-        if targets := request.data.get("targets"):
-            configuration["targets"] = {**configuration.get("targets", {}), **targets}
+        if "targets" in request.data:
+            try:
+                configuration["targets"] = normalise_targets(
+                    configuration.get("targets", {}), request.data["targets"]
+                )
+            except ValueError as exc:
+                return Response({"detail": str(exc)}, status=400)
         if industry := request.data.get("industry"):
             configuration["industry"] = industry
         if "customKpis" in request.data:
@@ -108,12 +115,7 @@ class WorkspaceQuestionView(APIView):
         intelligence = build_intelligence(
             factory,
             {
-                "oee": 78,
-                "availability": 85,
-                "performance": 95,
-                "quality": 98,
-                "stockCoverDays": 3,
-                "downtimeMinutes": 30,
+                **DEFAULT_TARGETS,
                 **factory.configuration.get("targets", {}),
             },
             filters,

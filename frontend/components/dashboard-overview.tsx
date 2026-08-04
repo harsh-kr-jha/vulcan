@@ -8,8 +8,11 @@ import {
   Download,
   ExternalLink,
   FileSearch,
+  FolderKanban,
+  Gauge,
   Lightbulb,
   ShieldAlert,
+  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo } from "react";
@@ -17,14 +20,33 @@ import { useMemo } from "react";
 import { Chart } from "@/components/charts/chart";
 import { CommandFilters } from "@/components/command-filters";
 import { downloadBlob } from "@/lib/browser-files";
+import { formatDuration } from "@/lib/formatters";
 import { useFactory } from "@/lib/factory-context";
 import { datasetLabels, type DatasetType } from "@/lib/factory-domain";
+import { useProjects } from "@/lib/project-context";
 
 const colors = {
   plan: "#b9c0bc",
   actual: "#416f57",
   good: "#9abb55",
 };
+
+function HomeModuleGrid() {
+  const { projects } = useProjects();
+  const { intelligence } = useFactory();
+  const delayed = projects.filter((project) => project.status === "Delayed" || project.deliveryPrediction.state !== "On track").length;
+  const activeAlerts = intelligence.alerts.filter((alert) => alert.status !== "resolved");
+  const criticalAlerts = activeAlerts.filter((alert) => alert.severity === "critical").length;
+  const twin = intelligence.digitalTwin.summary;
+  const hasProduction = intelligence.dataAvailability.production > 0;
+  const modules = [
+    { href: "/projects", label: "Projects", description: "Track every order from material receipt to dispatch.", value: projects.filter((project) => project.status !== "Completed").length.toString(), status: "active projects", meta: `${delayed} at risk`, icon: FolderKanban },
+    { href: "/digital-twin", label: "Digital twin", description: "See lines, processes and machines.", value: twin.running.toString(), status: `of ${twin.machines} machines running`, meta: `${twin.attention} need attention`, icon: Workflow },
+    { href: "/performance", label: "Performance", description: "Understand output, losses and quality.", value: `${intelligence.oee.value.toFixed(1)}%`, status: "overall OEE", meta: hasProduction ? `${intelligence.totals.planAttainment.toFixed(1)}% plan attainment` : "Awaiting production data", icon: Gauge },
+    { href: "/alerts", label: "Alerts", description: "Review priority exceptions and actions.", value: activeAlerts.length.toString(), status: "open alerts", meta: `${criticalAlerts} critical`, icon: ShieldAlert },
+  ];
+  return <section className="home-module-section"><header><div><div><h2>Move through your factory</h2><p>Open a workspace directly and see its current operating status.</p></div></div><small>4 operational modules</small></header><div className="home-module-grid">{modules.map((module) => { const Icon = module.icon; return <Link className="home-module-card" href={module.href} key={module.href}><span><Icon size={18} /></span><div><b>{module.label}</b><p>{module.description}</p><div className="home-module-status"><strong>{module.value}</strong><span>{module.status}</span></div><small>{module.meta}</small></div><ArrowRight size={15} /></Link>; })}</div></section>;
+}
 
 function PanelHeader({
   number,
@@ -65,9 +87,12 @@ function EmptyData({ type }: { type: string }) {
   );
 }
 
-const monitoredDatasets = ["production", "downtime", "quality", "inventory", "supplier"] as const;
+const coreMonitoredDatasets = ["production", "downtime", "quality", "inventory", "supplier"] as const;
 
 function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof useFactory>["intelligence"] }) {
+  const monitoredDatasets: DatasetType[] = intelligence.digitalTwin.summary.processes
+    ? ["process", ...coreMonitoredDatasets]
+    : [...coreMonitoredDatasets];
   const issues = monitoredDatasets.flatMap((datasetType) => {
     const health = intelligence.dataHealth[datasetType];
     return health && health.status !== "current" ? [{ datasetType, ...health }] : [];
@@ -79,7 +104,11 @@ function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof us
       <div className="data-health-notice-list">
         {issues.map((issue) => {
           const label = datasetLabels[issue.datasetType as DatasetType];
-          const detail = issue.status === "absent" ? `No ${label.toLowerCase()} sheet has been approved.` : `${label} is ${issue.ageDays} days old${issue.latestDate ? ` · latest ${new Date(`${issue.latestDate}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : ""}.`;
+          const detail = issue.status === "absent"
+            ? `No ${label.toLowerCase()} sheet has been approved.`
+            : issue.ageDays === null
+              ? `${label} has no approved record on or before the selected end date.`
+              : `${label} is ${issue.ageDays} days old${issue.latestDate ? ` · latest ${new Date(`${issue.latestDate}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}` : ""}.`;
           return <article key={issue.datasetType}><div><strong>{label}</strong><span>{detail}</span></div><Link className="button button-secondary" href={`/uploads?add=${issue.datasetType}`}>{issue.status === "absent" ? "Add" : "Refresh"} {label.toLowerCase()} <ArrowRight size={12} /></Link></article>;
         })}
       </div>
@@ -186,7 +215,7 @@ function MajorLossesWidget({ number }: { number: number }) {
       />
       <div className="loss-kpi-row">
         <div><span>Output below plan</span><strong>{intelligence.totals.estimatedProductionLost.toLocaleString("en-IN")} units</strong></div>
-        <div><span>Total downtime</span><strong>{intelligence.totals.totalDowntime.toLocaleString("en-IN")} min</strong></div>
+        <div><span>Total downtime</span><strong>{formatDuration(intelligence.totals.totalDowntime)}</strong></div>
         <div><span>Rejected</span><strong>{intelligence.totals.rejected.toLocaleString("en-IN")} units</strong></div>
       </div>
       <div className="home-loss-columns">
@@ -200,7 +229,7 @@ function MajorLossesWidget({ number }: { number: number }) {
                   <span><strong>{item.machine}</strong><small>{item.occurrences} stops</small></span>
                   <i><b style={{ width: `${(item.minutes / maxDowntime) * 100}%` }} /></i>
                 </div>
-                <strong>{item.minutes} min</strong>
+                <strong>{formatDuration(item.minutes)}</strong>
               </div>
             ))}
             {!intelligence.machineLoss.length && <EmptyData type="downtime" />}
@@ -316,7 +345,7 @@ export function DashboardOverview() {
   const cardNumber = (key: string) => visibleCardKeys.indexOf(key) + 1;
   const summaryMetrics = [
     hasProduction && { label: "OEE", value: `${intelligence.oee.value.toFixed(1)}%`, detail: `A ${intelligence.oee.availability.toFixed(1)} · P ${intelligence.oee.performance.toFixed(1)} · Q ${intelligence.oee.quality.toFixed(1)}` },
-    (hasProduction || available.downtime > 0) && { label: "Total downtime", value: `${intelligence.totals.totalDowntime.toLocaleString("en-IN")} min`, detail: `${intelligence.totals.downtimeFrequency} stops` },
+    (hasProduction || available.downtime > 0) && { label: "Total downtime", value: formatDuration(intelligence.totals.totalDowntime), detail: `${intelligence.totals.downtimeFrequency} stops` },
     (hasProduction || available.quality > 0) && { label: "Rejection", value: `${intelligence.totals.rejectionRate.toFixed(1)}%`, detail: `${intelligence.totals.rejected.toLocaleString("en-IN")} units` },
     available.inventory > 0 && { label: "Material risks", value: intelligence.inventoryRisks.length.toString(), detail: "requiring review" },
     hasSupplier && { label: "Supplier score", value: intelligence.supplierScore.toFixed(1), detail: "out of 100" },
@@ -349,6 +378,7 @@ export function DashboardOverview() {
           <button className="button button-secondary" onClick={exportSnapshot}><Download size={14} /> Export snapshot</button>
         </div>
       </header>
+      <HomeModuleGrid />
       <CommandFilters />
       <DataHealthNotice intelligence={intelligence} />
       {summaryMetrics.length > 0 && <div className="answer-summary-strip home-summary-strip" style={{ gridTemplateColumns: `repeat(${Math.min(summaryMetrics.length, 6)}, 1fr)` }}>{summaryMetrics.map((metric) => <div key={metric.label}><span>{metric.label}</span><strong>{metric.value}</strong><small>{metric.detail}</small></div>)}</div>}

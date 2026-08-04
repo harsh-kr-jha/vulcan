@@ -1,10 +1,14 @@
+from io import BytesIO
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models.deletion import ProtectedError
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill
 from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny
@@ -23,6 +27,81 @@ from apps.tenancy.models import Factory, FactoryMaster
 from apps.tenancy.services import get_workspace_identity
 from processing.readers.tabular import read_rows
 from processing.templates import TEMPLATES
+
+TEMPLATE_EXAMPLES = {
+    "projects": [
+        "IG-2026-047",
+        "Customer name",
+        "Purified Water Distribution Skid",
+        "PO-4821",
+        "Process Equipment",
+        1,
+        "Set",
+        "Unit-I",
+        4_850_000,
+        "2026-07-25",
+        "2026-07-28",
+        "2026-08-24",
+        "2026-08-24",
+        "",
+        "High",
+        "In Progress",
+        58,
+        "Nisha Rao|Project lead; Imran Shaikh|Production",
+    ],
+    "project_stages": [
+        "IG-2026-047",
+        "RAW-MATERIAL",
+        "Raw Material Delivery",
+        1,
+        "Completed",
+        100,
+        "2026-07-28",
+        "2026-07-29",
+        "2026-07-30",
+        "2026-07-30",
+        "Ajay Kumar",
+        0,
+        "Material certificate verified",
+        "material-test-certificate.pdf; goods-receipt-note.pdf",
+    ],
+}
+
+
+class ImportTemplateView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request, dataset_type):
+        fields = TEMPLATES.get(dataset_type)
+        if not fields:
+            return Response({"detail": "Choose a supported dataset type."}, status=404)
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = dataset_type.replace("_", " ").title()[:31]
+        worksheet.append([field.key for field in fields])
+        if dataset_type in TEMPLATE_EXAMPLES:
+            worksheet.append(TEMPLATE_EXAMPLES[dataset_type])
+        for cell in worksheet[1]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill("solid", fgColor="416F57")
+        worksheet.freeze_panes = "A2"
+        for column in worksheet.columns:
+            width = min(max(len(str(cell.value or "")) for cell in column) + 3, 42)
+            worksheet.column_dimensions[column[0].column_letter].width = width
+        content = BytesIO()
+        workbook.save(content)
+        workbook.close()
+        response = HttpResponse(
+            content.getvalue(),
+            content_type=(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            ),
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="vulcan_{dataset_type}_template.xlsx"'
+        )
+        return response
 
 
 class ImportInspectView(APIView):

@@ -29,3 +29,12 @@ def test_suggest_mapping_prioritises_aliases():
         "good_quantity",
     ]
     assert all(suggestion.confidence == Confidence.HIGH for suggestion in suggestions)
+
+
+def test_exact_later_header_is_not_consumed_by_earlier_fuzzy_header():
+    fields = [TemplateField("po_number", "Purchase order number", "string", aliases=("PO No",))]
+
+    suggestions = suggest_mappings(["Sr No", "PO NO."], fields)
+
+    assert suggestions[0].target_key is None
+    assert suggestions[1].target_key == "po_number"

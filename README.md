@@ -5,9 +5,10 @@ quantified losses, and traceable recommendations.
 
 This repository contains one lightweight application:
 
-- Next.js display layer for the command centre, Digital Twin, performance, uploads, alerts, and
-  process-aware factory setup
-- Django API as the source of truth for factories, master data, files, mappings, records and rules
+- Next.js display layer for the command centre, Projects, Digital Twin, performance, uploads,
+  alerts, and process-aware factory setup
+- Django API as the validated analytical store for factories, source lineage, mappings, records
+  and rules; connected factory sheets remain authoritative for operational facts
 - Server-side CSV/XLSX inspection, mapping suggestions, validation and KPI calculation
 - PostgreSQL-ready relational ownership with SQLite as the zero-infrastructure local default
 - Optional Celery, Redis and S3/MinIO deployment path for larger asynchronous workloads
@@ -38,6 +39,11 @@ MyPol showcase factory; you can also create a factory, configure its process flo
 CSV/XLSX files. Django inspects every file. Optional source columns may be set to
 **Do not import**; required-field and row mismatches include a correction, and rejected rows stay
 outside the standard record table.
+
+Projects use the same source-connected path. Import **Project master** first, then **Project
+stages**. The latest approved row for each project number and `(project number, stage code)` key
+drives the portfolio, tracker, delivery prediction, documents, activities, Home counts and project
+alerts. Re-uploads refresh those analytical views without creating browser-local project data.
 
 ## Full local stack
 

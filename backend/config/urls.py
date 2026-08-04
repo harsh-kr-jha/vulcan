@@ -13,6 +13,7 @@ from apps.operations.import_views import (
     ImportEditView,
     ImportInspectView,
     ImportPreviewView,
+    ImportTemplateView,
     ImportValidationView,
 )
 from apps.operations.views import UploadViewSet
@@ -57,6 +58,11 @@ urlpatterns = [
     ),
     path("api/workspace/ask/", WorkspaceQuestionView.as_view(), name="workspace-question"),
     path("api/imports/inspect/", ImportInspectView.as_view(), name="import-inspect"),
+    path(
+        "api/imports/template/<str:dataset_type>/",
+        ImportTemplateView.as_view(),
+        name="import-template",
+    ),
     path(
         "api/imports/<uuid:upload_id>/validate/",
         ImportValidationView.as_view(),

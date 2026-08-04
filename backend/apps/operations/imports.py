@@ -76,6 +76,13 @@ def validate_mapping(upload, mapping):
     mapped_rows = [apply_import_context(upload, map_row(row, mapping)) for row in upload.raw_rows]
     if not any(item["severity"] == Severity.REJECTION and item["row"] == 0 for item in issues):
         references = master_references(upload)
+        known_projects = {
+            str(values.get("project_number", "")).strip().casefold()
+            for values in StandardRecord.objects.filter(
+                factory=upload.factory, dataset_type="projects"
+            ).values_list("values", flat=True)
+            if str(values.get("project_number", "")).strip()
+        }
         for index, row in enumerate(mapped_rows, start=2):
             for record_issue in validate_record(row, field_rules(upload.dataset_type)):
                 issues.append(
@@ -92,6 +99,8 @@ def validate_mapping(upload, mapping):
             issues.extend(validate_dates(row, fields, index))
             issues.extend(validate_import_context(upload, row, index))
             issues.extend(validate_references(row, references, index))
+            issues.extend(validate_project_row(upload, row, index, known_projects))
+        issues.extend(validate_project_duplicates(upload, mapped_rows))
 
     rejected_rows = {
         item["row"] for item in issues if item["severity"] == Severity.REJECTION and item["row"]
@@ -318,6 +327,8 @@ def normalize_date(value):
 def record_date(values):
     raw = (
         values.get("date")
+        or values.get("start_date")
+        or values.get("planned_start")
         or values.get("actual_delivery_date")
         or values.get("promised_date")
         or values.get("due_date")
@@ -349,6 +360,208 @@ def validate_dates(row, fields, row_number):
                     value,
                 )
             )
+    return issues
+
+
+def validate_project_row(upload, row, row_number, known_projects):
+    if upload.dataset_type not in {"projects", "project_stages"}:
+        return []
+
+    issues = []
+    if upload.dataset_type == "projects":
+        issues.extend(
+            validate_choice(
+                row,
+                row_number,
+                "priority",
+                {"critical", "high", "medium", "low"},
+                "Use Critical, High, Medium or Low.",
+            )
+        )
+        issues.extend(
+            validate_choice(
+                row,
+                row_number,
+                "status",
+                {"not started", "in progress", "delayed", "completed", "on hold"},
+                "Use Not Started, In Progress, Delayed, Completed or On Hold.",
+            )
+        )
+        issues.extend(
+            validate_date_order(
+                row,
+                row_number,
+                "start_date",
+                "commitment_date",
+                "Project commitment cannot be before the project start date.",
+            )
+        )
+        raw_progress = row.get("progress")
+        if raw_progress not in {None, ""}:
+            try:
+                progress = Decimal(str(raw_progress))
+                if progress > 100:
+                    issues.append(
+                        issue(
+                            row_number,
+                            "progress",
+                            Severity.REJECTION,
+                            "maximum_progress",
+                            "Project completion cannot exceed 100%.",
+                            "Use a value from 0 to 100.",
+                            progress,
+                        )
+                    )
+            except InvalidOperation:
+                pass
+        return issues
+
+    project_number = str(row.get("project_number", "") or "").strip()
+    if project_number and project_number.casefold() not in known_projects:
+        issues.append(
+            issue(
+                row_number,
+                "project_number",
+                Severity.REJECTION,
+                "unknown_project",
+                f"Project “{project_number}” has not been imported for this factory.",
+                "Import and approve the Project master sheet before importing its stages.",
+                project_number,
+            )
+        )
+    issues.extend(
+        validate_choice(
+            row,
+            row_number,
+            "stage_status",
+            {"not started", "in progress", "delayed", "completed"},
+            "Use Not Started, In Progress, Delayed or Completed.",
+        )
+    )
+    try:
+        progress = Decimal(str(row.get("progress", "")))
+        if progress > 100:
+            issues.append(
+                issue(
+                    row_number,
+                    "progress",
+                    Severity.REJECTION,
+                    "maximum_progress",
+                    "Stage completion cannot exceed 100%.",
+                    "Use a value from 0 to 100.",
+                    progress,
+                )
+            )
+        stage_status = str(row.get("stage_status", "") or "").strip().casefold()
+        inconsistent = (stage_status == "completed" and progress != 100) or (
+            stage_status == "not started" and progress != 0
+        )
+        if inconsistent:
+            expected = 100 if stage_status == "completed" else 0
+            issues.append(
+                issue(
+                    row_number,
+                    "progress",
+                    Severity.REJECTION,
+                    "status_progress_consistency",
+                    f"{row.get('stage_status')} stages must be recorded as {expected}% complete.",
+                    f"Set progress to {expected}, or correct the stage status.",
+                    progress,
+                )
+            )
+    except InvalidOperation:
+        pass
+    issues.extend(
+        validate_date_order(
+            row,
+            row_number,
+            "planned_start",
+            "planned_completion",
+            "Planned completion cannot be before planned start.",
+        )
+    )
+    issues.extend(
+        validate_date_order(
+            row,
+            row_number,
+            "actual_start",
+            "actual_completion",
+            "Actual completion cannot be before actual start.",
+        )
+    )
+    return issues
+
+
+def validate_choice(row, row_number, field_name, choices, correction):
+    entered = str(row.get(field_name, "") or "").strip()
+    if not entered or entered.casefold() in choices:
+        return []
+    return [
+        issue(
+            row_number,
+            field_name,
+            Severity.REJECTION,
+            "valid_choice",
+            f"“{entered}” is not a supported {field_name.replace('_', ' ')}.",
+            correction,
+            entered,
+        )
+    ]
+
+
+def validate_date_order(row, row_number, start_field, end_field, explanation):
+    start = parse_normalized_date(row.get(start_field))
+    end = parse_normalized_date(row.get(end_field))
+    if not start or not end or end >= start:
+        return []
+    return [
+        issue(
+            row_number,
+            end_field,
+            Severity.REJECTION,
+            "date_sequence",
+            explanation,
+            f"Use a {end_field.replace('_', ' ')} on or after {start.isoformat()}.",
+            row.get(end_field),
+        )
+    ]
+
+
+def parse_normalized_date(value):
+    try:
+        return date.fromisoformat(normalize_date(value)) if value else None
+    except ValueError:
+        return None
+
+
+def validate_project_duplicates(upload, rows):
+    if upload.dataset_type not in {"projects", "project_stages"}:
+        return []
+    seen = set()
+    issues = []
+    for row_number, row in enumerate(rows, start=2):
+        project_number = str(row.get("project_number", "") or "").strip().casefold()
+        stage_code = str(row.get("stage_code", "") or "").strip().casefold()
+        key = (
+            (project_number,)
+            if upload.dataset_type == "projects"
+            else (project_number, stage_code)
+        )
+        if not all(key) or key not in seen:
+            seen.add(key)
+            continue
+        label = "project number" if upload.dataset_type == "projects" else "project and stage code"
+        issues.append(
+            issue(
+                row_number,
+                "project_number" if upload.dataset_type == "projects" else "stage_code",
+                Severity.REJECTION,
+                "duplicate_project_key",
+                f"This {label} appears more than once in the source.",
+                "Keep one authoritative row for each source key.",
+                " / ".join(key),
+            )
+        )
     return issues
 
 

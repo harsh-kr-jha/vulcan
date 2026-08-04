@@ -53,38 +53,56 @@ def suggest_mappings(
     fields: Iterable[TemplateField],
     approved_mapping: dict[str, str] | None = None,
 ) -> list[MappingSuggestion]:
+    source_headers = tuple(source_headers)
     fields = tuple(fields)
     approved = {normalize_header(key): value for key, value in (approved_mapping or {}).items()}
-    suggestions = []
+    suggestions: dict[str, MappingSuggestion] = {}
     assigned: set[str] = set()
 
+    # Profiles and exact aliases are resolved before fuzzy matching. This keeps
+    # early generic columns such as "Sr No" from consuming a later exact "PO No".
     for source in source_headers:
         normalized_source = normalize_header(source)
         approved_target = approved.get(normalized_source)
         if approved_target and approved_target not in assigned:
-            suggestions.append(
-                MappingSuggestion(source, approved_target, Confidence.HIGH, 1.0, "approved profile")
+            suggestions[source] = MappingSuggestion(
+                source, approved_target, Confidence.HIGH, 1.0, "approved profile"
             )
             assigned.add(approved_target)
+    for source in source_headers:
+        if source in suggestions:
             continue
+        normalized_source = normalize_header(source)
+        for field in fields:
+            aliases = (field.key, field.display_name, *field.aliases)
+            if normalized_source not in {normalize_header(alias) for alias in aliases}:
+                continue
+            if field.key in assigned:
+                break
+            suggestions[source] = MappingSuggestion(
+                source, field.key, Confidence.HIGH, 1.0, "exact or alias match"
+            )
+            assigned.add(field.key)
+            break
 
-        candidates = []
+    candidates = []
+    best_source_scores = {}
+    for source in source_headers:
+        if source in suggestions:
+            continue
+        normalized_source = normalize_header(source)
         for field in fields:
             aliases = (field.key, field.display_name, *field.aliases)
             score = max(
                 SequenceMatcher(None, normalized_source, normalize_header(alias)).ratio()
                 for alias in aliases
             )
-            if normalized_source in {normalize_header(alias) for alias in aliases}:
-                score = 1.0
-            candidates.append((score, field))
-        candidates.sort(key=lambda item: item[0], reverse=True)
-        score, best = candidates[0] if candidates else (0.0, None)
-
-        if best is None or score < 0.48 or best.key in assigned:
-            suggestions.append(
-                MappingSuggestion(source, None, Confidence.UNMAPPED, score, "no unique match")
-            )
+            best_source_scores[source] = max(best_source_scores.get(source, 0), score)
+            if score >= 0.6:
+                candidates.append((score, source, field))
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    for score, source, best in candidates:
+        if source in suggestions or best.key in assigned:
             continue
         confidence = (
             Confidence.HIGH
@@ -93,8 +111,21 @@ def suggest_mappings(
             if score >= 0.7
             else Confidence.LOW
         )
-        reason = "exact or alias match" if score == 1 else "header token similarity"
-        suggestions.append(MappingSuggestion(source, best.key, confidence, round(score, 3), reason))
+        suggestions[source] = MappingSuggestion(
+            source, best.key, confidence, round(score, 3), "header token similarity"
+        )
         assigned.add(best.key)
 
-    return suggestions
+    return [
+        suggestions.get(
+            source,
+            MappingSuggestion(
+                source,
+                None,
+                Confidence.UNMAPPED,
+                round(best_source_scores.get(source, 0), 3),
+                "no unique match",
+            ),
+        )
+        for source in source_headers
+    ]

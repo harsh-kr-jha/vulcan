@@ -5378,6 +5378,7 @@ i.twin-status-no_data,
 .project-empty svg { color: var(--green); }
 .project-empty strong { color: var(--ink); font-size: 13px; }
 .project-empty p { font-size: 10px; margin: 0; }
+.project-empty .button { margin-top: 8px; }
 
 .project-tracker-header { align-items: flex-start; display: flex; gap: 20px; justify-content: space-between; margin-bottom: 17px; }
 .project-tracker-meta { align-items: center; color: var(--green); display: flex; font-size: 9px; font-weight: 720; gap: 7px; letter-spacing: .06em; text-transform: uppercase; }
@@ -5601,6 +5602,8 @@ i.twin-status-no_data,
 .project-upload-card h2 { font-size: 13px; margin: 13px 0 0; }
 .project-comment-panel > p,
 .project-upload-card > p { color: var(--muted); font-size: 9px; line-height: 1.5; margin: 5px 0 13px; }
+.project-comment-panel > .button,
+.project-upload-card > .button { justify-content: center; width: 100%; }
 .project-comment-panel textarea { border: 1px solid var(--line-strong); border-radius: 8px; font: inherit; font-size: 10px; line-height: 1.5; outline: 0; padding: 10px; resize: vertical; width: 100%; }
 .project-comment-panel textarea:focus { border-color: #88a797; box-shadow: 0 0 0 3px rgba(70,121,95,.08); }
 .project-comment-panel form .button { margin-top: 8px; width: 100%; }
@@ -5648,6 +5651,8 @@ i.twin-status-no_data,
 .stage-form-grid input,
 .stage-form-grid select { height: 39px; }
 .stage-form-grid textarea { line-height: 1.5; padding: 9px 10px; resize: vertical; }
+.stage-form-grid input[readonly],
+.stage-form-grid textarea[readonly] { background: #f7f9f6; color: var(--ink); cursor: default; }
 .stage-form-grid input:focus,
 .stage-form-grid select:focus,
 .stage-form-grid textarea:focus { border-color: #88a797; box-shadow: 0 0 0 3px rgba(70,121,95,.08); }

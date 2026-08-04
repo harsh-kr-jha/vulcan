@@ -1,4 +1,6 @@
-export type DatasetType = "process" | "production" | "downtime" | "quality" | "inventory" | "supplier" | "orders";
+import type { FactoryProject } from "./project-data";
+
+export type DatasetType = "process" | "production" | "downtime" | "quality" | "inventory" | "supplier" | "orders" | "projects" | "project_stages";
 export type DataSource = "file" | "template" | "showcase";
 
 export interface Company { id: string; name: string; industry: string }
@@ -50,6 +52,7 @@ export interface Intelligence {
   customKpiVariables: CustomKpiVariable[];
   customKpis: CustomKpiResult[];
   digitalTwin: DigitalTwinPayload;
+  projects: FactoryProject[];
   losses: { productionGapUnits: number; downtimeLostUnits: number; speedLostUnits: number; rejectedUnits: number; reworkUnits: number };
   dataAvailability: Record<DatasetType, number>;
   dataHealth: Partial<Record<DatasetType, { status: "current" | "stale" | "absent"; latestDate: string | null; ageDays: number | null; staleAfterDays: number }>>;
@@ -64,9 +67,9 @@ export interface ImportValidation { upload: UploadDataset; issues: ValidationIss
 export interface ImportPreview { upload: UploadDataset; headers: string[]; rows: Record<string, string | number | null>[]; totalRows: number; mapping: Record<string, string>; omittedFields: string[] }
 export interface WorkspacePayload { state: FactoryState; intelligence: Intelligence }
 
-export const datasetLabels: Record<DatasetType, string> = { process: "Process sheets", production: "Production", downtime: "Downtime", quality: "Quality", inventory: "Inventory", supplier: "Supplier deliveries", orders: "Orders" };
+export const datasetLabels: Record<DatasetType, string> = { process: "Process sheets", production: "Production", downtime: "Downtime", quality: "Quality", inventory: "Inventory", supplier: "Supplier deliveries", orders: "Orders", projects: "Project master", project_stages: "Project stages" };
 
 const today = new Date();
 const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 6);
 export const defaultFilters: DashboardFilters = { from: weekAgo.toISOString().slice(0, 10), to: today.toISOString().slice(0, 10), factoryId: "", line: "all", machine: "all", sku: "all", shift: "all" };
-export const emptyIntelligence: Intelligence = { totals: { planned: 0, actual: 0, good: 0, rejected: 0, reworked: 0, planAttainment: 0, firstPassYield: 0, totalDowntime: 0, downtimeFrequency: 0, averageDowntimeDuration: 0, rejectionRate: 0, reworkRate: 0, estimatedProductionLost: 0, throughputRate: 0, idealCycleMinutes: 0, actualCycleMinutes: 0, cycleTimeVariance: 0 }, oee: { availability: 0, performance: 0, quality: 0, value: 0, plannedMinutes: 0, runMinutes: 0, idealMinutes: 0 }, dailyOee: [], productionTrend: [], machineLoss: [], reasonLoss: [], defectLoss: [], skuQuality: [], inventoryRisks: [], orderRisks: [], supplierScores: [], supplierScore: 0, customKpiVariables: [], customKpis: [], digitalTwin: { factory: { id: "", name: "", code: "", location: "", details: {} }, summary: { lines: 0, processes: 0, machines: 0, running: 0, attention: 0, withoutData: 0 }, lines: [] }, losses: { productionGapUnits: 0, downtimeLostUnits: 0, speedLostUnits: 0, rejectedUnits: 0, reworkUnits: 0 }, dataAvailability: { process: 0, production: 0, downtime: 0, quality: 0, inventory: 0, supplier: 0, orders: 0 }, dataHealth: {}, alerts: [], dataQuality: 100 };
+export const emptyIntelligence: Intelligence = { totals: { planned: 0, actual: 0, good: 0, rejected: 0, reworked: 0, planAttainment: 0, firstPassYield: 0, totalDowntime: 0, downtimeFrequency: 0, averageDowntimeDuration: 0, rejectionRate: 0, reworkRate: 0, estimatedProductionLost: 0, throughputRate: 0, idealCycleMinutes: 0, actualCycleMinutes: 0, cycleTimeVariance: 0 }, oee: { availability: 0, performance: 0, quality: 0, value: 0, plannedMinutes: 0, runMinutes: 0, idealMinutes: 0 }, dailyOee: [], productionTrend: [], machineLoss: [], reasonLoss: [], defectLoss: [], skuQuality: [], inventoryRisks: [], orderRisks: [], supplierScores: [], supplierScore: 0, customKpiVariables: [], customKpis: [], digitalTwin: { factory: { id: "", name: "", code: "", location: "", details: {} }, summary: { lines: 0, processes: 0, machines: 0, running: 0, attention: 0, withoutData: 0 }, lines: [] }, projects: [], losses: { productionGapUnits: 0, downtimeLostUnits: 0, speedLostUnits: 0, rejectedUnits: 0, reworkUnits: 0 }, dataAvailability: { process: 0, production: 0, downtime: 0, quality: 0, inventory: 0, supplier: 0, orders: 0, projects: 0, project_stages: 0 }, dataHealth: {}, alerts: [], dataQuality: 100 };

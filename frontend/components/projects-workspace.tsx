@@ -12,11 +12,13 @@ import {
   Search,
   SlidersHorizontal,
   Sparkles,
+  UploadCloud,
 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { formatProjectDate, formatProjectValue, type FactoryProject } from "@/lib/project-data";
+import { useFactory } from "@/lib/factory-context";
 import { useProjects } from "@/lib/project-context";
 
 type ViewFilter = "All" | "Active" | "At risk" | "Completed";
@@ -31,6 +33,7 @@ function ProgressBar({ value, danger = false }: { value: number; danger?: boolea
 
 export function ProjectsWorkspace() {
   const { projects } = useProjects();
+  const { filters, state } = useFactory();
   const [query, setQuery] = useState("");
   const [view, setView] = useState<ViewFilter>("All");
   const [priority, setPriority] = useState("All priorities");
@@ -48,9 +51,12 @@ export function ProjectsWorkspace() {
   const active = projects.filter((project) => project.status !== "Completed").length;
   const atRisk = projects.filter((project) => project.status === "Delayed" || project.deliveryPrediction.state !== "On track").length;
   const totalValue = projects.reduce((total, project) => total + project.orderValue, 0);
-  const dueSoon = projects.filter((project) => project.status !== "Completed" && project.customerDueDate <= "2026-08-24").length;
-  const urgentProject = projects.find((project) => project.priority === "Critical") ?? projects[0];
-
+  const cycleStart = new Date(`${filters.to}T00:00:00`);
+  const cycleEnd = new Date(cycleStart); cycleEnd.setDate(cycleEnd.getDate() + 30);
+  const dueSoon = projects.filter((project) => {
+    const due = new Date(`${project.customerDueDate}T00:00:00`);
+    return project.status !== "Completed" && due >= cycleStart && due <= cycleEnd;
+  }).length;
   return <>
     <header className="page-header projects-page-header">
       <div>
@@ -58,19 +64,19 @@ export function ProjectsWorkspace() {
         <h1>Projects <span>from PO to dispatch.</span></h1>
         <p className="page-subtitle">One live view of every order, owner, milestone and delivery risk.</p>
       </div>
-      {urgentProject && <div className="page-actions"><Link className="button button-accent" href={`/projects/${urgentProject.id}`}>Open critical project <ArrowRight size={14} /></Link></div>}
+      <div className="page-actions"><Link className="button button-secondary" href="/uploads?add=project_stages"><UploadCloud size={14} />Import stages</Link><Link className="button button-accent" href="/uploads?add=projects">Import project master <ArrowRight size={14} /></Link></div>
     </header>
 
     <section className="project-source-note">
       <span><Sparkles size={16} /></span>
-      <div><strong>Built from the Project List workbook</strong><p>Project List, Ongoing Projects and Projections are unified through the project number, PO, customer, quantity, unit, dates, priority and status fields.</p></div>
-      <small>Factory Twin V4 model</small>
+      <div><strong>Source-connected project analysis</strong><p>Projects and execution stages come from approved Excel or CSV sources for {state.factories.find((factory) => factory.id === state.activeFactoryId)?.name ?? "this factory"}. Portal screens do not create operational project data.</p></div>
+      <small>{projects.length ? "Latest approved rows" : "Awaiting project source"}</small>
     </section>
 
     <section className="project-summary-grid" aria-label="Project summary">
       <article><span><FolderKanban size={17} /></span><div><small>Active projects</small><strong>{active}</strong><p>{projects.length} total customer orders</p></div></article>
       <article><span className="project-icon-danger"><AlertTriangle size={17} /></span><div><small>At-risk projects</small><strong>{atRisk}</strong><p>Need recovery decisions</p></div></article>
-      <article><span><CalendarClock size={17} /></span><div><small>Due this cycle</small><strong>{dueSoon}</strong><p>Through 24 Aug 2026</p></div></article>
+      <article><span><CalendarClock size={17} /></span><div><small>Due in next 30 days</small><strong>{dueSoon}</strong><p>From the selected end date</p></div></article>
       <article><span><IndianRupee size={17} /></span><div><small>Tracked order value</small><strong>{formatProjectValue(totalValue)}</strong><p>Across this portfolio</p></div></article>
     </section>
 
@@ -100,7 +106,7 @@ export function ProjectsWorkspace() {
             <span className="project-open"><ArrowRight size={16} /></span>
           </Link>;
         })}
-        {!filteredProjects.length && <div className="project-empty"><PackageCheck size={28} /><strong>No projects match this view</strong><p>Change the search or filters to see other customer orders.</p></div>}
+        {!filteredProjects.length && <div className="project-empty"><PackageCheck size={28} /><strong>{projects.length ? "No projects match this view" : "No approved project source"}</strong><p>{projects.length ? "Change the search or filters to see other customer orders." : "Import the Project master sheet to populate this factory portfolio."}</p>{!projects.length && <Link className="button button-primary" href="/uploads?add=projects">Import project master <ArrowRight size={13} /></Link>}</div>}
       </div>
     </section>
   </>;

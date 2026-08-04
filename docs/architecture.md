@@ -97,8 +97,10 @@ aggregates; the frontend formats and visualises them.
 Factory identity and master data are relational and factory-scoped. Each upload preserves its
 headers, raw rows, approved mapping, omitted columns, validation issues and lineage in Django.
 Approved rows become searchable `StandardRecord` rows with common dimensions plus typed JSON
-values. This keeps the MVP schema small while preserving a clean migration path to dedicated
-production, downtime, quality, inventory and order fact tables once their grains stabilize.
+values. Project master and project-stage sheets use the same layer; analytics resolves the newest
+approved source per stable project/stage key before building the portfolio, tracker, prediction and
+alerts. This keeps the MVP schema small while preserving a clean migration path to dedicated
+production, downtime, quality, inventory, order and project fact tables once their grains stabilize.
 
 Authentication is intentionally bypassed through a single implicit workspace identity in this
 slice. This is a temporary boundary, not an authorization design; tenant and factory foreign keys

@@ -1,9 +1,79 @@
+from io import BytesIO
 from pathlib import Path
 
 import pytest
 from apps.operations.models import StandardRecord, Upload
 from apps.tenancy.models import Company
 from django.core.files.uploadedfile import SimpleUploadedFile
+from openpyxl import load_workbook
+
+
+def import_sheet(api_client, factory_id, dataset_type, filename, content):
+    content_type = (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        if filename.endswith(".xlsx")
+        else "text/csv"
+    )
+    inspection = api_client.post(
+        "/api/imports/inspect/",
+        {
+            "factory": factory_id,
+            "datasetType": dataset_type,
+            "file": SimpleUploadedFile(filename, content, content_type=content_type),
+        },
+        format="multipart",
+    )
+    assert inspection.status_code == 201
+    upload_id = inspection.data["upload"]["id"]
+    validation = api_client.post(
+        f"/api/imports/{upload_id}/validate/",
+        {"mapping": inspection.data["mapping"]},
+        format="json",
+    )
+    assert validation.status_code == 200
+    assert validation.data["canImport"] is True
+    committed = api_client.post(f"/api/imports/{upload_id}/commit/", {}, format="json")
+    assert committed.status_code == 200
+    return upload_id
+
+
+@pytest.mark.django_db
+def test_project_templates_are_downloaded_as_excel_workbooks(api_client):
+    response = api_client.get("/api/imports/template/projects/")
+
+    assert response.status_code == 200
+    assert response["Content-Disposition"].endswith('"vulcan_projects_template.xlsx"')
+    workbook = load_workbook(BytesIO(response.content), read_only=True)
+    worksheet = workbook.active
+    headers = [cell.value for cell in next(worksheet.iter_rows())]
+    assert headers[:4] == ["project_number", "customer", "project_name", "po_number"]
+    assert worksheet["A2"].value == "IG-2026-047"
+    workbook.close()
+
+
+@pytest.mark.django_db
+def test_mock_project_workbooks_import_end_to_end(api_client):
+    factory_id = api_client.get("/api/workspace/").data["state"]["activeFactoryId"]
+    fixture_dir = Path(__file__).parents[2] / "test-data" / "projects"
+
+    for dataset_type, filename in [
+        ("projects", "project_master_mock.xlsx"),
+        ("project_stages", "project_stages_mock.xlsx"),
+    ]:
+        source = fixture_dir / filename
+        import_sheet(api_client, factory_id, dataset_type, filename, source.read_bytes())
+
+    intelligence = api_client.get(f"/api/workspace/?factory={factory_id}").data["intelligence"]
+    assert intelligence["dataAvailability"]["projects"] == 6
+    assert intelligence["dataAvailability"]["project_stages"] == 54
+    assert len(intelligence["projects"]) == 6
+    assert {project["status"] for project in intelligence["projects"]} == {
+        "Not Started",
+        "In Progress",
+        "Delayed",
+        "Completed",
+    }
+    assert any(alert["id"] == "project-IG-2026-048" for alert in intelligence["alerts"])
 
 
 @pytest.mark.django_db
@@ -385,4 +455,111 @@ def test_inventory_reports_actual_unit_and_stale_data(api_client):
         "latestDate": "2026-07-20",
         "ageDays": 11,
         "staleAfterDays": 3,
+    }
+
+
+@pytest.mark.django_db
+def test_project_sheets_drive_factory_scoped_tracker_and_latest_source_wins(api_client):
+    factory_id = api_client.get("/api/workspace/").data["state"]["activeFactoryId"]
+    project = (
+        b"project_number,customer,project_name,po_number,category,quantity,uom,"
+        b"factory_unit,order_value,po_received_date,start_date,customer_due_date,"
+        b"commitment_date,priority,status,progress,assigned_team\n"
+        b"IG-2026-047,Customer A,Water skid,PO-4821,Process Equipment,1,Set,Unit-I,"
+        b"4850000,2026-07-25,2026-07-28,2026-08-20,2026-08-20,High,In Progress,"
+        b"50,Nisha Rao|Project lead; Imran Shaikh|Production\n"
+    )
+    import_sheet(api_client, factory_id, "projects", "project-master.csv", project)
+    stages = (
+        b"project_number,stage_code,stage_name,sequence,stage_status,progress,"
+        b"planned_start,actual_start,planned_completion,actual_completion,assigned_to,"
+        b"delay_days,notes,attachments\n"
+        b"IG-2026-047,RAW,Raw Material Delivery,1,Completed,100,2026-07-28,"
+        b"2026-07-28,2026-07-30,2026-07-30,Ajay Kumar,0,Material verified,mtc.pdf\n"
+        b"IG-2026-047,CUT,Profile Cutting,2,In Progress,50,2026-07-31,2026-08-01,"
+        b"2026-08-05,,Imran Shaikh,0,Cutting active,drawing.dwg\n"
+        b"IG-2026-047,WELD,Welding,3,Delayed,25,2026-08-06,2026-08-07,"
+        b"2026-08-20,,Ravi Joshi,3,Capacity constraint,inspection.pdf\n"
+    )
+    import_sheet(api_client, factory_id, "project_stages", "project-stages.csv", stages)
+
+    workspace = api_client.get(
+        f"/api/workspace/?factory={factory_id}&from=2026-08-01&to=2026-08-10"
+    ).data["intelligence"]
+    assert workspace["dataAvailability"]["projects"] == 1
+    assert workspace["dataAvailability"]["project_stages"] == 3
+    assert len(workspace["projects"]) == 1
+    tracker = workspace["projects"][0]
+    project_id = tracker["id"]
+    assert tracker["status"] == "Delayed"
+    assert tracker["progress"] == 58
+    assert tracker["deliveryPrediction"] == {
+        "date": "2026-08-23",
+        "confidence": 68,
+        "state": "Late",
+    }
+    assert [stage["name"] for stage in tracker["stages"]] == [
+        "Raw Material Delivery",
+        "Profile Cutting",
+        "Welding",
+    ]
+    assert {document["name"] for document in tracker["documents"]} == {
+        "mtc.pdf",
+        "drawing.dwg",
+        "inspection.pdf",
+    }
+    assert any(alert["id"] == "project-IG-2026-047" for alert in workspace["alerts"])
+
+    refreshed = project.replace(b"4850000", b"5100000").replace(
+        b"Customer A", b"Customer A Updated"
+    )
+    import_sheet(api_client, factory_id, "projects", "project-master-v2.csv", refreshed)
+    latest = api_client.get(f"/api/workspace/?factory={factory_id}").data["intelligence"]
+    assert len(latest["projects"]) == 1
+    assert latest["projects"][0]["id"] == project_id
+    assert latest["projects"][0]["customer"] == "Customer A Updated"
+    assert latest["projects"][0]["orderValue"] == 5_100_000
+
+    second_factory = api_client.post(
+        "/api/factories/",
+        {
+            "name": "Project-free plant",
+            "code": "PROJECT-FREE",
+            "location": "Pune",
+            "timezone": "Asia/Kolkata",
+            "currency": "INR",
+        },
+        format="json",
+    ).data["id"]
+    isolated = api_client.get(f"/api/workspace/?factory={second_factory}").data["intelligence"]
+    assert isolated["projects"] == []
+    assert isolated["dataAvailability"]["projects"] == 0
+
+
+@pytest.mark.django_db
+def test_project_stage_validation_rejects_orphans_and_inconsistent_progress(api_client):
+    factory_id = api_client.get("/api/workspace/").data["state"]["activeFactoryId"]
+    content = (
+        b"project_number,stage_code,stage_name,sequence,stage_status,progress,"
+        b"planned_start,planned_completion\n"
+        b"MISSING-01,PACK,Packing,1,Completed,20,2026-08-01,2026-08-02\n"
+    )
+    inspection = api_client.post(
+        "/api/imports/inspect/",
+        {
+            "factory": factory_id,
+            "datasetType": "project_stages",
+            "file": SimpleUploadedFile("orphan.csv", content, content_type="text/csv"),
+        },
+        format="multipart",
+    )
+    validation = api_client.post(
+        f"/api/imports/{inspection.data['upload']['id']}/validate/",
+        {"mapping": inspection.data["mapping"]},
+        format="json",
+    )
+    assert validation.data["canImport"] is False
+    assert {issue["ruleCode"] for issue in validation.data["issues"]} >= {
+        "unknown_project",
+        "status_progress_consistency",
     }

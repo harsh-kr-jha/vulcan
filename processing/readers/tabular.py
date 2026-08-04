@@ -32,7 +32,12 @@ def inspect_file(path: str | Path, sample_size: int = 8) -> FileInspection:
 
 
 def read_rows(path: str | Path) -> tuple[list[str], list[dict[str, object]]]:
-    """Read the first tabular sheet without evaluating spreadsheet formulas."""
+    """Read the first tabular sheet without evaluating spreadsheet formulas.
+
+    Workbooks exported from operational teams often contain title or spacer rows
+    above the real table. The first row containing at least two headings is used
+    as the header so those sources can be mapped without being reformatted first.
+    """
     source = Path(path)
     if source.suffix.lower() == ".csv":
         with source.open("r", encoding="utf-8-sig", newline="") as handle:
@@ -43,15 +48,24 @@ def read_rows(path: str | Path) -> tuple[list[str], list[dict[str, object]]]:
         try:
             worksheet = workbook.worksheets[0]
             iterator = worksheet.iter_rows(values_only=True)
-            headers = [
-                str(value).strip() if value is not None else "" for value in next(iterator, ())
-            ]
+            headers = []
+            for candidate in iterator:
+                normalized = [
+                    str(value).strip() if value is not None else "" for value in candidate
+                ]
+                if sum(bool(value) for value in normalized) >= 2:
+                    headers = normalized
+                    break
+            if not headers:
+                return [], []
             return headers, [
                 {
                     header: _serializable_cell(value)
                     for header, value in zip(headers, row, strict=False)
+                    if header
                 }
                 for row in iterator
+                if any(value is not None and value != "" for value in row)
             ]
         finally:
             workbook.close()

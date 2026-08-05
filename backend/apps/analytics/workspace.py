@@ -148,7 +148,7 @@ def workspace_snapshot(identity, factory, filters):
                 "industry": factory.configuration.get("industry", "Manufacturing"),
             },
             "factories": WorkspaceFactorySerializer(
-                identity.tenant.factories.filter(is_active=True), many=True
+                identity.factories(), many=True
             ).data,
             "activeFactoryId": str(factory.id),
             "masters": masters,

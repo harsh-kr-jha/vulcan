@@ -1,11 +1,24 @@
+import os
 from datetime import date, timedelta
 
-from django.core.management.base import BaseCommand
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.core.management.base import BaseCommand, CommandError
+from django.core.validators import validate_email
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.operations.imports import record_date
 from apps.operations.models import StandardRecord, Upload
-from apps.tenancy.models import Factory, FactoryMaster
+from apps.tenancy.models import (
+    EmailIdentity,
+    Factory,
+    FactoryMaster,
+    Membership,
+    Role,
+    normalize_login_email,
+)
 from apps.tenancy.services import get_workspace_identity
 
 
@@ -13,6 +26,7 @@ class Command(BaseCommand):
     help = "Create or refresh the Musroom cultivation-intelligence showcase factory."
 
     def handle(self, *args, **options):
+        demo_credentials = self.demo_credentials()
         identity = get_workspace_identity()
         identity.company.name = "Musroom Cultivation Labs"
         identity.company.legal_name = "Musroom Cultivation Labs Pvt. Ltd."
@@ -291,11 +305,72 @@ class Command(BaseCommand):
         )
         self.seed_operational_data(identity, factory, wing, today)
         self.seed_crop_cycles(identity, factory, today)
+        if demo_credentials:
+            self.provision_demo_login(identity, *demo_credentials)
         self.stdout.write(
             self.style.SUCCESS(
                 f"Musroom ready: {len(processes)} crop stages and "
                 f"{factory.standard_records.count()} standardized records."
             )
+        )
+        if demo_credentials:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "Opt-in Musroom demo login provisioned; its password was rotated."
+                )
+            )
+        else:
+            self.stdout.write("No demo login provisioned; set both MUSHROOM_DEMO_* variables.")
+
+    def demo_credentials(self):
+        raw_email = os.getenv("MUSHROOM_DEMO_EMAIL", "")
+        password = os.getenv("MUSHROOM_DEMO_PASSWORD", "")
+        if bool(raw_email) != bool(password):
+            raise CommandError(
+                "Set MUSHROOM_DEMO_EMAIL and MUSHROOM_DEMO_PASSWORD together, or neither."
+            )
+        if not raw_email:
+            return None
+
+        email = normalize_login_email(raw_email)
+        try:
+            validate_email(email)
+            if len(password) < 15:
+                raise ValidationError("The demo password must contain at least 15 characters.")
+            candidate = get_user_model()(username="mushroom-demo-login", email=email)
+            validate_password(password, user=candidate)
+        except ValidationError as exc:
+            message = "Invalid Musroom demo credentials: " + " ".join(exc.messages)
+            raise CommandError(message) from exc
+        return email, password
+
+    @transaction.atomic
+    def provision_demo_login(self, identity, email, password):
+        user_model = get_user_model()
+        user, created = user_model.objects.get_or_create(username="mushroom-demo-login")
+        if not created and not EmailIdentity.objects.filter(user=user).exists():
+            raise CommandError("The reserved demo-login username already belongs to another user.")
+        user.email = email
+        user.is_active = True
+        user.is_staff = False
+        user.is_superuser = False
+        user.set_password(password)
+        user.save(
+            update_fields=["email", "is_active", "is_staff", "is_superuser", "password"]
+        )
+        try:
+            EmailIdentity.objects.update_or_create(user=user, defaults={"email": email})
+        except IntegrityError as exc:
+            message = "The configured demo email already belongs to another user."
+            raise CommandError(message) from exc
+        Membership.objects.update_or_create(
+            user=user,
+            tenant=identity.tenant,
+            defaults={
+                "role": Role.COMPANY_ADMIN,
+                "all_factories": True,
+                "is_active": True,
+            },
         )
 
     def master(self, identity, factory, kind, name, code, parent=None, metadata=None):

@@ -47,6 +47,7 @@ class UploadViewSet(viewsets.ModelViewSet):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["tenant"] = tenant_for_request(self.request)
+        context["factories"] = factories_for_request(self.request)
         return context
 
     def perform_create(self, serializer):
@@ -92,7 +93,17 @@ class UploadViewSet(viewsets.ModelViewSet):
         if upload.status != UploadState.MAPPING_REQUIRED:
             raise serializers.ValidationError("Upload is not awaiting a mapping.")
         upload.transition_to(UploadState.READY_FOR_VALIDATION)
-        record_audit_event(request, "mapping.confirmed", upload, metadata=request.data)
+        mapping = request.data.get("mapping", {})
+        mapped_values = list(mapping.values()) if isinstance(mapping, dict) else []
+        record_audit_event(
+            request,
+            "mapping.confirmed",
+            upload,
+            metadata={
+                "mappedFieldCount": sum(bool(value) for value in mapped_values),
+                "omittedFieldCount": sum(not value for value in mapped_values),
+            },
+        )
         return Response(self.get_serializer(upload).data)
 
     @action(detail=True, methods=["post"])

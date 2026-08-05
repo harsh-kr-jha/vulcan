@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 import pytest
 from apps.operations.models import StandardRecord, Upload
-from apps.tenancy.models import Factory, FactoryMaster
+from apps.tenancy.models import Factory, FactoryMaster, Membership, Role
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 
@@ -196,7 +196,9 @@ def test_process_import_uses_selected_process_code_without_mutating_source(api_c
     assert node["metrics"]["pressureBar"] is None
 
 
-def test_seed_mypol_is_idempotent_and_populates_every_feature(api_client):
+def test_seed_mypol_is_idempotent_and_populates_every_feature(
+    api_client, user, membership
+):
     call_command("seed_mypol", verbosity=0)
     factory = Factory.objects.get(tenant__slug="vulcan-workspace", code="MYPOL-MYS")
     first_counts = {
@@ -231,6 +233,15 @@ def test_seed_mypol_is_idempotent_and_populates_every_feature(api_client):
     assert suppliers.count() >= 6
     assert process_uploads.count() == processes.count()
     assert all(len(upload.standard_records.all()) > 0 for upload in process_uploads)
+
+    membership.is_active = False
+    membership.save(update_fields=["is_active"])
+    Membership.objects.create(
+        user=user,
+        tenant=factory.tenant,
+        role=Role.COMPANY_ADMIN,
+        all_factories=True,
+    )
 
     today = date.today()
     result = api_client.get(

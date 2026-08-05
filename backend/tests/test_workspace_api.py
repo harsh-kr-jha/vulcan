@@ -77,7 +77,7 @@ def test_mock_project_workbooks_import_end_to_end(api_client):
 
 
 @pytest.mark.django_db
-def test_factory_and_master_data_are_persisted_without_login(api_client):
+def test_factory_and_master_data_are_persisted_for_authenticated_admin(api_client):
     factory_response = api_client.post(
         "/api/factories/",
         {
@@ -101,7 +101,8 @@ def test_factory_and_master_data_are_persisted_without_login(api_client):
 
     workspace = api_client.get(f"/api/workspace/?factory={factory_id}")
     assert workspace.status_code == 200
-    assert workspace.data["state"]["factories"][0]["name"] == "Mysuru Plant"
+    factories = {item["id"]: item for item in workspace.data["state"]["factories"]}
+    assert factories[factory_id]["name"] == "Mysuru Plant"
     assert workspace.data["state"]["masters"]["lines"][0]["code"] == "CURE-01"
 
 

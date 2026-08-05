@@ -1,7 +1,8 @@
 from datetime import date, timedelta
 
 from django.shortcuts import get_object_or_404
-from rest_framework.permissions import AllowAny
+from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -14,28 +15,31 @@ from apps.analytics.workspace import (
     normalise_targets,
     workspace_snapshot,
 )
-from apps.tenancy.models import Factory
-from apps.tenancy.services import get_or_create_default_factory, get_workspace_identity
+from apps.common.permissions import (
+    CanManageAlerts,
+    CanManageCompany,
+    CanManageFactory,
+    factories_for_request,
+)
+from apps.tenancy.services import workspace_identity_for_request
 
 
 class WorkspaceView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        identity = get_workspace_identity()
-        factory = resolve_factory(request, identity)
+        factory = resolve_factory(request)
+        identity = workspace_identity_for_request(request, factory)
         filters = filter_values(request, factory)
         return Response(workspace_snapshot(identity, factory, filters))
 
 
 class WorkspaceConfigurationView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [CanManageFactory]
 
     def patch(self, request):
-        identity = get_workspace_identity()
-        factory = resolve_factory(request, identity)
+        factory = resolve_factory(request)
+        identity = workspace_identity_for_request(request, factory)
         configuration = {**factory.configuration}
         if "targets" in request.data:
             try:
@@ -52,9 +56,11 @@ class WorkspaceConfigurationView(APIView):
             except ValueError as exc:
                 return Response({"detail": str(exc)}, status=400)
         if company_name := request.data.get("name"):
+            if identity.membership.role not in CanManageCompany.allowed_roles:
+                raise PermissionDenied(CanManageCompany.message)
             name_conflict = (
                 identity.tenant.companies.filter(name=company_name)
-                .exclude(id=identity.company.id)
+                .exclude(id=factory.company_id)
                 .exists()
             )
             if name_conflict:
@@ -62,8 +68,8 @@ class WorkspaceConfigurationView(APIView):
                     {"detail": "A company with this name already exists in this workspace."},
                     status=400,
                 )
-            identity.company.name = company_name
-            identity.company.save(update_fields=["name", "updated_at"])
+            factory.company.name = company_name
+            factory.company.save(update_fields=["name", "updated_at"])
         if alert_status := request.data.get("alertStatus"):
             statuses = {**configuration.get("alertStatuses", {})}
             statuses[str(alert_status["id"])] = alert_status["status"]
@@ -74,12 +80,11 @@ class WorkspaceConfigurationView(APIView):
 
 
 class WorkspaceActionView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [CanManageAlerts]
 
     def post(self, request):
-        identity = get_workspace_identity()
-        factory = resolve_factory(request, identity)
+        factory = resolve_factory(request)
+        identity = workspace_identity_for_request(request, factory)
         item = ActionItem.objects.create(
             tenant=identity.tenant,
             factory=factory,
@@ -91,8 +96,8 @@ class WorkspaceActionView(APIView):
         return Response({"id": str(item.id)}, status=201)
 
     def patch(self, request, action_id):
-        identity = get_workspace_identity()
-        factory = resolve_factory(request, identity)
+        factory = resolve_factory(request)
+        identity = workspace_identity_for_request(request, factory)
         item = get_object_or_404(
             ActionItem,
             id=action_id,
@@ -105,12 +110,10 @@ class WorkspaceActionView(APIView):
 
 
 class WorkspaceQuestionView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        identity = get_workspace_identity()
-        factory = resolve_factory(request, identity)
+        factory = resolve_factory(request)
         filters = filter_values(request, factory)
         intelligence = build_intelligence(
             factory,
@@ -123,11 +126,14 @@ class WorkspaceQuestionView(APIView):
         return Response(answer_question(intelligence, request.data.get("question", "")))
 
 
-def resolve_factory(request, identity):
+def resolve_factory(request):
     factory_id = request.query_params.get("factory") or request.data.get("factory")
     if factory_id:
-        return get_object_or_404(Factory, id=factory_id, tenant=identity.tenant, is_active=True)
-    return get_or_create_default_factory(identity)
+        return get_object_or_404(factories_for_request(request), id=factory_id)
+    factory = factories_for_request(request).first()
+    if factory is None:
+        raise NotFound("No factory is available to this membership.")
+    return factory
 
 
 def filter_values(request, factory):

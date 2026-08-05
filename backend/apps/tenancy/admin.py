@@ -1,6 +1,23 @@
 from django.contrib import admin
 
-from .models import Company, Factory, FactoryMaster, Machine, Membership, ProductionLine, Tenant
+from .models import (
+    Company,
+    EmailIdentity,
+    Factory,
+    FactoryMaster,
+    Machine,
+    Membership,
+    ProductionLine,
+    Tenant,
+)
+
+
+@admin.register(EmailIdentity)
+class EmailIdentityAdmin(admin.ModelAdmin):
+    list_display = ("email", "user", "updated_at")
+    search_fields = ("email", "user__username")
+    autocomplete_fields = ("user",)
+    readonly_fields = ("id", "created_at", "updated_at")
 
 
 @admin.register(Tenant)

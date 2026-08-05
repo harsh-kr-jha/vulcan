@@ -18,12 +18,14 @@ from apps.operations.import_views import (
 )
 from apps.operations.views import UploadViewSet
 from apps.tenancy.views import (
+    CsrfTokenView,
     FactoryMasterViewSet,
     FactoryViewSet,
     MeView,
     SessionLoginView,
     SessionLogoutView,
 )
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
@@ -37,8 +39,8 @@ router.register("uploads", UploadViewSet, basename="upload")
 router.register("alerts", AlertViewSet, basename="alert")
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path("health/", HealthView.as_view(), name="health"),
+    path("api/auth/csrf/", CsrfTokenView.as_view(), name="csrf-token"),
     path("api/auth/login/", SessionLoginView.as_view(), name="session-login"),
     path("api/auth/logout/", SessionLogoutView.as_view(), name="session-logout"),
     path("api/auth/me/", MeView.as_view(), name="me"),
@@ -87,3 +89,9 @@ urlpatterns = [
     path("api/imports/<uuid:upload_id>/cancel/", ImportCancelView.as_view(), name="import-cancel"),
     path("api/", include(router.urls)),
 ]
+
+# The stock admin login is not protected by the API's distributed sign-in
+# throttles. Keep it available for loopback-bound local development only and
+# omit the route entirely from every fail-closed production configuration.
+if settings.DEBUG:
+    urlpatterns.insert(0, path("admin/", admin.site.urls))

@@ -1,6 +1,21 @@
 import path from "node:path";
 import type { NextConfig } from "next";
 
+const isProduction = process.env.NODE_ENV === "production";
+
+const securityHeaders = [
+  { key: "Referrer-Policy", value: "same-origin" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(), payment=(), usb=(), browsing-topics=()" },
+  ...(isProduction
+    // Do not opt unrelated subdomains into HSTS or the browser preload list.
+    // Those broader commitments belong at the ingress after an HTTPS inventory.
+    ? [{ key: "Strict-Transport-Security", value: "max-age=31536000" }]
+    : []),
+];
+
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
   poweredByHeader: false,
@@ -13,6 +28,9 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ["lucide-react"],
+  },
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
   },
   async rewrites() {
     const backend = process.env.BACKEND_URL ?? "http://127.0.0.1:8000";

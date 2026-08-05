@@ -10,11 +10,15 @@ RUN pip install --no-cache-dir uv==0.11.7
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
-COPY backend ./backend
-COPY processing ./processing
+RUN addgroup --system app && adduser --system --ingroup app app
+
+COPY --chown=app:app backend ./backend
+COPY --chown=app:app processing ./processing
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONPATH="/app/backend:/app"
+
+USER app
 
 EXPOSE 8000
 CMD ["gunicorn", "--chdir", "backend", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "60", "config.wsgi:application"]

@@ -1,3 +1,5 @@
+# Local development only. Do not reuse these credentials or expose these
+# services in a production deployment.
 name: vulcan
 
 services:
@@ -33,8 +35,8 @@ services:
       MINIO_ROOT_USER: vulcan
       MINIO_ROOT_PASSWORD: vulcan-local-secret
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio-data:/data
 
@@ -58,7 +60,7 @@ services:
     environment:
       DJANGO_DATABASE_URL: postgresql://vulcan:vulcan@postgres:5432/vulcan
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -68,7 +70,7 @@ services:
         condition: service_completed_successfully
     command: >
       sh -c "python backend/manage.py migrate &&
-             python backend/manage.py seed_mypol &&
+             python backend/manage.py seed_mushroom &&
              gunicorn --chdir backend --bind 0.0.0.0:8000 --workers 3 config.wsgi:application"
 
   worker:
@@ -93,7 +95,7 @@ services:
     environment:
       BACKEND_URL: http://backend:8000
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       - backend
 

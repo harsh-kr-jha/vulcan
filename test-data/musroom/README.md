@@ -22,6 +22,14 @@ order shown above, with `crop_cycles.csv` before `crop_stages.csv`. Alternativel
 .venv/bin/python backend/manage.py seed_mushroom
 ```
 
+That command can seed data without a user. To sign in to the seeded workspace, set both
+`MUSHROOM_DEMO_EMAIL` and `MUSHROOM_DEMO_PASSWORD` before running it, following the credential
+rules in the [root development guide](../../README.md#lightweight-local-development). The command
+has no default password and rotates the opt-in development account on each run.
+
+Only the synthetic files in this directory are repository fixtures. Do not copy photographed or
+real farm records from the ignored `MUSHROOM-DATA/` directory into Git.
+
 Regenerate the CSV files and `manifest.json` with:
 
 ```bash

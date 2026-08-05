@@ -2,7 +2,6 @@
 
 import {
   Bell,
-  Bolt,
   Building2,
   CheckCircle2,
   ChevronDown,
@@ -18,6 +17,7 @@ import {
   Sigma,
   Settings2,
   ShieldAlert,
+  Sprout,
   UploadCloud,
   Workflow,
 } from "lucide-react";
@@ -29,21 +29,21 @@ import { useFactory } from "@/lib/factory-context";
 const navGroups = [
   { label: "Workspace", items: [
     { href: "/", label: "Home", icon: LayoutDashboard },
-    { href: "/projects", label: "Projects", icon: FolderKanban },
-    { href: "/digital-twin", label: "Digital twin", icon: Workflow },
+    { href: "/projects", label: "Crop cycles", icon: FolderKanban },
+    { href: "/digital-twin", label: "Farm twin", icon: Workflow },
     { href: "/uploads", label: "Data upload", icon: UploadCloud },
     { href: "/performance", label: "Performance", icon: Gauge },
     { href: "/alerts", label: "Alerts", icon: ShieldAlert },
   ] },
   { label: "Manage", items: [
-    { href: "/settings", label: "Factory setup", icon: Building2 },
+    { href: "/settings", label: "Farm setup", icon: Building2 },
     { href: "/rules", label: "Rules & targets", icon: Settings2 },
     { href: "/methodology", label: "Data visualisation", icon: Sigma },
   ] },
 ];
 
 function Brand() {
-  return <Link className="brand" href="/" aria-label="Vulcan home"><span className="brand-mark"><Bolt size={18} strokeWidth={2.8} /></span><span><strong>VULCAN</strong><small>Factory intelligence</small></span></Link>;
+  return <Link className="brand" href="/" aria-label="Musroom home"><span className="brand-mark"><Sprout size={18} strokeWidth={2.8} /></span><span><strong>MUSROOM</strong><small>Cultivation intelligence</small></span></Link>;
 }
 
 function Sidebar({ open, closed, onClose, onNavigate }: { open: boolean; closed: boolean; onClose: () => void; onNavigate: () => void }) {
@@ -60,12 +60,12 @@ function Sidebar({ open, closed, onClose, onNavigate }: { open: boolean; closed:
       <div className="factory-switcher-wrap">
         <button className="factory-switcher" onClick={() => setFactoryMenu((value) => !value)} aria-expanded={factoryMenu}>
           <span className="factory-avatar"><Factory size={17} /></span>
-          <span className="factory-switcher-copy"><small>Active factory</small><strong>{activeFactory?.name ?? "Create factory"}</strong></span>
+          <span className="factory-switcher-copy"><small>Active farm</small><strong>{activeFactory?.name ?? "Create farm"}</strong></span>
           <ChevronDown size={16} />
         </button>
         {factoryMenu && <div className="factory-menu">
           {state.factories.map((factory) => <button key={factory.id} className={factory.id === state.activeFactoryId ? "active" : ""} onClick={() => { setActiveFactory(factory.id); setFactoryMenu(false); }}><span><strong>{factory.name}</strong><small>{factory.code} · {factory.location}</small></span>{factory.id === state.activeFactoryId && <i />}</button>)}
-          <Link href="/settings?create=factory" onClick={() => setFactoryMenu(false)}><Plus size={13} /> Create factory</Link>
+          <Link href="/settings?create=factory" onClick={() => setFactoryMenu(false)}><Plus size={13} /> Create farm</Link>
         </div>}
       </div>
       <nav className="sidebar-nav" aria-label="Primary navigation">
@@ -105,7 +105,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <button className="sidebar-toggle" onClick={toggleSidebar} aria-label="Open or close sidebar"><PanelLeftClose className="sidebar-close-icon" size={17} /><PanelLeftOpen className="sidebar-open-icon" size={17} /></button>
     <div className="app-main">
       <header className="topbar">
-        <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark"><Bolt size={16} /></span><strong>VULCAN</strong></div></div>
+        <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark"><Sprout size={16} /></span><strong>MUSROOM</strong></div></div>
         <div className="topbar-context"><span className="shift-label">{filters.shift === "all" ? "All shifts" : filters.shift} · {filters.from} to {filters.to}</span></div>
         <div className="topbar-actions">
           <button className="icon-button action-menu-button" aria-label={`${openActions.length} open action items`} onClick={() => { setActionsOpen((value) => !value); setNotificationsOpen(false); setProfileOpen(false); }}><ClipboardList size={19} />{openActions.length > 0 && <span className="action-counter">{openActions.length > 99 ? "99+" : openActions.length}</span>}</button>
@@ -113,7 +113,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button className="icon-button notification-button" aria-label="Notifications" onClick={() => { setNotificationsOpen((value) => !value); setActionsOpen(false); setProfileOpen(false); }}><Bell size={19} />{intelligence.alerts.some((alert) => alert.status === "new") && <span />}</button>
           {notificationsOpen && <div className="topbar-popover notification-popover"><div><strong>Priority signals</strong><Link href="/alerts" onClick={() => setNotificationsOpen(false)}>View all</Link></div>{intelligence.alerts.filter((alert) => alert.status !== "resolved").slice(0, 3).map((alert) => <Link href="/alerts" key={alert.id} onClick={() => setNotificationsOpen(false)}><i className={`alert-indicator ${alert.severity}`} /><span><b>{alert.title}</b><small>{alert.observed}</small></span></Link>)}{!intelligence.alerts.some((alert) => alert.status !== "resolved") && <p>No open alerts for this selection.</p>}</div>}
           <button className="profile-button" aria-label="Open workspace menu" onClick={() => { setProfileOpen((value) => !value); setNotificationsOpen(false); setActionsOpen(false); }}><span className="profile-avatar">FT</span><span className="profile-copy"><strong>Factory team</strong><small>Open workspace</small></span><ChevronDown size={15} /></button>
-          {profileOpen && <div className="topbar-popover profile-popover"><Link href="/settings" onClick={() => setProfileOpen(false)}><Settings2 size={14} /> Factory setup</Link></div>}
+          {profileOpen && <div className="topbar-popover profile-popover"><Link href="/settings" onClick={() => setProfileOpen(false)}><Settings2 size={14} /> Farm setup</Link></div>}
         </div>
       </header>
       <main className="page-content">{children}</main>

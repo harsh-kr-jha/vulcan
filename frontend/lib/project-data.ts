@@ -80,15 +80,14 @@ export interface FactoryProject {
 }
 
 export const defaultWorkflow = [
-  "Raw Material Delivery",
-  "Process Operations",
-  "Profile Cutting",
-  "Bending",
-  "Machining",
-  "Other fabrication processes",
-  "Welding",
-  "Polishing",
-  "Packing",
+  "Compost Preparation",
+  "Pasteurisation & Conditioning",
+  "Spawning",
+  "Spawn Run",
+  "Casing",
+  "Pinning",
+  "Cropping & Harvest",
+  "Packing & Cold Room",
 ] as const;
 
 export function formatProjectDate(value: string | null, fallback = "—") {

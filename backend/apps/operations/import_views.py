@@ -30,40 +30,40 @@ from processing.templates import TEMPLATES
 
 TEMPLATE_EXAMPLES = {
     "projects": [
-        "IG-2026-047",
-        "Customer name",
-        "Purified Water Distribution Skid",
-        "PO-4821",
-        "Process Equipment",
-        1,
-        "Set",
-        "Unit-I",
-        4_850_000,
-        "2026-07-25",
-        "2026-07-28",
-        "2026-08-24",
-        "2026-08-24",
+        "MUS-2608-R1",
+        "NCR Fresh Programme",
+        "Button mushroom cycle · Growing Room 1",
+        "MUS-PROG-01",
+        "Button mushroom",
+        3600,
+        "kg",
+        "Growing Wing A",
+        504_000,
+        "2026-06-12",
+        "2026-06-19",
+        "2026-08-08",
+        "2026-08-11",
         "",
         "High",
         "In Progress",
         58,
-        "Nisha Rao|Project lead; Imran Shaikh|Production",
+        "Asha Verma|Crop lead; Ravi Malik|Room operations",
     ],
     "project_stages": [
-        "IG-2026-047",
-        "RAW-MATERIAL",
-        "Raw Material Delivery",
+        "MUS-2608-R1",
+        "COMPOST-PREP",
+        "Compost Preparation",
         1,
         "Completed",
         100,
-        "2026-07-28",
-        "2026-07-29",
-        "2026-07-30",
-        "2026-07-30",
-        "Ajay Kumar",
+        "2026-06-19",
+        "2026-06-19",
+        "2026-06-30",
+        "2026-06-30",
+        "Asha Verma",
         0,
-        "Material certificate verified",
-        "material-test-certificate.pdf; goods-receipt-note.pdf",
+        "Compost recipe and turn log verified",
+        "compost-recipe.pdf; compost-temperature-log.pdf",
     ],
 }
 
@@ -94,12 +94,10 @@ class ImportTemplateView(APIView):
         workbook.close()
         response = HttpResponse(
             content.getvalue(),
-            content_type=(
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            ),
+            content_type=("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
         )
         response["Content-Disposition"] = (
-            f'attachment; filename="vulcan_{dataset_type}_template.xlsx"'
+            f'attachment; filename="musroom_{dataset_type}_template.xlsx"'
         )
         return response
 

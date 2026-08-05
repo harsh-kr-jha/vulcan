@@ -1,14 +1,14 @@
-# Vulcan Factory Intelligence
+# Musroom Factory Intelligence
 
-Vulcan turns factory CSV and Excel files into validated operating records, explainable KPIs,
-quantified losses, and traceable recommendations.
+Musroom turns mushroom-farm CSV and Excel files into validated crop records, cultivation KPIs,
+room-condition intelligence, quantified losses, and traceable recommendations.
 
 This repository contains one lightweight application:
 
-- Next.js display layer for the command centre, Projects, Digital Twin, performance, uploads,
-  alerts, and process-aware factory setup
-- Django API as the validated analytical store for factories, source lineage, mappings, records
-  and rules; connected factory sheets remain authoritative for operational facts
+- Next.js display layer for the crop command centre, crop cycles, farm twin, performance, uploads,
+  alerts, and stage-aware farm setup
+- Django API as the validated analytical store for mushroom farms, source lineage, mappings,
+  records and rules; connected farm sheets remain authoritative for operational facts
 - Server-side CSV/XLSX inspection, mapping suggestions, validation and KPI calculation
 - PostgreSQL-ready relational ownership with SQLite as the zero-infrastructure local default
 - Optional Celery, Redis and S3/MinIO deployment path for larger asynchronous workloads
@@ -23,7 +23,7 @@ temporarily disabled while the single-workspace model is being proven.
 npm install
 uv sync
 .venv/bin/python backend/manage.py migrate
-.venv/bin/python backend/manage.py seed_mypol
+.venv/bin/python backend/manage.py seed_mushroom
 .venv/bin/python backend/manage.py runserver
 ```
 
@@ -34,16 +34,19 @@ cp frontend/.env.example frontend/.env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The idempotent seed provides the complete
-MyPol showcase factory; you can also create a factory, configure its process flow, and import
-CSV/XLSX files. Django inspects every file. Optional source columns may be set to
+Open [http://localhost:3000](http://localhost:3000). The idempotent seed provides a complete
+Musroom showcase farm with crop stages, rooms, seven days of climate observations, harvests,
+quality, downtime, materials, suppliers, orders and crop cycles. You can also create a farm,
+configure its cultivation flow, and import CSV/XLSX files. Django inspects every file. Optional source columns may be set to
 **Do not import**; required-field and row mismatches include a correction, and rejected rows stay
 outside the standard record table.
 
-Projects use the same source-connected path. Import **Project master** first, then **Project
-stages**. The latest approved row for each project number and `(project number, stage code)` key
-drives the portfolio, tracker, delivery prediction, documents, activities, Home counts and project
-alerts. Re-uploads refresh those analytical views without creating browser-local project data.
+Crop cycles use the same source-connected path. Import **Crop cycle master** first, then **Crop
+cycle stages**. The latest approved row for each batch and `(batch, stage code)` key drives the
+portfolio, tracker, harvest prediction, documents, activities, Home counts and crop alerts.
+
+An import-ready sample pack is in [`test-data/musroom`](test-data/musroom). Its README maps every
+CSV to a Musroom source type and lists the intelligence unlocked by that source.
 
 ## Full local stack
 

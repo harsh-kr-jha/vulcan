@@ -11,23 +11,24 @@ type NumericTarget = Exclude<keyof FactoryTargets, "downtimeUnit">;
 
 const targetGroups = [
   {
-    title: "Equipment effectiveness",
-    description: "Targets used to judge OEE and its three components.",
+    title: "Crop performance",
+    description: "Targets used to judge substrate conversion, harvest and saleability.",
     icon: Activity,
     rules: [
-      { key: "oee", label: "OEE target", help: "Minimum combined effectiveness", unit: "%" },
-      { key: "availability", label: "Availability target", help: "Minimum planned time running", unit: "%" },
-      { key: "performance", label: "Performance target", help: "Minimum ideal-speed achievement", unit: "%" },
-      { key: "quality", label: "Quality target", help: "Minimum good output share", unit: "%" },
+      { key: "biologicalEfficiency", label: "Biological efficiency", help: "Minimum harvest per dry substrate", unit: "%" },
+      { key: "planAttainment", label: "Harvest plan attainment", help: "Minimum actual against planned harvest", unit: "%" },
+      { key: "saleableYield", label: "Saleable yield", help: "Minimum saleable share of harvest", unit: "%" },
     ],
   },
   {
-    title: "Operational guardrails",
-    description: "Thresholds that turn measured losses into priority exceptions.",
+    title: "Room & crop guardrails",
+    description: "Limits that turn climate, contamination and farm losses into exceptions.",
     icon: Wrench,
     rules: [
-      { key: "downtimeMinutes", label: "Downtime alert", help: "Alert above this machine loss", unit: "min" },
-      { key: "rejectionRate", label: "Maximum rejection", help: "Alert above this rejected share", unit: "%" },
+      { key: "contaminationRate", label: "Maximum contamination", help: "Alert above this contaminated share", unit: "%" },
+      { key: "environmentCompliance", label: "Climate compliance", help: "Minimum readings within stage limits", unit: "%" },
+      { key: "waterProductivity", label: "Water productivity", help: "Minimum harvest per kilolitre", unit: "kg/kL" },
+      { key: "downtimeMinutes", label: "Room downtime alert", help: "Alert above this room or asset loss", unit: "min" },
     ],
   },
   {
@@ -61,7 +62,7 @@ function RulesEditor() {
   return (
     <form onSubmit={save}>
       <div className="rules-overview panel">
-        <div><ShieldCheck size={19} /><span><strong>Factory-level rule set</strong><small>Applied only to the selected factory</small></span></div>
+        <div><ShieldCheck size={19} /><span><strong>Farm-level rule set</strong><small>Applied only to the selected mushroom farm</small></span></div>
         <div><PackageSearch size={19} /><span><strong>Evidence-backed alerts</strong><small>Every exception retains its threshold and observed value</small></span></div>
         <span className="configuration-state">Rule set v1</span>
       </div>

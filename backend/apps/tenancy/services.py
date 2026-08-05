@@ -15,7 +15,7 @@ class WorkspaceIdentity:
 def get_workspace_identity() -> WorkspaceIdentity:
     """Return the temporary single-workspace identity used while auth is disabled."""
     tenant, _ = Tenant.objects.get_or_create(
-        slug="vulcan-workspace", defaults={"name": "Vulcan Workspace"}
+        slug="vulcan-workspace", defaults={"name": "Musroom Workspace"}
     )
     # Company names are editable, so they cannot be used as identity keys.
     # Prefer the company already owning this workspace's factories; this keeps
@@ -31,12 +31,12 @@ def get_workspace_identity() -> WorkspaceIdentity:
     if company is None:
         company = Company.objects.create(
             tenant=tenant,
-            name="My manufacturing company",
+            name="My mushroom company",
             legal_name="",
         )
     user, _ = get_user_model().objects.get_or_create(
         username="vulcan-workspace",
-        defaults={"first_name": "Factory", "last_name": "Team", "is_active": True},
+        defaults={"first_name": "Farm", "last_name": "Team", "is_active": True},
     )
     return WorkspaceIdentity(tenant=tenant, company=company, user=user)
 
@@ -48,8 +48,8 @@ def get_or_create_default_factory(identity: WorkspaceIdentity) -> Factory:
     return Factory.objects.create(
         tenant=identity.tenant,
         company=identity.company,
-        name="My Factory",
-        code="FACTORY-01",
+        name="My Mushroom Farm",
+        code="MUSHROOM-01",
         timezone="Asia/Kolkata",
-        configuration={"currency": "INR", "industry": "Manufacturing"},
+        configuration={"currency": "INR", "industry": "Mushroom cultivation"},
     )

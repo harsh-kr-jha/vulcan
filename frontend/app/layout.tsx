@@ -5,8 +5,8 @@ import { ProjectProvider } from "@/lib/project-context";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Vulcan · Factory Intelligence",
-  description: "Operational intelligence for modern factories",
+  title: "Musroom · Mushroom Factory Intelligence",
+  description: "Crop, climate, harvest and supply intelligence for mushroom factories",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

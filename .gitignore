@@ -21,6 +21,7 @@ db.sqlite3
 .env.local
 .env.*.local
 .data/
+MUSHROOM-DATA/
 media/
 staticfiles/
 

@@ -16,9 +16,9 @@ interface FactoryContextValue {
   askQuestion: (question: string) => Promise<{ answer: string; reasoning: string; evidence: string[] }>;
 }
 
-const emptyState: FactoryState = { company: { id: "", name: "", industry: "Manufacturing" }, factories: [], activeFactoryId: "", masters: { lines: [], processes: [], machines: [], skus: [], materials: [], suppliers: [], shifts: [], reasonCodes: [] }, uploads: [], actions: [], targets: { oee: 78, availability: 85, performance: 95, quality: 98, planAttainment: 90, rejectionRate: 5, supplierScore: 85, stockCoverDays: 3, downtimeMinutes: 30, downtimeUnit: "minutes" } };
+const emptyState: FactoryState = { company: { id: "", name: "", industry: "Button mushroom cultivation" }, factories: [], activeFactoryId: "", masters: { lines: [], processes: [], machines: [], skus: [], materials: [], suppliers: [], shifts: [], reasonCodes: [] }, uploads: [], actions: [], targets: { oee: 0, availability: 95, performance: 95, quality: 96, planAttainment: 92, rejectionRate: 2, supplierScore: 85, stockCoverDays: 7, downtimeMinutes: 45, downtimeUnit: "minutes", biologicalEfficiency: 90, saleableYield: 94, contaminationRate: 2, environmentCompliance: 92, waterProductivity: 1100 } };
 const emptyMasters: FactoryMasters = { lines: [], processes: [], machines: [], skus: [], materials: [], suppliers: [], shifts: [], reasonCodes: [] };
-const defaultTargets: FactoryTargets = { oee: 78, availability: 85, performance: 95, quality: 98, planAttainment: 90, rejectionRate: 5, supplierScore: 85, stockCoverDays: 3, downtimeMinutes: 30, downtimeUnit: "minutes" };
+const defaultTargets: FactoryTargets = { oee: 0, availability: 95, performance: 95, quality: 96, planAttainment: 92, rejectionRate: 2, supplierScore: 85, stockCoverDays: 7, downtimeMinutes: 45, downtimeUnit: "minutes", biologicalEfficiency: 90, saleableYield: 94, contaminationRate: 2, environmentCompliance: 92, waterProductivity: 1100 };
 const FactoryContext = createContext<FactoryContextValue | null>(null);
 
 export function FactoryProvider({ children }: { children: React.ReactNode }) {
@@ -41,7 +41,7 @@ export function FactoryProvider({ children }: { children: React.ReactNode }) {
   const toggleAction = useCallback((id: string) => mutate(() => api.toggleAction(activeFactoryId, id)), [mutate, activeFactoryId]);
   const askQuestion = useCallback((question: string) => api.ask(activeFactoryId, filters, question), [activeFactoryId, filters]);
   const value = useMemo(() => ({ state, intelligence, filters, hydrated, loading, error, setFilters, setActiveFactory, refresh, updateCompany, createFactory, updateFactory, upsertMaster, removeMaster, updateAlertStatus, createAction, toggleAction, updateTargets, updateCustomKpis, askQuestion }), [state, intelligence, filters, hydrated, loading, error, refresh, updateCompany, createFactory, updateFactory, upsertMaster, removeMaster, updateAlertStatus, createAction, toggleAction, updateTargets, updateCustomKpis, askQuestion, setActiveFactory]);
-  if (!hydrated) return <div className="application-loading" role="status"><span /><strong>Connecting to factory database…</strong></div>;
+  if (!hydrated) return <div className="application-loading" role="status"><span /><strong>Connecting to Musroom farm intelligence…</strong></div>;
   return <FactoryContext.Provider value={value}>{error && <div className="api-error-banner" role="alert">{error}</div>}{children}</FactoryContext.Provider>;
 }
 

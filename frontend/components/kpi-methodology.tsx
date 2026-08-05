@@ -8,7 +8,7 @@ import { useFactory } from "@/lib/factory-context";
 import { formatDuration } from "@/lib/formatters";
 import type { CustomKpiDefinition, CustomKpiResult, CustomKpiVariable, FactoryTargets, Intelligence } from "@/lib/factory-domain";
 
-type Family = "Effectiveness" | "Flow" | "Quality" | "Loss" | "Supply" | "Governance";
+type Family = "Cultivation" | "Harvest" | "Quality" | "Environment" | "Loss" | "Supply" | "Governance";
 type MetricDefinition = {
   name: string;
   family: Family;
@@ -21,29 +21,23 @@ type MetricDefinition = {
 };
 
 const metrics: MetricDefinition[] = [
-  { name: "OEE", family: "Effectiveness", meaning: "Combined productive effectiveness of planned operating time.", inputs: ["Availability", "Performance", "Quality"], formula: "Availability × Performance × Quality ÷ 10,000", treatment: "Each component is capped at 100% before multiplication.", value: (data) => `${data.oee.value.toFixed(1)}%`, target: (targets) => `Target ≥ ${targets.oee}%` },
-  { name: "Availability", family: "Effectiveness", meaning: "Share of planned time left after recorded downtime.", inputs: ["Planned minutes", "Downtime minutes"], formula: "(Planned min − Downtime min) ÷ Planned min × 100", treatment: "Run time cannot fall below zero; the result is capped at 100%.", value: (data) => `${data.oee.availability.toFixed(1)}%`, target: (targets) => `Target ≥ ${targets.availability}%` },
-  { name: "Performance", family: "Effectiveness", meaning: "Actual running speed compared with the ideal cycle requirement.", inputs: ["Ideal cycle", "Actual quantity", "Run minutes"], formula: "Σ(Ideal cycle × Actual quantity) ÷ Run minutes × 100", treatment: "Uses the product mix in the selected period and is capped at 100%.", value: (data) => `${data.oee.performance.toFixed(1)}%`, target: (targets) => `Target ≥ ${targets.performance}%` },
-  { name: "Quality", family: "Effectiveness", meaning: "Share of produced units classified as good output.", inputs: ["Good quantity", "Actual quantity"], formula: "Good quantity ÷ Actual quantity × 100", treatment: "Falls back to zero where no actual production exists.", value: (data) => `${data.oee.quality.toFixed(1)}%`, target: (targets) => `Target ≥ ${targets.quality}%` },
-  { name: "Throughput", family: "Flow", meaning: "Average actual output produced per run hour.", inputs: ["Actual quantity", "Run minutes"], formula: "Actual quantity ÷ Run minutes × 60", treatment: "Excludes recorded downtime from the available run minutes.", value: (data) => `${data.totals.throughputRate.toFixed(1)} units/hr` },
-  { name: "Weighted ideal cycle", family: "Flow", meaning: "Ideal minutes per unit adjusted for the selected product mix.", inputs: ["Ideal cycle", "Actual quantity"], formula: "Σ(Ideal cycle × Actual quantity) ÷ Actual quantity", treatment: "Weights every SKU by its produced quantity.", value: (data) => `${data.totals.idealCycleMinutes.toFixed(3)} min/unit` },
-  { name: "Actual cycle", family: "Flow", meaning: "Observed run minutes consumed per produced unit.", inputs: ["Run minutes", "Actual quantity"], formula: "Run minutes ÷ Actual quantity", treatment: "Uses run time after subtracting downtime.", value: (data) => `${data.totals.actualCycleMinutes.toFixed(3)} min/unit` },
-  { name: "Cycle variance", family: "Flow", meaning: "How far actual cycle time is from weighted ideal cycle time.", inputs: ["Actual cycle", "Weighted ideal cycle"], formula: "(Actual cycle − Ideal cycle) ÷ Ideal cycle × 100", treatment: "Positive values indicate operation slower than ideal.", value: (data) => `${data.totals.cycleTimeVariance.toFixed(1)}%` },
-  { name: "First-pass yield", family: "Quality", meaning: "Share accepted without rejection or rework.", inputs: ["Inspected", "Rejected", "Reworked"], formula: "(Inspected − Rejected − Reworked) ÷ Inspected × 100", treatment: "Uses the quality sheet when present; otherwise good-output quality is used.", value: (data) => `${data.totals.firstPassYield.toFixed(1)}%` },
-  { name: "Rejection rate", family: "Quality", meaning: "Rejected share of inspected production.", inputs: ["Rejected quantity", "Inspected quantity"], formula: "Rejected quantity ÷ Inspected quantity × 100", treatment: "Falls back to production actual quantity if no quality sheet is available.", value: (data) => `${data.totals.rejectionRate.toFixed(1)}%`, target: (targets) => `Limit ≤ ${targets.rejectionRate}%` },
-  { name: "Rework rate", family: "Quality", meaning: "Share of inspected production requiring rework.", inputs: ["Reworked quantity", "Inspected quantity"], formula: "Reworked quantity ÷ Inspected quantity × 100", treatment: "Falls back to production totals if no quality sheet is available.", value: (data) => `${data.totals.reworkRate.toFixed(1)}%` },
-  { name: "Output gap", family: "Loss", meaning: "Planned units that were not produced in the selected period.", inputs: ["Planned quantity", "Actual quantity"], formula: "max(Planned quantity − Actual quantity, 0)", treatment: "Never reports over-production as a negative loss.", value: (data) => `${data.losses.productionGapUnits.toFixed(0)} units` },
-  { name: "Downtime frequency", family: "Loss", meaning: "Total standardized stoppage occurrences in the selected period.", inputs: ["Occurrence count per downtime row"], formula: "Σ Downtime occurrences", treatment: "A missing occurrence count is treated as one occurrence for that row.", value: (data) => `${data.totals.downtimeFrequency.toFixed(0)} stops` },
-  { name: "Average stoppage", family: "Loss", meaning: "Typical duration of a recorded downtime occurrence.", inputs: ["Total downtime", "Occurrences"], formula: "Total downtime minutes ÷ Downtime occurrences", treatment: "Occurrences come from the mapped downtime sheet.", value: (data) => formatDuration(data.totals.averageDowntimeDuration) },
-  { name: "Downtime output loss", family: "Loss", meaning: "Estimated units that downtime prevented at ideal cycle.", inputs: ["Downtime minutes", "Weighted ideal cycle"], formula: "Downtime minutes ÷ Weighted ideal cycle", treatment: "An estimate for comparison—not a posted production transaction.", value: (data) => `${data.losses.downtimeLostUnits.toFixed(0)} units` },
-  { name: "Speed output loss", family: "Loss", meaning: "Estimated output lost while running below ideal speed.", inputs: ["Run minutes", "Weighted ideal cycle", "Actual quantity"], formula: "max(Run min ÷ Ideal cycle − Actual quantity, 0)", treatment: "Never reports a negative loss.", value: (data) => `${data.losses.speedLostUnits.toFixed(0)} units` },
+  { name: "Biological efficiency", family: "Cultivation", meaning: "Fresh mushroom harvest produced from dry substrate.", inputs: ["Harvest kg", "Unique dry substrate kg by batch"], formula: "Total harvest kg ÷ dry substrate kg × 100", treatment: "Dry substrate is counted once per crop batch, preventing daily observation duplication.", value: (data) => `${data.mushroom.biologicalEfficiency.toFixed(1)}%`, target: (targets) => `Target ≥ ${targets.biologicalEfficiency}%` },
+  { name: "Plan attainment", family: "Harvest", meaning: "Share of the planned harvest actually collected.", inputs: ["Harvest kg", "Planned harvest kg"], formula: "Harvest kg ÷ planned harvest kg × 100", treatment: "Uses approved harvest rows in the selected date window.", value: (data) => `${data.mushroom.planAttainment.toFixed(1)}%`, target: (targets) => `Target ≥ ${targets.planAttainment}%` },
+  { name: "Saleable yield", family: "Quality", meaning: "Harvest suitable for sale after grading and contamination loss.", inputs: ["Saleable harvest kg", "Total harvest kg"], formula: "Saleable harvest kg ÷ total harvest kg × 100", treatment: "Saleable harvest is the approved good quantity from harvest records.", value: (data) => `${data.mushroom.saleableYield.toFixed(1)}%`, target: (targets) => `Target ≥ ${targets.saleableYield}%` },
+  { name: "Contamination rate", family: "Quality", meaning: "Share of harvest rejected because of contamination or crop-quality loss.", inputs: ["Contaminated harvest kg", "Total harvest kg"], formula: "Contaminated harvest kg ÷ total harvest kg × 100", treatment: "Uses the rejected quantity retained against each harvest or quality record.", value: (data) => `${data.mushroom.contaminationRate.toFixed(1)}%`, target: (targets) => `Limit ≤ ${targets.contaminationRate}%` },
+  { name: "Yield per growing area", family: "Cultivation", meaning: "Harvest density across the active growing area.", inputs: ["Harvest kg", "Unique growing area m² by batch"], formula: "Total harvest kg ÷ growing area m²", treatment: "Growing area is counted once for each batch.", value: (data) => `${data.mushroom.yieldPerM2.toFixed(1)} kg/m²` },
+  { name: "Water productivity", family: "Environment", meaning: "Mushrooms harvested per kilolitre of recorded water.", inputs: ["Harvest kg", "Water litres"], formula: "Harvest kg ÷ water litres × 1,000", treatment: "Includes water reported in harvest and room-observation sources.", value: (data) => `${data.mushroom.waterProductivityKgPerKl.toFixed(1)} kg/kL`, target: (targets) => `Target ≥ ${targets.waterProductivity} kg/kL` },
+  { name: "Climate compliance", family: "Environment", meaning: "Room observations inside stage-specific temperature, humidity and CO₂ limits.", inputs: ["Room readings", "Configured min/max limits"], formula: "Compliant readings ÷ evaluated readings × 100", treatment: "A reading is compliant only when every supplied limit is satisfied.", value: (data) => `${data.mushroom.environmentCompliance.toFixed(1)}%`, target: (targets) => `Target ≥ ${targets.environmentCompliance}%` },
+  { name: "Average crop age", family: "Cultivation", meaning: "Average crop age at each reported harvest.", inputs: ["Crop age days", "Harvest records"], formula: "Σ crop age days ÷ harvest records", treatment: "Only records with a supplied crop age enter the average.", value: (data) => `${data.mushroom.averageCropAgeDays.toFixed(1)} days` },
+  { name: "Harvest gap", family: "Loss", meaning: "Planned mushroom kg that were not harvested in the selected period.", inputs: ["Planned harvest kg", "Actual harvest kg"], formula: "max(planned harvest − actual harvest, 0)", treatment: "Over-plan harvest is never shown as a negative loss.", value: (data) => `${data.losses.productionGapUnits.toFixed(0)} kg` },
+  { name: "Room downtime", family: "Loss", meaning: "Total recorded interruption across growing rooms and farm assets.", inputs: ["Downtime minutes", "Occurrence count"], formula: "Σ downtime minutes", treatment: "Reasons and assets remain traceable to their approved source rows.", value: (data) => formatDuration(data.totals.totalDowntime), target: (targets) => `Alert above ${targets.downtimeMinutes} min` },
   { name: "Inventory cover", family: "Supply", meaning: "Production days supported by the latest material balance.", inputs: ["Available quantity", "Daily consumption"], formula: "Available quantity ÷ Daily consumption", treatment: "Uses the latest inventory row on or before the selected end date.", value: (data) => data.inventoryRisks[0] ? `${data.inventoryRisks[0].stockDays.toFixed(1)} days` : "No material risk", target: (targets) => `Risk below ${targets.stockCoverDays} days` },
   { name: "Supplier score", family: "Supply", meaning: "Auditable delivery performance weighted across completed deliveries.", inputs: ["Delivery timing", "Quantity", "Accepted quality", "Terms"], formula: "Timing 60 + Quantity 25 + Accepted 10 + Terms 5", treatment: "Each late day removes 10 timing points; factory score is delivery-weighted.", value: (data) => `${data.supplierScore.toFixed(1)}/100`, target: (targets) => `Target ≥ ${targets.supplierScore}` },
   { name: "Order risk", family: "Supply", meaning: "Required remaining run rate compared with recent good output.", inputs: ["Remaining units", "Days left", "Average daily good"], formula: "(Remaining units ÷ Days left) ÷ Average daily good", treatment: "Due within one day is critical; above 0.5 is high; otherwise watch.", value: (data) => data.orderRisks[0] ? `${data.orderRisks[0].risk} · ${data.orderRisks[0].remaining.toLocaleString("en-IN")} units` : "No order risk" },
   { name: "Data quality", family: "Governance", meaning: "Average validation quality of completed source imports.", inputs: ["Completed upload quality scores"], formula: "Σ Upload quality score ÷ Completed uploads", treatment: "Raw sources and rejected rows remain preserved for lineage.", value: (data) => `${data.dataQuality.toFixed(1)}%` },
 ];
 
-const families = ["All", "Effectiveness", "Flow", "Quality", "Loss", "Supply", "Governance"] as const;
+const families = ["All", "Cultivation", "Harvest", "Quality", "Environment", "Loss", "Supply", "Governance"] as const;
 
 const operatorLabels = { add: "+ Add", subtract: "− Subtract", multiply: "× Multiply", divide: "÷ Divide" } as const;
 
@@ -74,10 +68,10 @@ export function KpiMethodology() {
   const [family, setFamily] = useState<(typeof families)[number]>("All");
   const [builderOpen, setBuilderOpen] = useState(false);
   const visibleMetrics = family === "All" ? metrics : metrics.filter((metric) => metric.family === family);
-  const oeeParts = [
-    { label: "Availability", value: intelligence.oee.availability, color: "var(--amber)" },
-    { label: "Performance", value: intelligence.oee.performance, color: "var(--blue)" },
-    { label: "Quality", value: intelligence.oee.quality, color: "var(--green)" },
+  const cultivationParts = [
+    { label: "Plan attainment", value: intelligence.mushroom.planAttainment, color: "var(--blue)" },
+    { label: "Saleable yield", value: intelligence.mushroom.saleableYield, color: "var(--green)" },
+    { label: "Climate compliance", value: intelligence.mushroom.environmentCompliance, color: "var(--amber)" },
   ];
   const customDefinitions = intelligence.customKpis.map(definitionOf);
   async function saveCustomKpi(item: CustomKpiDefinition) { await updateCustomKpis([...customDefinitions, item]); }
@@ -96,12 +90,12 @@ export function KpiMethodology() {
         <div><CheckCircle2 size={18} /><span><strong>Operational answer</strong><small>Filtered to one factory</small></span></div>
       </section>
       <section className="panel oee-method-card">
-        <header><div><Gauge size={19} /><span><h2>OEE calculation</h2><p>The headline effectiveness measure, decomposed without hiding the arithmetic.</p></span></div><strong>{intelligence.oee.value.toFixed(1)}%</strong></header>
+        <header><div><Gauge size={19} /><span><h2>Biological efficiency</h2><p>The core cultivation measure: fresh harvest returned by the dry substrate loaded.</p></span></div><strong>{intelligence.mushroom.biologicalEfficiency.toFixed(1)}%</strong></header>
         <div className="oee-equation">
-          {oeeParts.map((part, index) => <div className="oee-equation-part" key={part.label}><span>{part.label}</span><strong>{part.value.toFixed(1)}%</strong><i><b style={{ width: `${Math.min(part.value, 100)}%`, background: part.color }} /></i>{index < 2 && <em>×</em>}</div>)}
-          <div className="oee-equation-result"><span>OEE</span><strong>{intelligence.oee.value.toFixed(1)}%</strong><small>Target {state.targets.oee}%</small></div>
+          {cultivationParts.map((part) => <div className="oee-equation-part" key={part.label}><span>{part.label}</span><strong>{part.value.toFixed(1)}%</strong><i><b style={{ width: `${Math.min(part.value, 100)}%`, background: part.color }} /></i></div>)}
+          <div className="oee-equation-result"><span>BE</span><strong>{intelligence.mushroom.biologicalEfficiency.toFixed(1)}%</strong><small>Target {state.targets.biologicalEfficiency}%</small></div>
         </div>
-        <div className="formula-note"><Info size={14} /><span><b>Formula:</b> Availability × Performance × Quality ÷ 10,000. Components are capped at 100%.</span></div>
+        <div className="formula-note"><Info size={14} /><span><b>Formula:</b> {intelligence.mushroom.totalHarvestKg.toLocaleString("en-IN")} kg harvested ÷ {intelligence.mushroom.drySubstrateKg.toLocaleString("en-IN")} kg dry substrate × 100. Substrate is deduplicated by batch.</span></div>
       </section>
       {intelligence.customKpis.length > 0 && <section className="custom-kpi-section"><div className="custom-kpi-heading"><div><p className="eyebrow">Factory-defined</p><h2>Custom KPIs</h2></div><span>{intelligence.customKpis.length}/12</span></div><div className="custom-kpi-grid">{intelligence.customKpis.map((item) => <article className="panel custom-kpi-card" key={item.id}><header><span>{item.datasets.join(" + ")}</span><strong>{item.value === null ? "—" : item.value.toLocaleString("en-IN", { minimumFractionDigits: item.decimals, maximumFractionDigits: item.decimals })}{item.unit ? ` ${item.unit}` : ""}</strong></header><h3>{item.name}</h3><p>{item.formulaLabel}</p>{item.status === "unavailable" && <small>The second variable is zero, so this result cannot be calculated.</small>}<footer><button className={`button ${item.pinnedToHome ? "button-primary" : "button-secondary"}`} onClick={() => void toggleHome(item)}><Home size={12} /> {item.pinnedToHome ? "On Home" : "Add to Home"}</button><button className="icon-button" aria-label={`Delete ${item.name}`} onClick={() => void removeCustomKpi(item)}><Trash2 size={14} /></button></footer></article>)}</div></section>}
       <nav className="methodology-tabs" aria-label="Metric families">{families.map((item) => <button className={family === item ? "active" : ""} key={item} onClick={() => setFamily(item)}>{item}</button>)}</nav>
@@ -119,10 +113,11 @@ export function KpiMethodology() {
       <section className="panel methodology-sources">
         <header><h2>What each source contributes</h2><p>Only approved rows inside the active factory and selected dates enter these calculations.</p></header>
         <div>
-          <article><Activity size={16} /><strong>Production</strong><span>Quantities, planned time, ideal cycle and recorded downtime</span></article>
-          <article><Clock3 size={16} /><strong>Downtime</strong><span>Minutes, occurrences, machines and standardized reasons</span></article>
-          <article><PackageCheck size={16} /><strong>Quality</strong><span>Inspected, rejected and reworked quantity by reason and SKU</span></article>
-          <article><Boxes size={16} /><strong>Inventory</strong><span>Actual balance, unit, consumption and incoming receipt dates</span></article>
+          <article><Activity size={16} /><strong>Harvest</strong><span>Planned, harvested, saleable and contaminated kg; batch, flush, substrate, area, water and crop age</span></article>
+          <article><Gauge size={16} /><strong>Room observations</strong><span>Stage, room, batch, temperature, humidity, CO₂, substrate moisture, water and treatments</span></article>
+          <article><Clock3 size={16} /><strong>Room downtime</strong><span>Minutes, occurrences, rooms, farm assets and standardized reasons</span></article>
+          <article><PackageCheck size={16} /><strong>Crop quality</strong><span>Inspected, contaminated, held or reworked kg by reason and mushroom grade</span></article>
+          <article><Boxes size={16} /><strong>Materials</strong><span>Substrate, spawn, casing, packaging and chemical balances with incoming receipts</span></article>
           <article><Truck size={16} /><strong>Suppliers</strong><span>Promised and actual delivery, quantity, acceptance and terms</span></article>
         </div>
       </section>

@@ -42,12 +42,12 @@ def test_project_templates_are_downloaded_as_excel_workbooks(api_client):
     response = api_client.get("/api/imports/template/projects/")
 
     assert response.status_code == 200
-    assert response["Content-Disposition"].endswith('"vulcan_projects_template.xlsx"')
+    assert response["Content-Disposition"].endswith('"musroom_projects_template.xlsx"')
     workbook = load_workbook(BytesIO(response.content), read_only=True)
     worksheet = workbook.active
     headers = [cell.value for cell in next(worksheet.iter_rows())]
     assert headers[:4] == ["project_number", "customer", "project_name", "po_number"]
-    assert worksheet["A2"].value == "IG-2026-047"
+    assert worksheet["A2"].value == "MUS-2608-R1"
     workbook.close()
 
 

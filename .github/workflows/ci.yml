@@ -25,6 +25,7 @@ jobs:
       DJANGO_DEBUG: "true"
       DJANGO_SECRET_KEY: ci-only-7f3b9a2d5e8c4f1a6b0d9e2c5a8f3b7d1e4c6a9f0b2d5e8f1a4c7b0d3e6f9a2c
       NEXT_TELEMETRY_DISABLED: "1"
+      VULCAN_VARIANT: mushroom
 
     steps:
       - name: Check out the repository
@@ -62,10 +63,16 @@ jobs:
       - name: Audit JavaScript dependencies
         run: npm audit --audit-level=moderate
 
-      - name: Build frontend
+      - name: Build mushroom frontend
         run: npm run build
         env:
           NEXT_DIST_DIR: .next-build
+
+      - name: Build automotive frontend
+        run: npm run build
+        env:
+          NEXT_DIST_DIR: .next-build
+          VULCAN_VARIANT: automotive
 
       - name: Lint Python
         run: uv run ruff check .

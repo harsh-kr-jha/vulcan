@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
@@ -49,6 +50,11 @@ class WorkspaceConfigurationView(APIView):
             except ValueError as exc:
                 return Response({"detail": str(exc)}, status=400)
         if industry := request.data.get("industry"):
+            if industry != settings.VULCAN_VARIANT_CONFIG["industry"]:
+                return Response(
+                    {"detail": "Industry is fixed by this deployment's product variant."},
+                    status=400,
+                )
             configuration["industry"] = industry
         if "customKpis" in request.data:
             try:

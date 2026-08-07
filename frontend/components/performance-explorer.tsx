@@ -2,16 +2,18 @@
 
 import type { EChartsOption } from "echarts";
 import { CheckCircle2, Download, FileSearch, Info, Target } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Chart } from "@/components/charts/chart";
 import { CommandFilters } from "@/components/command-filters";
 import { downloadBlob } from "@/lib/browser-files";
 import { formatDuration } from "@/lib/formatters";
 import { useFactory } from "@/lib/factory-context";
+import { useVariant } from "@/lib/variant";
 
-const tabs = ["Cultivation", "Harvest", "Room downtime", "Crop quality", "Inventory", "Suppliers"] as const;
-type Tab = (typeof tabs)[number];
+const mushroomTabs = ["Cultivation", "Harvest", "Room downtime", "Crop quality", "Inventory", "Suppliers"] as const;
+const automotiveTabs = ["OEE", "Production", "Steam & Fuel", "Downtime", "Quality", "Inventory", "Suppliers"] as const;
+type Tab = (typeof mushroomTabs)[number] | (typeof automotiveTabs)[number];
 
 const colors = {
   green: "#416f57",
@@ -102,7 +104,32 @@ function CultivationView() {
   );
 }
 
-function HarvestView() {
+function OeeView() {
+  const { intelligence, state } = useFactory();
+  const components = [
+    { label: "Availability", value: intelligence.oee.availability, target: state.targets.availability, color: colors.green },
+    { label: "Performance", value: intelligence.oee.performance, target: state.targets.performance, color: colors.blue },
+    { label: "Quality", value: intelligence.oee.quality, target: state.targets.quality, color: colors.amber },
+    { label: "Plan attainment", value: intelligence.totals.planAttainment, target: state.targets.planAttainment, color: colors.green },
+  ];
+  const option: EChartsOption = {
+    grid: { left: 58, right: 24, top: 38, bottom: 38 },
+    tooltip,
+    legend: { top: 2, right: 8, textStyle: { color: colors.text, fontSize: 11 } },
+    xAxis: { type: "category", data: intelligence.dailyOee.map((point) => point.date.slice(5)), ...axis },
+    yAxis: { type: "value", min: 0, max: 100, axisLabel: { color: colors.text, fontSize: 11, formatter: "{value}%" }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } },
+    series: [{ name: "OEE", type: "line", smooth: true, data: intelligence.dailyOee.map((point) => point.value), lineStyle: { color: colors.green, width: 3 }, itemStyle: { color: colors.green }, areaStyle: { color: "rgba(65,111,87,.12)" } }],
+  };
+  return <>
+    <section className="breakdown-grid performance-breakdown">
+      {components.map((component) => <div className="breakdown-card" key={component.label}><div><span>{component.label}</span><Info size={14} /></div><strong>{component.value.toFixed(1)}%</strong><p>Target {component.target}%</p><i><b style={{ width: `${Math.min(component.value, 100)}%`, background: component.color }} /></i></div>)}
+      <div className="formula-card"><span><Target size={13} /> Overall equipment effectiveness</span><p>{intelligence.oee.availability.toFixed(1)}% × {intelligence.oee.performance.toFixed(1)}% × {intelligence.oee.quality.toFixed(1)}%</p><strong>{intelligence.oee.value.toFixed(1)}%</strong></div>
+    </section>
+    <PerformancePanel title="OEE trend" subtitle="Daily overall equipment effectiveness from approved production and downtime records" option={option} />
+  </>;
+}
+
+function ProductionView({ mushroomMode }: { mushroomMode: boolean }) {
   const { intelligence } = useFactory();
   const option: EChartsOption = {
     grid: { left: 58, right: 24, top: 38, bottom: 38 },
@@ -119,16 +146,22 @@ function HarvestView() {
   return (
     <>
       <MetricRow metrics={[
-        { label: "Saleable harvest", value: `${intelligence.mushroom.saleableHarvestKg.toLocaleString("en-IN")} kg`, detail: "accepted mushrooms" },
-        { label: "Yield density", value: `${intelligence.mushroom.yieldPerM2.toFixed(1)} kg/m²`, detail: "harvest per growing area" },
-        { label: "Average crop age", value: `${intelligence.mushroom.averageCropAgeDays.toFixed(0)} days`, detail: "at harvest" },
+        ...(mushroomMode ? [
+          { label: "Saleable harvest", value: `${intelligence.mushroom.saleableHarvestKg.toLocaleString("en-IN")} kg`, detail: "accepted mushrooms" },
+          { label: "Yield density", value: `${intelligence.mushroom.yieldPerM2.toFixed(1)} kg/m²`, detail: "harvest per growing area" },
+          { label: "Average crop age", value: `${intelligence.mushroom.averageCropAgeDays.toFixed(0)} days`, detail: "at harvest" },
+        ] : [
+          { label: "Planned output", value: intelligence.totals.planned.toLocaleString("en-IN"), detail: "scheduled units" },
+          { label: "Actual output", value: intelligence.totals.actual.toLocaleString("en-IN"), detail: `${intelligence.totals.planAttainment.toFixed(1)}% plan attainment` },
+          { label: "Accepted output", value: intelligence.totals.good.toLocaleString("en-IN"), detail: `${intelligence.totals.firstPassYield.toFixed(1)}% first-pass yield` },
+        ]),
       ]} />
-      <PerformancePanel title="Flush harvest trend" subtitle="Planned, harvested and saleable mushroom kg by day" option={option} />
+      <PerformancePanel title={mushroomMode ? "Flush harvest trend" : "Production trend"} subtitle={mushroomMode ? "Planned, harvested and saleable mushroom kg by day" : "Planned, actual and accepted units by day"} option={option} />
     </>
   );
 }
 
-function DowntimeView() {
+function DowntimeView({ mushroomMode }: { mushroomMode: boolean }) {
   const { intelligence } = useFactory();
   const reversed = [...intelligence.reasonLoss].slice(0, 8).reverse();
   const showHours = reversed.some((item) => item.minutes >= 60);
@@ -145,17 +178,17 @@ function DowntimeView() {
         { label: "Total downtime", value: formatDuration(intelligence.totals.totalDowntime), detail: "selected period" },
         { label: "Stoppages", value: intelligence.totals.downtimeFrequency.toLocaleString("en-IN"), detail: "recorded occurrences" },
         { label: "Average stop", value: formatDuration(intelligence.totals.averageDowntimeDuration), detail: "per occurrence" },
-        { label: "Estimated harvest lost", value: `${intelligence.losses.downtimeLostUnits.toFixed(0)} kg`, detail: "at the configured harvest rate" },
+        { label: mushroomMode ? "Estimated harvest lost" : "Estimated output lost", value: `${intelligence.losses.downtimeLostUnits.toFixed(0)}${mushroomMode ? " kg" : " units"}`, detail: `at the configured ${mushroomMode ? "harvest" : "production"} rate` },
       ];
   return (
     <>
       <MetricRow metrics={metrics} />
-      {reversed.length > 0 ? <PerformancePanel title="Room downtime reasons" subtitle={`Pareto of ${showHours ? "hours" : "minutes"} lost by room or farm asset`} option={option} /> : <section className="panel contextual-empty-state"><Info size={22} /><div><h2>Downtime total is available</h2><p>Upload the room downtime sheet to add occurrence, room and reason analysis.</p></div></section>}
+      {reversed.length > 0 ? <PerformancePanel title={mushroomMode ? "Room downtime reasons" : "Downtime reasons"} subtitle={`Pareto of ${showHours ? "hours" : "minutes"} lost by ${mushroomMode ? "room or farm asset" : "machine or production asset"}`} option={option} /> : <section className="panel contextual-empty-state"><Info size={22} /><div><h2>Downtime total is available</h2><p>Upload the {mushroomMode ? "room " : ""}downtime sheet to add occurrence, {mushroomMode ? "room" : "machine"} and reason analysis.</p></div></section>}
     </>
   );
 }
 
-function QualityView() {
+function QualityView({ mushroomMode }: { mushroomMode: boolean }) {
   const { intelligence } = useFactory();
   const reversed = [...intelligence.skuQuality].slice(0, 10).reverse();
   const option: EChartsOption = {
@@ -168,11 +201,17 @@ function QualityView() {
   return (
     <>
       <MetricRow metrics={[
-        { label: "Saleable yield", value: `${intelligence.mushroom.saleableYield.toFixed(1)}%`, detail: "saleable share of harvest" },
-        { label: "Contamination", value: `${intelligence.mushroom.contaminationRate.toFixed(1)}%`, detail: `${intelligence.mushroom.contaminatedHarvestKg.toLocaleString("en-IN")} kg` },
-        { label: "Quality holds", value: `${intelligence.totals.reworked.toLocaleString("en-IN")} kg`, detail: "trim, grade or rework" },
+        ...(mushroomMode ? [
+          { label: "Saleable yield", value: `${intelligence.mushroom.saleableYield.toFixed(1)}%`, detail: "saleable share of harvest" },
+          { label: "Contamination", value: `${intelligence.mushroom.contaminationRate.toFixed(1)}%`, detail: `${intelligence.mushroom.contaminatedHarvestKg.toLocaleString("en-IN")} kg` },
+          { label: "Quality holds", value: `${intelligence.totals.reworked.toLocaleString("en-IN")} kg`, detail: "trim, grade or rework" },
+        ] : [
+          { label: "First-pass yield", value: `${intelligence.totals.firstPassYield.toFixed(1)}%`, detail: "accepted without rework" },
+          { label: "Rejection rate", value: `${intelligence.totals.rejectionRate.toFixed(1)}%`, detail: `${intelligence.totals.rejected.toLocaleString("en-IN")} rejected units` },
+          { label: "Reworked output", value: intelligence.totals.reworked.toLocaleString("en-IN"), detail: `${intelligence.totals.reworkRate.toFixed(1)}% of inspected output` },
+        ]),
       ]} />
-      <PerformancePanel title="Quality loss by mushroom grade" subtitle="Products ordered by contamination or rejection rate" option={option} />
+      <PerformancePanel title={mushroomMode ? "Quality loss by mushroom grade" : "Quality loss by product"} subtitle={mushroomMode ? "Products ordered by contamination or rejection rate" : "Products ordered by rejection rate"} option={option} />
     </>
   );
 }
@@ -215,16 +254,50 @@ function SuppliersView() {
   );
 }
 
+function SteamFuelView() {
+  const { intelligence } = useFactory();
+  const steam = intelligence.steamRecovery;
+  const option: EChartsOption = {
+    grid: { left: 62, right: 62, top: 42, bottom: 38 },
+    tooltip,
+    legend: { top: 2, right: 8, textStyle: { color: colors.text, fontSize: 11 } },
+    xAxis: { type: "category", data: steam.trend.map((point) => point.date.slice(5)), ...axis },
+    yAxis: [
+      { type: "value", name: "kg", axisLabel: { color: colors.text, fontSize: 11 }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } },
+      { type: "value", name: "MJ", axisLabel: { color: colors.text, fontSize: 11 }, splitLine: { show: false } },
+    ],
+    series: [
+      { name: "Steam generated", type: "bar", barWidth: 16, data: steam.trend.map((point) => point.steamGeneratedKg), itemStyle: { color: colors.blue, borderRadius: [4, 4, 0, 0] } },
+      { name: "Briquettes used", type: "bar", barWidth: 12, data: steam.trend.map((point) => point.briquetteUsedKg), itemStyle: { color: colors.amber, borderRadius: [3, 3, 0, 0] } },
+      { name: "Heat recovered", type: "line", yAxisIndex: 1, smooth: true, data: steam.trend.map((point) => point.heatRecoveredMj), lineStyle: { color: colors.green, width: 3 }, itemStyle: { color: colors.green } },
+    ],
+  };
+  return <>
+    <MetricRow metrics={[
+      { label: "Heat recovered", value: `${steam.heatRecoveredGj.toFixed(2)} GJ`, detail: `${steam.temperatureLiftC.toFixed(1)}°C measured feedwater lift` },
+      { label: "Briquettes avoided", value: `${steam.equivalentBriquetteSavedKg.toLocaleString("en-IN", { maximumFractionDigits: 0 })} kg`, detail: `${steam.briquetteAvoidancePercent.toFixed(1)}% of fuel without recovery` },
+      { label: "Specific steam", value: `${steam.specificSteamKgPerUnit.toFixed(2)} kg/unit`, detail: "steam generated per actual output" },
+      { label: "Fuel intensity", value: `${steam.specificBriquetteKgPerTonneSteam.toFixed(1)} kg/t`, detail: "briquettes per tonne of steam" },
+    ]} />
+    <PerformancePanel title="Steam, fuel and recovered heat" subtitle="Daily boiler-house pattern from approved utility logs" option={option} />
+    <section className="panel contextual-empty-state"><Info size={22} /><div><h2>Recovery calculation is auditable</h2><p>Recovered heat = feedwater kg × 4.186 kJ/kg·K × measured tank temperature lift. Avoided briquettes use the logged GCV and boiler efficiency. Condensate recovery is {steam.condensateRecoveryPercent.toFixed(1)}%; flash-steam recovery is {steam.flashSteamRecoveryPercent.toFixed(1)}%. Flash steam is not added again, preventing double counting.</p></div></section>
+  </>;
+}
+
 export function PerformanceExplorer() {
   const { intelligence, filters, state } = useFactory();
-  const [activeTab, setActiveTab] = useState<Tab>("Cultivation");
-  const availableTabs = useMemo(() => tabs.filter((tab) => {
-    if (tab === "Cultivation" || tab === "Harvest") return intelligence.dataAvailability.production > 0;
-    if (tab === "Room downtime") return intelligence.dataAvailability.downtime > 0 || intelligence.totals.totalDowntime > 0;
-    if (tab === "Crop quality") return intelligence.dataAvailability.quality > 0;
+  const variant = useVariant();
+  const mushroomMode = variant.features.mushroomAnalytics;
+  const tabs: readonly Tab[] = mushroomMode ? mushroomTabs : automotiveTabs;
+  const [activeTab, setActiveTab] = useState<Tab>(mushroomMode ? "Cultivation" : "OEE");
+  const availableTabs = tabs.filter((tab) => {
+    if (["Cultivation", "Harvest", "OEE", "Production"].includes(tab)) return intelligence.dataAvailability.production > 0;
+    if (tab === "Steam & Fuel") return intelligence.dataAvailability.utilities > 0;
+    if (tab === "Room downtime" || tab === "Downtime") return intelligence.dataAvailability.downtime > 0 || intelligence.totals.totalDowntime > 0;
+    if (tab === "Crop quality" || tab === "Quality") return intelligence.dataAvailability.quality > 0;
     if (tab === "Inventory") return intelligence.dataAvailability.inventory > 0;
     return intelligence.dataAvailability.supplier > 0;
-  }), [intelligence]);
+  });
   const selectedTab = availableTabs.includes(activeTab) ? activeTab : availableTabs[0];
 
   useEffect(() => {
@@ -233,7 +306,7 @@ export function PerformanceExplorer() {
       if (requested && tabs.includes(requested)) setActiveTab(requested);
     }, 0);
     return () => window.clearTimeout(queryTimer);
-  }, []);
+  }, [tabs]);
 
   function selectTab(tab: Tab) {
     setActiveTab(tab);
@@ -241,13 +314,13 @@ export function PerformanceExplorer() {
   }
 
   function exportData() {
-    downloadBlob(JSON.stringify({ factory: state.activeFactoryId, filters, module: selectedTab, intelligence }, null, 2), `musroom-${selectedTab?.toLowerCase().replaceAll(" ", "-") ?? "performance"}-${filters.to}.json`, "application/json");
+    downloadBlob(JSON.stringify({ factory: state.activeFactoryId, filters, module: selectedTab, intelligence }, null, 2), `${variant.id}-${selectedTab?.toLowerCase().replaceAll(" ", "-") ?? "performance"}-${filters.to}.json`, "application/json");
   }
 
   return (
     <>
       <header className="page-header">
-        <div><p className="eyebrow">Cultivation · validated data</p><h1>Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
+        <div><p className="eyebrow">{mushroomMode ? "Cultivation" : "Manufacturing"} · validated data</p><h1>{mushroomMode ? "Understand every crop." : "Understand every operation."} <span>{mushroomMode ? "Improve every flush." : "Improve every shift."}</span></h1><p className="page-subtitle">{mushroomMode ? "Harvest, climate, crop quality, rooms and supply intelligence from approved farm records." : "Production, OEE, downtime, quality and supply intelligence from approved factory records."}</p></div>
         {selectedTab && <button className="button button-secondary" onClick={exportData}><Download size={14} /> Export {selectedTab}</button>}
       </header>
       <CommandFilters />
@@ -256,10 +329,10 @@ export function PerformanceExplorer() {
           <nav className="performance-tabs" aria-label="Available performance analysis">
             {availableTabs.map((tab) => <button className={selectedTab === tab ? "active" : ""} key={tab} onClick={() => selectTab(tab)}>{tab}</button>)}
           </nav>
-          {selectedTab === "Cultivation" ? <CultivationView /> : selectedTab === "Harvest" ? <HarvestView /> : selectedTab === "Room downtime" ? <DowntimeView /> : selectedTab === "Crop quality" ? <QualityView /> : selectedTab === "Inventory" ? <InventoryView /> : <SuppliersView />}
+          {selectedTab === "Cultivation" ? <CultivationView /> : selectedTab === "OEE" ? <OeeView /> : selectedTab === "Steam & Fuel" ? <SteamFuelView /> : selectedTab === "Harvest" || selectedTab === "Production" ? <ProductionView mushroomMode={mushroomMode} /> : selectedTab === "Room downtime" || selectedTab === "Downtime" ? <DowntimeView mushroomMode={mushroomMode} /> : selectedTab === "Crop quality" || selectedTab === "Quality" ? <QualityView mushroomMode={mushroomMode} /> : selectedTab === "Inventory" ? <InventoryView /> : <SuppliersView />}
         </>
       ) : (
-        <section className="panel performance-no-data"><FileSearch size={28} /><h2>No cultivation analysis yet</h2><p>Upload a harvest or room observation sheet to begin farm intelligence.</p></section>
+        <section className="panel performance-no-data"><FileSearch size={28} /><h2>No {mushroomMode ? "cultivation" : "production"} analysis yet</h2><p>Upload a {mushroomMode ? "harvest or room observation" : "production, downtime or quality"} sheet to begin {variant.terminology.siteSingular} intelligence.</p></section>
       )}
     </>
   );

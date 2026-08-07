@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { api } from "./api-client";
 import type { CustomKpiDefinition, DashboardFilters, FactoryConfig, FactoryMasters, FactoryState, FactoryTargets, Intelligence, MasterItem } from "./factory-domain";
 import { defaultFilters, emptyIntelligence } from "./factory-domain";
+import { useVariant } from "./variant";
 
 type MasterCollection = keyof FactoryMasters;
 interface FactoryContextValue {
@@ -16,13 +17,14 @@ interface FactoryContextValue {
   askQuestion: (question: string) => Promise<{ answer: string; reasoning: string; evidence: string[] }>;
 }
 
-const emptyState: FactoryState = { company: { id: "", name: "", industry: "Button mushroom cultivation" }, factories: [], activeFactoryId: "", masters: { lines: [], processes: [], machines: [], skus: [], materials: [], suppliers: [], shifts: [], reasonCodes: [] }, uploads: [], actions: [], targets: { oee: 0, availability: 95, performance: 95, quality: 96, planAttainment: 92, rejectionRate: 2, supplierScore: 85, stockCoverDays: 7, downtimeMinutes: 45, downtimeUnit: "minutes", biologicalEfficiency: 90, saleableYield: 94, contaminationRate: 2, environmentCompliance: 92, waterProductivity: 1100 } };
+const emptyState: FactoryState = { company: { id: "", name: "", industry: "" }, factories: [], activeFactoryId: "", masters: { lines: [], processes: [], machines: [], skus: [], materials: [], suppliers: [], shifts: [], reasonCodes: [] }, uploads: [], actions: [], targets: { oee: 0, availability: 95, performance: 95, quality: 96, planAttainment: 92, rejectionRate: 2, supplierScore: 85, stockCoverDays: 7, downtimeMinutes: 45, downtimeUnit: "minutes", biologicalEfficiency: 90, saleableYield: 94, contaminationRate: 2, environmentCompliance: 92, waterProductivity: 1100 } };
 const emptyMasters: FactoryMasters = { lines: [], processes: [], machines: [], skus: [], materials: [], suppliers: [], shifts: [], reasonCodes: [] };
 const defaultTargets: FactoryTargets = { oee: 0, availability: 95, performance: 95, quality: 96, planAttainment: 92, rejectionRate: 2, supplierScore: 85, stockCoverDays: 7, downtimeMinutes: 45, downtimeUnit: "minutes", biologicalEfficiency: 90, saleableYield: 94, contaminationRate: 2, environmentCompliance: 92, waterProductivity: 1100 };
 const FactoryContext = createContext<FactoryContextValue | null>(null);
 
 export function FactoryProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState(emptyState); const [intelligence, setIntelligence] = useState<Intelligence>(emptyIntelligence); const [filters, setFilters] = useState(defaultFilters); const [hydrated, setHydrated] = useState(false); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
+  const variant = useVariant();
+  const [state, setState] = useState(() => ({ ...emptyState, company: { ...emptyState.company, industry: variant.industry } })); const [intelligence, setIntelligence] = useState<Intelligence>(emptyIntelligence); const [filters, setFilters] = useState(defaultFilters); const [hydrated, setHydrated] = useState(false); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
   const requestSequence = useRef(0);
   const refresh = useCallback(async () => { const requestId = ++requestSequence.current; setLoading(true); setError(""); try { const payload = await api.workspace(filters); if (requestId !== requestSequence.current) return; setState(payload.state); setIntelligence(payload.intelligence); if (!filters.factoryId && payload.state.activeFactoryId) setFilters((current) => ({ ...current, factoryId: payload.state.activeFactoryId })); } catch (cause) { if (requestId === requestSequence.current) setError(cause instanceof Error ? cause.message : "Django API is unavailable."); } finally { if (requestId === requestSequence.current) { setLoading(false); setHydrated(true); } } }, [filters]);
   useEffect(() => { const timer = window.setTimeout(() => void refresh(), 0); return () => window.clearTimeout(timer); }, [refresh]);
@@ -41,7 +43,7 @@ export function FactoryProvider({ children }: { children: React.ReactNode }) {
   const toggleAction = useCallback((id: string) => mutate(() => api.toggleAction(activeFactoryId, id)), [mutate, activeFactoryId]);
   const askQuestion = useCallback((question: string) => api.ask(activeFactoryId, filters, question), [activeFactoryId, filters]);
   const value = useMemo(() => ({ state, intelligence, filters, hydrated, loading, error, setFilters, setActiveFactory, refresh, updateCompany, createFactory, updateFactory, upsertMaster, removeMaster, updateAlertStatus, createAction, toggleAction, updateTargets, updateCustomKpis, askQuestion }), [state, intelligence, filters, hydrated, loading, error, refresh, updateCompany, createFactory, updateFactory, upsertMaster, removeMaster, updateAlertStatus, createAction, toggleAction, updateTargets, updateCustomKpis, askQuestion, setActiveFactory]);
-  if (!hydrated) return <div className="application-loading" role="status"><span /><strong>Connecting to Musroom farm intelligence…</strong></div>;
+  if (!hydrated) return <div className="application-loading" role="status"><span /><strong>Connecting to {variant.displayName} {variant.descriptor.toLocaleLowerCase("en-US")}…</strong></div>;
   return <FactoryContext.Provider value={value}>{error && <div className="api-error-banner" role="alert">{error}</div>}{children}</FactoryContext.Provider>;
 }
 

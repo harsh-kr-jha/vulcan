@@ -22,8 +22,9 @@ import { CommandFilters } from "@/components/command-filters";
 import { downloadBlob } from "@/lib/browser-files";
 import { formatDuration } from "@/lib/formatters";
 import { useFactory } from "@/lib/factory-context";
-import { datasetLabels, type DatasetType } from "@/lib/factory-domain";
+import type { DatasetType } from "@/lib/factory-domain";
 import { useProjects } from "@/lib/project-context";
+import { useVariant } from "@/lib/variant";
 
 const colors = {
   plan: "#b9c0bc",
@@ -32,6 +33,7 @@ const colors = {
 };
 
 function HomeModuleGrid() {
+  const variant = useVariant();
   const { projects } = useProjects();
   const { intelligence } = useFactory();
   const delayed = projects.filter((project) => project.status === "Delayed" || project.deliveryPrediction.state !== "On track").length;
@@ -39,13 +41,14 @@ function HomeModuleGrid() {
   const criticalAlerts = activeAlerts.filter((alert) => alert.severity === "critical").length;
   const twin = intelligence.digitalTwin.summary;
   const hasProduction = intelligence.dataAvailability.production > 0;
+  const mushroom = variant.features.mushroomAnalytics;
   const modules = [
-    { href: "/projects", label: "Crop cycles", description: "Track every batch from compost preparation to cold room.", value: projects.filter((project) => project.status !== "Completed").length.toString(), status: "active crop cycles", meta: `${delayed} at risk`, icon: FolderKanban },
-    { href: "/digital-twin", label: "Farm twin", description: "See crop stages, growing rooms and current conditions.", value: twin.running.toString(), status: `of ${twin.machines} rooms/assets healthy`, meta: `${twin.attention} need attention`, icon: Workflow },
-    { href: "/performance", label: "Cultivation", description: "Understand harvest, conversion, climate and crop loss.", value: `${intelligence.mushroom.biologicalEfficiency.toFixed(1)}%`, status: "biological efficiency", meta: hasProduction ? `${intelligence.mushroom.planAttainment.toFixed(1)}% harvest attainment` : "Awaiting harvest data", icon: Gauge },
+    { href: "/projects", label: variant.navigation.projects, description: mushroom ? "Track every batch from compost preparation to cold room." : "Track customer projects, stages and delivery risk.", value: projects.filter((project) => project.status !== "Completed").length.toString(), status: `active ${variant.terminology.projectPlural}`, meta: `${delayed} at risk`, icon: FolderKanban },
+    { href: "/digital-twin", label: variant.navigation["digital-twin"], description: mushroom ? "See crop stages, growing rooms and current conditions." : "See production lines, processes, machines and current state.", value: twin.running.toString(), status: `of ${twin.machines} assets healthy`, meta: `${twin.attention} need attention`, icon: Workflow },
+    { href: "/performance", label: mushroom ? "Cultivation" : "Production", description: mushroom ? "Understand harvest, conversion, climate and crop loss." : "Understand output, OEE, quality and production loss.", value: mushroom ? `${intelligence.mushroom.biologicalEfficiency.toFixed(1)}%` : `${intelligence.oee.value.toFixed(1)}%`, status: mushroom ? "biological efficiency" : "overall equipment effectiveness", meta: hasProduction ? `${intelligence.totals.planAttainment.toFixed(1)}% plan attainment` : "Awaiting production data", icon: Gauge },
     { href: "/alerts", label: "Alerts", description: "Review priority exceptions and actions.", value: activeAlerts.length.toString(), status: "open alerts", meta: `${criticalAlerts} critical`, icon: ShieldAlert },
   ];
-  return <section className="home-module-section"><header><div><div><h2>Move through your farm</h2><p>Open a workspace directly and see the current crop state.</p></div></div><small>4 cultivation modules</small></header><div className="home-module-grid">{modules.map((module) => { const Icon = module.icon; return <Link className="home-module-card" href={module.href} key={module.href}><span><Icon size={18} /></span><div><b>{module.label}</b><p>{module.description}</p><div className="home-module-status"><strong>{module.value}</strong><span>{module.status}</span></div><small>{module.meta}</small></div><ArrowRight size={15} /></Link>; })}</div></section>;
+  return <section className="home-module-section"><header><div><div><h2>Move through your {variant.terminology.siteSingular}</h2><p>Open a workspace directly and see its current operating state.</p></div></div><small>4 intelligence modules</small></header><div className="home-module-grid">{modules.map((module) => { const Icon = module.icon; return <Link className="home-module-card" href={module.href} key={module.href}><span><Icon size={18} /></span><div><b>{module.label}</b><p>{module.description}</p><div className="home-module-status"><strong>{module.value}</strong><span>{module.status}</span></div><small>{module.meta}</small></div><ArrowRight size={15} /></Link>; })}</div></section>;
 }
 
 function PanelHeader({
@@ -90,9 +93,11 @@ function EmptyData({ type }: { type: string }) {
 const coreMonitoredDatasets = ["production", "downtime", "quality", "inventory", "supplier"] as const;
 
 function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof useFactory>["intelligence"] }) {
+  const { datasets: datasetLabels, terminology } = useVariant();
   const monitoredDatasets: DatasetType[] = intelligence.digitalTwin.summary.processes
     ? ["process", ...coreMonitoredDatasets]
     : [...coreMonitoredDatasets];
+  if (intelligence.dataAvailability.utilities > 0) monitoredDatasets.push("utilities");
   const issues = monitoredDatasets.flatMap((datasetType) => {
     const health = intelligence.dataHealth[datasetType];
     return health && health.status !== "current" ? [{ datasetType, ...health }] : [];
@@ -100,7 +105,7 @@ function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof us
   if (!issues.length) return null;
   return (
     <section className="panel data-health-notice">
-      <div className="data-health-notice-heading"><CircleAlert size={20} /><div><h2>Data needs attention</h2><p>Refresh these sheets so crop decisions use current farm facts.</p></div></div>
+      <div className="data-health-notice-heading"><CircleAlert size={20} /><div><h2>Data needs attention</h2><p>Refresh these sheets so decisions use current {terminology.siteSingular} facts.</p></div></div>
       <div className="data-health-notice-list">
         {issues.map((issue) => {
           const label = datasetLabels[issue.datasetType as DatasetType];
@@ -118,6 +123,9 @@ function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof us
 
 function ProductionWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
+  const variant = useVariant();
+  const mushroom = variant.features.mushroomAnalytics;
+  const unit = mushroom ? " kg" : "";
   const option = useMemo<EChartsOption>(
     () => ({
       animationDuration: 500,
@@ -186,22 +194,25 @@ function ProductionWidget({ number }: { number: number }) {
     <section className="panel command-widget production-widget home-production-widget">
       <PanelHeader
         number={number}
-        title="Harvest against plan"
-        subtitle="Daily planned, total and saleable mushroom kg"
-        href="/performance?tab=Harvest"
+        title={`${mushroom ? "Harvest" : "Production"} against plan`}
+        subtitle={mushroom ? "Daily planned, total and saleable mushroom kg" : "Daily planned, actual and accepted production output"}
+        href={`/performance?tab=${mushroom ? "Harvest" : "Production"}`}
       />
       <div className="command-metric-row">
-        <div><span>Plan</span><strong>{intelligence.totals.planned.toLocaleString("en-IN")} kg</strong></div>
-        <div><span>Harvested</span><strong>{intelligence.totals.actual.toLocaleString("en-IN")} kg</strong></div>
-        <div><span>Saleable</span><strong>{intelligence.totals.good.toLocaleString("en-IN")} kg</strong></div>
+        <div><span>Plan</span><strong>{intelligence.totals.planned.toLocaleString("en-IN")}{unit}</strong></div>
+        <div><span>{mushroom ? "Harvested" : "Actual"}</span><strong>{intelligence.totals.actual.toLocaleString("en-IN")}{unit}</strong></div>
+        <div><span>{mushroom ? "Saleable" : "Accepted"}</span><strong>{intelligence.totals.good.toLocaleString("en-IN")}{unit}</strong></div>
       </div>
-      {intelligence.productionTrend.length ? <Chart option={option} height={250} /> : <EmptyData type="harvest" />}
+      {intelligence.productionTrend.length ? <Chart option={option} height={250} /> : <EmptyData type={mushroom ? "harvest" : "production"} />}
     </section>
   );
 }
 
 function MajorLossesWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
+  const variant = useVariant();
+  const mushroom = variant.features.mushroomAnalytics;
+  const unit = mushroom ? " kg" : "";
   const maxDowntime = intelligence.machineLoss[0]?.minutes || 1;
   const maxDefect = intelligence.defectLoss[0]?.rejected || 1;
 
@@ -209,18 +220,18 @@ function MajorLossesWidget({ number }: { number: number }) {
     <section className="panel command-widget home-loss-widget">
       <PanelHeader
         number={number}
-        title="Crop loss and room interruptions"
-        subtitle="The largest quantified harvest and environment losses"
-        href="/performance?tab=Room%20downtime"
+        title={mushroom ? "Crop loss and room interruptions" : "Production loss and interruptions"}
+        subtitle={mushroom ? "The largest quantified harvest and environment losses" : "The largest quantified output, downtime and quality losses"}
+        href={`/performance?tab=${mushroom ? "Room%20downtime" : "Downtime"}`}
       />
       <div className="loss-kpi-row">
-        <div><span>Harvest below plan</span><strong>{intelligence.totals.estimatedProductionLost.toLocaleString("en-IN")} kg</strong></div>
-        <div><span>Room downtime</span><strong>{formatDuration(intelligence.totals.totalDowntime)}</strong></div>
-        <div><span>Contaminated / discarded</span><strong>{intelligence.totals.rejected.toLocaleString("en-IN")} kg</strong></div>
+        <div><span>{mushroom ? "Harvest" : "Output"} below plan</span><strong>{intelligence.totals.estimatedProductionLost.toLocaleString("en-IN")}{unit}</strong></div>
+        <div><span>{mushroom ? "Room" : "Machine"} downtime</span><strong>{formatDuration(intelligence.totals.totalDowntime)}</strong></div>
+        <div><span>{mushroom ? "Contaminated / discarded" : "Rejected output"}</span><strong>{intelligence.totals.rejected.toLocaleString("en-IN")}{unit}</strong></div>
       </div>
       <div className="home-loss-columns">
         <div>
-          <h3>Top affected rooms and assets</h3>
+          <h3>Top affected {mushroom ? "rooms and assets" : "machines and assets"}</h3>
           <div className="ranked-bars">
             {intelligence.machineLoss.slice(0, 3).map((item, index) => (
               <div key={item.machine}>
@@ -240,7 +251,7 @@ function MajorLossesWidget({ number }: { number: number }) {
           <div className="defect-bars">
             {intelligence.defectLoss.slice(0, 3).map((item) => (
               <div key={item.reason}>
-                <span><b>{item.reason}</b><strong>{item.rejected} kg affected</strong></span>
+                <span><b>{item.reason}</b><strong>{item.rejected}{unit} affected</strong></span>
                 <i><b style={{ width: `${(item.rejected / maxDefect) * 100}%` }} /></i>
               </div>
             ))}
@@ -263,8 +274,9 @@ function MajorLossesWidget({ number }: { number: number }) {
 
 function RoomConditionsWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
+  const mushroom = useVariant().features.mushroomAnalytics;
   return <section className="panel command-widget room-conditions-widget">
-    <PanelHeader number={number} title="Growing-room conditions" subtitle="Latest temperature, humidity and CO2 by room" href="/digital-twin" />
+    <PanelHeader number={number} title={mushroom ? "Growing-room conditions" : "Process conditions"} subtitle={`Latest temperature, humidity and CO2 by ${mushroom ? "room" : "process"}`} href="/digital-twin" />
     <div className="room-condition-list">
       {intelligence.roomConditions.filter((item) => item.temperatureC !== null || item.humidityPct !== null || item.co2Ppm !== null).slice(0, 6).map((item) => <article key={item.room} className={item.compliant === false ? "room-condition-warning" : ""}>
         <div><strong>{item.room}</strong><small>{item.batchId || item.process}</small></div>
@@ -344,6 +356,8 @@ function SupplierPerformanceWidget({ number }: { number: number }) {
 }
 
 export function DashboardOverview() {
+  const variant = useVariant();
+  const mushroom = variant.features.mushroomAnalytics;
   const { state, filters, intelligence } = useFactory();
   const activeFactory = state.factories.find((factory) => factory.id === state.activeFactoryId);
   const latestUpload = state.uploads[0];
@@ -361,12 +375,20 @@ export function DashboardOverview() {
     hasAlerts && "alerts",
   ].filter((key): key is string => Boolean(key));
   const cardNumber = (key: string) => visibleCardKeys.indexOf(key) + 1;
-  const summaryMetrics = [
+  const verticalMetrics = mushroom ? [
     hasProduction && { label: "Biological efficiency", value: `${intelligence.mushroom.biologicalEfficiency.toFixed(1)}%`, detail: `${intelligence.mushroom.saleableHarvestKg.toLocaleString("en-IN")} kg from ${intelligence.mushroom.drySubstrateKg.toLocaleString("en-IN")} kg dry substrate` },
     hasProduction && { label: "Saleable yield", value: `${intelligence.mushroom.saleableYield.toFixed(1)}%`, detail: `${intelligence.mushroom.yieldPerM2.toFixed(1)} kg/m²` },
     hasEnvironment && { label: "Climate compliance", value: `${intelligence.mushroom.environmentCompliance.toFixed(1)}%`, detail: `${intelligence.mushroom.environmentReadings} room readings` },
     hasEnvironment && { label: "Water productivity", value: `${intelligence.mushroom.waterProductivityKgPerKl.toFixed(0)} kg/kl`, detail: `${intelligence.mushroom.waterLitres.toLocaleString("en-IN")} litres applied` },
     (hasProduction || available.quality > 0) && { label: "Contamination", value: `${intelligence.mushroom.contaminationRate.toFixed(1)}%`, detail: `${intelligence.mushroom.contaminatedHarvestKg.toLocaleString("en-IN")} kg affected` },
+  ] : [
+    hasProduction && { label: "OEE", value: `${intelligence.oee.value.toFixed(1)}%`, detail: "availability × performance × quality" },
+    hasProduction && { label: "Plan attainment", value: `${intelligence.totals.planAttainment.toFixed(1)}%`, detail: `${intelligence.totals.actual.toLocaleString("en-IN")} actual output` },
+    hasProduction && { label: "First-pass yield", value: `${intelligence.totals.firstPassYield.toFixed(1)}%`, detail: `${intelligence.totals.good.toLocaleString("en-IN")} accepted without rework` },
+    (hasProduction || available.quality > 0) && { label: "Rejection rate", value: `${intelligence.totals.rejectionRate.toFixed(1)}%`, detail: `${intelligence.totals.rejected.toLocaleString("en-IN")} rejected output` },
+  ];
+  const summaryMetrics = [
+    ...verticalMetrics,
     available.inventory > 0 && { label: "Material risks", value: intelligence.inventoryRisks.length.toString(), detail: "requiring review" },
     hasSupplier && { label: "Supplier score", value: intelligence.supplierScore.toFixed(1), detail: "out of 100" },
     ...intelligence.customKpis.filter((item) => item.pinnedToHome).map((item) => ({ label: item.name, value: item.value === null ? "—" : `${item.value.toLocaleString("en-IN", { minimumFractionDigits: item.decimals, maximumFractionDigits: item.decimals })}${item.unit ? ` ${item.unit}` : ""}`, detail: "Custom KPI" })),
@@ -376,7 +398,7 @@ export function DashboardOverview() {
   function exportSnapshot() {
     downloadBlob(
       JSON.stringify({ generatedAt: new Date().toISOString(), factory: activeFactory, filters, intelligence }, null, 2),
-      `musroom-command-centre-${filters.to}.json`,
+      `${variant.id}-command-centre-${filters.to}.json`,
       "application/json",
     );
   }
@@ -386,15 +408,15 @@ export function DashboardOverview() {
       <header className="page-header command-centre-header">
         <div>
           <p className="eyebrow">
-            Musroom crop command centre · {new Date(`${filters.to}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+            {variant.displayName} {mushroom ? "crop" : "factory"} command centre · {new Date(`${filters.to}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
           </p>
-          <h1>See every crop. <span>Improve every flush.</span></h1>
+          <h1>{mushroom ? "See every crop." : "See every operation."} <span>{mushroom ? "Improve every flush." : "Improve every shift."}</span></h1>
           <p className="page-subtitle">
             {activeFactory?.name} · latest upload: {latestUpload ? `${latestUpload.filename} · ${latestUpload.status.toLowerCase().replaceAll("_", " ")}` : "no sheets uploaded"}
           </p>
         </div>
         <div className="page-actions">
-          <Link href="/uploads" className="button button-accent">Add farm data <ArrowRight size={14} /></Link>
+          <Link href="/uploads" className="button button-accent">Add {variant.terminology.siteSingular} data <ArrowRight size={14} /></Link>
           <button className="button button-secondary" onClick={exportSnapshot}><Download size={14} /> Export snapshot</button>
         </div>
       </header>

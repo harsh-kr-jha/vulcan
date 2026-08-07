@@ -7,6 +7,7 @@ import pytest
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 REQUIRED_PRODUCTION_ENV = {
+    "VULCAN_VARIANT": "mushroom",
     "DJANGO_DEBUG": "false",
     "DJANGO_SECRET_KEY": "K8x4qP2vN7mR5cT9zL3wS6hY1dF0gJ8bQ4eU7iO2aC5nM9pV6rX3kH9s",
     "DJANGO_ALLOWED_HOSTS": "app.example.com",
@@ -47,6 +48,8 @@ def import_production_settings(*, remove=(), override=None):
     ("remove", "override", "expected_message"),
     [
         (("DJANGO_SECRET_KEY",), None, "DJANGO_SECRET_KEY is required"),
+        (("VULCAN_VARIANT",), None, "VULCAN_VARIANT is required"),
+        ((), {"VULCAN_VARIANT": "unknown"}, "must be one of"),
         ((), {"DJANGO_SECRET_KEY": "too-short"}, "long, random production secret"),
         ((), {"DJANGO_ALLOWED_HOSTS": "*.example.com"}, "exact hostnames"),
         (("DJANGO_DATABASE_URL",), None, "DJANGO_DATABASE_URL is required"),
@@ -84,8 +87,9 @@ def test_production_settings_fail_closed(remove, override, expected_message):
     assert expected_message in result.stderr
 
 
-def test_complete_explicit_production_settings_import_successfully():
-    result = import_production_settings()
+@pytest.mark.parametrize("variant", ["automotive", "mushroom"])
+def test_complete_explicit_production_settings_import_successfully(variant):
+    result = import_production_settings(override={"VULCAN_VARIANT": variant})
 
     assert result.returncode == 0, result.stderr
 

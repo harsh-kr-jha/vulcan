@@ -20,6 +20,7 @@ import { useMemo, useState } from "react";
 import { formatProjectDate, formatProjectValue, type FactoryProject } from "@/lib/project-data";
 import { useFactory } from "@/lib/factory-context";
 import { useProjects } from "@/lib/project-context";
+import { useVariant } from "@/lib/variant";
 
 type ViewFilter = "All" | "Active" | "At risk" | "Completed";
 
@@ -32,6 +33,10 @@ function ProgressBar({ value, danger = false }: { value: number; danger?: boolea
 }
 
 export function ProjectsWorkspace() {
+  const variant = useVariant();
+  const mushroom = variant.features.mushroomAnalytics;
+  const projectSingular = variant.terminology.projectSingular;
+  const projectPlural = variant.terminology.projectPlural;
   const { projects } = useProjects();
   const { filters, state } = useFactory();
   const [query, setQuery] = useState("");
@@ -61,23 +66,23 @@ export function ProjectsWorkspace() {
     <header className="page-header projects-page-header">
       <div>
         <p className="eyebrow">Customer order execution</p>
-        <h1>Crop cycles <span>from compost to cold room.</span></h1>
+        <h1>{mushroom ? "Crop cycles" : "Projects"} <span>{mushroom ? "from compost to cold room." : "from order to delivery."}</span></h1>
         <p className="page-subtitle">One live view of every order, owner, milestone and delivery risk.</p>
       </div>
-      <div className="page-actions"><Link className="button button-secondary" href="/uploads?add=project_stages"><UploadCloud size={14} />Import crop stages</Link><Link className="button button-accent" href="/uploads?add=projects">Import crop cycles <ArrowRight size={14} /></Link></div>
+      <div className="page-actions"><Link className="button button-secondary" href="/uploads?add=project_stages"><UploadCloud size={14} />Import {mushroom ? "crop" : "project"} stages</Link><Link className="button button-accent" href="/uploads?add=projects">Import {projectPlural} <ArrowRight size={14} /></Link></div>
     </header>
 
     <section className="project-source-note">
       <span><Sparkles size={16} /></span>
-      <div><strong>Source-connected crop-cycle analysis</strong><p>Crop batches and cultivation stages come from approved Excel or CSV records for {state.factories.find((factory) => factory.id === state.activeFactoryId)?.name ?? "this farm"}.</p></div>
-      <small>{projects.length ? "Latest approved rows" : "Awaiting crop source"}</small>
+      <div><strong>Source-connected {projectSingular} analysis</strong><p>{mushroom ? "Crop batches and cultivation stages" : "Projects and production stages"} come from approved Excel or CSV records for {state.factories.find((factory) => factory.id === state.activeFactoryId)?.name ?? `this ${variant.terminology.siteSingular}`}.</p></div>
+      <small>{projects.length ? "Latest approved rows" : `Awaiting ${projectSingular} source`}</small>
     </section>
 
     <section className="project-summary-grid" aria-label="Project summary">
-      <article><span><FolderKanban size={17} /></span><div><small>Active crop cycles</small><strong>{active}</strong><p>{projects.length} total tracked batches</p></div></article>
-      <article><span className="project-icon-danger"><AlertTriangle size={17} /></span><div><small>At-risk crops</small><strong>{atRisk}</strong><p>Need intervention decisions</p></div></article>
+      <article><span><FolderKanban size={17} /></span><div><small>Active {projectPlural}</small><strong>{active}</strong><p>{projects.length} total tracked {mushroom ? "batches" : "projects"}</p></div></article>
+      <article><span className="project-icon-danger"><AlertTriangle size={17} /></span><div><small>At-risk {projectPlural}</small><strong>{atRisk}</strong><p>Need intervention decisions</p></div></article>
       <article><span><CalendarClock size={17} /></span><div><small>Due in next 30 days</small><strong>{dueSoon}</strong><p>From the selected end date</p></div></article>
-      <article><span><IndianRupee size={17} /></span><div><small>Expected crop value</small><strong>{formatProjectValue(totalValue)}</strong><p>Across active and completed cycles</p></div></article>
+      <article><span><IndianRupee size={17} /></span><div><small>Expected {mushroom ? "crop" : "order"} value</small><strong>{formatProjectValue(totalValue)}</strong><p>Across active and completed {projectPlural}</p></div></article>
     </section>
 
     <section className="panel project-list-panel">
@@ -86,12 +91,12 @@ export function ProjectsWorkspace() {
           {(["All", "Active", "At risk", "Completed"] as ViewFilter[]).map((item) => <button key={item} className={view === item ? "active" : ""} onClick={() => setView(item)}>{item}{item === "At risk" && atRisk > 0 && <span>{atRisk}</span>}</button>)}
         </div>
         <div className="project-list-filters">
-          <label className="project-search"><Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search batch, customer or room" aria-label="Search crop cycles" /></label>
+          <label className="project-search"><Search size={14} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={mushroom ? "Search batch, customer or room" : "Search project, customer or order"} aria-label={`Search ${projectPlural}`} /></label>
           <label className="project-priority-filter"><SlidersHorizontal size={14} /><select value={priority} onChange={(event) => setPriority(event.target.value)} aria-label="Filter by priority"><option>All priorities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select></label>
         </div>
       </header>
 
-      <div className="project-list-heading" aria-hidden="true"><span>Crop cycle</span><span>Status</span><span>Progress</span><span>Current stage</span><span>Expected harvest</span><span /></div>
+      <div className="project-list-heading" aria-hidden="true"><span>{projectSingular}</span><span>Status</span><span>Progress</span><span>Current stage</span><span>{mushroom ? "Expected harvest" : "Committed delivery"}</span><span /></div>
       <div className="project-list">
         {filteredProjects.map((project) => {
           const currentStage = project.stages.find((stage) => stage.status === "Delayed" || stage.status === "In Progress")
@@ -106,7 +111,7 @@ export function ProjectsWorkspace() {
             <span className="project-open"><ArrowRight size={16} /></span>
           </Link>;
         })}
-        {!filteredProjects.length && <div className="project-empty"><PackageCheck size={28} /><strong>{projects.length ? "No crop cycles match this view" : "No approved crop-cycle source"}</strong><p>{projects.length ? "Change the search or filters to see other batches." : "Import the Crop cycle master sheet to populate this farm."}</p>{!projects.length && <Link className="button button-primary" href="/uploads?add=projects">Import crop cycles <ArrowRight size={13} /></Link>}</div>}
+        {!filteredProjects.length && <div className="project-empty"><PackageCheck size={28} /><strong>{projects.length ? `No ${projectPlural} match this view` : `No approved ${projectSingular} source`}</strong><p>{projects.length ? `Change the search or filters to see other ${projectPlural}.` : `Import the ${variant.datasets.projects} sheet to populate this ${variant.terminology.siteSingular}.`}</p>{!projects.length && <Link className="button button-primary" href="/uploads?add=projects">Import {projectPlural} <ArrowRight size={13} /></Link>}</div>}
       </div>
     </section>
   </>;

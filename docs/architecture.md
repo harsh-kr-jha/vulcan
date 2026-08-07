@@ -4,6 +4,10 @@
 
 Vulcan is a modular monolith with independently scalable background workers.
 
+The same application images can run as an allowlisted `mushroom` or `automotive` deployment. Each
+vertical cell has a separate hostname, Cloud Run service, database, bucket, identities and secrets;
+the runtime variant cannot be selected by a request. See the [product variant guide](variants.md).
+
 ```mermaid
 flowchart LR
     Browser[Next.js display layer] -->|same-origin session + CSRF| Next[Next.js server]
@@ -22,8 +26,10 @@ flowchart LR
     API -->|precomputed aggregates| Browser
 ```
 
-API and workers deploy from the same backend image. This keeps domain logic in one codebase
-while allowing expensive queues to scale independently.
+API and future workers deploy from the same backend image. This keeps domain logic in one codebase
+while allowing expensive queues to scale independently. The current synchronous import path is the
+only complete ingestion route; object-backed worker ingestion remains disabled until download,
+malware scanning, parsing and retry handling are implemented end to end.
 
 ## Domain boundaries
 

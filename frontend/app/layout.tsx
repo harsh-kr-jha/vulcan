@@ -2,20 +2,26 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { ApplicationBoundary } from "@/lib/auth-context";
+import { getVariantConfig } from "@/lib/variant-config";
+import { VariantProvider } from "@/lib/variant";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: {
-    default: "Ion · Industrial Intelligence",
-    template: "%s · Ion",
-  },
-  description: "Factories that think ahead.",
-};
+export function generateMetadata(): Metadata {
+  const variant = getVariantConfig();
+  return {
+    title: {
+      default: `${variant.displayName} · Industrial Intelligence`,
+      template: `%s · ${variant.displayName}`,
+    },
+    description: `${variant.displayName} ${variant.descriptor.toLocaleLowerCase("en-US")}.`,
+  };
+}
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // A fresh CSP nonce is attached by proxy.ts on every document request.
   // Dynamic rendering lets Next apply it to framework and page scripts.
   await connection();
+  const variant = getVariantConfig();
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -27,7 +33,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         />
       </head>
       <body suppressHydrationWarning>
-        <ApplicationBoundary>{children}</ApplicationBoundary>
+        <VariantProvider config={variant}>
+          <ApplicationBoundary>{children}</ApplicationBoundary>
+        </VariantProvider>
       </body>
     </html>
   );

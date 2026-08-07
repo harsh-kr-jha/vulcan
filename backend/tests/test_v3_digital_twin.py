@@ -1,10 +1,9 @@
-from datetime import date, timedelta
-
 import pytest
 from apps.operations.models import StandardRecord, Upload
-from apps.tenancy.models import Factory, FactoryMaster, Membership, Role
+from apps.tenancy.models import Factory, FactoryMaster
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
+from django.test import override_settings
 
 pytestmark = pytest.mark.django_db
 
@@ -196,18 +195,25 @@ def test_process_import_uses_selected_process_code_without_mutating_source(api_c
     assert node["metrics"]["pressureBar"] is None
 
 
-def test_seed_mypol_is_idempotent_and_populates_every_feature(
-    api_client, user, membership
-):
-    call_command("seed_mypol", verbosity=0)
-    factory = Factory.objects.get(tenant__slug="vulcan-workspace", code="MYPOL-MYS")
+@override_settings(
+    DEBUG=True,
+    VULCAN_VARIANT="automotive",
+    VULCAN_VARIANT_CONFIG={
+        "industry": "automotive-manufacturing",
+        "features": {"asyncUploads": False, "mushroomAnalytics": False},
+    },
+)
+def test_seed_mypol_is_idempotent_and_imports_the_complete_fixture(api_client, membership):
+    command_options = {"verbosity": 0, "tenant_slug": membership.tenant.slug}
+    call_command("seed_mypol", **command_options)
+    factory = Factory.objects.get(tenant=membership.tenant, code="MYP-MYS")
     first_counts = {
         "masters": factory.master_records.count(),
         "uploads": factory.uploads.count(),
         "records": factory.standard_records.count(),
     }
 
-    call_command("seed_mypol", verbosity=0)
+    call_command("seed_mypol", **command_options)
     factory.refresh_from_db()
     second_counts = {
         "masters": factory.master_records.count(),
@@ -225,50 +231,51 @@ def test_seed_mypol_is_idempotent_and_populates_every_feature(
         factory=factory, kind=FactoryMaster.Kind.SUPPLIER, is_active=True
     )
     process_uploads = Upload.objects.filter(
-        factory=factory, dataset_type="process", source_type="showcase", status="COMPLETED"
+        factory=factory,
+        dataset_type="process",
+        source_type="showcase-derived",
+        status="COMPLETED",
     )
     assert first_counts == second_counts
-    assert processes.count() >= 6
-    assert materials.count() >= 6
-    assert suppliers.count() >= 6
+    assert factory.company.name == "MYPOL"
+    assert factory.company.legal_name == "Mysore Polymers and Rubber Products Pvt. Ltd."
+    assert factory.name == "MYPOL Mysuru Plant"
+    assert factory.configuration["industry"] == "automotive-manufacturing"
+    assert factory.configuration["showcase"]["synthetic"] is True
+    assert processes.count() == 23
+    assert materials.count() == 15
+    assert suppliers.count() == 8
     assert process_uploads.count() == processes.count()
     assert all(len(upload.standard_records.all()) > 0 for upload in process_uploads)
+    fixture_uploads = Upload.objects.filter(factory=factory, source_type="showcase")
+    assert fixture_uploads.count() == 7
+    assert sum(upload.accepted_rows for upload in fixture_uploads) == 5702
+    assert factory.standard_records.count() == 5863
 
-    membership.is_active = False
-    membership.save(update_fields=["is_active"])
-    Membership.objects.create(
-        user=user,
-        tenant=factory.tenant,
-        role=Role.COMPANY_ADMIN,
-        all_factories=True,
-    )
-
-    today = date.today()
-    result = api_client.get(
-        f"/api/workspace/?factory={factory.id}"
-        f"&from={(today - timedelta(days=6)).isoformat()}&to={today.isoformat()}"
-    )
+    result = api_client.get(f"/api/workspace/?factory={factory.id}&from=2026-07-25&to=2026-07-31")
     assert result.status_code == 200
     intelligence = result.data["intelligence"]
     twin = intelligence["digitalTwin"]
     twin_processes = [item for line in twin["lines"] for item in line["processes"]]
 
-    assert twin["factory"]["name"] == "MyPol"
-    assert [item["sequence"] for item in twin_processes] == list(range(1, len(twin_processes) + 1))
+    assert twin["factory"]["name"] == "MYPOL Mysuru Plant"
+    assert len(twin["lines"]) == 4
+    assert len(twin_processes) == 23
     assert all(item["hasData"] for item in twin_processes)
     assert any(item["status"] in {"warning", "down"} for item in twin_processes)
     assert any(value is None for item in twin_processes for value in item["metrics"].values())
     assert intelligence["alerts"]
+    assert intelligence["totals"]["planned"] == 85233
+    assert intelligence["totals"]["actual"] == 73575
+    assert round(intelligence["oee"]["value"], 2) == 75.93
+    assert intelligence["machineLoss"][0]["machine"] == "Tube Cure Press HC-02"
     assert intelligence["supplierScore"] > 0
-    assert len(intelligence["inventoryRisks"]) >= 6
-    assert len(intelligence["supplierScores"]) >= 6
-    assert {item["status"] for item in intelligence["supplierScores"]} == {
-        "preferred",
-        "stable",
-        "watch",
-        "critical",
-    }
+    assert len(intelligence["inventoryRisks"]) >= 3
+    assert len(intelligence["supplierScores"]) >= 3
     assert intelligence["orderRisks"]
+    assert {
+        item["orderId"] for item in intelligence["orderRisks"] if item["risk"] == "critical"
+    } >= {"MYP-ORD-AT-RISK-01", "MYP-ORD-AT-RISK-02"}
     assert any(
         item["pinnedToHome"] and item["value"] is not None for item in intelligence["customKpis"]
     )
@@ -280,5 +287,8 @@ def test_seed_mypol_is_idempotent_and_populates_every_feature(
         "inventory",
         "supplier",
         "orders",
+        "utilities",
     ]:
         assert intelligence["dataAvailability"][dataset_type] > 0
+    assert intelligence["steamRecovery"]["heatRecoveredGj"] > 0
+    assert intelligence["steamRecovery"]["equivalentBriquetteSavedKg"] > 0

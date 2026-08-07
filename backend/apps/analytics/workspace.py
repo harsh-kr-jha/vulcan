@@ -4,10 +4,17 @@ from datetime import date, timedelta
 from decimal import Decimal
 from uuid import uuid4
 
+from django.conf import settings
+
 from apps.operations.imports import serialize_upload
 from apps.operations.models import StandardRecord, Upload
 from apps.tenancy.serializers import FactoryMasterSerializer, WorkspaceFactorySerializer
-from processing.kpis import MushroomKPIInputs, calculate_mushroom_kpis
+from processing.kpis import (
+    MushroomKPIInputs,
+    SteamRecoveryInputs,
+    calculate_mushroom_kpis,
+    calculate_steam_recovery,
+)
 
 DEFAULT_TARGETS = {
     "oee": 78,
@@ -38,6 +45,17 @@ DEFAULT_PROJECT_WORKFLOW = [
     "Pinning",
     "Cropping & Harvest",
     "Packing & Cold Room",
+]
+
+AUTOMOTIVE_PROJECT_WORKFLOW = [
+    "Order & Feasibility Review",
+    "Process Planning",
+    "Tooling & Validation",
+    "Material Readiness",
+    "Pilot Production",
+    "Quality Approval",
+    "Volume Production",
+    "Dispatch",
 ]
 
 
@@ -80,9 +98,9 @@ def duration_label(minutes):
 
 
 CUSTOM_KPI_VARIABLES = {
-    "production.planned": ("Planned harvest", "Harvest", "kg"),
-    "production.actual": ("Total harvest", "Harvest", "kg"),
-    "production.good": ("Saleable harvest", "Harvest", "kg"),
+    "production.planned": ("Planned output", "Production", "units"),
+    "production.actual": ("Actual output", "Production", "units"),
+    "production.good": ("Accepted output", "Production", "units"),
     "production.run_minutes": ("Run time", "Production", "minutes"),
     "downtime.minutes": ("Downtime", "Downtime", "minutes"),
     "downtime.occurrences": ("Stoppages", "Downtime", "stops"),
@@ -94,6 +112,10 @@ CUSTOM_KPI_VARIABLES = {
     "supplier.deliveries": ("Supplier deliveries", "Supplier deliveries", "deliveries"),
     "supplier.late_deliveries": ("Late deliveries", "Supplier deliveries", "deliveries"),
     "orders.at_risk": ("Orders at risk", "Orders", "orders"),
+    "utilities.steam_generated": ("Steam generated", "Steam & boiler utilities", "kg"),
+    "utilities.briquette_used": ("Briquettes used", "Steam & boiler utilities", "kg"),
+    "utilities.heat_recovered": ("Heat recovered", "Steam & boiler utilities", "MJ"),
+    "utilities.briquette_saved": ("Equivalent briquettes saved", "Steam & boiler utilities", "kg"),
     "mushroom.dry_substrate": ("Dry substrate", "Crop batches", "kg"),
     "mushroom.water_litres": ("Water applied", "Room observations", "litres"),
     "mushroom.biological_efficiency": (
@@ -145,7 +167,9 @@ def workspace_snapshot(identity, factory, filters):
             "company": {
                 "id": str(identity.company.id),
                 "name": identity.company.name,
-                "industry": factory.configuration.get("industry", "Manufacturing"),
+                "industry": factory.configuration.get(
+                    "industry", settings.VULCAN_VARIANT_CONFIG["industry"]
+                ),
             },
             "factories": WorkspaceFactorySerializer(
                 identity.factories(), many=True
@@ -219,6 +243,7 @@ def build_intelligence(factory, targets, filters):
     production = [value for kind, value in scoped if kind == "production"]
     downtime = [value for kind, value in scoped if kind == "downtime"]
     quality = [value for kind, value in scoped if kind == "quality"]
+    utilities = [value for kind, value in scoped if kind == "utilities"]
     process_runs = process_history
     scoped_process_runs = [
         value
@@ -329,6 +354,7 @@ def build_intelligence(factory, targets, filters):
             "environmentReadings": environment_readings,
         }
     )
+    steam_recovery = build_steam_recovery(utilities, production)
     trend, daily_oee = production_trends(production)
     machine_loss = grouped_loss(downtime, "machine", include_line=True)
     reason_loss = grouped_loss(downtime, "reason")
@@ -385,6 +411,7 @@ def build_intelligence(factory, targets, filters):
         supplier_scores,
         order_risks,
         mushroom_kpis,
+        steam_recovery,
     )
     custom_kpis = calculate_custom_kpis(
         factory.configuration.get("customKpis", []), custom_variables
@@ -433,6 +460,7 @@ def build_intelligence(factory, targets, filters):
         "supplierScore": supplier_score,
         "mushroom": mushroom_kpis,
         "roomConditions": build_room_conditions(process_runs),
+        "steamRecovery": steam_recovery,
         "customKpiVariables": custom_variables,
         "customKpis": custom_kpis,
         "digitalTwin": digital_twin,
@@ -448,6 +476,7 @@ def build_intelligence(factory, targets, filters):
             "process": len(process_runs),
             "projects": len(projects),
             "project_stages": len(latest_project_values(project_stage_records, stage_record_key)),
+            "utilities": len(utilities),
         },
         "dataHealth": build_data_health(latest_dates, uploaded_types, to_date),
         "alerts": alerts,
@@ -517,6 +546,7 @@ def build_custom_kpi_variables(
     supplier_scores,
     order_risks,
     mushroom_kpis,
+    steam_recovery,
 ):
     values = {
         "production.planned": planned,
@@ -533,11 +563,27 @@ def build_custom_kpi_variables(
         "supplier.deliveries": sum(item["deliveries"] for item in supplier_scores),
         "supplier.late_deliveries": sum(item["lateDeliveries"] for item in supplier_scores),
         "orders.at_risk": len(order_risks),
+        "utilities.steam_generated": steam_recovery["steamGeneratedKg"],
+        "utilities.briquette_used": steam_recovery["briquetteUsedKg"],
+        "utilities.heat_recovered": steam_recovery["heatRecoveredMj"],
+        "utilities.briquette_saved": steam_recovery["equivalentBriquetteSavedKg"],
         "mushroom.dry_substrate": mushroom_kpis["drySubstrateKg"],
         "mushroom.water_litres": mushroom_kpis["waterLitres"],
         "mushroom.biological_efficiency": mushroom_kpis["biologicalEfficiency"],
         "mushroom.environment_compliance": mushroom_kpis["environmentCompliance"],
     }
+    variables = CUSTOM_KPI_VARIABLES
+    if settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]:
+        variables = {
+            **CUSTOM_KPI_VARIABLES,
+            "production.planned": ("Planned harvest", "Harvest", "kg"),
+            "production.actual": ("Total harvest", "Harvest", "kg"),
+            "production.good": ("Saleable harvest", "Harvest", "kg"),
+        }
+    else:
+        variables = {
+            key: item for key, item in variables.items() if not key.startswith("mushroom.")
+        }
     return [
         {
             "key": key,
@@ -546,8 +592,134 @@ def build_custom_kpi_variables(
             "sourceUnit": unit,
             "value": values[key],
         }
-        for key, (label, dataset, unit) in CUSTOM_KPI_VARIABLES.items()
+        for key, (label, dataset, unit) in variables.items()
     ]
+
+
+def build_steam_recovery(utility_rows, production_rows):
+    """Build period and daily boiler KPIs from approved utility log rows."""
+
+    feedwater_kg = total(utility_rows, "feedwater_kg")
+    steam_generated_kg = total(utility_rows, "steam_generated_kg")
+    briquette_used_kg = total(utility_rows, "briquette_used_kg")
+
+    def weighted(field, weight_field):
+        denominator = total(utility_rows, weight_field)
+        return (
+            sum(number(row.get(field)) * number(row.get(weight_field)) for row in utility_rows)
+            / denominator
+            if denominator
+            else 0
+        )
+
+    result = calculate_steam_recovery(
+        SteamRecoveryInputs(
+            feedwater_kg=Decimal(str(feedwater_kg)),
+            feedwater_inlet_temperature_c=Decimal(
+                str(weighted("feedwater_inlet_temperature_c", "feedwater_kg"))
+            ),
+            feedwater_tank_temperature_c=Decimal(
+                str(weighted("feedwater_tank_temperature_c", "feedwater_kg"))
+            ),
+            steam_generated_kg=Decimal(str(steam_generated_kg)),
+            recovered_condensate_kg=Decimal(
+                str(total(utility_rows, "recovered_condensate_kg"))
+            ),
+            flash_steam_recovered_kg=Decimal(
+                str(total(utility_rows, "flash_steam_recovered_kg"))
+            ),
+            briquette_used_kg=Decimal(str(briquette_used_kg)),
+            briquette_gcv_kcal_per_kg=Decimal(
+                str(weighted("briquette_gcv_kcal_per_kg", "briquette_used_kg"))
+            ),
+            boiler_efficiency_percent=Decimal(
+                str(weighted("boiler_efficiency_percent", "briquette_used_kg"))
+            ),
+            production_quantity=Decimal(str(total(production_rows, "actual_quantity"))),
+        )
+    ).as_dict()
+    result.update(
+        {
+            "feedwaterKg": feedwater_kg,
+            "steamGeneratedKg": steam_generated_kg,
+            "recoveredCondensateKg": total(utility_rows, "recovered_condensate_kg"),
+            "flashSteamRecoveredKg": total(utility_rows, "flash_steam_recovered_kg"),
+            "briquetteUsedKg": briquette_used_kg,
+            "boilerEfficiencyPercent": weighted(
+                "boiler_efficiency_percent", "briquette_used_kg"
+            ),
+            "briquetteGcvKcalPerKg": weighted(
+                "briquette_gcv_kcal_per_kg", "briquette_used_kg"
+            ),
+        }
+    )
+
+    utility_by_date = defaultdict(list)
+    production_by_date = defaultdict(list)
+    for row in utility_rows:
+        utility_by_date[str(row.get("date", ""))].append(row)
+    for row in production_rows:
+        production_by_date[str(row.get("date", ""))].append(row)
+    result["trend"] = []
+    for day in sorted(key for key in utility_by_date if key):
+        daily = build_steam_recovery_without_trend(
+            utility_by_date[day], production_by_date.get(day, [])
+        )
+        result["trend"].append(
+            {
+                "date": day,
+                "steamGeneratedKg": daily["steamGeneratedKg"],
+                "briquetteUsedKg": daily["briquetteUsedKg"],
+                "heatRecoveredMj": daily["heatRecoveredMj"],
+                "specificSteamKgPerUnit": daily["specificSteamKgPerUnit"],
+            }
+        )
+    return result
+
+
+def build_steam_recovery_without_trend(utility_rows, production_rows):
+    """Calculate one daily point without recursively building another trend."""
+
+    feedwater = total(utility_rows, "feedwater_kg")
+    fuel = total(utility_rows, "briquette_used_kg")
+
+    def weighted(field, weight_field, denominator):
+        return (
+            sum(number(row.get(field)) * number(row.get(weight_field)) for row in utility_rows)
+            / denominator
+            if denominator
+            else 0
+        )
+
+    calculated = calculate_steam_recovery(
+        SteamRecoveryInputs(
+            feedwater_kg=Decimal(str(feedwater)),
+            feedwater_inlet_temperature_c=Decimal(
+                str(weighted("feedwater_inlet_temperature_c", "feedwater_kg", feedwater))
+            ),
+            feedwater_tank_temperature_c=Decimal(
+                str(weighted("feedwater_tank_temperature_c", "feedwater_kg", feedwater))
+            ),
+            steam_generated_kg=Decimal(str(total(utility_rows, "steam_generated_kg"))),
+            recovered_condensate_kg=Decimal(str(total(utility_rows, "recovered_condensate_kg"))),
+            flash_steam_recovered_kg=Decimal(str(total(utility_rows, "flash_steam_recovered_kg"))),
+            briquette_used_kg=Decimal(str(fuel)),
+            briquette_gcv_kcal_per_kg=Decimal(
+                str(weighted("briquette_gcv_kcal_per_kg", "briquette_used_kg", fuel))
+            ),
+            boiler_efficiency_percent=Decimal(
+                str(weighted("boiler_efficiency_percent", "briquette_used_kg", fuel))
+            ),
+            production_quantity=Decimal(str(total(production_rows, "actual_quantity"))),
+        )
+    ).as_dict()
+    calculated.update(
+        {
+            "steamGeneratedKg": total(utility_rows, "steam_generated_kg"),
+            "briquetteUsedKg": fuel,
+        }
+    )
+    return calculated
 
 
 def calculate_custom_kpis(definitions, variables):
@@ -1078,17 +1250,22 @@ def build_project_stage(project_number, values):
 
 
 def default_project_stages(project_number, start_value, commitment_value, progress, status):
+    workflow = (
+        DEFAULT_PROJECT_WORKFLOW
+        if settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]
+        else AUTOMOTIVE_PROJECT_WORKFLOW
+    )
     start = parse_date(start_value) or date.today()
     commitment = parse_date(commitment_value) or start
-    total_days = max((commitment - start).days + 1, len(DEFAULT_PROJECT_WORKFLOW))
-    stage_position = progress / 100 * len(DEFAULT_PROJECT_WORKFLOW)
+    total_days = max((commitment - start).days + 1, len(workflow))
+    stage_position = progress / 100 * len(workflow)
     stages = []
-    for index, name in enumerate(DEFAULT_PROJECT_WORKFLOW):
+    for index, name in enumerate(workflow):
         stage_start = start + timedelta(
-            days=int(total_days * index / len(DEFAULT_PROJECT_WORKFLOW))
+            days=int(total_days * index / len(workflow))
         )
         next_start = start + timedelta(
-            days=int(total_days * (index + 1) / len(DEFAULT_PROJECT_WORKFLOW))
+            days=int(total_days * (index + 1) / len(workflow))
         )
         completed = index < int(stage_position)
         active = index == int(stage_position) and 0 < progress < 100
@@ -1340,6 +1517,7 @@ def build_data_health(latest_dates, uploaded_types, selected_end):
         "quality": 7,
         "inventory": 3,
         "supplier": 14,
+        "utilities": 2,
     }
     result = {}
     for dataset_type, threshold in stale_after_days.items():
@@ -1757,7 +1935,10 @@ def alert(
 def answer_question(intelligence, question):
     normalized = question.casefold()
     mushroom = intelligence.get("mushroom", {})
-    if any(word in normalized for word in ["biological", "substrate", "conversion"]):
+    mushroom_mode = settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]
+    if mushroom_mode and any(
+        word in normalized for word in ["biological", "substrate", "conversion"]
+    ):
         return response(
             f"Biological efficiency is {mushroom.get('biologicalEfficiency', 0):.1f}%.",
             "It compares total fresh mushroom harvest with the dry substrate loaded "
@@ -1767,7 +1948,9 @@ def answer_question(intelligence, question):
                 f"{mushroom.get('drySubstrateKg', 0):g} kg dry substrate",
             ],
         )
-    if any(word in normalized for word in ["climate", "temperature", "humidity", "co2"]):
+    if mushroom_mode and any(
+        word in normalized for word in ["climate", "temperature", "humidity", "co2"]
+    ):
         return response(
             f"Growing-room environment compliance is "
             f"{mushroom.get('environmentCompliance', 0):.1f}%.",
@@ -1775,7 +1958,7 @@ def answer_question(intelligence, question):
             "humidity and CO2 limits.",
             [f"{mushroom.get('environmentReadings', 0):g} validated readings"],
         )
-    if any(word in normalized for word in ["water", "irrigation"]):
+    if mushroom_mode and any(word in normalized for word in ["water", "irrigation"]):
         return response(
             f"Water productivity is "
             f"{mushroom.get('waterProductivityKgPerKl', 0):.1f} kg per kilolitre.",
@@ -1827,7 +2010,12 @@ def answer_question(intelligence, question):
             )
     totals = intelligence["totals"]
     return response(
-        f"Harvest is {totals['actual']:g} kg against a plan of {totals['planned']:g} kg.",
+        (
+            f"Harvest is {totals['actual']:g} kg against a plan of {totals['planned']:g} kg."
+            if mushroom_mode
+            else f"Production is {totals['actual']:g} units against a plan of "
+            f"{totals['planned']:g} units."
+        ),
         "This answer uses only validated records in the selected factory and date range.",
         [f"Plan {totals['planned']:g}", f"Actual {totals['actual']:g}"],
     )
@@ -1923,11 +2111,7 @@ def build_room_conditions(rows):
 
 
 def is_mushroom_factory(factory):
-    industry = str(factory.configuration.get("industry", "")).casefold()
-    factory_type = str(
-        factory.configuration.get("factoryDetails", {}).get("factoryType", "")
-    ).casefold()
-    return "mushroom" in industry or "mushroom" in factory_type or factory.code.startswith("MUS")
+    return settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]
 
 
 def optional_total(rows, key):

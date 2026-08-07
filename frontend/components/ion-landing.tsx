@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
 
@@ -54,24 +53,21 @@ export function IonLanding({ nextPath = "/dashboard" }: { nextPath?: string }) {
       <IonVideoBackground />
       <div className="ion-scrim pointer-events-none absolute inset-0 z-[1]" aria-hidden="true" />
 
-      <nav className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-8 py-7" aria-label="Primary navigation">
-        <Link className="ion-display text-[26px] tracking-tight" href="/" aria-label="Ion home">Ion</Link>
-        <div className="hidden items-center gap-7 sm:flex">
-          <a className="text-[13px] text-white/55 transition-colors hover:text-white focus-visible:text-white" href="#sign-in">Network</a>
-          <Link className="text-[13px] text-white/55 transition-colors hover:text-white focus-visible:text-white" href="/dashboard">Platform</Link>
-          <a className="text-[13px] text-white/55 transition-colors hover:text-white focus-visible:text-white" href="#sign-in">Careers</a>
-        </div>
-        <a className="ion-liquid-glass rounded-full px-5 py-2.5 text-[12px] font-medium text-white/90 transition-colors hover:text-white" href="#sign-in">Talk to us</a>
-      </nav>
+      <header className="relative z-10 mx-auto flex max-w-7xl items-center px-5 py-6 sm:px-8 sm:py-7" aria-label="Vulcan">
+        <span className="ion-display text-[27px] tracking-tight">Vulcan</span>
+      </header>
 
-      <div className="ion-login-position pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-8">
+      <div className="ion-login-position pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 sm:px-8">
         <form
           id="sign-in"
-          className="ion-login-panel pointer-events-auto w-[min(22rem,calc(100vw-4rem))] rounded-[22px] px-6 py-6 sm:px-7"
+          className="ion-login-panel pointer-events-auto w-full max-w-[21rem] rounded-[22px] px-6 py-6 sm:px-7 sm:py-7"
           onSubmit={handleSubmit}
           aria-busy={submitting}
         >
-          <h2 className="ion-display mb-5 text-center text-[28px] leading-none">Sign in</h2>
+          <div className="mb-5 text-center">
+            <p className="mb-2 text-[9px] font-medium uppercase tracking-[0.34em] text-white/40">Secure workspace</p>
+            <h2 className="ion-display text-[28px] leading-none">Sign in to Vulcan</h2>
+          </div>
           <div className="space-y-4">
             <label className="block" htmlFor="email">
               <span className="mb-2 block text-[11px] font-medium text-white/65">Email</span>
@@ -114,23 +110,13 @@ export function IonLanding({ nextPath = "/dashboard" }: { nextPath?: string }) {
         </form>
       </div>
 
-      <section className="relative z-10 mx-auto flex min-h-[calc(100svh-104px)] max-w-7xl flex-col justify-end px-8 pb-20" aria-labelledby="ion-headline">
+      <section className="pointer-events-none relative z-10 mx-auto flex min-h-[calc(100svh-92px)] max-w-7xl flex-col justify-end px-5 pb-8 sm:px-8 sm:pb-12" aria-labelledby="ion-headline">
         <div className="ion-hero-copy">
-          <p className="ion-enter ion-enter-eyebrow mb-5 text-[11px] font-medium uppercase tracking-[0.42em] text-white/45">Industrial Intelligence</p>
-          <h1 id="ion-headline" className="ion-display ion-enter ion-enter-headline max-w-[13ch] text-5xl leading-[0.95] tracking-[-0.02em] sm:text-6xl md:text-7xl">
-            Factories that<br /><em className="not-italic text-white/[0.48]">think ahead.</em>
+          <p className="ion-enter ion-enter-eyebrow mb-4 text-[10px] font-medium uppercase tracking-[0.38em] text-white/45">Operational intelligence</p>
+          <h1 id="ion-headline" className="ion-display ion-enter ion-enter-headline max-w-[12ch] text-[2.75rem] leading-[0.94] tracking-[-0.02em] sm:text-6xl md:text-7xl">
+            See every operation.<br /><em className="not-italic text-white/[0.48]">Act before it slips.</em>
           </h1>
-          <div className="ion-enter ion-enter-actions mt-8 flex items-center gap-6">
-            <a className="rounded-full bg-white px-5 py-3 text-[12px] font-semibold text-[#04070f] transition hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" href="#sign-in">Book a Demo</a>
-            <Link className="text-[12px] font-medium text-white/55 transition-colors hover:text-white focus-visible:text-white" href="/dashboard">See the Platform →</Link>
-          </div>
         </div>
-
-        <footer className="ion-footer-rail absolute bottom-5 left-8 right-8 flex items-center justify-between border-t border-white/10 pt-4 text-[10px] uppercase tracking-[0.3em] text-white/25">
-          <span>Est. 2020</span>
-          <span className="hidden sm:inline">11 markets</span>
-          <span>Carbon negative</span>
-        </footer>
       </section>
     </main>
   );

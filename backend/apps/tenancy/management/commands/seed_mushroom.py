@@ -1,6 +1,7 @@
 import os
 from datetime import date, timedelta
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -26,6 +27,8 @@ class Command(BaseCommand):
     help = "Create or refresh the Musroom cultivation-intelligence showcase factory."
 
     def handle(self, *args, **options):
+        if settings.VULCAN_VARIANT != "mushroom":
+            raise CommandError("seed_mushroom can run only in the mushroom variant.")
         demo_credentials = self.demo_credentials()
         identity = get_workspace_identity()
         identity.company.name = "Musroom Cultivation Labs"

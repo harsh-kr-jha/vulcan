@@ -444,19 +444,203 @@ TEMPLATES = {
         field("priority", "Priority"),
         field("status", "Status", aliases=["order status"]),
     ],
+    "utilities": [
+        field("date", "Boiler log date", "date", True, ["date", "log date"]),
+        field("shift", "Shift", required=True, aliases=["shift name"]),
+        field("boiler", "Boiler", required=True, aliases=["boiler name", "asset"]),
+        field(
+            "feedwater_kg", "Feedwater supplied", "decimal", True,
+            ["feed water kg", "feedwater flow kg", "boiler feedwater kg"],
+        ),
+        field(
+            "feedwater_inlet_temperature_c", "Feedwater inlet temperature", "decimal", True,
+            ["inlet temp c", "makeup water temp", "feedwater inlet temp"],
+        ),
+        field(
+            "feedwater_tank_temperature_c", "Feedwater tank temperature", "decimal", True,
+            ["tank temp c", "bft temperature", "feedwater tank temp"],
+        ),
+        field(
+            "steam_generated_kg", "Steam generated", "decimal", True,
+            ["steam kg", "steam usage", "steam output"],
+        ),
+        field(
+            "recovered_condensate_kg", "Recovered condensate", "decimal", True,
+            ["condensate return kg", "condensate recovered"],
+        ),
+        field(
+            "flash_steam_recovered_kg", "Flash steam recovered", "decimal", True,
+            ["flash steam kg", "recovered flash steam"],
+        ),
+        field(
+            "briquette_used_kg", "Briquettes used", "decimal", True,
+            ["briquette kg", "biomass fuel kg", "fuel used kg"],
+        ),
+        field(
+            "briquette_gcv_kcal_per_kg", "Briquette GCV", "decimal", True,
+            ["gcv", "fuel gcv kcal kg", "calorific value"],
+        ),
+        field(
+            "boiler_efficiency_percent", "Boiler efficiency", "decimal", True,
+            ["boiler efficiency pct", "efficiency percent"],
+        ),
+    ],
 }
 
+# Automotive and mushroom cells share the same normalized analytical schema.
+# The deployment variant changes the human contract presented during mapping;
+# source keys remain stable so the processing and audit layers stay common.
+AUTOMOTIVE_LABELS = {
+    "projects": {
+        "project_number": "Project number",
+        "customer": "Customer",
+        "project_name": "Project name",
+        "po_number": "Purchase order number",
+        "category": "Category",
+        "quantity": "Quantity",
+        "factory_unit": "Factory unit",
+        "order_value": "Order value",
+        "po_received_date": "PO received date",
+        "start_date": "Project start date",
+        "customer_due_date": "Customer expected delivery date",
+        "commitment_date": "Factory commitment date",
+        "dispatch_date": "Dispatch date",
+        "priority": "Priority",
+        "status": "Project status",
+        "progress": "Overall completion percent",
+        "assigned_team": "Assigned team",
+    },
+    "project_stages": {
+        "project_number": "Project number",
+        "stage_code": "Stage code",
+        "stage_name": "Stage name",
+        "stage_status": "Stage status",
+        "progress": "Completion percent",
+        "assigned_to": "Assigned person",
+    },
+    "process": {
+        "date": "Process date",
+        "line": "Production line",
+        "process": "Manufacturing process",
+        "machine": "Machine",
+        "shift": "Shift",
+        "status": "Process state",
+        "input_quantity": "Input quantity",
+        "output_quantity": "Output quantity",
+        "rejected_quantity": "Rejected quantity",
+        "run_minutes": "Run minutes",
+        "cycle_time_minutes": "Cycle time",
+        "operator": "Operator",
+        "batch_id": "Batch ID",
+    },
+    "production": {
+        "date": "Production date",
+        "line": "Production line",
+        "machine": "Machine",
+        "sku": "Product / SKU",
+        "shift": "Shift",
+        "order_id": "Order ID",
+        "planned_quantity": "Planned quantity",
+        "actual_quantity": "Actual quantity",
+        "good_quantity": "Good quantity",
+        "rejected_quantity": "Rejected quantity",
+        "reworked_quantity": "Reworked quantity",
+        "batch_id": "Batch ID",
+    },
+    "downtime": {
+        "line": "Production line",
+        "machine": "Machine",
+        "shift": "Shift",
+        "reason": "Downtime reason",
+    },
+    "quality": {
+        "date": "Date",
+        "line": "Production line",
+        "machine": "Machine",
+        "sku": "Product / SKU",
+        "shift": "Shift",
+        "inspected_quantity": "Inspected quantity",
+        "rejected_quantity": "Rejected quantity",
+        "reworked_quantity": "Reworked quantity",
+        "defect_reason": "Defect reason",
+    },
+}
 
-def field_rules(dataset_type):
+AUTOMOTIVE_EXCLUDED_FIELDS = {
+    "process": {
+        "humidity_pct",
+        "co2_ppm",
+        "substrate_moisture_pct",
+        "water_litres",
+        "treatment",
+        "treatment_quantity",
+        "humidity_min_pct",
+        "humidity_max_pct",
+        "co2_max_ppm",
+    },
+    "production": {
+        "flush_number",
+        "substrate_dry_kg",
+        "growing_area_m2",
+        "water_litres",
+        "crop_age_days",
+    },
+}
+
+MUSHROOM_ALIAS_TERMS = (
+    "contamination",
+    "crop",
+    "compost",
+    "cultivation",
+    "farm",
+    "flush",
+    "grower",
+    "growing",
+    "harvest",
+    "humidity",
+    "irrigation",
+    "mushroom",
+    "room",
+    "spawn",
+    "substrate",
+)
+
+
+def templates_for_variant(variant="mushroom"):
+    if variant == "mushroom":
+        return TEMPLATES
+    if variant != "automotive":
+        raise ValueError(f"Unsupported processing variant: {variant!r}.")
+    return {
+        dataset_type: [
+            TemplateField(
+                item.key,
+                AUTOMOTIVE_LABELS.get(dataset_type, {}).get(item.key, item.display_name),
+                item.data_type,
+                item.required,
+                tuple(
+                    alias
+                    for alias in item.aliases
+                    if not any(term in alias.casefold() for term in MUSHROOM_ALIAS_TERMS)
+                ),
+            )
+            for item in fields
+            if item.key not in AUTOMOTIVE_EXCLUDED_FIELDS.get(dataset_type, set())
+        ]
+        for dataset_type, fields in TEMPLATES.items()
+    }
+
+
+def field_rules(dataset_type, variant="mushroom"):
     return [
         FieldRule(
             item.key, item.required, item.data_type, 0 if item.data_type == "decimal" else None
         )
-        for item in TEMPLATES[dataset_type]
+        for item in templates_for_variant(variant)[dataset_type]
     ]
 
 
-def serialize_fields(dataset_type):
+def serialize_fields(dataset_type, variant="mushroom"):
     return [
         {
             "key": item.key,
@@ -465,5 +649,5 @@ def serialize_fields(dataset_type):
             "required": item.required,
             "aliases": list(item.aliases),
         }
-        for item in TEMPLATES[dataset_type]
+        for item in templates_for_variant(variant)[dataset_type]
     ]

@@ -1,6 +1,7 @@
 import logging
 from collections.abc import Mapping
 
+from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -210,6 +211,7 @@ class FactoryViewSet(viewsets.ModelViewSet):
         identity = workspace_identity_for_request(self.request)
         configuration = {
             "currency": self.request.data.get("currency", "INR"),
+            "industry": settings.VULCAN_VARIANT_CONFIG["industry"],
             "factoryDetails": self.request.data.get("details", {}),
         }
         factory = serializer.save(

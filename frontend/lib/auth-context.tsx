@@ -36,7 +36,7 @@ function ProtectedApplication({ children }: { children: React.ReactNode }) {
         router.replace(`/?next=${encodeURIComponent(current)}`);
         return;
       }
-      setError("Ion could not verify your session. Please try again.");
+      setError("Vulcan could not verify your session. Please try again.");
     });
 
     return () => { active = false; };

@@ -92,8 +92,10 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         BACKEND_URL: http://backend:8000
+        VULCAN_VARIANT: mushroom
     environment:
       BACKEND_URL: http://backend:8000
+      VULCAN_VARIANT: mushroom
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:

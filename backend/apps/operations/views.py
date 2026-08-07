@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils import timezone
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
@@ -35,6 +36,17 @@ class UploadViewSet(viewsets.ModelViewSet):
             return [CanOperateUploads()]
         return [IsAuthenticated()]
 
+    @staticmethod
+    def require_async_uploads():
+        if not settings.VULCAN_VARIANT_CONFIG["features"]["asyncUploads"]:
+            raise serializers.ValidationError(
+                {"detail": "Asynchronous object uploads are not enabled for this deployment."}
+            )
+
+    def create(self, request, *args, **kwargs):
+        self.require_async_uploads()
+        return super().create(request, *args, **kwargs)
+
     def get_queryset(self):
         tenant = tenant_for_request(self.request)
         factory_ids = factories_for_request(self.request).values_list("id", flat=True)
@@ -57,6 +69,7 @@ class UploadViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"], url_path="presigned-url")
     def presigned_url(self, request, pk=None):
+        self.require_async_uploads()
         upload = self.get_object()
         if upload.status == UploadState.CREATED:
             upload.transition_to(UploadState.UPLOADING)
@@ -76,6 +89,7 @@ class UploadViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def complete(self, request, pk=None):
+        self.require_async_uploads()
         upload = self.get_object()
         if upload.status == UploadState.UPLOADING:
             upload.transition_to(UploadState.UPLOADED)
@@ -89,6 +103,7 @@ class UploadViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"], url_path="confirm-mapping")
     def confirm_mapping(self, request, pk=None):
+        self.require_async_uploads()
         upload = self.get_object()
         if upload.status != UploadState.MAPPING_REQUIRED:
             raise serializers.ValidationError("Upload is not awaiting a mapping.")
@@ -108,6 +123,7 @@ class UploadViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def validate(self, request, pk=None):
+        self.require_async_uploads()
         upload = self.get_object()
         if upload.status != UploadState.READY_FOR_VALIDATION:
             raise serializers.ValidationError("Upload is not ready for validation.")
@@ -117,6 +133,7 @@ class UploadViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
+        self.require_async_uploads()
         upload = self.get_object()
         if upload.status != UploadState.VALIDATION_REVIEW:
             raise serializers.ValidationError("Only reviewed uploads can be approved.")
@@ -127,6 +144,7 @@ class UploadViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
+        self.require_async_uploads()
         upload = self.get_object()
         upload.transition_to(UploadState.CANCELLED)
         record_audit_event(request, "upload.cancelled", upload)

@@ -21,8 +21,9 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { useFactory } from "@/lib/factory-context";
 import type { FactoryConfig, FactoryDetails, MasterItem } from "@/lib/factory-domain";
+import { useVariant } from "@/lib/variant";
 
-const sections = [
+const baseSections = [
   { id: "profile", label: "Company & farm", icon: Building2 },
   { id: "assets", label: "Cultivation flow", icon: Workflow },
   { id: "catalogue", label: "Mushrooms & materials", icon: Package },
@@ -30,7 +31,7 @@ const sections = [
   { id: "reasons", label: "Reason codes", icon: ClipboardCheck },
 ] as const;
 
-type Section = (typeof sections)[number]["id"];
+type Section = (typeof baseSections)[number]["id"];
 type BasicMasterCollection =
   | "lines"
   | "skus"
@@ -233,6 +234,7 @@ function MasterManager({
 
 function ProcessManager() {
   const { state, upsertMaster, removeMaster } = useFactory();
+  const mushroomMode = useVariant().features.mushroomAnalytics;
   const [editing, setEditing] = useState<MasterItem | null | "new">(null);
   const lines = activeFactoryItems(state.masters.lines, state.activeFactoryId);
   const processes = activeFactoryItems(state.masters.processes, state.activeFactoryId).sort(
@@ -312,7 +314,7 @@ function ProcessManager() {
     <section className="panel master-manager">
       <SettingsHeader
         title="Processes"
-        subtitle="Ordered cultivation stages used to draw and calculate the Farm Twin"
+        subtitle={`Ordered ${mushroomMode ? "cultivation stages" : "manufacturing processes"} used to draw and calculate the ${mushroomMode ? "Farm" : "Factory"} Twin`}
         action={
           <button className="button button-secondary" disabled={!lines.length} onClick={() => open()}>
             <Plus size={13} /> Add process
@@ -337,7 +339,7 @@ function ProcessManager() {
         })}
         {!processes.length && (
           <div className="empty-state">
-            Add a farm wing first, then describe each cultivation stage in flow order.
+            Add a {mushroomMode ? "farm wing" : "production line"} first, then describe each {mushroomMode ? "cultivation stage" : "manufacturing process"} in flow order.
           </div>
         )}
       </div>
@@ -359,7 +361,7 @@ function ProcessManager() {
               <input value={form.code} onChange={(event) => setForm({ ...form, code: event.target.value.toUpperCase() })} required />
             </label>
             <label>
-              Farm wing
+              {mushroomMode ? "Farm wing" : "Production line"}
               <select
                 value={form.parentId}
                 onChange={(event) => {
@@ -433,6 +435,7 @@ function ProcessManager() {
 
 function MachineManager() {
   const { state, upsertMaster, removeMaster } = useFactory();
+  const mushroomMode = useVariant().features.mushroomAnalytics;
   const [editing, setEditing] = useState<MasterItem | null | "new">(null);
   const lines = activeFactoryItems(state.masters.lines, state.activeFactoryId);
   const processes = activeFactoryItems(state.masters.processes, state.activeFactoryId);
@@ -494,7 +497,7 @@ function MachineManager() {
   return (
     <section className="panel master-manager">
       <SettingsHeader
-        title="Growing rooms & assets"
+        title={mushroomMode ? "Growing rooms & assets" : "Machines & assets"}
         subtitle="Line-owned assets associated with the process they perform"
         action={
           <button className="button button-secondary" disabled={!lines.length} onClick={() => open()}>
@@ -518,7 +521,7 @@ function MachineManager() {
             </button>
           );
         })}
-        {!machines.length && <div className="empty-state">No active rooms or farm assets yet.</div>}
+        {!machines.length && <div className="empty-state">No active {mushroomMode ? "rooms or farm" : "machines or production"} assets yet.</div>}
       </div>
       {editing && (
         <div className="nested-editor">
@@ -530,15 +533,15 @@ function MachineManager() {
               </button>
             </div>
             <label>
-              Room or asset name
+              {mushroomMode ? "Room or asset name" : "Machine or asset name"}
               <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
             </label>
             <label>
-              Room or asset code
+              {mushroomMode ? "Room or asset code" : "Machine or asset code"}
               <input value={form.code} onChange={(event) => setForm({ ...form, code: event.target.value.toUpperCase() })} required />
             </label>
             <label>
-              Farm wing
+              {mushroomMode ? "Farm wing" : "Production line"}
               <select
                 value={form.parentId}
                 onChange={(event) => {
@@ -610,20 +613,28 @@ function MachineManager() {
 
 function FactoryDialog({ onClose }: { onClose: () => void }) {
   const { createFactory } = useFactory();
+  const variant = useVariant();
+  const mushroom = variant.features.mushroomAnalytics;
+  const siteSingular = variant.terminology.siteSingular;
+  const variantDetails = mushroom ? defaultFactoryDetails : {
+    ...defaultFactoryDetails,
+    factoryType: "Automotive manufacturing plant",
+    productionUnit: "units",
+  };
   const [form, setForm] = useState<Omit<FactoryConfig, "id" | "companyId">>({
     name: "",
     code: "",
     location: "",
     timezone: "Asia/Kolkata",
     currency: "INR",
-    details: { ...defaultFactoryDetails },
+    details: { ...variantDetails },
   });
-  const details = { ...defaultFactoryDetails, ...form.details };
+  const details = { ...variantDetails, ...form.details };
 
   function updateDetail<Key extends keyof FactoryDetails>(key: Key, value: FactoryDetails[Key]) {
     setForm((current) => ({
       ...current,
-      details: { ...defaultFactoryDetails, ...current.details, [key]: value },
+      details: { ...variantDetails, ...current.details, [key]: value },
     }));
   }
 
@@ -639,8 +650,8 @@ function FactoryDialog({ onClose }: { onClose: () => void }) {
         <div className="modal-header">
           <div>
             <span className="modal-step">New operating location</span>
-            <h2>Create a mushroom farm</h2>
-            <p>Master data and crop records remain isolated by farm.</p>
+            <h2>Create a {siteSingular}</h2>
+            <p>Master data and operational records remain isolated by {siteSingular}.</p>
           </div>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Close">
             <X size={17} />
@@ -648,16 +659,16 @@ function FactoryDialog({ onClose }: { onClose: () => void }) {
         </div>
         <div className="modal-body profile-form">
           <label>
-            Farm name
+            {mushroom ? "Farm" : "Factory"} name
             <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Ahmedabad Plant 02" required />
           </label>
           <label>
-            Farm code
+            {mushroom ? "Farm" : "Factory"} code
             <input value={form.code} onChange={(event) => setForm({ ...form, code: event.target.value.toUpperCase() })} placeholder="AMD-02" required />
           </label>
           <label>
-            Farm type
-            <input value={details.factoryType ?? ""} onChange={(event) => updateDetail("factoryType", event.target.value)} placeholder="Button mushroom, oyster mushroom…" required />
+            {mushroom ? "Farm" : "Factory"} type
+            <input value={details.factoryType ?? ""} onChange={(event) => updateDetail("factoryType", event.target.value)} placeholder={mushroom ? "Button mushroom, oyster mushroom…" : "Assembly, machining, components…"} required />
           </label>
           <label>
             Facility area (m²)
@@ -668,7 +679,7 @@ function FactoryDialog({ onClose }: { onClose: () => void }) {
             <input value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} placeholder="Sanand, Gujarat" required />
           </label>
           <label>
-            Harvest unit
+            {mushroom ? "Harvest" : "Production"} unit
             <input value={details.productionUnit ?? ""} onChange={(event) => updateDetail("productionUnit", event.target.value)} placeholder="pieces, kg, tubes…" required />
           </label>
           <label>
@@ -710,7 +721,7 @@ function FactoryDialog({ onClose }: { onClose: () => void }) {
         </div>
         <div className="modal-footer">
           <button type="button" className="button button-secondary" onClick={onClose}>Cancel</button>
-          <button className="button button-primary">Create farm <ChevronRight size={13} /></button>
+          <button className="button button-primary">Create {siteSingular} <ChevronRight size={13} /></button>
         </div>
       </form>
     </div>
@@ -719,25 +730,32 @@ function FactoryDialog({ onClose }: { onClose: () => void }) {
 
 function ProfileSection() {
   const { state, updateCompany, updateFactory } = useFactory();
+  const variant = useVariant();
+  const mushroom = variant.features.mushroomAnalytics;
+  const variantDetails = mushroom ? defaultFactoryDetails : {
+    ...defaultFactoryDetails,
+    factoryType: "Automotive manufacturing plant",
+    productionUnit: "units",
+  };
   const active = state.factories.find((factory) => factory.id === state.activeFactoryId)!;
   const [company, setCompany] = useState(state.company);
   const [factory, setFactory] = useState<FactoryConfig>({
     ...active,
-    details: { ...defaultFactoryDetails, ...active.details },
+    details: { ...variantDetails, ...active.details },
   });
   const [saved, setSaved] = useState(false);
-  const details = { ...defaultFactoryDetails, ...factory.details };
+  const details = { ...variantDetails, ...factory.details };
 
   function updateDetail<Key extends keyof FactoryDetails>(key: Key, value: FactoryDetails[Key]) {
     setFactory((current) => ({
       ...current,
-      details: { ...defaultFactoryDetails, ...current.details, [key]: value },
+      details: { ...variantDetails, ...current.details, [key]: value },
     }));
   }
 
   async function save(event: FormEvent) {
     event.preventDefault();
-    await updateCompany(company);
+    await updateCompany({ name: company.name, industry: variant.industry });
     await updateFactory(factory.id, factory);
     setSaved(true);
     window.setTimeout(() => setSaved(false), 2500);
@@ -746,8 +764,8 @@ function ProfileSection() {
   return (
     <form className="panel factory-profile-card" onSubmit={save}>
       <SettingsHeader
-        title="Company and mushroom-farm profile"
-        subtitle="Identity, growing area, harvest capacity and operating units used across farm analysis"
+        title={`Company and ${variant.terminology.siteSingular} profile`}
+        subtitle={mushroom ? "Identity, growing area, harvest capacity and operating units used across farm analysis" : "Identity, facility area, production capacity and operating units used across factory analysis"}
         action={<span className="configuration-state">Reviewable</span>}
       />
       <div className="profile-form">
@@ -757,19 +775,19 @@ function ProfileSection() {
         </label>
         <label>
           Industry
-          <input value={company.industry} onChange={(event) => setCompany({ ...company, industry: event.target.value })} required />
+          <input value={variant.industry} readOnly aria-readonly="true" />
         </label>
         <label>
-          Farm name
+          {mushroom ? "Farm" : "Factory"} name
           <input value={factory.name} onChange={(event) => setFactory({ ...factory, name: event.target.value })} required />
         </label>
         <label>
-          Farm code
+          {mushroom ? "Farm" : "Factory"} code
           <input value={factory.code} onChange={(event) => setFactory({ ...factory, code: event.target.value.toUpperCase() })} required />
         </label>
         <label>
-          Farm type
-          <input value={details.factoryType ?? ""} onChange={(event) => updateDetail("factoryType", event.target.value)} placeholder="Button mushroom, oyster mushroom…" required />
+          {mushroom ? "Farm" : "Factory"} type
+          <input value={details.factoryType ?? ""} onChange={(event) => updateDetail("factoryType", event.target.value)} placeholder={mushroom ? "Button mushroom, oyster mushroom…" : "Assembly, machining, components…"} required />
         </label>
         <label>
           Commissioned year
@@ -803,7 +821,7 @@ function ProfileSection() {
           <input type="number" min="0" step="any" value={details.facilityAreaM2 ?? ""} onChange={(event) => updateDetail("facilityAreaM2", optionalNumber(event.target.value))} />
         </label>
         <label>
-          Default harvest unit
+          Default {mushroom ? "harvest" : "production"} unit
           <input value={details.productionUnit ?? ""} onChange={(event) => updateDetail("productionUnit", event.target.value)} placeholder="units, pieces, tubes…" required />
         </label>
         <label>
@@ -865,6 +883,18 @@ function ProfileSection() {
 }
 
 export function FactorySettings() {
+  const variant = useVariant();
+  const mushroom = variant.features.mushroomAnalytics;
+  const sections = baseSections.map((section) => ({
+    ...section,
+    label: !mushroom && section.id === "profile"
+      ? "Company & factory"
+      : !mushroom && section.id === "assets"
+        ? "Production flow"
+        : !mushroom && section.id === "catalogue"
+          ? "Products & materials"
+          : section.label,
+  }));
   const { state } = useFactory();
   const [section, setSection] = useState<Section>("profile");
   const [createOpen, setCreateOpen] = useState(false);
@@ -874,7 +904,7 @@ export function FactorySettings() {
       const params = new URLSearchParams(window.location.search);
       const requested = params.get("tab");
       if (requested === "processes") setSection("assets");
-      else if (requested && sections.some((item) => item.id === requested)) {
+      else if (requested && baseSections.some((item) => item.id === requested)) {
         setSection(requested as Section);
       }
       if (params.get("create") === "factory") setCreateOpen(true);
@@ -914,18 +944,18 @@ export function FactorySettings() {
     <>
       <header className="page-header">
         <div>
-          <p className="eyebrow">Mushroom farm configuration</p>
-          <h1>Define <span>how the crop flows.</span></h1>
-          <p className="page-subtitle">Farm context, cultivation stages, rooms, assets and harvest units—stored in Django for the selected farm.</p>
+          <p className="eyebrow">{mushroom ? "Mushroom farm" : "Automotive factory"} configuration</p>
+          <h1>Define <span>{mushroom ? "how the crop flows." : "how production flows."}</span></h1>
+          <p className="page-subtitle">{mushroom ? "Farm context, cultivation stages, rooms, assets and harvest units" : "Factory context, production processes, lines, machines and output units"}—stored in Django for the selected {variant.terminology.siteSingular}.</p>
         </div>
         <button className="button button-accent" onClick={() => setCreateOpen(true)}>
-          <Plus size={13} /> Create farm
+          <Plus size={13} /> Create {variant.terminology.siteSingular}
         </button>
       </header>
       <div className="setup-stat-grid">
-        <article className="panel"><span><Factory size={16} /></span><div><strong>{activeCount.lines}</strong><small>Farm wings</small></div></article>
+        <article className="panel"><span><Factory size={16} /></span><div><strong>{activeCount.lines}</strong><small>{mushroom ? "Farm wings" : "Production lines"}</small></div></article>
         <article className="panel"><span><Workflow size={16} /></span><div><strong>{activeCount.processes}</strong><small>Ordered processes</small></div></article>
-        <article className="panel"><span><Wrench size={16} /></span><div><strong>{activeCount.machines}</strong><small>Rooms & assets</small></div></article>
+        <article className="panel"><span><Wrench size={16} /></span><div><strong>{activeCount.machines}</strong><small>{mushroom ? "Rooms & assets" : "Machines & assets"}</small></div></article>
         <article className="panel"><span><Gauge size={16} /></span><div><strong>{activeCount.skus}</strong><small>Active SKUs</small></div></article>
       </div>
       <div className="settings-layout">
@@ -933,7 +963,7 @@ export function FactorySettings() {
           <div className="settings-completion">
             <div><span>Setup health</span><strong>{setupHealth}%</strong></div>
             <i><b style={{ width: `${setupHealth}%` }} /></i>
-            <p>{setupHealth === 100 ? "Cultivation flow is ready" : "Complete farm details and stage links"}</p>
+            <p>{setupHealth === 100 ? `${mushroom ? "Cultivation" : "Production"} flow is ready` : `Complete ${mushroom ? "farm" : "factory"} details and stage links`}</p>
           </div>
           <nav>
             {sections.map((item) => {
@@ -950,19 +980,19 @@ export function FactorySettings() {
           {section === "profile" && <ProfileSection key={state.activeFactoryId} />}
           {section === "assets" && (
             <>
-              <MasterManager collection="lines" title="Farm wings" subtitle="Independent cultivation flows and KPI groupings" />
+              <MasterManager collection="lines" title={mushroom ? "Farm wings" : "Production lines"} subtitle={`Independent ${mushroom ? "cultivation" : "production"} flows and KPI groupings`} />
               <ProcessManager />
               <MachineManager />
             </>
           )}
           {section === "catalogue" && (
             <>
-              <MasterManager collection="skus" title="Mushroom grades and SKUs" subtitle="Fresh grades and packed mushroom products" />
+              <MasterManager collection="skus" title={mushroom ? "Mushroom grades and SKUs" : "Products and SKUs"} subtitle={mushroom ? "Fresh grades and packed mushroom products" : "Finished products, variants and customer part numbers"} />
               <MasterManager collection="materials" title="Materials" subtitle="Consumed inventory and safety stock" />
               <MasterManager collection="suppliers" title="Suppliers" subtitle="Approved material sources" />
             </>
           )}
-          {section === "calendar" && <MasterManager collection="shifts" title="Observation rounds" subtitle="Farm calendar, crop checks and operating windows" />}
+          {section === "calendar" && <MasterManager collection="shifts" title={mushroom ? "Observation rounds" : "Production shifts"} subtitle={mushroom ? "Farm calendar, crop checks and operating windows" : "Factory calendar, shifts and operating windows"} />}
           {section === "reasons" && <MasterManager collection="reasonCodes" title="Reason codes" subtitle="Standard loss and exception classification" />}
         </div>
       </div>

@@ -30,7 +30,7 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from config.views import HealthView
+from config.views import HealthView, PlatformConfigView
 
 router = DefaultRouter()
 router.register("factories", FactoryViewSet, basename="factory")
@@ -40,6 +40,7 @@ router.register("alerts", AlertViewSet, basename="alert")
 
 urlpatterns = [
     path("health/", HealthView.as_view(), name="health"),
+    path("api/platform/config/", PlatformConfigView.as_view(), name="platform-config"),
     path("api/auth/csrf/", CsrfTokenView.as_view(), name="csrf-token"),
     path("api/auth/login/", SessionLoginView.as_view(), name="session-login"),
     path("api/auth/logout/", SessionLogoutView.as_view(), name="session-logout"),

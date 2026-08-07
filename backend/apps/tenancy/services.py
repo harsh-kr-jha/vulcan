@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import PermissionDenied
 
@@ -48,7 +49,7 @@ def workspace_identity_for_request(request, factory: Factory | None = None) -> W
 def get_workspace_identity() -> WorkspaceIdentity:
     """Return the seed identity used only by trusted management commands."""
     tenant, _ = Tenant.objects.get_or_create(
-        slug="vulcan-workspace", defaults={"name": "Musroom Workspace"}
+        slug="vulcan-workspace", defaults={"name": "Vulcan Workspace"}
     )
     # Company names are editable, so they cannot be used as identity keys.
     # Prefer the company already owning this workspace's factories; this keeps
@@ -64,12 +65,12 @@ def get_workspace_identity() -> WorkspaceIdentity:
     if company is None:
         company = Company.objects.create(
             tenant=tenant,
-            name="My mushroom company",
+            name="My company",
             legal_name="",
         )
     user, _ = get_user_model().objects.get_or_create(
         username="vulcan-workspace",
-        defaults={"first_name": "Farm", "last_name": "Team", "is_active": True},
+        defaults={"first_name": "Vulcan", "last_name": "Team", "is_active": True},
     )
     return WorkspaceIdentity(tenant=tenant, company=company, user=user)
 
@@ -78,11 +79,12 @@ def get_or_create_default_factory(identity: WorkspaceIdentity) -> Factory:
     factory = Factory.objects.filter(tenant=identity.tenant, is_active=True).first()
     if factory:
         return factory
+    mushroom_mode = settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]
     return Factory.objects.create(
         tenant=identity.tenant,
         company=identity.company,
-        name="My Mushroom Farm",
-        code="MUSHROOM-01",
+        name="My Mushroom Farm" if mushroom_mode else "My Automotive Factory",
+        code="MUSHROOM-01" if mushroom_mode else "AUTOMOTIVE-01",
         timezone="Asia/Kolkata",
-        configuration={"currency": "INR", "industry": "Mushroom cultivation"},
+        configuration={"currency": "INR", "industry": settings.VULCAN_VARIANT_CONFIG["industry"]},
     )

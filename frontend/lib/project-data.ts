@@ -79,17 +79,6 @@ export interface FactoryProject {
   };
 }
 
-export const defaultWorkflow = [
-  "Compost Preparation",
-  "Pasteurisation & Conditioning",
-  "Spawning",
-  "Spawn Run",
-  "Casing",
-  "Pinning",
-  "Cropping & Harvest",
-  "Packing & Cold Room",
-] as const;
-
 export function formatProjectDate(value: string | null, fallback = "—") {
   if (!value) return fallback;
   return new Date(`${value.slice(0, 10)}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });

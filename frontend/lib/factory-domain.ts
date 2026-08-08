@@ -18,7 +18,7 @@ export interface FactoryDetails {
   pressureUnit?: string;
   commissionedYear?: number;
 }
-export interface FactoryConfig { id: string; companyId: string; name: string; code: string; location: string; timezone: string; currency: string; details?: FactoryDetails }
+export interface FactoryConfig { id: string; companyId: string; name: string; code: string; location: string; timezone: string; currency: string; details?: FactoryDetails; recommendedRange?: { from: string; to: string } | null }
 export interface MasterItem { id: string; name: string; code: string; factoryId: string; kind?: keyof FactoryMasters; parentId?: string | null; metadata?: Record<string, unknown>; active: boolean }
 export interface FactoryMasters { lines: MasterItem[]; processes: MasterItem[]; machines: MasterItem[]; skus: MasterItem[]; materials: MasterItem[]; suppliers: MasterItem[]; shifts: MasterItem[]; reasonCodes: MasterItem[] }
 export interface FactoryTargets { oee: number; availability: number; performance: number; quality: number; planAttainment: number; rejectionRate: number; supplierScore: number; stockCoverDays: number; downtimeMinutes: number; downtimeUnit: "minutes" | "hours"; biologicalEfficiency: number; saleableYield: number; contaminationRate: number; environmentCompliance: number; waterProductivity: number }

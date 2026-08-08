@@ -5,6 +5,7 @@ from decimal import Decimal
 from uuid import uuid4
 
 from django.conf import settings
+from django.core.cache import cache
 
 from apps.operations.imports import serialize_upload
 from apps.operations.models import StandardRecord, Upload
@@ -132,6 +133,15 @@ CUSTOM_KPI_VARIABLES = {
 
 
 def workspace_snapshot(identity, factory, filters):
+    # Short-lived per-factory+filters cache to avoid recomputing heavy aggregates
+    version = cache.get(f"workspace:version:{factory.id}", 1)
+    from_val = str(filters.get("from", ""))
+    to_val = str(filters.get("to", ""))
+    key = f"workspace:v{version}:{factory.id}:{from_val}:{to_val}:{filters.get('line','all')}:{filters.get('machine','all')}:{filters.get('sku','all')}:{filters.get('shift','all')}"
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
+
     targets = {**DEFAULT_TARGETS, **factory.configuration.get("targets", {})}
     intelligence = build_intelligence(factory, targets, filters)
     masters = {
@@ -162,7 +172,7 @@ def workspace_snapshot(identity, factory, filters):
         }
         for item in factory.action_items.all()
     ]
-    return {
+    snapshot = {
         "state": {
             "company": {
                 "id": str(identity.company.id),
@@ -182,12 +192,30 @@ def workspace_snapshot(identity, factory, filters):
         },
         "intelligence": intelligence,
     }
+    # Cache the snapshot for a short period to smooth repeated UI loads.
+    ttl = getattr(settings, "WORKSPACE_CACHE_TTL", 60)
+    try:
+        cache.set(key, snapshot, ttl)
+    except Exception:
+        # Do not break the response if caching fails for any reason.
+        pass
+    return snapshot
 
 
 def build_intelligence(factory, targets, filters):
-    records = StandardRecord.objects.filter(factory=factory).select_related("upload")
     from_date = parse_date(filters.get("from"))
     to_date = parse_date(filters.get("to"))
+    # Narrow the queryset at the DB level using the provided date range to avoid
+    # fetching all records into Python when the client requested a sub-range.
+    records_qs = StandardRecord.objects.filter(factory=factory).select_related("upload")
+    if from_date:
+        records_qs = records_qs.filter(operational_date__gte=from_date)
+    if to_date:
+        records_qs = records_qs.filter(operational_date__lte=to_date)
+    # Only fetch the smallest set of fields necessary for aggregation.
+    # Keep the queryset as model instances; avoid deferring related fields
+    # that are traversed later (avoids FieldError with select_related).
+    records = records_qs
     scoped = []
     inventory_history = []
     process_history = []

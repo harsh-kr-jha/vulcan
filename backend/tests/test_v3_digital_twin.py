@@ -254,6 +254,13 @@ def test_seed_mypol_is_idempotent_and_imports_the_complete_fixture(api_client, m
 
     result = api_client.get(f"/api/workspace/?factory={factory.id}&from=2026-07-25&to=2026-07-31")
     assert result.status_code == 200
+    active_factory = next(
+        item for item in result.data["state"]["factories"] if item["id"] == str(factory.id)
+    )
+    assert active_factory["recommendedRange"] == {
+        "from": "2026-07-25",
+        "to": "2026-07-31",
+    }
     intelligence = result.data["intelligence"]
     twin = intelligence["digitalTwin"]
     twin_processes = [item for line in twin["lines"] for item in line["processes"]]

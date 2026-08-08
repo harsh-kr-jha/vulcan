@@ -3533,6 +3533,7 @@ a {
 
 .command-widget {
   min-height: 310px;
+  padding : 20px;
 }
 
 .command-panel-header {

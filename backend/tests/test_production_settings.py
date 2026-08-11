@@ -8,6 +8,8 @@ import pytest
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 REQUIRED_PRODUCTION_ENV = {
     "VULCAN_VARIANT": "mushroom",
+    "VULCAN_SINGLE_NODE": "false",
+    "VULCAN_ADMIN_ENABLED": "false",
     "DJANGO_DEBUG": "false",
     "DJANGO_SECRET_KEY": "K8x4qP2vN7mR5cT9zL3wS6hY1dF0gJ8bQ4eU7iO2aC5nM9pV6rX3kH9s",
     "DJANGO_ALLOWED_HOSTS": "app.example.com",
@@ -94,6 +96,32 @@ def test_complete_explicit_production_settings_import_successfully(variant):
     assert result.returncode == 0, result.stderr
 
 
+@pytest.mark.parametrize("variant", ["automotive", "mushroom"])
+def test_explicit_single_node_showcase_accepts_only_sqlite_without_redis(variant):
+    result = import_production_settings(
+        remove=("REDIS_URL", "DJANGO_CACHE_URL"),
+        override={
+            "VULCAN_VARIANT": variant,
+            "VULCAN_SINGLE_NODE": "true",
+            "DJANGO_DATABASE_URL": "sqlite:////tmp/vulcan-showcase.sqlite3",
+        },
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+def test_single_node_showcase_rejects_a_postgres_database():
+    result = import_production_settings(
+        override={
+            "VULCAN_VARIANT": "automotive",
+            "VULCAN_SINGLE_NODE": "true",
+        }
+    )
+
+    assert result.returncode != 0
+    assert "requires a SQLite DJANGO_DATABASE_URL" in result.stderr
+
+
 def test_production_url_configuration_does_not_expose_django_admin():
     environment = os.environ.copy()
     for key in REQUIRED_PRODUCTION_ENV:
@@ -112,6 +140,42 @@ def test_production_url_configuration_does_not_expose_django_admin():
                 "from django.urls import resolve, Resolver404; "
                 "\ntry:\n resolve('/admin/login/')\nexcept Resolver404:\n raise SystemExit(0)"
                 "\nraise SystemExit(1)"
+            ),
+        ],
+        cwd=REPOSITORY_ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("variant", ["automotive", "mushroom"])
+def test_explicit_variant_deployment_can_expose_the_standard_admin_route(variant):
+    environment = os.environ.copy()
+    for key in REQUIRED_PRODUCTION_ENV:
+        environment.pop(key, None)
+    environment.update(REQUIRED_PRODUCTION_ENV)
+    environment.update(
+        {
+            "VULCAN_ADMIN_ENABLED": "true",
+            "VULCAN_VARIANT": variant,
+        }
+    )
+    environment["DJANGO_SETTINGS_MODULE"] = "config.settings"
+    environment["PYTHONPATH"] = os.pathsep.join(
+        [str(REPOSITORY_ROOT / "backend"), str(REPOSITORY_ROOT)]
+    )
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import django; django.setup(); "
+                "from django.urls import resolve; "
+                "assert resolve('/admin/login/').url_name == 'login'"
             ),
         ],
         cwd=REPOSITORY_ROOT,

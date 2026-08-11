@@ -43,6 +43,8 @@ def redis_location(location: str) -> bool:
 
 
 DEBUG = environment_boolean("DJANGO_DEBUG", default=False)
+SINGLE_NODE = environment_boolean("VULCAN_SINGLE_NODE", default=False)
+ADMIN_ENABLED = environment_boolean("VULCAN_ADMIN_ENABLED", default=False)
 variant_value = os.getenv("VULCAN_VARIANT", "mushroom" if DEBUG else "").strip().lower()
 if not variant_value:
     raise ImproperlyConfigured("VULCAN_VARIANT is required when DJANGO_DEBUG is false.")
@@ -135,9 +137,21 @@ DATABASES = {
         conn_max_age=60,
     )
 }
-if not DEBUG and DATABASES["default"]["ENGINE"] != "django.db.backends.postgresql":
+if (
+    not DEBUG
+    and not SINGLE_NODE
+    and DATABASES["default"]["ENGINE"] != "django.db.backends.postgresql"
+):
     raise ImproperlyConfigured(
         "DJANGO_DATABASE_URL must use PostgreSQL when DJANGO_DEBUG is false."
+    )
+if (
+    not DEBUG
+    and SINGLE_NODE
+    and DATABASES["default"]["ENGINE"] != "django.db.backends.sqlite3"
+):
+    raise ImproperlyConfigured(
+        "VULCAN_SINGLE_NODE requires a SQLite DJANGO_DATABASE_URL."
     )
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -163,6 +177,7 @@ TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
+STATIC_ROOT = os.getenv("DJANGO_STATIC_ROOT", str(BASE_DIR / "staticfiles"))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 num_proxies = int(os.getenv("DJANGO_NUM_PROXIES", "0"))
@@ -233,15 +248,19 @@ CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0" if DEBUG else "")
 cache_url = os.getenv("DJANGO_CACHE_URL", "")
-if not DEBUG and (not REDIS_URL or not cache_url):
+if not DEBUG and not SINGLE_NODE and (not REDIS_URL or not cache_url):
     raise ImproperlyConfigured(
         "REDIS_URL and DJANGO_CACHE_URL are required when DJANGO_DEBUG is false."
     )
-if not DEBUG and any(not redis_location(url) for url in (REDIS_URL, cache_url)):
+if (
+    not DEBUG
+    and not SINGLE_NODE
+    and any(not redis_location(url) for url in (REDIS_URL, cache_url))
+):
     raise ImproperlyConfigured(
         "REDIS_URL and DJANGO_CACHE_URL must use redis://, rediss://, or unix://."
     )
-if cache_url or not DEBUG:
+if cache_url or (not DEBUG and not SINGLE_NODE):
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",

@@ -10,7 +10,8 @@ RUN pip install --no-cache-dir uv==0.11.7
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
-RUN addgroup --system app && adduser --system --ingroup app app
+RUN addgroup --system --gid 10001 app && \
+    adduser --system --uid 10001 --ingroup app app
 
 COPY --chown=app:app backend ./backend
 COPY --chown=app:app processing ./processing

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the Vulcan automotive SQLite backup every night
+
+[Timer]
+OnCalendar=*-*-* 02:30:00 UTC
+Persistent=true
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target

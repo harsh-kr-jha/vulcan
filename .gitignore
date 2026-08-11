@@ -24,6 +24,7 @@ db.sqlite3
 MUSHROOM-DATA/
 media/
 staticfiles/
+deploy/gce-micro/.env
 
 # Editors and operating systems
 .DS_Store

@@ -9,7 +9,10 @@ from django.core.management.base import CommandError
 pytestmark = pytest.mark.django_db
 
 
-def test_seed_mushroom_without_credentials_does_not_create_a_login(monkeypatch, capsys):
+def test_seed_mushroom_without_credentials_does_not_create_a_login(
+    monkeypatch, capsys, settings
+):
+    settings.DEBUG = True
     monkeypatch.delenv("MUSHROOM_DEMO_EMAIL", raising=False)
     monkeypatch.delenv("MUSHROOM_DEMO_PASSWORD", raising=False)
 

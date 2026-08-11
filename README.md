@@ -72,6 +72,11 @@ See the [architecture guide](docs/architecture.md) for data boundaries, the
 [local development guide](docs/local-development.md) for supported workflows, and the
 [GCP deployment guide](docs/deployment-gcp.md) for the production topology and runbook.
 
+For inexpensive, isolated single-node variant demonstrations on Google Compute Engine, use the
+explicitly gated [GCE showcase profile](deploy/gce-micro/README.md). Each target preserves its own
+variant-scoped SQLite database across container deployments and uploads consistent backups to
+private Cloud Storage, but it is not the customer-production topology.
+
 ## Production boundary
 
 Email/password session authentication, distributed login throttling, CSRF protection,

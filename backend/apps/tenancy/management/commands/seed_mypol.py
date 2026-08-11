@@ -366,11 +366,24 @@ class Command(BaseCommand):
                 "vulcan-demo when present."
             ),
         )
+        parser.add_argument(
+            "--confirm-production-showcase",
+            action="store_true",
+            help=(
+                "Allow the verified synthetic showcase pack in the explicitly configured "
+                "single-node showcase deployment. Never use this for customer data."
+            ),
+        )
 
     def handle(self, *args, **options):
-        if not settings.DEBUG:
+        production_showcase = (
+            settings.SINGLE_NODE
+            and options.get("confirm_production_showcase")
+        )
+        if not settings.DEBUG and not production_showcase:
             raise CommandError(
-                "seed_mypol is a local synthetic-data command and requires DJANGO_DEBUG=true."
+                "seed_mypol requires DJANGO_DEBUG=true, or an explicit single-node showcase "
+                "deployment plus --confirm-production-showcase."
             )
         if settings.VULCAN_VARIANT != "automotive":
             raise CommandError("seed_mypol can run only with VULCAN_VARIANT=automotive.")

@@ -1,10 +1,25 @@
 import pytest
+from apps.tenancy.admin import (
+    EmailIdentityInline,
+    MembershipInline,
+    VulcanUserAdmin,
+    configure_vulcan_user_admin,
+)
 from apps.tenancy.models import EmailIdentity
+from django.contrib import admin
 from django.contrib.auth import authenticate, get_user_model
 from django.core.management import call_command, get_commands
 from django.core.management.base import CommandError
 
 pytestmark = pytest.mark.django_db
+
+
+def test_vulcan_user_admin_combines_login_identity_and_membership():
+    configure_vulcan_user_admin()
+
+    registered = admin.site._registry[get_user_model()]
+    assert isinstance(registered, VulcanUserAdmin)
+    assert registered.inlines == (EmailIdentityInline, MembershipInline)
 
 
 def test_project_overrides_stock_createsuperuser_with_email_identity_command():

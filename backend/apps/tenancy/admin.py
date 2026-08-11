@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin
 
 from .models import (
     Company,
@@ -10,6 +12,47 @@ from .models import (
     ProductionLine,
     Tenant,
 )
+
+
+class EmailIdentityInline(admin.StackedInline):
+    model = EmailIdentity
+    extra = 1
+    max_num = 1
+    can_delete = False
+    fields = ("email",)
+
+
+class MembershipInline(admin.StackedInline):
+    model = Membership
+    extra = 1
+    fields = ("tenant", "role", "all_factories", "factories", "is_active")
+    autocomplete_fields = ("tenant", "factories")
+
+
+user_model = get_user_model()
+
+
+class VulcanUserAdmin(UserAdmin):
+    inlines = (EmailIdentityInline, MembershipInline)
+
+    def save_formset(self, request, form, formset, change):
+        super().save_formset(request, form, formset, change)
+        if formset.model is EmailIdentity:
+            identity = EmailIdentity.objects.filter(user=form.instance).first()
+            if identity and form.instance.email != identity.email:
+                form.instance.email = identity.email
+                form.instance.save(update_fields=["email"])
+
+
+def configure_vulcan_user_admin():
+    """Replace the stock user screen after Django admin autodiscovery has completed."""
+
+    registered_admin = admin.site._registry.get(user_model)
+    if isinstance(registered_admin, VulcanUserAdmin):
+        return
+    if registered_admin is not None:
+        admin.site.unregister(user_model)
+    admin.site.register(user_model, VulcanUserAdmin)
 
 
 @admin.register(EmailIdentity)

@@ -91,8 +91,14 @@ urlpatterns = [
     path("api/", include(router.urls)),
 ]
 
-# The stock admin login is not protected by the API's distributed sign-in
-# throttles. Keep it available for loopback-bound local development only and
-# omit the route entirely from every fail-closed production configuration.
-if settings.DEBUG:
+# Production admin remains absent by default. Any explicitly configured deployment
+# can opt in so its operator can manage that variant's users and data.
+if settings.DEBUG or settings.ADMIN_ENABLED:
+    from apps.tenancy.admin import configure_vulcan_user_admin
+
+    configure_vulcan_user_admin()
+    if settings.ADMIN_ENABLED and not settings.DEBUG:
+        admin.site.site_header = f"Vulcan {settings.VULCAN_VARIANT.title()} Administration"
+        admin.site.site_title = "Vulcan Admin"
+        admin.site.index_title = f"{settings.VULCAN_VARIANT.title()} deployment"
     urlpatterns.insert(0, path("admin/", admin.site.urls))

@@ -26,7 +26,25 @@ from apps.tenancy.services import get_workspace_identity
 class Command(BaseCommand):
     help = "Create or refresh the Musroom cultivation-intelligence showcase factory."
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--confirm-production-showcase",
+            action="store_true",
+            help=(
+                "Allow synthetic mushroom data in an explicitly configured single-node "
+                "showcase. Never use this for customer data."
+            ),
+        )
+
     def handle(self, *args, **options):
+        production_showcase = settings.SINGLE_NODE and options.get(
+            "confirm_production_showcase"
+        )
+        if not settings.DEBUG and not production_showcase:
+            raise CommandError(
+                "seed_mushroom requires DJANGO_DEBUG=true, or an explicit single-node "
+                "showcase plus --confirm-production-showcase."
+            )
         if settings.VULCAN_VARIANT != "mushroom":
             raise CommandError("seed_mushroom can run only in the mushroom variant.")
         demo_credentials = self.demo_credentials()

@@ -15,7 +15,7 @@ dependencies = [
   "gunicorn>=23,<24",
   "openpyxl>=3.1,<4",
   "psycopg[binary]>=3.2,<4",
-  "redis>=6.2,<7",
+  "redis>=6.2,<9",
 ]
 
 [dependency-groups]

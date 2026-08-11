@@ -1,3 +1,5 @@
+from rest_framework.throttling import BaseThrottle
+
 from apps.audit.models import AuditEvent
 from apps.common.permissions import tenant_for_request
 
@@ -6,10 +8,9 @@ def record_audit_event(
     request, event_type: str, entity, metadata: dict | None = None
 ) -> AuditEvent:
     tenant = tenant_for_request(request)
-    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    ip_address = (
-        forwarded_for.split(",")[0].strip() if forwarded_for else request.META.get("REMOTE_ADDR")
-    )
+    # BaseThrottle.get_ident honours REST_FRAMEWORK.NUM_PROXIES. Its secure
+    # default is zero, so forwarded headers are ignored until explicitly trusted.
+    ip_address = BaseThrottle().get_ident(request)
     return AuditEvent.objects.create(
         tenant=tenant,
         actor=request.user,

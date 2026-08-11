@@ -47,6 +47,11 @@
       "sha256": "a619bc3e4006e002d517168e7ccb2e61547431fcb423bd9a22de0ba23ed5a40d"
     },
     {
+      "file": "utilities.csv",
+      "rows": 183,
+      "sha256": "9fafcf07e51e21aaad3080c47a534f7bb726f14fe982bf8177bd546bdd668296"
+    },
+    {
       "file": "factory_master_reference.csv",
       "rows": 68,
       "sha256": "b74975392334069042a963a7a686b4a5e029edf51cc3dab9a215c6cc4a8655c4"
@@ -54,7 +59,7 @@
   ],
   "expected_results_file": "expected_results.json",
   "totals": {
-    "importable_rows": 5519,
+    "importable_rows": 5702,
     "reference_rows": 68
   },
   "expected_signals_for_2026-07-25_to_2026-07-31": [

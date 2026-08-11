@@ -35,13 +35,33 @@ Exact row counts and SHA-256 checksums are recorded in [manifest.json](manifest.
 | `inventory.csv` | Inventory | Daily material snapshots, consumption and receipt risk |
 | `orders.csv` | Orders | Completed history plus current open/held production orders |
 | `suppliers.csv` | Supplier deliveries | Promised versus actual delivery, quantity, acceptance and terms |
+| `utilities.csv` | Steam & boiler utilities | Feedwater temperatures, condensate/flash recovery, steam generation, briquette use, GCV and efficiency |
 | `factory_master_reference.csv` | Setup reference only | Lines, machines, SKUs, materials, suppliers, shifts and reason codes |
 | `expected_results.json` | Verification reference | Exact final-week totals, OEE components, rankings and risks |
 
-The six operational files use Vulcan’s standard field keys, so deterministic mapping should
+The seven operational files use Vulcan’s standard field keys, so deterministic mapping should
 suggest every required field automatically.
 
 ## Import into Vulcan
+
+For a complete, repeatable local automotive showcase, the preferred path is:
+
+```bash
+export DJANGO_DEBUG=true
+export VULCAN_VARIANT=automotive
+export CELERY_TASK_ALWAYS_EAGER=true
+export DJANGO_DATABASE_URL='sqlite:///backend/automotive.sqlite3'
+.venv/bin/python backend/manage.py migrate
+.venv/bin/python backend/manage.py seed_mypol
+```
+
+`seed_mypol` verifies this manifest and every source checksum before changing the database. It
+creates the MYPOL company and Mysuru factory, configures the source masters plus a detailed
+four-line/23-process Factory Twin, and imports all seven operational files as completed, traceable
+showcase uploads. It is local-only and refuses to run unless `VULCAN_VARIANT=automotive` and
+`DJANGO_DEBUG=true`.
+
+To exercise the browser's manual mapping and approval workflow instead:
 
 1. Open **Factory setup** and create:
    - Factory name: `MYPOL Mysuru Plant`
@@ -60,6 +80,7 @@ suggest every required field automatically.
    4. `inventory.csv`
    5. `orders.csv`
    6. `suppliers.csv`
+   7. `utilities.csv`
 5. Accept the suggested mappings, review validation, and approve accepted rows.
 6. On the command centre, keep the date filter at `2026-07-25` to `2026-07-31` for the designed
    stress scenario. Use a wider date range to test trends and volume.
@@ -74,6 +95,7 @@ suggest every required field automatically.
 - `Butyl Rubber IIR Grade A` and `Valve Stem Assembly TR78A` have low cover and delayed receipts.
 - `MYP-TUBE-1100-20` has an elevated rejection pattern led by `Valve base leak`.
 - Production is below plan and OEE is below the default target in the final week.
+- Feedwater heat recovery rises while specific briquette use falls in the final fortnight.
 
 These deliberately correlated events let you test whether Vulcan links production loss, order
 risk, material risk, quality loss, alerts, recommendations, and operational answers coherently.

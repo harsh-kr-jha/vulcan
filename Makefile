@@ -18,4 +18,4 @@ migrate:
 	.venv/bin/python backend/manage.py migrate
 
 seed:
-	.venv/bin/python backend/manage.py seed_mypol
+	.venv/bin/python backend/manage.py seed_mushroom

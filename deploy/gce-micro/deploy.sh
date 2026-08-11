@@ -45,6 +45,7 @@ printf '%s' "$access_token" | docker login -u oauth2accesstoken --password-stdin
 
 previous_image_tag="$(sed -n 's/^IMAGE_TAG=//p' .env)"
 sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${new_image_tag}/" .env
+export IMAGE_TAG="$new_image_tag"
 
 rollback_tag() {
   sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${previous_image_tag}/" .env

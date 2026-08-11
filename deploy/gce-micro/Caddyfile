@@ -10,6 +10,10 @@
 		file_server
 	}
 
+	handle_path /api/backend/* {
+		reverse_proxy backend:8000
+	}
+
 	handle /admin/* {
 		reverse_proxy backend:8000
 	}

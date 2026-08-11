@@ -1,5 +1,6 @@
 import hashlib
 from collections import defaultdict
+from contextlib import suppress
 from datetime import date, timedelta
 from decimal import Decimal
 from uuid import uuid4
@@ -137,7 +138,10 @@ def workspace_snapshot(identity, factory, filters):
     version = cache.get(f"workspace:version:{factory.id}", 1)
     from_val = str(filters.get("from", ""))
     to_val = str(filters.get("to", ""))
-    key = f"workspace:v{version}:{factory.id}:{from_val}:{to_val}:{filters.get('line','all')}:{filters.get('machine','all')}:{filters.get('sku','all')}:{filters.get('shift','all')}"
+    dimensions = ":".join(
+        str(filters.get(name, "all")) for name in ("line", "machine", "sku", "shift")
+    )
+    key = f"workspace:v{version}:{factory.id}:{from_val}:{to_val}:{dimensions}"
     cached = cache.get(key)
     if cached is not None:
         return cached
@@ -194,11 +198,8 @@ def workspace_snapshot(identity, factory, filters):
     }
     # Cache the snapshot for a short period to smooth repeated UI loads.
     ttl = getattr(settings, "WORKSPACE_CACHE_TTL", 60)
-    try:
+    with suppress(Exception):
         cache.set(key, snapshot, ttl)
-    except Exception:
-        # Do not break the response if caching fails for any reason.
-        pass
     return snapshot
 
 

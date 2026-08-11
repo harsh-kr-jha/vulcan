@@ -10,6 +10,7 @@ from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
+from apps.analytics.cache import invalidate_workspace
 from apps.operations.imports import record_date
 from apps.operations.models import StandardRecord, Upload
 from apps.tenancy.models import (
@@ -328,6 +329,7 @@ class Command(BaseCommand):
         self.seed_crop_cycles(identity, factory, today)
         if demo_credentials:
             self.provision_demo_login(identity, *demo_credentials)
+        invalidate_workspace(factory.id)
         self.stdout.write(
             self.style.SUCCESS(
                 f"Musroom ready: {len(processes)} crop stages and "

@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.alerts.models import ActionItem
+from apps.analytics.cache import invalidate_workspace
 from apps.analytics.workspace import (
     DEFAULT_TARGETS,
     answer_question,
@@ -82,6 +83,7 @@ class WorkspaceConfigurationView(APIView):
             configuration["alertStatuses"] = statuses
         factory.configuration = configuration
         factory.save(update_fields=["configuration", "updated_at"])
+        invalidate_workspace(factory.id)
         return Response(workspace_snapshot(identity, factory, filter_values(request, factory)))
 
 
@@ -99,6 +101,7 @@ class WorkspaceActionView(APIView):
             owner=request.data.get("owner", "Factory team"),
             due_date=date.today() + timedelta(days=1),
         )
+        invalidate_workspace(factory.id)
         return Response({"id": str(item.id)}, status=201)
 
     def patch(self, request, action_id):
@@ -112,6 +115,7 @@ class WorkspaceActionView(APIView):
         )
         item.status = "done" if item.status == "open" else "open"
         item.save(update_fields=["status", "updated_at"])
+        invalidate_workspace(factory.id)
         return Response({"id": str(item.id), "status": item.status})
 
 

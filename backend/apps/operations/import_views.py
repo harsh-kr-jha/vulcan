@@ -3,7 +3,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from django.conf import settings
-from django.core.cache import cache
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models.deletion import ProtectedError
 from django.http import HttpResponse
@@ -16,6 +15,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.analytics.cache import invalidate_workspace
 from apps.common.permissions import (
     CanApproveUploads,
     CanOperateUploads,
@@ -275,15 +275,7 @@ class ImportCommitView(APIView):
             result = import_valid_rows(upload, request.user)
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=400)
-        # Bump workspace cache version for the affected factory so cached
-        # snapshots are invalidated and clients will see fresh intelligence.
-        try:
-            version_key = f"workspace:version:{upload.factory_id}"
-            current = cache.get(version_key) or 1
-            cache.set(version_key, int(current) + 1)
-        except Exception:
-            # Don't block the commit if cache backend fails
-            pass
+        invalidate_workspace(upload.factory_id)
         return Response(result)
 
 

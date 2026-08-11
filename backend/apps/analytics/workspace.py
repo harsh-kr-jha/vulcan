@@ -206,17 +206,10 @@ def workspace_snapshot(identity, factory, filters):
 def build_intelligence(factory, targets, filters):
     from_date = parse_date(filters.get("from"))
     to_date = parse_date(filters.get("to"))
-    # Narrow the queryset at the DB level using the provided date range to avoid
-    # fetching all records into Python when the client requested a sub-range.
-    records_qs = StandardRecord.objects.filter(factory=factory).select_related("upload")
-    if from_date:
-        records_qs = records_qs.filter(operational_date__gte=from_date)
-    if to_date:
-        records_qs = records_qs.filter(operational_date__lte=to_date)
-    # Only fetch the smallest set of fields necessary for aggregation.
-    # Keep the queryset as model instances; avoid deferring related fields
-    # that are traversed later (avoids FieldError with select_related).
-    records = records_qs
+    # Some datasets describe state at or beyond the selected period (for example,
+    # inventory history, project stages, and orders due after the range). Apply
+    # their date semantics below instead of dropping them in one global DB filter.
+    records = StandardRecord.objects.filter(factory=factory).select_related("upload")
     scoped = []
     inventory_history = []
     process_history = []

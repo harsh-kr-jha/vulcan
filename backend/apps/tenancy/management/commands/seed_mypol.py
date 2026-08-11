@@ -14,6 +14,7 @@ from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
+from apps.analytics.cache import invalidate_workspace
 from apps.operations.imports import normalize_values, record_date
 from apps.operations.models import MappingProfile, StandardRecord, Upload, UploadState
 from apps.tenancy.models import (
@@ -420,6 +421,8 @@ class Command(BaseCommand):
                 uploader,
                 manifest,
             )
+
+        invalidate_workspace(factory.id)
 
         self.stdout.write(
             self.style.SUCCESS(

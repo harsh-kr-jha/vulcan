@@ -18,6 +18,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import BaseThrottle
 from rest_framework.views import APIView
 
+from apps.analytics.cache import invalidate_workspace
 from apps.audit.services import record_audit_event
 from apps.common.permissions import (
     CanCreateFactory,
@@ -28,6 +29,7 @@ from apps.common.permissions import (
 )
 from apps.tenancy.models import (
     EmailIdentity,
+    Factory,
     FactoryMaster,
     Membership,
     normalize_login_email,
@@ -221,6 +223,9 @@ class FactoryViewSet(viewsets.ModelViewSet):
         )
         if identity.membership and not identity.membership.all_factories:
             identity.membership.factories.add(factory)
+        factory_ids = Factory.objects.filter(tenant=factory.tenant).values_list("id", flat=True)
+        for factory_id in factory_ids:
+            invalidate_workspace(factory_id)
 
 
 class FactoryMasterViewSet(viewsets.ModelViewSet):
@@ -257,10 +262,17 @@ class FactoryMasterViewSet(viewsets.ModelViewSet):
         return {**super().get_serializer_context(), "factory": self.get_factory()}
 
     def perform_create(self, serializer):
-        serializer.save(tenant=tenant_for_request(self.request), factory=self.get_factory())
+        factory = self.get_factory()
+        serializer.save(tenant=tenant_for_request(self.request), factory=factory)
+        invalidate_workspace(factory.id)
+
+    def perform_update(self, serializer):
+        item = serializer.save()
+        invalidate_workspace(item.factory_id)
 
     def destroy(self, request, *args, **kwargs):
         item = self.get_object()
         item.is_active = False
         item.save(update_fields=["is_active", "updated_at"])
+        invalidate_workspace(item.factory_id)
         return Response(status=status.HTTP_204_NO_CONTENT)

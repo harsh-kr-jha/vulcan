@@ -255,7 +255,20 @@ class ImportDeleteView(APIView):
     permission_classes = [CanOperateUploads]
 
     def delete(self, request, upload_id):
-        upload = get_upload(request, upload_id)
+        upload = (
+            Upload.objects.select_related("factory", "tenant")
+            .filter(
+                id=upload_id,
+                tenant=tenant_for_request(request),
+                factory_id__in=factories_for_request(request).values("id"),
+            )
+            .first()
+        )
+        # DELETE is idempotent. A retry after a successful request must not turn
+        # a completed user action into a misleading 404 error.
+        if upload is None:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        factory_id = upload.factory_id
         try:
             upload.delete()
         except ProtectedError:
@@ -263,6 +276,7 @@ class ImportDeleteView(APIView):
                 {"detail": "This source is used by a later import and cannot be deleted."},
                 status=status.HTTP_409_CONFLICT,
             )
+        invalidate_workspace(factory_id)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

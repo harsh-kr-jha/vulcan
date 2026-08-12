@@ -195,7 +195,13 @@ def build_workspace_snapshot(identity, factory, filters, targets=None):
     }
     for item in factory.master_records.select_related("parent").order_by("kind", "name"):
         masters[item.kind].append(FactoryMasterSerializer(item).data)
-    uploads = [serialize_upload(item) for item in Upload.objects.filter(factory=factory)[:100]]
+    # Draft inspection, mapping and validation rows are implementation details of
+    # the open dialog. A source becomes part of factory history only after the
+    # operator explicitly imports its valid rows.
+    uploads = [
+        serialize_upload(item)
+        for item in Upload.objects.filter(factory=factory, status="COMPLETED")[:100]
+    ]
     actions = [
         {
             "id": str(item.id),

@@ -34,7 +34,7 @@ testpaths = ["backend/tests", "processing/tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-exclude = ["backend/apps/*/migrations"]
+exclude = ["backend/apps/*/migrations", "test-data"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "DJ"]

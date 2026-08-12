@@ -19,6 +19,8 @@ from apps.operations.import_views import (
 from apps.operations.views import UploadViewSet
 from apps.tenancy.views import (
     CsrfTokenView,
+    FactoryMasterImportApplyView,
+    FactoryMasterImportInspectView,
     FactoryMasterViewSet,
     FactoryViewSet,
     MeView,
@@ -61,6 +63,16 @@ urlpatterns = [
     ),
     path("api/workspace/ask/", WorkspaceQuestionView.as_view(), name="workspace-question"),
     path("api/imports/inspect/", ImportInspectView.as_view(), name="import-inspect"),
+    path(
+        "api/factory-masters/import/inspect/",
+        FactoryMasterImportInspectView.as_view(),
+        name="factory-master-import-inspect",
+    ),
+    path(
+        "api/factory-masters/import/apply/",
+        FactoryMasterImportApplyView.as_view(),
+        name="factory-master-import-apply",
+    ),
     path(
         "api/imports/template/<str:dataset_type>/",
         ImportTemplateView.as_view(),

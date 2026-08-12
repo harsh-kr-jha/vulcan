@@ -2312,6 +2312,135 @@ a {
   min-width: 0;
 }
 
+.page-header-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.master-import-dialog { max-width: 900px; }
+.master-import-note {
+  align-items: center;
+  background: #f5f8f5;
+  border: 1px solid #dce6de;
+  border-radius: 11px;
+  color: var(--green);
+  display: flex;
+  gap: 11px;
+  margin-top: 14px;
+  padding: 12px 14px;
+}
+.master-import-note div { min-width: 0; }
+.master-import-note strong,
+.master-import-note span { display: block; }
+.master-import-note strong { color: var(--ink); font-size: 11px; }
+.master-import-note span {
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+.master-import-explainer {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.6;
+  margin: 12px 2px 0;
+}
+.master-import-review { display: grid; gap: 14px; }
+.master-import-summary {
+  display: grid;
+  gap: 9px;
+  grid-template-columns: repeat(4, 1fr);
+}
+.master-import-summary article {
+  background: #f8faf7;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 12px;
+}
+.master-import-summary strong,
+.master-import-summary span { display: block; }
+.master-import-summary strong { font-size: 18px; }
+.master-import-summary span {
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 700;
+  margin-top: 3px;
+  text-transform: uppercase;
+}
+.master-kind-breakdown { display: flex; flex-wrap: wrap; gap: 6px; }
+.master-kind-breakdown span {
+  background: #f2f5f1;
+  border-radius: 99px;
+  color: var(--muted);
+  font-size: 9px;
+  padding: 5px 8px;
+}
+.master-kind-breakdown b { color: var(--ink); }
+.master-import-readiness {
+  align-items: center;
+  border: 1px solid;
+  border-radius: 11px;
+  display: flex;
+  gap: 10px;
+  padding: 11px 13px;
+}
+.master-import-readiness.ready { background: #f2faf5; border-color: #c9e5d3; color: var(--green); }
+.master-import-readiness.blocked { background: #fff5f2; border-color: #efc6bd; color: #a43d2f; }
+.master-import-readiness strong,
+.master-import-readiness span { display: block; }
+.master-import-readiness strong { font-size: 11px; }
+.master-import-readiness span { color: var(--muted); font-size: 9px; margin-top: 2px; }
+.master-import-issues {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  max-height: 170px;
+  overflow: auto;
+}
+.master-import-issues > div {
+  align-items: flex-start;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 9px;
+  padding: 8px 10px;
+}
+.master-import-issues > div:first-child { border-top: 0; }
+.master-import-issues b {
+  border-radius: 99px;
+  flex: 0 0 auto;
+  font-size: 7px;
+  padding: 3px 6px;
+  text-transform: uppercase;
+}
+.master-import-issues .error b { background: #fee9e5; color: #a43d2f; }
+.master-import-issues .warning b { background: #fff4d4; color: #8a6514; }
+.master-import-issues span { color: var(--muted); font-size: 9px; line-height: 1.45; }
+.master-import-issues > small,
+.master-import-table-note { color: var(--muted); display: block; font-size: 8px; padding: 7px 10px; }
+.master-import-table { max-height: 275px; }
+.master-action {
+  border-radius: 99px;
+  display: inline-block;
+  font-size: 7px;
+  font-weight: 750;
+  padding: 4px 6px;
+  text-transform: uppercase;
+}
+.master-action-create { background: var(--green-soft); color: var(--green); }
+.master-action-update { background: #eaf0fb; color: #365f9c; }
+.master-action-reactivate { background: #fff4d4; color: #8a6514; }
+.master-action-unchanged { background: #eef0ee; color: var(--muted); }
+.master-import-complete p { color: var(--ink); font-size: 11px; margin: 10px 0 0; }
+.master-import-complete small { color: var(--muted); font-size: 9px; margin-top: 7px; }
+
+@media (max-width: 680px) {
+  .page-header-actions { justify-content: flex-start; width: 100%; }
+  .master-import-summary { grid-template-columns: 1fr 1fr; }
+}
+
 .settings-section-header {
   align-items: center;
   border-bottom: 1px solid var(--line);

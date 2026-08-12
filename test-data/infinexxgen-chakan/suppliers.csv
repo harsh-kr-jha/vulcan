@@ -1,0 +1,71 @@
+supplier,material,purchase_order,order_date,promised_date,actual_delivery_date,ordered_quantity,received_quantity,accepted_quantity,terms_met
+Approved Plate Supplier A,SA516 Gr.70 Plate 20 mm,SYN-MAT-01-01,2026-06-15,2026-06-22,2026-06-23,9200,9182.73,8906.48,Yes
+Approved Plate Supplier A,SA516 Gr.70 Plate 20 mm,SYN-MAT-01-02,2026-06-27,2026-07-04,2026-07-04,9200,9076.65,9042.04,Yes
+Approved Plate Supplier A,SA516 Gr.70 Plate 20 mm,SYN-MAT-01-03,2026-07-09,2026-07-16,2026-07-16,9200,9164.18,9074.64,Yes
+Approved Plate Supplier A,SA516 Gr.70 Plate 20 mm,SYN-MAT-01-04,2026-07-21,2026-07-28,2026-07-28,9200,9192.57,8891.37,Yes
+Approved Plate Supplier A,SA516 Gr.70 Plate 20 mm,SYN-MAT-01-05,2026-08-02,2026-08-09,2026-08-09,9200,9145.76,8914.77,Yes
+Approved Stainless Supplier B,SS304L Sheet 6 mm,SYN-MAT-02-01,2026-06-16,2026-06-24,2026-06-24,7920,7874.23,7673.91,Yes
+Approved Stainless Supplier B,SS304L Sheet 6 mm,SYN-MAT-02-02,2026-06-28,2026-07-06,2026-07-06,7920,7899.25,7625.2,Yes
+Approved Stainless Supplier B,SS304L Sheet 6 mm,SYN-MAT-02-03,2026-07-10,2026-07-18,2026-07-18,7920,7770.7,7578.42,Yes
+Approved Stainless Supplier B,SS304L Sheet 6 mm,SYN-MAT-02-04,2026-07-22,2026-07-30,2026-07-30,7920,7839.06,7678.49,Yes
+Approved Stainless Supplier B,SS304L Sheet 6 mm,SYN-MAT-02-05,2026-08-03,2026-08-11,2026-08-11,7920,7772.26,7700.43,Yes
+Approved Pipe Supplier C,SS316L Process Pipe,SYN-MAT-03-01,2026-06-17,2026-06-26,2026-06-26,1032,1026.94,1009.82,Yes
+Approved Pipe Supplier C,SS316L Process Pipe,SYN-MAT-03-02,2026-06-29,2026-07-08,2026-07-08,1032,1016.86,1015.42,Yes
+Approved Pipe Supplier C,SS316L Process Pipe,SYN-MAT-03-03,2026-07-11,2026-07-20,2026-07-20,1032,1019.54,1010.91,Yes
+Approved Pipe Supplier C,SS316L Process Pipe,SYN-MAT-03-04,2026-07-23,2026-08-01,2026-08-06,1032,993.65,971.51,No
+Approved Pipe Supplier C,SS316L Process Pipe,SYN-MAT-03-05,2026-08-04,2026-08-13,2026-08-18,1032,977.13,965.69,No
+Approved Tube Supplier D,SS316L Heat Exchanger Tube,SYN-MAT-04-01,2026-06-18,2026-06-28,2026-06-28,2340,2333.41,2255.41,Yes
+Approved Tube Supplier D,SS316L Heat Exchanger Tube,SYN-MAT-04-02,2026-06-30,2026-07-10,2026-07-10,2340,2323.0,2246.24,Yes
+Approved Tube Supplier D,SS316L Heat Exchanger Tube,SYN-MAT-04-03,2026-07-12,2026-07-22,2026-07-22,2340,2303.16,2231.79,Yes
+Approved Tube Supplier D,SS316L Heat Exchanger Tube,SYN-MAT-04-04,2026-07-24,2026-08-03,2026-08-03,2340,2313.45,2313.0,Yes
+Approved Tube Supplier D,SS316L Heat Exchanger Tube,SYN-MAT-04-05,2026-08-05,2026-08-15,2026-08-16,2340,2310.37,2291.62,Yes
+Approved Forging Supplier E,Forged Carbon Steel Flanges,SYN-MAT-05-01,2026-06-19,2026-06-26,2026-06-26,260,259.98,252.62,Yes
+Approved Forging Supplier E,Forged Carbon Steel Flanges,SYN-MAT-05-02,2026-07-01,2026-07-08,2026-07-08,260,258.2,256.38,Yes
+Approved Forging Supplier E,Forged Carbon Steel Flanges,SYN-MAT-05-03,2026-07-13,2026-07-20,2026-07-20,260,259.98,256.72,Yes
+Approved Forging Supplier E,Forged Carbon Steel Flanges,SYN-MAT-05-04,2026-07-25,2026-08-01,2026-08-05,260,247.69,242.91,No
+Approved Forging Supplier E,Forged Carbon Steel Flanges,SYN-MAT-05-05,2026-08-06,2026-08-13,2026-08-17,260,252.23,247.1,No
+Approved Forging Supplier E,Forged SS316L Flanges,SYN-MAT-06-01,2026-06-15,2026-06-23,2026-06-23,198,197.71,195.46,Yes
+Approved Forging Supplier E,Forged SS316L Flanges,SYN-MAT-06-02,2026-06-27,2026-07-05,2026-07-05,198,197.04,194.0,Yes
+Approved Forging Supplier E,Forged SS316L Flanges,SYN-MAT-06-03,2026-07-09,2026-07-17,2026-07-18,198,197.96,196.86,Yes
+Approved Forging Supplier E,Forged SS316L Flanges,SYN-MAT-06-04,2026-07-21,2026-07-29,2026-08-03,198,191.18,185.95,No
+Approved Forging Supplier E,Forged SS316L Flanges,SYN-MAT-06-05,2026-08-02,2026-08-10,2026-08-15,198,191.41,187.75,No
+Approved Structural Supplier F,MS Structural Sections,SYN-MAT-07-01,2026-06-16,2026-06-25,2026-06-25,6480,6389.29,6223.63,Yes
+Approved Structural Supplier F,MS Structural Sections,SYN-MAT-07-02,2026-06-28,2026-07-07,2026-07-08,6480,6471.06,6325.61,Yes
+Approved Structural Supplier F,MS Structural Sections,SYN-MAT-07-03,2026-07-10,2026-07-19,2026-07-19,6480,6405.32,6384.95,Yes
+Approved Structural Supplier F,MS Structural Sections,SYN-MAT-07-04,2026-07-22,2026-07-31,2026-07-31,6480,6450.29,6293.6,Yes
+Approved Structural Supplier F,MS Structural Sections,SYN-MAT-07-05,2026-08-03,2026-08-12,2026-08-12,6480,6470.91,6362.72,Yes
+Approved Industrial Gas Supplier G,High-Purity Argon,SYN-MAT-08-01,2026-06-17,2026-06-27,2026-06-28,45.5,45.5,45.47,Yes
+Approved Industrial Gas Supplier G,High-Purity Argon,SYN-MAT-08-02,2026-06-29,2026-07-09,2026-07-09,45.5,45.07,44.59,Yes
+Approved Industrial Gas Supplier G,High-Purity Argon,SYN-MAT-08-03,2026-07-11,2026-07-21,2026-07-21,45.5,45.32,44.91,Yes
+Approved Industrial Gas Supplier G,High-Purity Argon,SYN-MAT-08-04,2026-07-23,2026-08-02,2026-08-06,45.5,42.21,41.54,No
+Approved Industrial Gas Supplier G,High-Purity Argon,SYN-MAT-08-05,2026-08-04,2026-08-14,2026-08-18,45.5,41.89,41.35,No
+Approved Welding Supplier H,ER316L Welding Wire,SYN-MAT-09-01,2026-06-18,2026-06-25,2026-06-25,210,206.47,204.39,Yes
+Approved Welding Supplier H,ER316L Welding Wire,SYN-MAT-09-02,2026-06-30,2026-07-07,2026-07-07,210,209.71,208.43,Yes
+Approved Welding Supplier H,ER316L Welding Wire,SYN-MAT-09-03,2026-07-12,2026-07-19,2026-07-19,210,206.33,206.13,Yes
+Approved Welding Supplier H,ER316L Welding Wire,SYN-MAT-09-04,2026-07-24,2026-07-31,2026-07-31,210,206.59,199.45,Yes
+Approved Welding Supplier H,ER316L Welding Wire,SYN-MAT-09-05,2026-08-05,2026-08-12,2026-08-12,210,209.92,208.01,Yes
+Approved Welding Supplier H,E7018 Welding Electrodes,SYN-MAT-10-01,2026-06-19,2026-06-27,2026-06-27,374,368.03,364.35,Yes
+Approved Welding Supplier H,E7018 Welding Electrodes,SYN-MAT-10-02,2026-07-01,2026-07-09,2026-07-09,374,372.76,360.74,Yes
+Approved Welding Supplier H,E7018 Welding Electrodes,SYN-MAT-10-03,2026-07-13,2026-07-21,2026-07-21,374,367.54,355.26,Yes
+Approved Welding Supplier H,E7018 Welding Electrodes,SYN-MAT-10-04,2026-07-25,2026-08-02,2026-08-02,374,369.53,361.51,Yes
+Approved Welding Supplier H,E7018 Welding Electrodes,SYN-MAT-10-05,2026-08-06,2026-08-14,2026-08-14,374,370.48,358.86,Yes
+Approved Sealing Supplier I,Hydro-Test Gasket Set,SYN-MAT-11-01,2026-06-15,2026-06-24,2026-06-24,84,83.46,81.39,Yes
+Approved Sealing Supplier I,Hydro-Test Gasket Set,SYN-MAT-11-02,2026-06-27,2026-07-06,2026-07-06,84,83.35,82.25,Yes
+Approved Sealing Supplier I,Hydro-Test Gasket Set,SYN-MAT-11-03,2026-07-09,2026-07-18,2026-07-18,84,82.34,81.53,Yes
+Approved Sealing Supplier I,Hydro-Test Gasket Set,SYN-MAT-11-04,2026-07-21,2026-07-30,2026-07-30,84,82.66,81.23,Yes
+Approved Sealing Supplier I,Hydro-Test Gasket Set,SYN-MAT-11-05,2026-08-02,2026-08-11,2026-08-12,84,82.78,81.81,Yes
+Approved Valve Supplier J,SS316L Process Valves,SYN-MAT-12-01,2026-06-16,2026-06-26,2026-06-26,156,153.79,152.05,Yes
+Approved Valve Supplier J,SS316L Process Valves,SYN-MAT-12-02,2026-06-28,2026-07-08,2026-07-08,156,153.08,150.61,Yes
+Approved Valve Supplier J,SS316L Process Valves,SYN-MAT-12-03,2026-07-10,2026-07-20,2026-07-20,156,153.38,152.98,Yes
+Approved Valve Supplier J,SS316L Process Valves,SYN-MAT-12-04,2026-07-22,2026-08-01,2026-08-02,156,154.18,149.2,Yes
+Approved Valve Supplier J,SS316L Process Valves,SYN-MAT-12-05,2026-08-03,2026-08-13,2026-08-13,156,155.31,153.94,Yes
+Approved Chemical Supplier K,Pickling & Passivation Chemical,SYN-MAT-13-01,2026-06-17,2026-06-24,2026-06-24,380,376.42,373.85,Yes
+Approved Chemical Supplier K,Pickling & Passivation Chemical,SYN-MAT-13-02,2026-06-29,2026-07-06,2026-07-06,380,377.43,377.39,Yes
+Approved Chemical Supplier K,Pickling & Passivation Chemical,SYN-MAT-13-03,2026-07-11,2026-07-18,2026-07-19,380,379.8,370.07,Yes
+Approved Chemical Supplier K,Pickling & Passivation Chemical,SYN-MAT-13-04,2026-07-23,2026-07-30,2026-07-30,380,376.02,369.69,Yes
+Approved Chemical Supplier K,Pickling & Passivation Chemical,SYN-MAT-13-05,2026-08-04,2026-08-11,2026-08-11,380,375.67,371.53,Yes
+Approved Packaging Supplier L,Export Packing Timber & Barrier Film,SYN-MAT-14-01,2026-06-18,2026-06-26,2026-06-26,55,54.44,52.91,Yes
+Approved Packaging Supplier L,Export Packing Timber & Barrier Film,SYN-MAT-14-02,2026-06-30,2026-07-08,2026-07-09,55,54.48,54.2,Yes
+Approved Packaging Supplier L,Export Packing Timber & Barrier Film,SYN-MAT-14-03,2026-07-12,2026-07-20,2026-07-20,55,54.24,54.16,Yes
+Approved Packaging Supplier L,Export Packing Timber & Barrier Film,SYN-MAT-14-04,2026-07-24,2026-08-01,2026-08-01,55,54.47,53.04,Yes
+Approved Packaging Supplier L,Export Packing Timber & Barrier Film,SYN-MAT-14-05,2026-08-05,2026-08-13,2026-08-13,55,54.61,53.17,Yes

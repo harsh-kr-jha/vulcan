@@ -203,6 +203,8 @@ def test_import_is_inspected_validated_and_calculated_in_django(api_client):
     assert inspection.status_code == 201
     upload_id = inspection.data["upload"]["id"]
     assert inspection.data["mapping"]["ignored"] == ""
+    after_inspection = api_client.get(f"/api/workspace/?factory={factory_id}")
+    assert after_inspection.data["state"]["uploads"] == []
     preview = api_client.get(f"/api/imports/{upload_id}/preview/")
     assert preview.status_code == 200
     assert preview.data["headers"][0] == "date"
@@ -217,11 +219,15 @@ def test_import_is_inspected_validated_and_calculated_in_django(api_client):
     assert validation.status_code == 200
     assert validation.data["canImport"] is True
     assert validation.data["upload"]["acceptedRows"] == 1
+    after_validation = api_client.get(f"/api/workspace/?factory={factory_id}")
+    assert after_validation.data["state"]["uploads"] == []
 
     committed = api_client.post(f"/api/imports/{upload_id}/commit/", {}, format="json")
     assert committed.status_code == 200
     assert committed.data["status"] == "COMPLETED"
     assert committed.data["omittedFields"] == ["ignored"]
+    after_commit = api_client.get(f"/api/workspace/?factory={factory_id}")
+    assert [item["id"] for item in after_commit.data["state"]["uploads"]] == [upload_id]
 
     configured = api_client.patch(
         f"/api/workspace/configuration/?factory={factory_id}",
@@ -352,10 +358,52 @@ def test_completed_source_can_be_reopened_for_editing_and_deleted(api_client):
     assert edit.data["mapping"]["minutes"] == "minutes"
     assert edit.data["samples"][0]["minutes"] == "75"
 
+    # Warm the workspace cache to reproduce the former stale-table failure.
+    before_delete = api_client.get(f"/api/workspace/?factory={factory_id}")
+    assert [item["id"] for item in before_delete.data["state"]["uploads"]] == [upload_id]
+
     deleted = api_client.delete(f"/api/imports/{upload_id}/delete/")
     assert deleted.status_code == 204
     assert not Upload.objects.filter(id=upload_id).exists()
     assert not StandardRecord.objects.filter(upload_id=upload_id).exists()
+    after_delete = api_client.get(f"/api/workspace/?factory={factory_id}")
+    assert after_delete.data["state"]["uploads"] == []
+
+    retried = api_client.delete(f"/api/imports/{upload_id}/delete/")
+    assert retried.status_code == 204
+
+
+@pytest.mark.django_db
+def test_do_not_import_never_adds_source_to_upload_history(api_client):
+    factory_id = api_client.get("/api/workspace/").data["state"]["activeFactoryId"]
+    inspection = api_client.post(
+        "/api/imports/inspect/",
+        {
+            "factory": factory_id,
+            "datasetType": "downtime",
+            "file": SimpleUploadedFile(
+                "declined.csv",
+                b"date,line,machine,shift,reason,minutes\n"
+                b"2026-07-31,Line 1,Mixer 1,Shift A,Failure,75\n",
+                content_type="text/csv",
+            ),
+        },
+        format="multipart",
+    )
+    upload_id = inspection.data["upload"]["id"]
+    validation = api_client.post(
+        f"/api/imports/{upload_id}/validate/",
+        {"mapping": inspection.data["mapping"]},
+        format="json",
+    )
+    assert validation.data["canImport"] is True
+
+    cancelled = api_client.post(f"/api/imports/{upload_id}/cancel/", {}, format="json")
+    assert cancelled.status_code == 200
+    assert cancelled.data["status"] == "CANCELLED"
+    workspace = api_client.get(f"/api/workspace/?factory={factory_id}")
+    assert workspace.data["state"]["uploads"] == []
+    assert StandardRecord.objects.filter(upload_id=upload_id).count() == 0
 
 
 @pytest.mark.django_db

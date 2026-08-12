@@ -21,6 +21,25 @@ export interface FactoryDetails {
 export interface FactoryConfig { id: string; companyId: string; name: string; code: string; location: string; timezone: string; currency: string; details?: FactoryDetails; recommendedRange?: { from: string; to: string } | null }
 export interface MasterItem { id: string; name: string; code: string; factoryId: string; kind?: keyof FactoryMasters; parentId?: string | null; metadata?: Record<string, unknown>; active: boolean }
 export interface FactoryMasters { lines: MasterItem[]; processes: MasterItem[]; machines: MasterItem[]; skus: MasterItem[]; materials: MasterItem[]; suppliers: MasterItem[]; shifts: MasterItem[]; reasonCodes: MasterItem[] }
+export type FactoryMasterImportAction = "create" | "update" | "reactivate" | "unchanged";
+export interface FactoryMasterImportIssue { row: number; field: string; severity: "error" | "warning"; message: string }
+export interface FactoryMasterImportRow { sourceRow: number; entityType: string; kind: keyof FactoryMasters; code: string; name: string; parentCode: string; action: FactoryMasterImportAction }
+export interface FactoryMasterImportInspection {
+  filename: string;
+  checksum: string;
+  factory: { id: string; name: string; code: string };
+  headers: string[];
+  totalRows: number;
+  importableRows: number;
+  contextRows: { sourceRow: number; entityType: "company" | "factory"; code: string; name: string }[];
+  counts: Partial<Record<keyof FactoryMasters, number>>;
+  actions: Record<FactoryMasterImportAction, number>;
+  rows: FactoryMasterImportRow[];
+  issues: FactoryMasterImportIssue[];
+  canApply: boolean;
+  applied?: Record<FactoryMasterImportAction, number>;
+  appliedTotal?: number;
+}
 export interface FactoryTargets { oee: number; availability: number; performance: number; quality: number; planAttainment: number; rejectionRate: number; supplierScore: number; stockCoverDays: number; downtimeMinutes: number; downtimeUnit: "minutes" | "hours"; biologicalEfficiency: number; saleableYield: number; contaminationRate: number; environmentCompliance: number; waterProductivity: number }
 export interface ActionItem { id: string; alertId: string; title: string; owner: string; dueDate: string; status: "open" | "done"; createdAt: string }
 export interface UploadDataset { id: string; factoryId: string; filename: string; datasetType: DatasetType; source: DataSource; importedAt: string; status: string; acceptedRows: number; warningRows: number; rejectedRows: number; dataQualityScore: number; omittedFields: string[] }

@@ -1,0 +1,90 @@
+{
+  "currency": "INR",
+  "industry": "Industrial equipment fabrication",
+  "subIndustry": "process-equipment-piping-and-modular-skids",
+  "factoryDetails": {
+    "factoryType": "Project-based process equipment, piping and modular skid fabrication",
+    "facilityAreaM2": 2800,
+    "ratedCapacityPerDay": 32,
+    "productionUnit": "work packages",
+    "operatingHoursPerDay": 16,
+    "shiftsPerDay": 2,
+    "powerCapacityKva": 500,
+    "energyUnit": "kWh",
+    "weightUnit": "kg",
+    "temperatureUnit": "°C",
+    "pressureUnit": "bar",
+    "commissionedYear": 2024
+  },
+  "targets": {
+    "oee": 72,
+    "availability": 88,
+    "performance": 86,
+    "quality": 97,
+    "planAttainment": 90,
+    "rejectionRate": 3,
+    "supplierScore": 82,
+    "stockCoverDays": 5,
+    "downtimeMinutes": 55,
+    "downtimeUnit": "minutes"
+  },
+  "customKpis": [
+    {
+      "id": "ixg-first-pass-output",
+      "name": "First-pass output",
+      "variableA": "production.good",
+      "operation": "divide",
+      "variableB": "production.actual",
+      "scale": 100,
+      "decimals": 1,
+      "unit": "%",
+      "pinnedToHome": true
+    },
+    {
+      "id": "ixg-schedule-attainment",
+      "name": "Schedule attainment",
+      "variableA": "production.actual",
+      "operation": "divide",
+      "variableB": "production.planned",
+      "scale": 100,
+      "decimals": 1,
+      "unit": "%",
+      "pinnedToHome": true
+    },
+    {
+      "id": "ixg-downtime-intensity",
+      "name": "Downtime per work package",
+      "variableA": "downtime.minutes",
+      "operation": "divide",
+      "variableB": "production.actual",
+      "scale": 1,
+      "decimals": 2,
+      "unit": "min/pkg",
+      "pinnedToHome": true
+    },
+    {
+      "id": "ixg-rework-share",
+      "name": "Rework share",
+      "variableA": "quality.reworked",
+      "operation": "divide",
+      "variableB": "quality.inspected",
+      "scale": 100,
+      "decimals": 1,
+      "unit": "%",
+      "pinnedToHome": false
+    }
+  ],
+  "showcase": {
+    "synthetic": true,
+    "source": "test-data/infinexxgen-chakan",
+    "period": {
+      "from": "2026-06-15",
+      "to": "2026-08-12"
+    },
+    "recommendedRange": {
+      "from": "2026-08-06",
+      "to": "2026-08-12"
+    },
+    "disclaimer": "Test-only operational data. It does not describe actual InfinexxGen customers, projects, assets, suppliers, capacity, finances or performance."
+  }
+}

@@ -1,4 +1,4 @@
-import type { DashboardFilters, ImportInspection, ImportPreview, ImportValidation, WorkspacePayload } from "./factory-domain";
+import type { DashboardFilters, FactoryMasterImportInspection, ImportInspection, ImportPreview, ImportValidation, WorkspacePayload } from "./factory-domain";
 
 const API_ROOT = "/api/backend/api";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -171,6 +171,8 @@ export const api = {
   createMaster: (factory: string, data: object) => request(`/factory-masters/?factory=${factory}`, { method: "POST", body: JSON.stringify({ ...data, factory }) }),
   updateMaster: (factory: string, id: string, data: object) => request(`/factory-masters/${id}/?factory=${factory}`, { method: "PATCH", body: JSON.stringify(data) }),
   removeMaster: (factory: string, id: string) => request(`/factory-masters/${id}/?factory=${factory}`, { method: "DELETE" }),
+  inspectFactoryMasters: (factory: string, file: File) => { const body = new FormData(); body.set("factory", factory); body.set("file", file); return request<FactoryMasterImportInspection>("/factory-masters/import/inspect/", { method: "POST", body }); },
+  applyFactoryMasters: (factory: string, file: File, expectedChecksum: string) => { const body = new FormData(); body.set("factory", factory); body.set("file", file); body.set("expectedChecksum", expectedChecksum); return request<FactoryMasterImportInspection>("/factory-masters/import/apply/", { method: "POST", body }); },
   inspectImport: async (factory: string, datasetType: string, file: File, process?: string) => { const body = new FormData(); body.set("factory", factory); body.set("datasetType", datasetType); body.set("file", file); if (process) body.set("process", process); return request<ImportInspection>("/imports/inspect/", { method: "POST", body }); },
   validateImport: (id: string, mapping: Record<string, string>) => request<ImportValidation>(`/imports/${id}/validate/`, { method: "POST", body: JSON.stringify({ mapping }) }),
   previewImport: (id: string) => request<ImportPreview>(`/imports/${id}/preview/`),

@@ -5,22 +5,27 @@ import {
   Building2,
   CalendarClock,
   Check,
+  CheckCircle2,
   ChevronRight,
+  CircleAlert,
   ClipboardCheck,
   Factory,
+  FileSpreadsheet,
   Gauge,
   MapPin,
   Package,
   Plus,
   Trash2,
+  UploadCloud,
   Workflow,
   Wrench,
   X,
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { api } from "@/lib/api-client";
 import { useFactory } from "@/lib/factory-context";
-import type { FactoryConfig, FactoryDetails, MasterItem } from "@/lib/factory-domain";
+import type { FactoryConfig, FactoryDetails, FactoryMasterImportInspection, MasterItem } from "@/lib/factory-domain";
 import { useVariant } from "@/lib/variant";
 
 const baseSections = [
@@ -611,6 +616,205 @@ function MachineManager() {
   );
 }
 
+const masterKindLabels: Record<string, string> = {
+  lines: "Lines",
+  processes: "Processes",
+  machines: "Machines",
+  skus: "SKUs",
+  materials: "Materials",
+  suppliers: "Suppliers",
+  shifts: "Shifts",
+  reasonCodes: "Reason codes",
+};
+
+function FactoryMasterImportDialog({
+  factoryId,
+  factoryName,
+  onClose,
+}: {
+  factoryId: string;
+  factoryName: string;
+  onClose: () => void;
+}) {
+  const { refresh } = useFactory();
+  const [file, setFile] = useState<File | null>(null);
+  const [inspection, setInspection] = useState<FactoryMasterImportInspection | null>(null);
+  const [result, setResult] = useState<FactoryMasterImportInspection | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function inspect() {
+    if (!file) return;
+    setBusy(true);
+    setError("");
+    try {
+      setInspection(await api.inspectFactoryMasters(factoryId, file));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The CSV could not be inspected.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function apply() {
+    if (!file || !inspection?.canApply) return;
+    setBusy(true);
+    setError("");
+    try {
+      const applied = await api.applyFactoryMasters(factoryId, file, inspection.checksum);
+      setResult(applied);
+      await refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The factory masters could not be applied.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const issues = inspection?.issues ?? [];
+  const errors = issues.filter((item) => item.severity === "error");
+  const warnings = issues.filter((item) => item.severity === "warning");
+
+  return (
+    <div className="modal-backdrop">
+      <div className="upload-modal master-import-dialog">
+        <div className="modal-header">
+          <div>
+            <span className="modal-step">Factory setup · controlled CSV import</span>
+            <h2>{result ? "Factory masters applied" : inspection ? "Review master changes" : "Import factory masters"}</h2>
+            <p>
+              {result
+                ? `${result.appliedTotal ?? 0} master rows were safely applied to ${factoryName}.`
+                : `Validate and populate the selected factory, ${factoryName}. Existing codes are updated; omitted masters are left untouched.`}
+            </p>
+          </div>
+          <button type="button" className="icon-button" onClick={onClose} aria-label="Close master import">
+            <X size={17} />
+          </button>
+        </div>
+
+        {error && (
+          <div className="wizard-error" role="alert">
+            <CircleAlert size={16} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {!inspection && !result && (
+          <div className="modal-body">
+            <label className={`drop-zone${file ? " drop-zone-selected" : ""}`}>
+              <span className="drop-zone-icon"><UploadCloud size={25} /></span>
+              <strong>{file?.name ?? "Choose factory_master_reference.csv"}</strong>
+              <span>{file ? `${(file.size / 1024).toFixed(1)} KB · ready to inspect` : "Drop the factory master CSV here or click to browse"}</span>
+              <small>CSV · UTF-8 · up to 2 MB · maximum 2,000 data rows</small>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(event) => {
+                  setFile(event.target.files?.[0] ?? null);
+                  setError("");
+                }}
+              />
+            </label>
+            <div className="master-import-note">
+              <FileSpreadsheet size={17} />
+              <div>
+                <strong>Expected columns</strong>
+                <span>entity_type, code, name, parent_code, uom, metadata_json, notes</span>
+              </div>
+            </div>
+            <p className="master-import-explainer">
+              The company and factory rows provide context only. Lines are created first, followed by processes, machines, products, materials, suppliers, shifts and reason codes. No operational records are changed.
+            </p>
+          </div>
+        )}
+
+        {inspection && !result && (
+          <div className="modal-body master-import-review">
+            <div className="master-import-summary">
+              {(["create", "update", "reactivate", "unchanged"] as const).map((action) => (
+                <article key={action}>
+                  <strong>{inspection.actions[action].toLocaleString("en-IN")}</strong>
+                  <span>{action}</span>
+                </article>
+              ))}
+            </div>
+            <div className="master-kind-breakdown">
+              {Object.entries(inspection.counts).map(([kind, count]) => (
+                <span key={kind}><b>{count}</b> {masterKindLabels[kind] ?? kind}</span>
+              ))}
+            </div>
+            <div className={`master-import-readiness ${inspection.canApply ? "ready" : "blocked"}`}>
+              {inspection.canApply ? <CheckCircle2 size={17} /> : <CircleAlert size={17} />}
+              <div>
+                <strong>{inspection.canApply ? "Ready to apply atomically" : `${errors.length} error${errors.length === 1 ? "" : "s"} must be fixed`}</strong>
+                <span>{warnings.length} warning{warnings.length === 1 ? "" : "s"} · {inspection.importableRows} master rows · {inspection.contextRows.length} context rows</span>
+              </div>
+            </div>
+            {issues.length > 0 && (
+              <div className="master-import-issues">
+                {issues.slice(0, 20).map((item, index) => (
+                  <div className={item.severity} key={`${item.row}-${item.field}-${index}`}>
+                    <b>{item.severity}</b>
+                    <span>{item.row ? `Row ${item.row} · ` : ""}{item.message}</span>
+                  </div>
+                ))}
+                {issues.length > 20 && <small>Showing 20 of {issues.length} issues.</small>}
+              </div>
+            )}
+            <div className="source-preview-table master-import-table">
+              <table>
+                <thead><tr><th>Row</th><th>Type</th><th>Code</th><th>Name</th><th>Parent</th><th>Action</th></tr></thead>
+                <tbody>
+                  {inspection.rows.slice(0, 50).map((row) => (
+                    <tr key={`${row.kind}-${row.code}`}>
+                      <td>{row.sourceRow}</td><td>{masterKindLabels[row.kind] ?? row.entityType}</td>
+                      <td>{row.code}</td><td>{row.name}</td><td>{row.parentCode || "—"}</td>
+                      <td><span className={`master-action master-action-${row.action}`}>{row.action}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {inspection.rows.length > 50 && <small className="master-import-table-note">Showing 50 of {inspection.rows.length} master rows.</small>}
+            </div>
+          </div>
+        )}
+
+        {result && (
+          <div className="modal-body upload-complete master-import-complete">
+            <span><CheckCircle2 size={27} /></span>
+            <h3>Factory setup refreshed</h3>
+            <p>{result.applied?.create ?? 0} created · {result.applied?.update ?? 0} updated · {result.applied?.reactivate ?? 0} reactivated · {result.applied?.unchanged ?? 0} unchanged</p>
+            <small>The import is recorded in the audit log with its filename and SHA-256 checksum.</small>
+          </div>
+        )}
+
+        <div className="modal-footer">
+          {!result && inspection && (
+            <button className="button button-secondary" disabled={busy} onClick={() => { setInspection(null); setError(""); }}>
+              Choose another file
+            </button>
+          )}
+          {!inspection && !result && (
+            <button className="button button-secondary" onClick={onClose}>Cancel</button>
+          )}
+          {!inspection && !result && (
+            <button className="button button-primary" disabled={!file || busy} onClick={() => void inspect()}>
+              {busy ? "Inspecting…" : "Inspect CSV"} <ChevronRight size={13} />
+            </button>
+          )}
+          {inspection && !result && (
+            <button className="button button-primary" disabled={!inspection.canApply || busy} onClick={() => void apply()}>
+              {busy ? "Applying…" : `Apply ${inspection.importableRows} masters`} <Check size={13} />
+            </button>
+          )}
+          {result && <button className="button button-primary" onClick={onClose}>Done</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function FactoryDialog({ onClose }: { onClose: () => void }) {
   const { createFactory } = useFactory();
   const variant = useVariant();
@@ -898,6 +1102,7 @@ export function FactorySettings() {
   const { state } = useFactory();
   const [section, setSection] = useState<Section>("profile");
   const [createOpen, setCreateOpen] = useState(false);
+  const [masterImportOpen, setMasterImportOpen] = useState(false);
 
   useEffect(() => {
     const queryTimer = window.setTimeout(() => {
@@ -948,9 +1153,14 @@ export function FactorySettings() {
           <h1>Define <span>{mushroom ? "how the crop flows." : "how production flows."}</span></h1>
           <p className="page-subtitle">{mushroom ? "Farm context, cultivation stages, rooms, assets and harvest units" : "Factory context, production processes, lines, machines and output units"}—stored in Django for the selected {variant.terminology.siteSingular}.</p>
         </div>
-        <button className="button button-accent" onClick={() => setCreateOpen(true)}>
-          <Plus size={13} /> Create {variant.terminology.siteSingular}
-        </button>
+        <div className="page-header-actions">
+          <button className="button button-secondary" disabled={!activeFactory} onClick={() => setMasterImportOpen(true)}>
+            <UploadCloud size={13} /> Import master CSV
+          </button>
+          <button className="button button-accent" onClick={() => setCreateOpen(true)}>
+            <Plus size={13} /> Create {variant.terminology.siteSingular}
+          </button>
+        </div>
       </header>
       <div className="setup-stat-grid">
         <article className="panel"><span><Factory size={16} /></span><div><strong>{activeCount.lines}</strong><small>{mushroom ? "Farm wings" : "Production lines"}</small></div></article>
@@ -997,6 +1207,13 @@ export function FactorySettings() {
         </div>
       </div>
       {createOpen && <FactoryDialog onClose={() => setCreateOpen(false)} />}
+      {masterImportOpen && activeFactory && (
+        <FactoryMasterImportDialog
+          factoryId={activeFactory.id}
+          factoryName={activeFactory.name}
+          onClose={() => setMasterImportOpen(false)}
+        />
+      )}
     </>
   );
 }

@@ -1,0 +1,124 @@
+{
+  "packId": "infinexxgen-chakan-two-line-synthetic-v1",
+  "schemaVersion": "vulcan-automotive-import-v1",
+  "synthetic": true,
+  "company": {
+    "displayName": "InfinexxGen Engineering Solutions Pvt Ltd",
+    "legalName": "InfinexxGen Engineering Solutions Private Limited",
+    "publicContext": "Industrial equipment manufacturer in Chakan, Pune, founded in 2023; formerly New Pleiaad.",
+    "publicLocations": [
+      "Unit I — MIDC Chakan Phase II, Pune, Maharashtra 410501",
+      "Unit II — MIDC Chakan Phase II, Pune, Maharashtra 410507"
+    ]
+  },
+  "factory": {
+    "name": "InfinexxGen Chakan Works — Synthetic Twin",
+    "code": "IXG-CHK",
+    "timezone": "Asia/Kolkata",
+    "currency": "INR",
+    "addressForTestSetup": "MIDC Chakan Phase II, Pune, Maharashtra",
+    "configurationFile": "factory_configuration.json",
+    "masterReferenceFile": "factory_master_reference.csv"
+  },
+  "period": {
+    "from": "2026-06-15",
+    "to": "2026-08-12",
+    "days": 59
+  },
+  "recommendedDemoRange": {
+    "from": "2026-08-06",
+    "to": "2026-08-12"
+  },
+  "quantitySemantics": {
+    "productionUnit": "work package",
+    "definition": "A completed, traceable fabrication or inspection package—not a finished vessel count. This lets unlike project products share one operational KPI model without pretending that tonnes, welds and vessels are directly additive.",
+    "projectQuantities": "Projects retain their own commercial units such as vessel, spool, skid or module."
+  },
+  "lines": [
+    {
+      "code": "LINE-01",
+      "name": "Process Equipment & Vessel Fabrication Line",
+      "purpose": "Plate preparation, forming, machining, weld-consumable control and vessel testing."
+    },
+    {
+      "code": "LINE-02",
+      "name": "Precision Piping & Modular Skid Line",
+      "purpose": "Precision pipe preparation, tube expansion, orbital welding, skid assembly and pressure testing."
+    }
+  ],
+  "processImports": [
+    {
+      "file": "process/01-material-cutting.csv",
+      "selectProcessCode": "L1-CUT",
+      "selectProcessName": "Material Cutting & Profiling"
+    },
+    {
+      "file": "process/02-plate-rolling.csv",
+      "selectProcessCode": "L1-ROLL",
+      "selectProcessName": "Plate Rolling & Forming"
+    },
+    {
+      "file": "process/03-machining-drilling.csv",
+      "selectProcessCode": "L1-MACH",
+      "selectProcessName": "Machining & Drilling"
+    },
+    {
+      "file": "process/04-consumable-conditioning.csv",
+      "selectProcessCode": "L1-COND",
+      "selectProcessName": "Welding Consumable Conditioning"
+    },
+    {
+      "file": "process/05-vessel-hydrotest.csv",
+      "selectProcessCode": "L1-TEST",
+      "selectProcessName": "Vessel Hydrostatic Testing"
+    },
+    {
+      "file": "process/06-pipe-preparation.csv",
+      "selectProcessCode": "L2-PREP",
+      "selectProcessName": "Pipe Cutting & End Preparation"
+    },
+    {
+      "file": "process/07-tube-expansion.csv",
+      "selectProcessCode": "L2-EXP",
+      "selectProcessName": "Tube Expansion & Jointing"
+    },
+    {
+      "file": "process/08-orbital-welding.csv",
+      "selectProcessCode": "L2-OWLD",
+      "selectProcessName": "Precision Orbital Welding"
+    },
+    {
+      "file": "process/09-skid-assembly.csv",
+      "selectProcessCode": "L2-SKID",
+      "selectProcessName": "Skid Fit-up & Assembly"
+    },
+    {
+      "file": "process/10-piping-pressure-test.csv",
+      "selectProcessCode": "L2-TEST",
+      "selectProcessName": "Piping Pressure & Leak Testing"
+    },
+    {
+      "file": "process/11-power-support.csv",
+      "selectProcessCode": "L2-UTIL",
+      "selectProcessName": "Backup Power Support"
+    }
+  ],
+  "sourceBoundary": {
+    "sourced": [
+      "Company name, former name, 2023 founding, Chakan/Pune context and two public MIDC unit addresses.",
+      "Broad product families: heat exchangers, vapour separators, flash vessels, silos, cyclone columns/separators, reactors, ATFDs, refrigerant receivers, storage tanks, structural skids, oil separators, tanks and piping.",
+      "Public capability themes: orbital welding, precision pipe cutting, heavy plate/SS fabrication, modular skid assembly, cyclone separators, silos, ducting and radiographic-quality piping."
+    ],
+    "synthetic": [
+      "Every project/customer/order/PO, supplier identity, material transaction, machine identity and specification, factory capacity, schedule, quantity, financial value, performance result, delay, defect and utility reading."
+    ],
+    "sourcesFile": "SOURCES.md"
+  },
+  "designedSignals": [
+    "Plate Rolling Machine becomes the Line 1 bottleneck during the recommended week.",
+    "Orbital Welding Machine becomes the Line 2 bottleneck, with weld-porosity quality loss.",
+    "Four material families show low cover and delayed receipts.",
+    "Two critical projects are delayed at their commitment date.",
+    "Supplier delays, order risk, process attention, quality loss and production under-attainment are correlated for dashboard storytelling."
+  ]
+}

@@ -13,6 +13,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from rest_framework import status, viewsets
 from rest_framework.exceptions import APIException, NotFound
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import BaseThrottle
@@ -26,6 +27,11 @@ from apps.common.permissions import (
     factories_for_request,
     membership_for_request,
     tenant_for_request,
+)
+from apps.tenancy.master_imports import (
+    MasterImportError,
+    apply_master_import,
+    inspect_master_import,
 )
 from apps.tenancy.models import (
     EmailIdentity,
@@ -276,3 +282,51 @@ class FactoryMasterViewSet(viewsets.ModelViewSet):
         item.save(update_fields=["is_active", "updated_at"])
         invalidate_workspace(item.factory_id)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class FactoryMasterImportBaseView(APIView):
+    permission_classes = [CanManageFactory]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_factory(self, request):
+        factory_id = request.data.get("factory") or request.query_params.get("factory")
+        if not factory_id:
+            raise MasterImportError("Choose the factory that will receive these masters.")
+        return get_object_or_404(factories_for_request(request), id=factory_id)
+
+
+class FactoryMasterImportInspectView(FactoryMasterImportBaseView):
+    def post(self, request):
+        try:
+            result = inspect_master_import(self.get_factory(request), request.FILES.get("file"))
+        except MasterImportError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        result.pop("_parsed", None)
+        return Response(result)
+
+
+class FactoryMasterImportApplyView(FactoryMasterImportBaseView):
+    def post(self, request):
+        try:
+            factory = self.get_factory(request)
+            result = apply_master_import(
+                tenant_for_request(request),
+                factory,
+                request.FILES.get("file"),
+                str(request.data.get("expectedChecksum", "") or ""),
+            )
+        except MasterImportError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        invalidate_workspace(factory.id)
+        record_audit_event(
+            request,
+            "factory_masters.imported",
+            factory,
+            {
+                "filename": result["filename"],
+                "checksum": result["checksum"],
+                "applied": result["applied"],
+                "applied_total": result["appliedTotal"],
+            },
+        )
+        return Response(result)

@@ -196,14 +196,16 @@ def import_valid_rows(upload, user):
     ).exists():
         raise ValueError("Resolve mapping errors before importing.")
 
-    records = []
+    accepted_rows = 0
+    batch = []
+    upload.standard_records.all().delete()
     for source_row, raw in enumerate(upload.raw_rows, start=2):
         if source_row in rejected:
             continue
         values = normalize_values(
             apply_import_context(upload, map_row(raw, upload.mapping)), upload.dataset_type
         )
-        records.append(
+        batch.append(
             StandardRecord(
                 tenant=upload.tenant,
                 upload=upload,
@@ -218,8 +220,13 @@ def import_valid_rows(upload, user):
                 values=values,
             )
         )
-    upload.standard_records.all().delete()
-    StandardRecord.objects.bulk_create(records, batch_size=500)
+        if len(batch) == 500:
+            StandardRecord.objects.bulk_create(batch, batch_size=500)
+            accepted_rows += len(batch)
+            batch.clear()
+    if batch:
+        StandardRecord.objects.bulk_create(batch, batch_size=500)
+        accepted_rows += len(batch)
     signature = header_signature({"data": upload.headers})
     MappingProfile.objects.update_or_create(
         factory=upload.factory,
@@ -234,7 +241,7 @@ def import_valid_rows(upload, user):
         },
     )
     upload.status = "COMPLETED"
-    upload.accepted_rows = len(records)
+    upload.accepted_rows = accepted_rows
     upload.save(update_fields=["status", "accepted_rows", "updated_at"])
     return serialize_upload(upload)
 

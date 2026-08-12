@@ -26,6 +26,7 @@ services:
       VULCAN_ADMIN_ENABLED: "true"
       VULCAN_SINGLE_NODE: "true"
       VULCAN_VARIANT: ${VULCAN_VARIANT}
+      WORKSPACE_CACHE_TTL_SECONDS: "300"
     command:
       - gunicorn
       - --chdir
@@ -67,8 +68,9 @@ services:
       retries: 6
       start_period: 60s
     stop_grace_period: 30s
-    mem_limit: 320m
-    mem_reservation: 160m
+    mem_limit: 640m
+    mem_reservation: 192m
+    memswap_limit: 1536m
 
   frontend:
     image: ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${AR_REPOSITORY}/frontend-${VULCAN_VARIANT}:${IMAGE_TAG}

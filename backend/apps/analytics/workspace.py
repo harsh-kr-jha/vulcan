@@ -3,10 +3,12 @@ from collections import defaultdict
 from contextlib import suppress
 from datetime import date, timedelta
 from decimal import Decimal
+from threading import Lock
 from uuid import uuid4
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db.models import Q
 
 from apps.operations.imports import serialize_upload
 from apps.operations.models import StandardRecord, Upload
@@ -59,6 +61,21 @@ AUTOMOTIVE_PROJECT_WORKFLOW = [
     "Volume Production",
     "Dispatch",
 ]
+
+_workspace_lock_guard = Lock()
+_workspace_locks = {}
+
+
+def workspace_lock(factory_id):
+    """Return one process-local build lock per factory.
+
+    The GCE showcase intentionally runs one Gunicorn worker with threads. A
+    process-local lock therefore prevents duplicate cold-cache calculations
+    without adding Redis to the lightweight deployment.
+    """
+    key = str(factory_id)
+    with _workspace_lock_guard:
+        return _workspace_locks.setdefault(key, Lock())
 
 
 def normalise_targets(current, updates):
@@ -146,7 +163,22 @@ def workspace_snapshot(identity, factory, filters):
     if cached is not None:
         return cached
 
-    targets = {**DEFAULT_TARGETS, **factory.configuration.get("targets", {})}
+    with workspace_lock(factory.id):
+        # Another request may have completed the same cold build while this
+        # thread waited for the per-factory lock.
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+        snapshot = build_workspace_snapshot(identity, factory, filters, targets=None)
+        ttl = getattr(settings, "WORKSPACE_CACHE_TTL", 300)
+        with suppress(Exception):
+            cache.set(key, snapshot, ttl)
+        return snapshot
+
+
+def build_workspace_snapshot(identity, factory, filters, targets=None):
+    targets = targets or {**DEFAULT_TARGETS, **factory.configuration.get("targets", {})}
+
     intelligence = build_intelligence(factory, targets, filters)
     masters = {
         kind: []
@@ -196,11 +228,42 @@ def workspace_snapshot(identity, factory, filters):
         },
         "intelligence": intelligence,
     }
-    # Cache the snapshot for a short period to smooth repeated UI loads.
-    ttl = getattr(settings, "WORKSPACE_CACHE_TTL", 60)
-    with suppress(Exception):
-        cache.set(key, snapshot, ttl)
     return snapshot
+
+
+def workspace_record_rows(factory, from_date, to_date):
+    """Stream only rows that can affect the selected workspace period.
+
+    Inventory and process data need history up to the selected end, while
+    projects and orders have their own later date semantics. Ordinary fact
+    datasets can be bounded at SQLite before their JSON payload reaches Python.
+    """
+    bounded_history_types = {"inventory", "process"}
+    unbounded_types = {"orders", "projects", "project_stages"}
+    period_types = {"production", "downtime", "quality", "utilities", "supplier"}
+    period = Q(dataset_type__in=period_types)
+    if from_date:
+        period &= Q(operational_date__isnull=True) | Q(operational_date__gte=from_date)
+    if to_date:
+        period &= Q(operational_date__isnull=True) | Q(operational_date__lte=to_date)
+
+    history = Q(dataset_type__in=bounded_history_types)
+    if to_date:
+        history &= Q(operational_date__isnull=True) | Q(operational_date__lte=to_date)
+
+    return (
+        StandardRecord.objects.filter(factory=factory)
+        .filter(period | history | Q(dataset_type__in=unbounded_types))
+        .values(
+            "dataset_type",
+            "operational_date",
+            "values",
+            "source_row",
+            "upload__created_at",
+            "upload__original_filename",
+        )
+        .iterator(chunk_size=500)
+    )
 
 
 def build_intelligence(factory, targets, filters):
@@ -209,8 +272,10 @@ def build_intelligence(factory, targets, filters):
     # Some datasets describe state at or beyond the selected period (for example,
     # inventory history, project stages, and orders due after the range). Apply
     # their date semantics below instead of dropping them in one global DB filter.
-    records = StandardRecord.objects.filter(factory=factory).select_related("upload")
-    scoped = []
+    production = []
+    downtime = []
+    quality = []
+    utilities = []
     inventory_history = []
     process_history = []
     orders = []
@@ -218,54 +283,47 @@ def build_intelligence(factory, targets, filters):
     project_records = []
     project_stage_records = []
     latest_dates = {}
-    for record in records.iterator():
-        value = record.values
+    for record in workspace_record_rows(factory, from_date, to_date):
+        value = record["values"]
+        dataset_type = record["dataset_type"]
+        operational_date = record["operational_date"]
         if (
-            record.operational_date
-            and (not to_date or record.operational_date <= to_date)
+            operational_date
+            and (not to_date or operational_date <= to_date)
             and (
-                record.dataset_type not in latest_dates
-                or record.operational_date > latest_dates[record.dataset_type]
+                dataset_type not in latest_dates
+                or operational_date > latest_dates[dataset_type]
             )
         ):
-            latest_dates[record.dataset_type] = record.operational_date
-        if record.dataset_type == "projects":
+            latest_dates[dataset_type] = operational_date
+        if dataset_type == "projects":
             project_records.append(record)
             continue
-        if record.dataset_type == "project_stages":
+        if dataset_type == "project_stages":
             project_stage_records.append(record)
             continue
-        if record.dataset_type == "inventory":
-            if not to_date or not record.operational_date or record.operational_date <= to_date:
-                inventory_history.append(value)
+        if dataset_type == "inventory":
+            inventory_history.append(value)
             continue
-        if record.dataset_type == "process":
-            if record.operational_date and to_date and record.operational_date > to_date:
-                continue
+        if dataset_type == "process":
             process_history.append(value)
             continue
-        if record.dataset_type == "orders":
+        if dataset_type == "orders":
             orders.append(value)
             continue
-        if record.dataset_type == "supplier":
-            if record.operational_date and from_date and record.operational_date < from_date:
-                continue
-            if record.operational_date and to_date and record.operational_date > to_date:
-                continue
+        if dataset_type == "supplier":
             supplier_deliveries.append(value)
-            continue
-        if record.operational_date and from_date and record.operational_date < from_date:
-            continue
-        if record.operational_date and to_date and record.operational_date > to_date:
             continue
         if not matches_dimensions(value, filters):
             continue
-        scoped.append((record.dataset_type, value))
-
-    production = [value for kind, value in scoped if kind == "production"]
-    downtime = [value for kind, value in scoped if kind == "downtime"]
-    quality = [value for kind, value in scoped if kind == "quality"]
-    utilities = [value for kind, value in scoped if kind == "utilities"]
+        if dataset_type == "production":
+            production.append(value)
+        elif dataset_type == "downtime":
+            downtime.append(value)
+        elif dataset_type == "quality":
+            quality.append(value)
+        elif dataset_type == "utilities":
+            utilities.append(value)
     process_runs = process_history
     scoped_process_runs = [
         value
@@ -1126,16 +1184,17 @@ def latest_project_values(records, key_builder):
     latest = {}
     versions = {}
     for record in records:
-        values = dict(record.values)
+        values = dict(record["values"])
         key = key_builder(values)
         valid_key = all(key) if isinstance(key, tuple) else bool(key)
         if not valid_key:
             continue
-        version = (record.upload.created_at, record.source_row)
+        uploaded_at = record["upload__created_at"]
+        version = (uploaded_at, record["source_row"])
         if key in versions and versions[key] >= version:
             continue
-        values["_source_uploaded_at"] = record.upload.created_at.isoformat()
-        values["_source_filename"] = record.upload.original_filename
+        values["_source_uploaded_at"] = uploaded_at.isoformat()
+        values["_source_filename"] = record["upload__original_filename"]
         latest[key] = values
         versions[key] = version
     return latest

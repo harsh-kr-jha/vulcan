@@ -268,6 +268,18 @@ if cache_url or (not DEBUG and not SINGLE_NODE):
             "KEY_PREFIX": "vulcan",
         }
     }
+elif not DEBUG and SINGLE_NODE:
+    # Keep potentially large workspace snapshots outside the web worker. The
+    # cache is disposable and is regenerated from SQLite after deployments or
+    # invalidation; locating it beside the database also avoids container-layer
+    # churn on the single-node showcase.
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+            "LOCATION": os.getenv("DJANGO_FILE_CACHE_DIR", "/data/cache"),
+            "OPTIONS": {"MAX_ENTRIES": 500, "CULL_FREQUENCY": 3},
+        }
+    }
 else:
     CACHES = {
         "default": {
@@ -275,6 +287,7 @@ else:
             "LOCATION": "vulcan-local-development",
         }
     }
+WORKSPACE_CACHE_TTL = int(os.getenv("WORKSPACE_CACHE_TTL_SECONDS", "300"))
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_TASK_ALWAYS_EAGER = environment_boolean("CELERY_TASK_ALWAYS_EAGER", default=DEBUG)

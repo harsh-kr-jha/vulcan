@@ -62,6 +62,10 @@ docker compose --env-file .env run --rm backend \
 docker compose --env-file .env run --rm backend \
   python backend/manage.py collectstatic --noinput
 docker compose --env-file .env up -d --remove-orphans --wait --wait-timeout 180
+docker compose --env-file .env exec -T caddy \
+  caddy validate --config /etc/caddy/Caddyfile
+docker compose --env-file .env exec -T caddy \
+  caddy reload --config /etc/caddy/Caddyfile
 docker compose --env-file .env ps
 
 trap - ERR

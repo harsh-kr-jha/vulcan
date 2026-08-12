@@ -11,11 +11,15 @@
 	}
 
 	handle_path /api/backend/* {
-		reverse_proxy backend:8000
+		reverse_proxy backend:8000 {
+			header_up Host {hostport}
+		}
 	}
 
 	handle /admin/* {
-		reverse_proxy backend:8000
+		reverse_proxy backend:8000 {
+			header_up Host {hostport}
+		}
 	}
 
 	handle {

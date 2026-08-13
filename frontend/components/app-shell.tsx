@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useFactory } from "@/lib/factory-context";
 import { useVariant } from "@/lib/variant";
@@ -90,6 +90,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const topbarActionsRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const { intelligence, filters, state, toggleAction } = useFactory();
   const { user, logout } = useAuth();
@@ -98,6 +99,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [logoutError, setLogoutError] = useState("");
   const openActions = state.actions.filter((action) => action.status === "open");
   const actionItems = [...state.actions].sort((first, second) => Number(first.status === "done") - Number(second.status === "done"));
+
+  useEffect(() => {
+    function closeTopbarPanels() {
+      setNotificationsOpen(false);
+      setActionsOpen(false);
+      setProfileOpen(false);
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!topbarActionsRef.current?.contains(event.target as Node)) closeTopbarPanels();
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") closeTopbarPanels();
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   if (pathname === "/login") return <>{children}</>;
 
   function toggleSidebar() {
@@ -117,7 +142,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="topbar">
         <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark">{variant.features.mushroomAnalytics ? <Sprout size={16} /> : <Factory size={16} />}</span><strong>{variant.displayName.toLocaleUpperCase("en-US")}</strong></div></div>
         <div className="topbar-context"><span className="shift-label">{filters.shift === "all" ? "All shifts" : filters.shift} · {filters.from} to {filters.to}</span></div>
-        <div className="topbar-actions">
+        <div className="topbar-actions" ref={topbarActionsRef}>
           <button className="icon-button action-menu-button" aria-label={`${openActions.length} open action items`} onClick={() => { setActionsOpen((value) => !value); setNotificationsOpen(false); setProfileOpen(false); }}><ClipboardList size={19} />{openActions.length > 0 && <span className="action-counter">{openActions.length > 99 ? "99+" : openActions.length}</span>}</button>
           {actionsOpen && <div className="topbar-popover action-popover"><div className="action-popover-heading"><span><strong>Action items</strong><small>{openActions.length} open for this factory</small></span><Link href="/alerts" onClick={() => setActionsOpen(false)}>View all</Link></div><div className="action-popover-list">{actionItems.slice(0, 6).map((action) => <button key={action.id} className={action.status === "done" ? "action-is-done" : ""} onClick={() => void toggleAction(action.id)}><span className="action-state-icon">{action.status === "done" ? <CheckCircle2 size={17} /> : <i />}</span><span><b>{action.title}</b><small>{action.owner} · due {new Date(`${action.dueDate}T00:00:00`).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</small></span><em>{action.status === "done" ? "Done" : "Mark done"}</em></button>)}{!state.actions.length && <p>No action items yet. Create one from an alert.</p>}</div></div>}
           <button className="icon-button notification-button" aria-label="Notifications" onClick={() => { setNotificationsOpen((value) => !value); setActionsOpen(false); setProfileOpen(false); }}><Bell size={19} />{intelligence.alerts.some((alert) => alert.status === "new") && <span />}</button>

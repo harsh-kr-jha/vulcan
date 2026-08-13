@@ -214,6 +214,8 @@ try {
       && document.documentElement.scrollWidth <= window.innerWidth;
   })()`);
   if (!mobileLayoutFits) throw new Error("The mobile landing page overflows its viewport.");
+  const mobileHeroMargin = await evaluate(`document.querySelector(".ion-hero-copy")?.getBoundingClientRect().left`);
+  if (mobileHeroMargin !== 16) throw new Error(`The mobile landing copy starts at ${mobileHeroMargin}px instead of the 16px design margin.`);
 
   await command("Emulation.setDeviceMetricsOverride", {
     width: 1440,
@@ -227,6 +229,8 @@ try {
   });
   await navigate("/");
   await waitFor(`document.querySelector("#sign-in") !== null`, "landing-page sign-in form");
+  const desktopHeroMargin = await evaluate(`document.querySelector(".ion-hero-copy")?.getBoundingClientRect().left`);
+  if (desktopHeroMargin !== 40) throw new Error(`The desktop landing copy starts at ${desktopHeroMargin}px instead of the 40px design margin.`);
   await waitFor(
     `document.querySelectorAll("video").length === 2
       && [...document.querySelectorAll("video")].every((video) => video.currentSrc.includes("/ion.mp4"))`,
@@ -246,6 +250,10 @@ try {
   );
   await setInput("#email", smokeEmail, "the sign-in email field");
   await setInput("#password", smokePassword, "the sign-in password field");
+  await clickSelector('button[aria-label="Show password"]', "the show-password control");
+  await waitFor(`document.querySelector("#password")?.type === "text"`, "visible password state");
+  await clickSelector('button[aria-label="Hide password"]', "the hide-password control");
+  await waitFor(`document.querySelector("#password")?.type === "password"`, "hidden password state");
   await clickText('#sign-in button[type="submit"]', "Sign in");
   await waitFor(`location.pathname === "/dashboard"`, "authenticated dashboard navigation", 300);
   await selectFarm("Musroom");
@@ -255,6 +263,24 @@ try {
     "Priority exceptions",
   ];
   for (const title of requiredWidgets) await waitFor(`document.body.innerText.includes(${JSON.stringify(title)})`, `widget “${title}”`);
+  const conditionsUseFullRow = await evaluate(`(() => {
+    const grid = document.querySelector(".home-decision-grid");
+    const card = document.querySelector(".room-conditions-widget");
+    if (!grid || !card) return false;
+    return Math.abs(grid.getBoundingClientRect().width - card.getBoundingClientRect().width) < 2;
+  })()`);
+  if (!conditionsUseFullRow) throw new Error("The process-conditions card does not occupy the full home grid row.");
+
+  for (const [buttonSelector, panelSelector, description] of [
+    [".action-menu-button", ".action-popover", "action panel"],
+    [".notification-button", ".notification-popover", "notification panel"],
+    ['button[aria-label="Open workspace menu"]', ".profile-popover", "profile panel"],
+  ]) {
+    await clickSelector(buttonSelector, description);
+    await waitFor(`document.querySelector(${JSON.stringify(panelSelector)}) !== null`, `${description} open state`);
+    await evaluate(`document.querySelector("main.page-content")?.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }))`);
+    await waitFor(`document.querySelector(${JSON.stringify(panelSelector)}) === null`, `${description} outside-click dismissal`);
+  }
   if (process.env.VULCAN_SCREENSHOT) {
     await command("Emulation.setDeviceMetricsOverride", { width: 1440, height: 1100, deviceScaleFactor: 1, mobile: false });
     const screenshot = await command("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
@@ -333,7 +359,7 @@ try {
   await waitFor(`document.body.innerText.includes("Action created for the factory team")`, "alert action creation");
 
   await navigate("/settings?create=factory");
-  await waitFor(`document.body.innerText.includes("Create a mushroom farm")`, "factory dialog");
+  await waitFor(`document.body.innerText.includes("Create a farm")`, "factory dialog");
   await setLabelledInput("Farm name", smokeFactoryName);
   await setLabelledInput("Farm code", smokeFactoryCode);
   await setLabelledInput("Location", "Pune, Maharashtra");
@@ -365,7 +391,7 @@ try {
   const importSummary = imported
     .map((fixture) => `${fixture.name} (${fixture.rows} ${fixture.rows === 1 ? "row" : "rows"})`)
     .join(", ");
-  console.log(`UI smoke test passed: reduced motion, mobile layout, cinematic dissolve, sign-in, dashboard, ${importSummary} mapping/import, action creation, factory creation, and sign-out.`);
+  console.log(`UI smoke test passed: V6 margins, readable responsive layout, password visibility, dismissible topbar panels, full-row conditions, cinematic dissolve, sign-in, dashboard, ${importSummary} mapping/import, action creation, factory creation, and sign-out.`);
 } finally {
   if (socket?.readyState === WebSocket.OPEN) socket.close();
   if (chrome.exitCode === null) {

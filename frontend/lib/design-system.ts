@@ -68,6 +68,7 @@ export const designSystemStyle: CssVariableMap = {
   "--body-line": typography.bodyMd.lineHeight,
   "--label-size": typography.labelMd.size,
   "--caption-size": typography.caption.size,
+  "--font-readable-min": typography.minimumReadable,
   "--sidebar-width": layout.sidebarWidth,
   "--content-max-width": layout.contentMaxWidth,
 };

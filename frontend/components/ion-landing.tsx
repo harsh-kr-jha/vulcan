@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 import { IonVideoBackground } from "@/components/ion-video-background";
 import { ApiError, api } from "@/lib/api-client";
@@ -12,6 +13,7 @@ export function IonLanding({ nextPath = "/dashboard" }: { nextPath?: string }) {
   const destination = safeNextPath(nextPath);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -53,7 +55,7 @@ export function IonLanding({ nextPath = "/dashboard" }: { nextPath?: string }) {
       <IonVideoBackground />
       <div className="ion-scrim pointer-events-none absolute inset-0 z-[1]" aria-hidden="true" />
 
-      <header className="relative z-10 mx-auto flex max-w-7xl items-center px-5 py-6 sm:px-8 sm:py-7" aria-label="Vulcan">
+      <header className="ion-frame relative z-10 flex w-full items-center py-5 sm:py-6" aria-label="Vulcan">
         <span className="ion-display text-[27px] tracking-tight">Vulcan</span>
       </header>
 
@@ -65,7 +67,7 @@ export function IonLanding({ nextPath = "/dashboard" }: { nextPath?: string }) {
           aria-busy={submitting}
         >
           <div className="mb-5 text-center">
-            <p className="mb-2 text-[9px] font-medium uppercase tracking-[0.34em] text-white/40">Secure workspace</p>
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.28em] text-white/50">Secure workspace</p>
             <h2 className="ion-display text-[28px] leading-none">Sign in to Vulcan</h2>
           </div>
           <div className="space-y-4">
@@ -86,17 +88,28 @@ export function IonLanding({ nextPath = "/dashboard" }: { nextPath?: string }) {
             </label>
             <label className="block" htmlFor="password">
               <span className="mb-2 block text-[11px] font-medium text-white/65">Password</span>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                maxLength={1024}
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="ion-login-input h-11 w-full rounded-xl px-3.5 text-[13px] text-white outline-none transition placeholder:text-white/25 focus-visible:ring-2 focus-visible:ring-white/45"
-              />
+              <span className="ion-password-field relative block">
+                <input
+                  id="password"
+                  name="password"
+                  type={passwordVisible ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  maxLength={1024}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="ion-login-input h-11 w-full rounded-xl px-3.5 pr-11 text-[13px] text-white outline-none transition placeholder:text-white/25 focus-visible:ring-2 focus-visible:ring-white/45"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center border-0 bg-transparent text-white/55 transition hover:text-white focus-visible:rounded-xl focus-visible:ring-2 focus-visible:ring-white/45"
+                  onClick={() => setPasswordVisible((visible) => !visible)}
+                  aria-label={passwordVisible ? "Hide password" : "Show password"}
+                  aria-pressed={passwordVisible}
+                >
+                  {passwordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </span>
             </label>
           </div>
           <p className="mt-3 min-h-4 text-center text-[11px] leading-4 text-red-200" role="alert" aria-live="polite">{error}</p>
@@ -110,9 +123,9 @@ export function IonLanding({ nextPath = "/dashboard" }: { nextPath?: string }) {
         </form>
       </div>
 
-      <section className="pointer-events-none relative z-10 mx-auto flex min-h-[calc(100svh-92px)] max-w-7xl flex-col justify-end px-5 pb-8 sm:px-8 sm:pb-12" aria-labelledby="ion-headline">
+      <section className="ion-frame pointer-events-none relative z-10 flex min-h-[calc(100svh-76px)] w-full flex-col justify-end pb-6 sm:pb-10" aria-labelledby="ion-headline">
         <div className="ion-hero-copy">
-          <p className="ion-enter ion-enter-eyebrow mb-4 text-[10px] font-medium uppercase tracking-[0.38em] text-white/45">Operational intelligence</p>
+          <p className="ion-enter ion-enter-eyebrow mb-3 text-[11px] font-medium uppercase tracking-[0.3em] text-white/55">Operational intelligence</p>
           <h1 id="ion-headline" className="ion-display ion-enter ion-enter-headline max-w-[12ch] text-[2.75rem] leading-[0.94] tracking-[-0.02em] sm:text-6xl md:text-7xl">
             See every operation.<br /><em className="not-italic text-white/[0.48]">Act before it slips.</em>
           </h1>

@@ -46,7 +46,8 @@
     "bodyLg": { "size": "18px", "weight": 400, "lineHeight": "28px" },
     "bodyMd": { "size": "16px", "weight": 400, "lineHeight": "24px" },
     "labelMd": { "size": "14px", "weight": 600, "lineHeight": "20px", "letterSpacing": "0.02em" },
-    "caption": { "size": "12px", "weight": 500, "lineHeight": "16px" }
+    "caption": { "size": "12px", "weight": 500, "lineHeight": "16px" },
+    "minimumReadable": "11px"
   },
   "radii": {
     "small": "8px",
@@ -88,6 +89,7 @@
     "label": "#6d7a71",
     "tooltip": "#333029",
     "tooltipText": "#f6f0e5",
-    "primaryArea": "rgba(0, 160, 108, 0.12)"
+    "primaryArea": "rgba(0, 160, 108, 0.12)",
+    "labelSize": 11
   }
 }

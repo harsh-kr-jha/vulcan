@@ -1,0 +1,93 @@
+{
+  "$schema": "./design-system.schema.json",
+  "name": "Warm Industrial Intelligence",
+  "description": "The single source of truth for Vulcan's visual design across every industry variant.",
+  "colors": {
+    "canvas": "#fff8ef",
+    "surface": "#ffffff",
+    "surfaceWarm": "#f4ebc3",
+    "surfaceLow": "#f9f3e8",
+    "surfaceContainer": "#f4ede3",
+    "surfaceHigh": "#eee7dd",
+    "surfaceHighest": "#e8e2d7",
+    "ink": "#1e1b15",
+    "inkVariant": "#3d4a42",
+    "muted": "#6d7a71",
+    "line": "#d8d2c8",
+    "lineStrong": "#bccabf",
+    "primary": "#00a06c",
+    "primaryDark": "#006a46",
+    "primaryHover": "#008559",
+    "primarySoft": "#adedcd",
+    "primaryFixed": "#7efabe",
+    "onPrimary": "#ffffff",
+    "onPrimarySoft": "#0c5139",
+    "secondary": "#2b6950",
+    "tertiary": "#645f40",
+    "tertiarySoft": "#ece3bb",
+    "warning": "#8a6514",
+    "warningSoft": "#fff4d4",
+    "error": "#ba1a1a",
+    "errorDark": "#93000a",
+    "errorSoft": "#ffdad6",
+    "info": "#2b6950",
+    "infoSoft": "#dcece2",
+    "inverseSurface": "#333029",
+    "inverseSurfaceRaised": "#454139",
+    "inverseInk": "#f6f0e5",
+    "inverseMuted": "#cfc7bd"
+  },
+  "typography": {
+    "fontFamily": "Outfit, ui-sans-serif, system-ui, sans-serif",
+    "displayLg": { "size": "48px", "weight": 700, "lineHeight": "56px", "letterSpacing": "-0.02em" },
+    "headlineLg": { "size": "32px", "weight": 600, "lineHeight": "40px", "letterSpacing": "-0.01em" },
+    "headlineMobile": { "size": "24px", "weight": 600, "lineHeight": "32px" },
+    "titleMd": { "size": "20px", "weight": 500, "lineHeight": "28px" },
+    "bodyLg": { "size": "18px", "weight": 400, "lineHeight": "28px" },
+    "bodyMd": { "size": "16px", "weight": 400, "lineHeight": "24px" },
+    "labelMd": { "size": "14px", "weight": 600, "lineHeight": "20px", "letterSpacing": "0.02em" },
+    "caption": { "size": "12px", "weight": 500, "lineHeight": "16px" }
+  },
+  "radii": {
+    "small": "8px",
+    "control": "16px",
+    "medium": "24px",
+    "card": "32px",
+    "hero": "48px",
+    "pill": "9999px"
+  },
+  "spacing": {
+    "unit": "8px",
+    "xs": "4px",
+    "small": "12px",
+    "medium": "24px",
+    "large": "48px",
+    "xl": "80px",
+    "gutter": "24px",
+    "mobileMargin": "16px",
+    "desktopMargin": "40px"
+  },
+  "elevation": {
+    "card": "0 12px 32px rgba(0, 160, 108, 0.05)",
+    "floating": "0 18px 48px rgba(0, 106, 70, 0.12)",
+    "focus": "0 0 0 4px rgba(0, 160, 108, 0.10)"
+  },
+  "layout": {
+    "sidebarWidth": "260px",
+    "contentMaxWidth": "1600px",
+    "mobileBreakpoint": "600px",
+    "desktopBreakpoint": "1024px"
+  },
+  "charts": {
+    "primary": "#00a06c",
+    "comparative": "#8dccad",
+    "planned": "#bccabf",
+    "accent": "#645f40",
+    "danger": "#ba1a1a",
+    "grid": "#e8e2d7",
+    "label": "#6d7a71",
+    "tooltip": "#333029",
+    "tooltipText": "#f6f0e5",
+    "primaryArea": "rgba(0, 160, 108, 0.12)"
+  }
+}

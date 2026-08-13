@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { ApplicationBoundary } from "@/lib/auth-context";
+import { designSystemStyle } from "@/lib/design-system";
 import { getVariantConfig } from "@/lib/variant-config";
 import { VariantProvider } from "@/lib/variant";
 import "./globals.css";
@@ -23,12 +24,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   await connection();
   const variant = getVariantConfig();
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning style={designSystemStyle}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>

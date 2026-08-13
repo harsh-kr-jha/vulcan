@@ -20,6 +20,7 @@ import { useMemo } from "react";
 import { Chart } from "@/components/charts/chart";
 import { CommandFilters } from "@/components/command-filters";
 import { downloadBlob } from "@/lib/browser-files";
+import { chartPalette } from "@/lib/design-system";
 import { formatDuration } from "@/lib/formatters";
 import { useFactory } from "@/lib/factory-context";
 import type { DatasetType } from "@/lib/factory-domain";
@@ -27,9 +28,9 @@ import { useProjects } from "@/lib/project-context";
 import { useVariant } from "@/lib/variant";
 
 const colors = {
-  plan: "#b9c0bc",
-  actual: "#416f57",
-  good: "#9abb55",
+  plan: chartPalette.planned,
+  actual: chartPalette.primary,
+  good: chartPalette.comparative,
 };
 
 function HomeModuleGrid() {
@@ -132,32 +133,32 @@ function ProductionWidget({ number }: { number: number }) {
       grid: { left: 43, right: 15, top: 24, bottom: 30 },
       tooltip: {
         trigger: "axis",
-        backgroundColor: "#17211d",
+        backgroundColor: chartPalette.tooltip,
         borderWidth: 0,
-        textStyle: { color: "#fff", fontSize: 10 },
+        textStyle: { color: chartPalette.tooltipText, fontSize: 10 },
       },
       legend: {
         top: 0,
         right: 5,
         itemWidth: 8,
         itemHeight: 8,
-        textStyle: { color: "#7c8781", fontSize: 8 },
+        textStyle: { color: chartPalette.label, fontSize: 10 },
       },
       xAxis: {
         type: "category",
         data: intelligence.productionTrend.map((row) => row.date.slice(5)),
-        axisLine: { lineStyle: { color: "#e3e6e1" } },
+        axisLine: { lineStyle: { color: chartPalette.grid } },
         axisTick: { show: false },
-        axisLabel: { color: "#7c8781", fontSize: 8 },
+        axisLabel: { color: chartPalette.label, fontSize: 10 },
       },
       yAxis: {
         type: "value",
         axisLabel: {
-          color: "#7c8781",
-          fontSize: 8,
+          color: chartPalette.label,
+          fontSize: 10,
           formatter: (value: number) => `${Math.round(value / 1000)}k`,
         },
-        splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } },
+        splitLine: { lineStyle: { color: chartPalette.grid, type: "dashed" } },
       },
       series: [
         {
@@ -174,7 +175,7 @@ function ProductionWidget({ number }: { number: number }) {
           symbolSize: 5,
           lineStyle: { color: colors.actual, width: 2.5 },
           itemStyle: { color: colors.actual },
-          areaStyle: { color: "rgba(65,111,87,.09)" },
+          areaStyle: { color: chartPalette.primaryArea },
           data: intelligence.productionTrend.map((row) => row.actual),
         },
         {

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Chart } from "@/components/charts/chart";
 import { CommandFilters } from "@/components/command-filters";
 import { downloadBlob } from "@/lib/browser-files";
+import { chartPalette } from "@/lib/design-system";
 import { formatDuration } from "@/lib/formatters";
 import { useFactory } from "@/lib/factory-context";
 import { useVariant } from "@/lib/variant";
@@ -16,12 +17,12 @@ const automotiveTabs = ["OEE", "Production", "Steam & Fuel", "Downtime", "Qualit
 type Tab = (typeof mushroomTabs)[number] | (typeof automotiveTabs)[number];
 
 const colors = {
-  green: "#416f57",
-  blue: "#577fbc",
-  amber: "#e2a040",
-  red: "#db6653",
-  line: "#e6e9e5",
-  text: "#68736d",
+  green: chartPalette.primary,
+  blue: chartPalette.comparative,
+  amber: chartPalette.accent,
+  red: chartPalette.danger,
+  line: chartPalette.grid,
+  text: chartPalette.label,
 };
 const axis = {
   axisLine: { lineStyle: { color: colors.line } },
@@ -30,9 +31,9 @@ const axis = {
 };
 const tooltip = {
   trigger: "axis" as const,
-  backgroundColor: "#17211d",
+  backgroundColor: chartPalette.tooltip,
   borderWidth: 0,
-  textStyle: { color: "#fff", fontSize: 11 },
+  textStyle: { color: chartPalette.tooltipText, fontSize: 11 },
 };
 
 function MetricRow({ metrics }: { metrics: { label: string; value: string; detail: string }[] }) {
@@ -74,11 +75,11 @@ function CultivationView() {
     tooltip,
     legend: { top: 2, right: 8, textStyle: { color: colors.text, fontSize: 11 } },
     xAxis: { type: "category", data: intelligence.productionTrend.map((point) => point.date.slice(5)), ...axis },
-    yAxis: { type: "value", name: "kg", axisLabel: { color: colors.text, fontSize: 11 }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } },
+    yAxis: { type: "value", name: "kg", axisLabel: { color: colors.text, fontSize: 11 }, splitLine: { lineStyle: { color: chartPalette.grid, type: "dashed" } } },
     series: [
-      { name: "Planned harvest", type: "bar", barWidth: 20, data: intelligence.productionTrend.map((point) => point.planned), itemStyle: { color: "#dfe4df", borderRadius: [4, 4, 0, 0] } },
+      { name: "Planned harvest", type: "bar", barWidth: 20, data: intelligence.productionTrend.map((point) => point.planned), itemStyle: { color: chartPalette.planned, borderRadius: [4, 4, 0, 0] } },
       { name: "Harvested", type: "bar", barWidth: 14, data: intelligence.productionTrend.map((point) => point.actual), itemStyle: { color: colors.green, borderRadius: [3, 3, 0, 0] } },
-      { name: "Saleable", type: "line", smooth: true, data: intelligence.productionTrend.map((point) => point.good), lineStyle: { color: "#9abb55", width: 2 }, itemStyle: { color: "#9abb55" } },
+      { name: "Saleable", type: "line", smooth: true, data: intelligence.productionTrend.map((point) => point.good), lineStyle: { color: chartPalette.comparative, width: 2 }, itemStyle: { color: chartPalette.comparative } },
     ],
   };
 
@@ -117,8 +118,8 @@ function OeeView() {
     tooltip,
     legend: { top: 2, right: 8, textStyle: { color: colors.text, fontSize: 11 } },
     xAxis: { type: "category", data: intelligence.dailyOee.map((point) => point.date.slice(5)), ...axis },
-    yAxis: { type: "value", min: 0, max: 100, axisLabel: { color: colors.text, fontSize: 11, formatter: "{value}%" }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } },
-    series: [{ name: "OEE", type: "line", smooth: true, data: intelligence.dailyOee.map((point) => point.value), lineStyle: { color: colors.green, width: 3 }, itemStyle: { color: colors.green }, areaStyle: { color: "rgba(65,111,87,.12)" } }],
+    yAxis: { type: "value", min: 0, max: 100, axisLabel: { color: colors.text, fontSize: 11, formatter: "{value}%" }, splitLine: { lineStyle: { color: chartPalette.grid, type: "dashed" } } },
+    series: [{ name: "OEE", type: "line", smooth: true, data: intelligence.dailyOee.map((point) => point.value), lineStyle: { color: colors.green, width: 3 }, itemStyle: { color: colors.green }, areaStyle: { color: chartPalette.primaryArea } }],
   };
   return <>
     <section className="breakdown-grid performance-breakdown">
@@ -136,11 +137,11 @@ function ProductionView({ mushroomMode }: { mushroomMode: boolean }) {
     tooltip,
     legend: { top: 2, right: 8, textStyle: { color: colors.text, fontSize: 11 } },
     xAxis: { type: "category", data: intelligence.productionTrend.map((point) => point.date.slice(5)), ...axis },
-    yAxis: { type: "value", axisLabel: { color: colors.text, fontSize: 11 }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } },
+    yAxis: { type: "value", axisLabel: { color: colors.text, fontSize: 11 }, splitLine: { lineStyle: { color: chartPalette.grid, type: "dashed" } } },
     series: [
-      { name: "Planned", type: "bar", barWidth: 20, data: intelligence.productionTrend.map((point) => point.planned), itemStyle: { color: "#dfe4df", borderRadius: [4, 4, 0, 0] } },
+      { name: "Planned", type: "bar", barWidth: 20, data: intelligence.productionTrend.map((point) => point.planned), itemStyle: { color: chartPalette.planned, borderRadius: [4, 4, 0, 0] } },
       { name: "Actual", type: "bar", barWidth: 14, data: intelligence.productionTrend.map((point) => point.actual), itemStyle: { color: colors.green, borderRadius: [3, 3, 0, 0] } },
-      { name: "Good", type: "line", smooth: true, data: intelligence.productionTrend.map((point) => point.good), lineStyle: { color: "#9abb55", width: 2 }, itemStyle: { color: "#9abb55" } },
+      { name: "Good", type: "line", smooth: true, data: intelligence.productionTrend.map((point) => point.good), lineStyle: { color: chartPalette.comparative, width: 2 }, itemStyle: { color: chartPalette.comparative } },
     ],
   };
   return (
@@ -170,7 +171,7 @@ function DowntimeView({ mushroomMode }: { mushroomMode: boolean }) {
   const option: EChartsOption = {
     grid: { left: 150, right: 58, top: 20, bottom: 34 },
     tooltip,
-    xAxis: { type: "value", axisLabel: { color: colors.text, fontSize: 11, formatter: `{value} ${durationUnit}` }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } },
+    xAxis: { type: "value", axisLabel: { color: colors.text, fontSize: 11, formatter: `{value} ${durationUnit}` }, splitLine: { lineStyle: { color: chartPalette.grid, type: "dashed" } } },
     yAxis: { type: "category", data: reversed.map((item) => item.reason), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: colors.text, fontSize: 11 } },
     series: [{ type: "bar", barWidth: 17, data: reversed.map((item, index) => ({ value: chartValue(item.minutes), itemStyle: { color: index >= reversed.length - 2 ? colors.red : colors.amber, borderRadius: [0, 5, 5, 0] } })), label: { show: true, position: "right", formatter: `{c} ${durationUnit}`, fontSize: 11, color: colors.text } }],
   };
@@ -194,7 +195,7 @@ function QualityView({ mushroomMode }: { mushroomMode: boolean }) {
   const option: EChartsOption = {
     grid: { left: 120, right: 58, top: 20, bottom: 34 },
     tooltip: { ...tooltip, valueFormatter: (value) => `${Number(value).toFixed(2)}%` },
-    xAxis: { type: "value", axisLabel: { color: colors.text, fontSize: 11, formatter: "{value}%" }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } },
+    xAxis: { type: "value", axisLabel: { color: colors.text, fontSize: 11, formatter: "{value}%" }, splitLine: { lineStyle: { color: chartPalette.grid, type: "dashed" } } },
     yAxis: { type: "category", data: reversed.map((item) => item.sku), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: colors.text, fontSize: 11 } },
     series: [{ type: "bar", barWidth: 17, data: reversed.map((item) => ({ value: item.rejectionRate.toFixed(2), itemStyle: { color: item.rejectionRate > 5 ? colors.red : colors.amber, borderRadius: [0, 5, 5, 0] } })), label: { show: true, position: "right", formatter: "{c}%", fontSize: 10, color: colors.text } }],
   };
@@ -263,7 +264,7 @@ function SteamFuelView() {
     legend: { top: 2, right: 8, textStyle: { color: colors.text, fontSize: 11 } },
     xAxis: { type: "category", data: steam.trend.map((point) => point.date.slice(5)), ...axis },
     yAxis: [
-      { type: "value", name: "kg", axisLabel: { color: colors.text, fontSize: 11 }, splitLine: { lineStyle: { color: "#edf0ec", type: "dashed" } } },
+      { type: "value", name: "kg", axisLabel: { color: colors.text, fontSize: 11 }, splitLine: { lineStyle: { color: chartPalette.grid, type: "dashed" } } },
       { type: "value", name: "MJ", axisLabel: { color: colors.text, fontSize: 11 }, splitLine: { show: false } },
     ],
     series: [

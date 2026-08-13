@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Vulcan design system",
+  "type": "object",
+  "required": ["name", "colors", "typography", "radii", "spacing", "elevation", "layout", "charts"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": { "type": "string" },
+    "description": { "type": "string" },
+    "colors": { "type": "object", "additionalProperties": { "type": "string" } },
+    "typography": { "type": "object" },
+    "radii": { "type": "object", "additionalProperties": { "type": "string" } },
+    "spacing": { "type": "object", "additionalProperties": { "type": "string" } },
+    "elevation": { "type": "object", "additionalProperties": { "type": "string" } },
+    "layout": { "type": "object", "additionalProperties": { "type": "string" } },
+    "charts": { "type": "object", "additionalProperties": { "type": "string" } }
+  }
+}

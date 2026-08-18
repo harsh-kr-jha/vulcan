@@ -31,7 +31,7 @@ import { usePlatform } from "@/lib/variant";
 
 function Brand() {
   const variant = usePlatform();
-  const BrandIcon = false ? Sprout : Factory;
+  const BrandIcon = variant.features.mushroomAnalytics ? Sprout : Factory;
   return <Link className="brand" href="/dashboard" aria-label={`${variant.displayName} home`}><span className="brand-mark"><BrandIcon size={18} strokeWidth={2.8} /></span><span><strong>{variant.displayName.toLocaleUpperCase("en-US")}</strong><small>{variant.descriptor}</small></span></Link>;
 }
 
@@ -140,7 +140,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <button className="sidebar-toggle" onClick={toggleSidebar} aria-label="Open or close sidebar"><PanelLeftClose className="sidebar-close-icon" size={17} /><PanelLeftOpen className="sidebar-open-icon" size={17} /></button>
     <div className="app-main">
       <header className="topbar">
-        <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark">{false ? <Sprout size={16} /> : <Factory size={16} />}</span><strong>{variant.displayName.toLocaleUpperCase("en-US")}</strong></div></div>
+        <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark">{variant.features.mushroomAnalytics ? <Sprout size={16} /> : <Factory size={16} />}</span><strong>{variant.displayName.toLocaleUpperCase("en-US")}</strong></div></div>
         <div className="topbar-context"><span className="shift-label">{filters.shift === "all" ? "All shifts" : filters.shift} · {filters.from} to {filters.to}</span></div>
         <div className="topbar-actions" ref={topbarActionsRef}>
           <button className="icon-button action-menu-button" aria-label={`${openActions.length} open action items`} onClick={() => { setActionsOpen((value) => !value); setNotificationsOpen(false); setProfileOpen(false); }}><ClipboardList size={19} />{openActions.length > 0 && <span className="action-counter">{openActions.length > 99 ? "99+" : openActions.length}</span>}</button>

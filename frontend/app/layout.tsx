@@ -8,19 +8,21 @@ import { PlatformProvider } from "@/lib/variant";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const config = await getPlatformConfig();
+  const variant = getPlatformConfig();
   return {
     title: {
-      default: `${config.displayName} · Industrial Intelligence`,
-      template: `%s · ${config.displayName}`,
+      default: `${variant.displayName} · Industrial Intelligence`,
+      template: `%s · ${variant.displayName}`,
     },
-    description: `${config.displayName} ${config.descriptor.toLocaleLowerCase("en-US")}.`,
+    description: `${variant.displayName} ${variant.descriptor.toLocaleLowerCase("en-US")}.`,
   };
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // A fresh CSP nonce is attached by proxy.ts on every document request.
+  // Dynamic rendering lets Next apply it to framework and page scripts.
   await connection();
-  const config = await getPlatformConfig();
+  const variant = getPlatformConfig();
   return (
     <html lang="en" suppressHydrationWarning style={designSystemStyle}>
       <head>
@@ -32,7 +34,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         />
       </head>
       <body suppressHydrationWarning>
-        <PlatformProvider config={config}>
+        <PlatformProvider config={variant}>
           <ApplicationBoundary>{children}</ApplicationBoundary>
         </PlatformProvider>
       </body>

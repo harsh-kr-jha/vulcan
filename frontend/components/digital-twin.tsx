@@ -28,7 +28,7 @@ import { Fragment, useState } from "react";
 import type { DigitalTwinPayload, FactoryDetails, TwinLine, TwinProcess, TwinStatus } from "@/lib/factory-domain";
 import { useFactory } from "@/lib/factory-context";
 import { formatDuration } from "@/lib/formatters";
-import { useVariant } from "@/lib/variant";
+import { usePlatform } from "@/lib/variant";
 
 const emptyTwin: DigitalTwinPayload = {
   factory: { id: "", name: "", code: "", location: "", details: {} },
@@ -76,8 +76,8 @@ function Metric({ icon, label, value, note }: { icon: React.ReactNode; label: st
 }
 
 function ProcessDetail({ process }: { process: TwinProcess }) {
-  const variant = useVariant();
-  const mushroom = variant.features.mushroomAnalytics;
+  const variant = usePlatform();
+  const mushroom = false;
   const metrics = process.metrics;
   const processUpload = `/uploads?add=process&process=${encodeURIComponent(process.id)}`;
   return <section className="panel twin-detail" aria-live="polite">
@@ -135,8 +135,8 @@ function ProcessDetail({ process }: { process: TwinProcess }) {
 }
 
 export function DigitalTwin() {
-  const variant = useVariant();
-  const mushroom = variant.features.mushroomAnalytics;
+  const variant = usePlatform();
+  const mushroom = false;
   const { intelligence, filters, loading, refresh } = useFactory();
   const twin = intelligence.digitalTwin ?? emptyTwin;
   const [selectedLineId, setSelectedLineId] = useState("");

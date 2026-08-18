@@ -3,7 +3,7 @@
 import { ArrowRight, BookOpen, ChevronDown, FileQuestion, Search, Settings2, UploadCloud } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useVariant } from "@/lib/variant";
+import { usePlatform } from "@/lib/variant";
 
 const mushroomGuides = [
   {
@@ -100,8 +100,8 @@ const automotiveFaqs = sharedFaqs.map((faq) => {
 });
 
 export function SetupHelp() {
-  const variant = useVariant();
-  const mushroomMode = variant.features.mushroomAnalytics;
+  const variant = usePlatform();
+  const mushroomMode = false;
   const guides = mushroomMode ? mushroomGuides : automotiveGuides;
   const faqs = mushroomMode ? sharedFaqs : automotiveFaqs;
   const [query, setQuery] = useState("");

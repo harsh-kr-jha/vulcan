@@ -20,7 +20,7 @@ import { useMemo, useState } from "react";
 import { formatProjectDate, formatProjectValue, type FactoryProject } from "@/lib/project-data";
 import { useFactory } from "@/lib/factory-context";
 import { useProjects } from "@/lib/project-context";
-import { useVariant } from "@/lib/variant";
+import { usePlatform } from "@/lib/variant";
 
 type ViewFilter = "All" | "Active" | "At risk" | "Completed";
 
@@ -33,8 +33,8 @@ function ProgressBar({ value, danger = false }: { value: number; danger?: boolea
 }
 
 export function ProjectsWorkspace() {
-  const variant = useVariant();
-  const mushroom = variant.features.mushroomAnalytics;
+  const variant = usePlatform();
+  const mushroom = false;
   const projectSingular = variant.terminology.projectSingular;
   const projectPlural = variant.terminology.projectPlural;
   const { projects } = useProjects();

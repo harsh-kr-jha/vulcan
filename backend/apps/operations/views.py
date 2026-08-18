@@ -38,7 +38,7 @@ class UploadViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def require_async_uploads():
-        if not settings.VULCAN_VARIANT_CONFIG["features"]["asyncUploads"]:
+        if not getattr(settings, "ASYNC_UPLOADS_ENABLED", False):
             raise serializers.ValidationError(
                 {"detail": "Asynchronous object uploads are not enabled for this deployment."}
             )

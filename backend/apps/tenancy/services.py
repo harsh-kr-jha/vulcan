@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import PermissionDenied
 
@@ -79,12 +78,11 @@ def get_or_create_default_factory(identity: WorkspaceIdentity) -> Factory:
     factory = Factory.objects.filter(tenant=identity.tenant, is_active=True).first()
     if factory:
         return factory
-    mushroom_mode = settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]
     return Factory.objects.create(
         tenant=identity.tenant,
         company=identity.company,
-        name="My Mushroom Farm" if mushroom_mode else "My Automotive Factory",
-        code="MUSHROOM-01" if mushroom_mode else "AUTOMOTIVE-01",
+        name="My Factory",
+        code="FACTORY-01",
         timezone="Asia/Kolkata",
-        configuration={"currency": "INR", "industry": settings.VULCAN_VARIANT_CONFIG["industry"]},
+        configuration={"currency": "INR", "industry": ""},
     )

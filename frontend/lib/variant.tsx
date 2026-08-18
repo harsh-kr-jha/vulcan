@@ -1,17 +1,21 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { DatasetType } from "@/lib/factory-domain";
 
-export type VariantId = "automotive" | "mushroom";
-
-export interface VariantConfig {
-  id: VariantId;
+/**
+ * Platform configuration provided by the operating template branch.
+ *
+ * Each branch supplies a platform.json at the repository root with industry-specific
+ * display names, terminology, navigation labels, and feature flags. Platform Core
+ * ships a minimal fallback when no platform.json exists.
+ */
+export interface PlatformConfig {
+  id: string;
   displayName: string;
   descriptor: string;
   industry: string;
   modules: string[];
-  datasets: Record<DatasetType, string>;
+  datasets: Record<string, string>;
   navigation: Record<string, string>;
   terminology: {
     siteSingular: string;
@@ -19,26 +23,23 @@ export interface VariantConfig {
     projectSingular: string;
     projectPlural: string;
   };
-  features: {
-    asyncUploads: boolean;
-    mushroomAnalytics: boolean;
-  };
+  features: Record<string, boolean>;
 }
 
-const VariantContext = createContext<VariantConfig | null>(null);
+const PlatformContext = createContext<PlatformConfig | null>(null);
 
-export function VariantProvider({
+export function PlatformProvider({
   config,
   children,
 }: {
-  config: VariantConfig;
+  config: PlatformConfig;
   children: React.ReactNode;
 }) {
-  return <VariantContext.Provider value={config}>{children}</VariantContext.Provider>;
+  return <PlatformContext.Provider value={config}>{children}</PlatformContext.Provider>;
 }
 
-export function useVariant(): VariantConfig {
-  const config = useContext(VariantContext);
-  if (!config) throw new Error("useVariant must be used inside VariantProvider.");
+export function usePlatform(): PlatformConfig {
+  const config = useContext(PlatformContext);
+  if (!config) throw new Error("usePlatform must be used inside PlatformProvider.");
   return config;
 }

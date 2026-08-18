@@ -110,7 +110,7 @@ if settings.DEBUG or settings.ADMIN_ENABLED:
 
     configure_vulcan_user_admin()
     if settings.ADMIN_ENABLED and not settings.DEBUG:
-        admin.site.site_header = f"Vulcan {settings.VULCAN_VARIANT.title()} Administration"
-        admin.site.site_title = "Vulcan Admin"
-        admin.site.index_title = f"{settings.VULCAN_VARIANT.title()} deployment"
+        admin.site.site_header = "Tamaso Platform Administration"
+        admin.site.site_title = "Tamaso Admin"
+        admin.site.index_title = "Platform deployment"
     urlpatterns.insert(0, path("admin/", admin.site.urls))

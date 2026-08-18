@@ -1,3 +1,6 @@
+# Platform Core – Shared analytics framework.
+# Industry-specific KPIs and workflows are provided by operating template branches.
+
 import hashlib
 from collections import defaultdict
 from contextlib import suppress
@@ -14,9 +17,7 @@ from apps.operations.imports import serialize_upload
 from apps.operations.models import StandardRecord, Upload
 from apps.tenancy.serializers import FactoryMasterSerializer, WorkspaceFactorySerializer
 from processing.kpis import (
-    MushroomKPIInputs,
     SteamRecoveryInputs,
-    calculate_mushroom_kpis,
     calculate_steam_recovery,
 )
 
@@ -31,36 +32,12 @@ DEFAULT_TARGETS = {
     "stockCoverDays": 3,
     "downtimeMinutes": 30,
     "downtimeUnit": "minutes",
-    "biologicalEfficiency": 85,
-    "saleableYield": 94,
-    "contaminationRate": 2,
-    "environmentCompliance": 92,
-    "waterProductivity": 1100,
 }
 
 NUMERIC_TARGETS = set(DEFAULT_TARGETS) - {"downtimeUnit"}
 
-DEFAULT_PROJECT_WORKFLOW = [
-    "Compost Preparation",
-    "Pasteurisation & Conditioning",
-    "Spawning",
-    "Spawn Run",
-    "Casing",
-    "Pinning",
-    "Cropping & Harvest",
-    "Packing & Cold Room",
-]
-
-AUTOMOTIVE_PROJECT_WORKFLOW = [
-    "Order & Feasibility Review",
-    "Process Planning",
-    "Tooling & Validation",
-    "Material Readiness",
-    "Pilot Production",
-    "Quality Approval",
-    "Volume Production",
-    "Dispatch",
-]
+# Empty by default — operating template branches fill this with their workflow stages.
+DEFAULT_PROJECT_WORKFLOW = []
 
 _workspace_lock_guard = Lock()
 _workspace_locks = {}
@@ -135,18 +112,6 @@ CUSTOM_KPI_VARIABLES = {
     "utilities.briquette_used": ("Briquettes used", "Steam & boiler utilities", "kg"),
     "utilities.heat_recovered": ("Heat recovered", "Steam & boiler utilities", "MJ"),
     "utilities.briquette_saved": ("Equivalent briquettes saved", "Steam & boiler utilities", "kg"),
-    "mushroom.dry_substrate": ("Dry substrate", "Crop batches", "kg"),
-    "mushroom.water_litres": ("Water applied", "Room observations", "litres"),
-    "mushroom.biological_efficiency": (
-        "Biological efficiency",
-        "Cultivation KPIs",
-        "%",
-    ),
-    "mushroom.environment_compliance": (
-        "Environment compliance",
-        "Room observations",
-        "%",
-    ),
 }
 
 
@@ -219,9 +184,7 @@ def build_workspace_snapshot(identity, factory, filters, targets=None):
             "company": {
                 "id": str(identity.company.id),
                 "name": identity.company.name,
-                "industry": factory.configuration.get(
-                    "industry", settings.VULCAN_VARIANT_CONFIG["industry"]
-                ),
+                "industry": factory.configuration.get("industry", ""),
             },
             "factories": WorkspaceFactorySerializer(
                 identity.factories(), many=True
@@ -331,21 +294,6 @@ def build_intelligence(factory, targets, filters):
         elif dataset_type == "utilities":
             utilities.append(value)
     process_runs = process_history
-    scoped_process_runs = [
-        value
-        for value in process_history
-        if (
-            not from_date
-            or not parse_date(value.get("date"))
-            or parse_date(value.get("date")) >= from_date
-        )
-        and (
-            not to_date
-            or not parse_date(value.get("date"))
-            or parse_date(value.get("date")) <= to_date
-        )
-        and matches_dimensions(value, filters)
-    ]
     orders = [value for value in orders if matches_dimensions(value, filters, include_shift=False)]
     inventory = latest_inventory(inventory_history)
     supplier_scores = build_supplier_scores(supplier_deliveries)
@@ -400,46 +348,10 @@ def build_intelligence(factory, targets, filters):
         if inspected
         else quality_rate
     )
-    batch_ids = {
-        str(row.get("batch_id", "")).strip()
-        for row in production
-        if str(row.get("batch_id", "")).strip()
-    }
-    dry_substrate_kg = unique_total(production, "substrate_dry_kg", "batch_id")
-    growing_area_m2 = unique_total(production, "growing_area_m2", "batch_id")
-    water_litres = total(scoped_process_runs, "water_litres") or total(production, "water_litres")
-    compliant_readings, environment_readings = environment_compliance_counts(scoped_process_runs)
-    crop_age_days_total, crop_age_batches = unique_sum_and_count(
-        production, "crop_age_days", "batch_id"
-    )
-    mushroom_kpis = calculate_mushroom_kpis(
-        MushroomKPIInputs(
-            planned_harvest_kg=Decimal(str(planned)),
-            total_harvest_kg=Decimal(str(actual)),
-            saleable_harvest_kg=Decimal(str(good)),
-            contaminated_harvest_kg=Decimal(str(quality_rejected if inspected else rejected)),
-            dry_substrate_kg=Decimal(str(dry_substrate_kg)),
-            growing_area_m2=Decimal(str(growing_area_m2)),
-            water_litres=Decimal(str(water_litres)),
-            compliant_environment_readings=Decimal(str(compliant_readings)),
-            total_environment_readings=Decimal(str(environment_readings)),
-            crop_age_days_total=Decimal(str(crop_age_days_total)),
-            crop_batches=Decimal(str(crop_age_batches)),
-        )
-    ).as_dict()
-    mushroom_kpis.update(
-        {
-            "plannedHarvestKg": planned,
-            "totalHarvestKg": actual,
-            "saleableHarvestKg": good,
-            "contaminatedHarvestKg": quality_rejected if inspected else rejected,
-            "drySubstrateKg": dry_substrate_kg,
-            "growingAreaM2": growing_area_m2,
-            "waterLitres": water_litres,
-            "activeBatches": len(batch_ids),
-            "environmentReadings": environment_readings,
-        }
-    )
+
+    # Industry-specific KPIs are empty at the platform level — template branches populate these.
+    mushroom_kpis = {}
+
     steam_recovery = build_steam_recovery(utilities, production)
     trend, daily_oee = production_trends(production)
     machine_loss = grouped_loss(downtime, "machine", include_line=True)
@@ -470,8 +382,6 @@ def build_intelligence(factory, targets, filters):
         order_risks,
         supplier_scores,
         rejection_rate,
-        is_mushroom_factory(factory),
-        mushroom_kpis,
     )
     alerts = project_alerts(factory, projects, filters.get("to")) + alerts
     uploads = Upload.objects.filter(factory=factory, status="COMPLETED")
@@ -496,7 +406,6 @@ def build_intelligence(factory, targets, filters):
         supplier_score,
         supplier_scores,
         order_risks,
-        mushroom_kpis,
         steam_recovery,
     )
     custom_kpis = calculate_custom_kpis(
@@ -545,7 +454,7 @@ def build_intelligence(factory, targets, filters):
         "supplierScores": supplier_scores,
         "supplierScore": supplier_score,
         "mushroom": mushroom_kpis,
-        "roomConditions": build_room_conditions(process_runs),
+        "roomConditions": [],
         "steamRecovery": steam_recovery,
         "customKpiVariables": custom_variables,
         "customKpis": custom_kpis,
@@ -631,7 +540,6 @@ def build_custom_kpi_variables(
     supplier_score,
     supplier_scores,
     order_risks,
-    mushroom_kpis,
     steam_recovery,
 ):
     values = {
@@ -653,23 +561,8 @@ def build_custom_kpi_variables(
         "utilities.briquette_used": steam_recovery["briquetteUsedKg"],
         "utilities.heat_recovered": steam_recovery["heatRecoveredMj"],
         "utilities.briquette_saved": steam_recovery["equivalentBriquetteSavedKg"],
-        "mushroom.dry_substrate": mushroom_kpis["drySubstrateKg"],
-        "mushroom.water_litres": mushroom_kpis["waterLitres"],
-        "mushroom.biological_efficiency": mushroom_kpis["biologicalEfficiency"],
-        "mushroom.environment_compliance": mushroom_kpis["environmentCompliance"],
     }
     variables = CUSTOM_KPI_VARIABLES
-    if settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]:
-        variables = {
-            **CUSTOM_KPI_VARIABLES,
-            "production.planned": ("Planned harvest", "Harvest", "kg"),
-            "production.actual": ("Total harvest", "Harvest", "kg"),
-            "production.good": ("Saleable harvest", "Harvest", "kg"),
-        }
-    else:
-        variables = {
-            key: item for key, item in variables.items() if not key.startswith("mushroom.")
-        }
     return [
         {
             "key": key,
@@ -1337,11 +1230,9 @@ def build_project_stage(project_number, values):
 
 
 def default_project_stages(project_number, start_value, commitment_value, progress, status):
-    workflow = (
-        DEFAULT_PROJECT_WORKFLOW
-        if settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]
-        else AUTOMOTIVE_PROJECT_WORKFLOW
-    )
+    workflow = DEFAULT_PROJECT_WORKFLOW
+    if not workflow:
+        return []
     start = parse_date(start_value) or date.today()
     commitment = parse_date(commitment_value) or start
     total_days = max((commitment - start).days + 1, len(workflow))
@@ -1743,22 +1634,17 @@ def generated_alerts(
     order_risks,
     supplier_scores,
     rejection_rate,
-    mushroom_mode,
-    mushroom,
 ):
     alerts = []
     end = filters.get("to") or date.today().isoformat()
-    rejection_limit = targets["contaminationRate"] if mushroom_mode else targets["rejectionRate"]
+    rejection_limit = targets["rejectionRate"]
     if order_risks:
         order = order_risks[0]
         alerts.append(
             alert(
                 f"order-{order['orderId']}",
                 f"{order['orderId']} is at risk",
-                (
-                    f"{order['remaining']:g} "
-                    f"{'kg' if mushroom_mode else 'units'} remain before {order['dueDate']}."
-                ),
+                f"{order['remaining']:g} units remain before {order['dueDate']}.",
                 f"{order['sku']} · Orders",
                 "critical" if order["risk"] == "critical" else "high",
                 "Re-sequence the constrained line and secure material before "
@@ -1792,10 +1678,7 @@ def generated_alerts(
             alert(
                 f"inventory-{item['material']}",
                 f"{item['material']} stock-out projected",
-                (
-                    f"Current stock covers {item['stockDays']:.1f} "
-                    f"{'growing' if mushroom_mode else 'production'} days."
-                ),
+                f"Current stock covers {item['stockDays']:.1f} production days.",
                 f"{item['supplier']} · Inventory",
                 "critical" if item["stockDays"] < 2 else "high",
                 "Expedite the receipt or re-sequence orders that consume this material.",
@@ -1808,7 +1691,7 @@ def generated_alerts(
                 ],
             )
         )
-    if planned and not mushroom_mode and oee < targets["oee"]:
+    if planned and oee < targets["oee"]:
         alerts.append(
             alert(
                 "oee-below-target",
@@ -1827,19 +1710,11 @@ def generated_alerts(
         alerts.append(
             alert(
                 "production-below-plan",
-                "Harvest is below plan" if mushroom_mode else "Production is below plan",
-                (
-                    f"{'Harvest' if mushroom_mode else 'Output'} reached "
-                    f"{percent(actual, planned):.1f}% of the selected-period plan."
-                ),
-                "Farm harvest" if mushroom_mode else "Factory production",
+                "Production is below plan",
+                f"Output reached {percent(actual, planned):.1f}% of the selected-period plan.",
+                "Factory production",
                 "high" if percent(actual, planned) < 75 else "medium",
-                (
-                    "Review room climate, crop age and the current flush before "
-                    "changing the harvest plan."
-                    if mushroom_mode
-                    else "Review the largest downtime and speed losses before changing the plan."
-                ),
+                "Review the largest downtime and speed losses before changing the plan.",
                 f"< {targets['planAttainment']}% attainment",
                 f"{percent(actual, planned):.1f}%",
                 end,
@@ -1850,23 +1725,12 @@ def generated_alerts(
         alerts.append(
             alert(
                 "rejection-above-target",
-                "Contamination and discard are above limit"
-                if mushroom_mode
-                else "Rejection is above target",
-                (
-                    ("Contaminated or discarded harvest" if mushroom_mode else "Rejected output")
-                    + " "
-                    f"is {rejection_rate:.1f}% for the selected period."
-                ),
-                "Crop quality" if mushroom_mode else "Factory quality",
+                "Rejection is above target",
+                f"Rejected output is {rejection_rate:.1f}% for the selected period.",
+                "Factory quality",
                 "high" if rejection_rate > rejection_limit * 1.5 else "medium",
-                (
-                    "Isolate the affected crop batch, verify hygiene records and "
-                    "inspect adjacent rooms."
-                    if mushroom_mode
-                    else "Review the leading defect reason and affected SKU before the next run."
-                ),
-                f"> {rejection_limit}% {'contamination' if mushroom_mode else 'rejection'}",
+                "Review the leading defect reason and affected SKU before the next run.",
+                f"> {rejection_limit}% rejection",
                 f"{rejection_rate:.1f}%",
                 end,
                 [f"Rejection rate {rejection_rate:.1f}%"],
@@ -1902,85 +1766,12 @@ def generated_alerts(
                 f"{defect['rejected']:g} rejected units share this defect reason.",
                 "Quality · Rejections",
                 "medium",
-                (
-                    "Inspect the affected room and crop batch, then verify sanitation, "
-                    "casing and climate records."
-                    if mushroom_mode
-                    else "Verify the process parameter at first-piece approval and "
-                    "sample the next three batches."
-                ),
+                "Verify the process parameter at first-piece approval and "
+                "sample the next three batches.",
                 "Top defect reason",
                 f"{defect['rejected']:g} rejected",
                 end,
                 [f"{defect['rejected']:g} rejected records"],
-            )
-        )
-    if (
-        mushroom_mode
-        and mushroom["drySubstrateKg"]
-        and mushroom["biologicalEfficiency"] < targets["biologicalEfficiency"]
-    ):
-        alerts.append(
-            alert(
-                "biological-efficiency-below-target",
-                "Biological efficiency is below target",
-                "Fresh mushroom yield is low for the dry substrate loaded into active batches.",
-                "Crop conversion",
-                "high"
-                if mushroom["biologicalEfficiency"] < targets["biologicalEfficiency"] * 0.8
-                else "medium",
-                "Compare recipe, compost temperature history, spawn rate and flush "
-                "performance by batch.",
-                f">= {targets['biologicalEfficiency']}% biological efficiency",
-                f"{mushroom['biologicalEfficiency']:.1f}%",
-                end,
-                [
-                    f"{mushroom['totalHarvestKg']:g} kg total harvest",
-                    f"{mushroom['drySubstrateKg']:g} kg dry substrate",
-                ],
-            )
-        )
-    if (
-        mushroom_mode
-        and mushroom["environmentReadings"]
-        and mushroom["environmentCompliance"] < targets["environmentCompliance"]
-    ):
-        alerts.append(
-            alert(
-                "environment-compliance-below-target",
-                "Growing-room climate needs attention",
-                "Temperature, humidity or CO2 readings fell outside the crop-stage limits.",
-                "Growing room climate",
-                "high" if mushroom["environmentCompliance"] < 80 else "medium",
-                "Prioritise the latest non-compliant room and verify HVAC, fresh-air "
-                "and fogging controls.",
-                f">= {targets['environmentCompliance']}% readings in range",
-                f"{mushroom['environmentCompliance']:.1f}%",
-                end,
-                [f"{mushroom['environmentReadings']:g} validated room readings"],
-            )
-        )
-    if (
-        mushroom_mode
-        and mushroom["waterLitres"]
-        and mushroom["waterProductivityKgPerKl"] < targets["waterProductivity"]
-    ):
-        alerts.append(
-            alert(
-                "water-productivity-below-target",
-                "Water productivity is below target",
-                "Saleable harvest per kilolitre is lower than the configured farm target.",
-                "Water use",
-                "medium",
-                "Check irrigation dose by room and remove watering events that do not "
-                "support crop-stage demand.",
-                f">= {targets['waterProductivity']} kg/kl",
-                f"{mushroom['waterProductivityKgPerKl']:.1f} kg/kl",
-                end,
-                [
-                    f"{mushroom['waterLitres']:g} litres applied",
-                    f"{mushroom['saleableHarvestKg']:g} kg saleable harvest",
-                ],
             )
         )
     statuses = factory.configuration.get("alertStatuses", {})
@@ -2021,40 +1812,6 @@ def alert(
 
 def answer_question(intelligence, question):
     normalized = question.casefold()
-    mushroom = intelligence.get("mushroom", {})
-    mushroom_mode = settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]
-    if mushroom_mode and any(
-        word in normalized for word in ["biological", "substrate", "conversion"]
-    ):
-        return response(
-            f"Biological efficiency is {mushroom.get('biologicalEfficiency', 0):.1f}%.",
-            "It compares total fresh mushroom harvest with the dry substrate loaded "
-            "into each crop batch.",
-            [
-                f"{mushroom.get('totalHarvestKg', 0):g} kg total harvest",
-                f"{mushroom.get('drySubstrateKg', 0):g} kg dry substrate",
-            ],
-        )
-    if mushroom_mode and any(
-        word in normalized for word in ["climate", "temperature", "humidity", "co2"]
-    ):
-        return response(
-            f"Growing-room environment compliance is "
-            f"{mushroom.get('environmentCompliance', 0):.1f}%.",
-            "Each room observation is checked against its crop-stage temperature, "
-            "humidity and CO2 limits.",
-            [f"{mushroom.get('environmentReadings', 0):g} validated readings"],
-        )
-    if mushroom_mode and any(word in normalized for word in ["water", "irrigation"]):
-        return response(
-            f"Water productivity is "
-            f"{mushroom.get('waterProductivityKgPerKl', 0):.1f} kg per kilolitre.",
-            "The measure divides saleable harvest by mapped room watering volume.",
-            [
-                f"{mushroom.get('waterLitres', 0):g} litres applied",
-                f"{mushroom.get('saleableHarvestKg', 0):g} kg saleable harvest",
-            ],
-        )
     if any(word in normalized for word in ["supplier", "delivery", "vendor"]):
         items = intelligence["supplierScores"]
         if items:
@@ -2097,12 +1854,8 @@ def answer_question(intelligence, question):
             )
     totals = intelligence["totals"]
     return response(
-        (
-            f"Harvest is {totals['actual']:g} kg against a plan of {totals['planned']:g} kg."
-            if mushroom_mode
-            else f"Production is {totals['actual']:g} units against a plan of "
-            f"{totals['planned']:g} units."
-        ),
+        f"Production is {totals['actual']:g} units against a plan of "
+        f"{totals['planned']:g} units.",
         "This answer uses only validated records in the selected factory and date range.",
         [f"Plan {totals['planned']:g}", f"Actual {totals['actual']:g}"],
     )
@@ -2143,62 +1896,6 @@ def unique_sum_and_count(rows, value_key, group_key):
 def unique_total(rows, value_key, group_key):
     value, _ = unique_sum_and_count(rows, value_key, group_key)
     return value
-
-
-def environment_compliance_counts(rows):
-    results = [result for row in rows if (result := row_environment_compliance(row)) is not None]
-    return sum(results), len(results)
-
-
-def row_environment_compliance(row):
-    checks = []
-    ranges = [
-        ("temperature_c", "temperature_min_c", "temperature_max_c"),
-        ("humidity_pct", "humidity_min_pct", "humidity_max_pct"),
-    ]
-    for value_key, minimum_key, maximum_key in ranges:
-        if row.get(value_key) in {None, ""}:
-            continue
-        if row.get(minimum_key) in {None, ""} or row.get(maximum_key) in {None, ""}:
-            continue
-        value = number(row.get(value_key))
-        checks.append(number(row.get(minimum_key)) <= value <= number(row.get(maximum_key)))
-    if row.get("co2_ppm") not in {None, ""} and row.get("co2_max_ppm") not in {None, ""}:
-        checks.append(number(row.get("co2_ppm")) <= number(row.get("co2_max_ppm")))
-    return all(checks) if checks else None
-
-
-def build_room_conditions(rows):
-    latest = {}
-    for row in rows:
-        room = str(row.get("machine", "")).strip()
-        if not room:
-            continue
-        current = latest.get(room)
-        if current and str(current.get("date", "")) > str(row.get("date", "")):
-            continue
-        latest[room] = row
-    return [
-        {
-            "room": room,
-            "line": row.get("line", ""),
-            "process": row.get("process", ""),
-            "batchId": row.get("batch_id", ""),
-            "date": row.get("date", ""),
-            "status": row.get("status", ""),
-            "temperatureC": optional_number(row.get("temperature_c")),
-            "humidityPct": optional_number(row.get("humidity_pct")),
-            "co2Ppm": optional_number(row.get("co2_ppm")),
-            "substrateMoisturePct": optional_number(row.get("substrate_moisture_pct")),
-            "waterLitres": optional_number(row.get("water_litres")),
-            "compliant": row_environment_compliance(row),
-        }
-        for room, row in sorted(latest.items())
-    ]
-
-
-def is_mushroom_factory(factory):
-    return settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]
 
 
 def optional_total(rows, key):

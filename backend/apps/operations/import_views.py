@@ -32,84 +32,24 @@ from apps.operations.imports import (
 from apps.operations.models import Upload
 from apps.tenancy.models import Factory, FactoryMaster
 from processing.readers.tabular import read_rows
-from processing.templates import templates_for_variant
+from processing.templates import TEMPLATES
 
-TEMPLATE_EXAMPLES = {
-    "projects": [
-        "MUS-2608-R1",
-        "NCR Fresh Programme",
-        "Button mushroom cycle · Growing Room 1",
-        "MUS-PROG-01",
-        "Button mushroom",
-        3600,
-        "kg",
-        "Growing Wing A",
-        504_000,
-        "2026-06-12",
-        "2026-06-19",
-        "2026-08-08",
-        "2026-08-11",
-        "",
-        "High",
-        "In Progress",
-        58,
-        "Asha Verma|Crop lead; Ravi Malik|Room operations",
-    ],
-    "project_stages": [
-        "MUS-2608-R1",
-        "COMPOST-PREP",
-        "Compost Preparation",
-        1,
-        "Completed",
-        100,
-        "2026-06-19",
-        "2026-06-19",
-        "2026-06-30",
-        "2026-06-30",
-        "Asha Verma",
-        0,
-        "Compost recipe and turn log verified",
-        "compost-recipe.pdf; compost-temperature-log.pdf",
-    ],
-}
-
-AUTOMOTIVE_TEMPLATE_EXAMPLES = {
-    "projects": [
-        "AUTO-2026-001", "OEM Customer", "New component production launch", "PO-2026-001",
-        "Production launch", 12000, "units", "Assembly Line 1", 2400000, "2026-06-12",
-        "2026-06-19", "2026-08-08", "2026-08-10", "", "High", "In Progress", 58,
-        "Priya Rao|Programme lead; Arjun Singh|Production engineering",
-    ],
-    "project_stages": [
-        "AUTO-2026-001", "TOOL-TRIAL", "Tooling trial", 1, "Completed", 100,
-        "2026-06-19", "2026-06-19", "2026-06-25", "2026-06-25", "Arjun Singh", 0,
-        "Trial output and dimensional report approved", "trial-report.pdf; dimensional-report.pdf",
-    ],
-    "utilities": [
-        "2026-07-31", "Shift A", "Biomass Boiler BB-01", 10000, 30, 70,
-        9000, 4500, 450, 1800, 3800, 72,
-    ],
-}
+TEMPLATE_EXAMPLES: dict[str, list] = {}
 
 
 class ImportTemplateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, dataset_type):
-        fields = templates_for_variant(settings.VULCAN_VARIANT).get(dataset_type)
+        fields = TEMPLATES.get(dataset_type)
         if not fields:
             return Response({"detail": "Choose a supported dataset type."}, status=404)
         workbook = Workbook()
         worksheet = workbook.active
         worksheet.title = dataset_type.replace("_", " ").title()[:31]
         worksheet.append([field.key for field in fields])
-        examples = (
-            TEMPLATE_EXAMPLES
-            if settings.VULCAN_VARIANT == "mushroom"
-            else AUTOMOTIVE_TEMPLATE_EXAMPLES
-        )
-        if dataset_type in examples:
-            worksheet.append(examples[dataset_type])
+        if dataset_type in TEMPLATE_EXAMPLES:
+            worksheet.append(TEMPLATE_EXAMPLES[dataset_type])
         for cell in worksheet[1]:
             cell.font = Font(bold=True, color="FFFFFF")
             cell.fill = PatternFill("solid", fgColor="416F57")
@@ -125,7 +65,7 @@ class ImportTemplateView(APIView):
             content_type=("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
         )
         response["Content-Disposition"] = (
-            f'attachment; filename="{settings.VULCAN_VARIANT}_{dataset_type}_template.xlsx"'
+            f'attachment; filename="{dataset_type}_template.xlsx"'
         )
         return response
 
@@ -135,11 +75,10 @@ class ImportInspectView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
-        templates = templates_for_variant(settings.VULCAN_VARIANT)
         tenant = tenant_for_request(request)
         file = request.FILES.get("file")
         dataset_type = request.data.get("datasetType", "")
-        if not file or dataset_type not in templates:
+        if not file or dataset_type not in TEMPLATES:
             return Response(
                 {"detail": "Choose a supported dataset type and a CSV or XLSX file."},
                 status=status.HTTP_400_BAD_REQUEST,

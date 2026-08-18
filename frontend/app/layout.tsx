@@ -3,26 +3,24 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { ApplicationBoundary } from "@/lib/auth-context";
 import { designSystemStyle } from "@/lib/design-system";
-import { getVariantConfig } from "@/lib/variant-config";
-import { VariantProvider } from "@/lib/variant";
+import { getPlatformConfig } from "@/lib/variant-config";
+import { PlatformProvider } from "@/lib/variant";
 import "./globals.css";
 
-export function generateMetadata(): Metadata {
-  const variant = getVariantConfig();
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await getPlatformConfig();
   return {
     title: {
-      default: `${variant.displayName} · Industrial Intelligence`,
-      template: `%s · ${variant.displayName}`,
+      default: `${config.displayName} · Industrial Intelligence`,
+      template: `%s · ${config.displayName}`,
     },
-    description: `${variant.displayName} ${variant.descriptor.toLocaleLowerCase("en-US")}.`,
+    description: `${config.displayName} ${config.descriptor.toLocaleLowerCase("en-US")}.`,
   };
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  // A fresh CSP nonce is attached by proxy.ts on every document request.
-  // Dynamic rendering lets Next apply it to framework and page scripts.
   await connection();
-  const variant = getVariantConfig();
+  const config = await getPlatformConfig();
   return (
     <html lang="en" suppressHydrationWarning style={designSystemStyle}>
       <head>
@@ -34,9 +32,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         />
       </head>
       <body suppressHydrationWarning>
-        <VariantProvider config={variant}>
+        <PlatformProvider config={config}>
           <ApplicationBoundary>{children}</ApplicationBoundary>
-        </VariantProvider>
+        </PlatformProvider>
       </body>
     </html>
   );

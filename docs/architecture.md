@@ -1,174 +1,123 @@
-# Architecture
+# Tamaso Platform Architecture
 
-## Shape
+## Four-Layer Separation
 
-Vulcan is a modular monolith with independently scalable background workers.
+The platform separates four independent concerns:
 
-The same application images can run as an allowlisted `mushroom` or `automotive` deployment. Each
-vertical cell has a separate hostname, Cloud Run service, database, bucket, identities and secrets;
-the runtime variant cannot be selected by a request. See the [product variant guide](variants.md).
-
-```mermaid
-flowchart LR
-    Browser[Next.js display layer] -->|same-origin session + CSRF| Next[Next.js server]
-    Next -->|JSON and multipart files| API[Django + DRF]
-    API -->|optional large objects| S3[(S3 / MinIO)]
-    API --> DB[(PostgreSQL)]
-    API --> Queue[(Redis)]
-    Queue --> Inspect[Inspection workers]
-    Queue --> Validate[Validation workers]
-    Queue --> Standardise[Standardisation workers]
-    Queue --> Analytics[Analytics workers]
-    Inspect --> S3
-    Validate --> S3
-    Standardise --> DB
-    Analytics --> DB
-    API -->|precomputed aggregates| Browser
+```
+SOFTWARE        → What application is running?
+CONFIGURATION   → How is it configured for this factory?
+DEPLOYMENT      → Which exact artifact/configuration is running?
+LICENSE         → Is this deployment allowed to operate? (future)
 ```
 
-API and future workers deploy from the same backend image. This keeps domain logic in one codebase
-while allowing expensive queues to scale independently. The current synchronous import path is the
-only complete ingestion route; object-backed worker ingestion remains disabled until download,
-malware scanning, parsing and retry handling are implemented end to end.
+Each layer is independently versioned and controlled.
 
-## Domain boundaries
+## Software Classification
 
-| Module | Owns | Does not own |
-|---|---|---|
-| `tenancy` | Tenant identity, factories, memberships, assets | Operational facts |
-| `operations` | Upload lifecycle, mapping profiles, processing jobs, validation issues | KPI formulas |
-| `analytics` | KPI definitions/results, aggregates, losses | File ingestion |
-| `alerts` | Versioned rules, evaluations, recommendations | Open-ended content generation |
-| `audit` | Actor, event, entity, factory, request context | Domain mutation |
-| `processing` | Pure readers, mapping, validation, calculation primitives | HTTP or user permissions |
-
-These boundaries are Python modules, not network services. They can be split later only if
-measured scale or team ownership justifies the operational cost.
-
-## Tenancy invariant
-
-Every business model stores `tenant_id`, even when it can be inferred from a factory. This is
-intentional:
-
-1. Query scoping is explicit and indexable.
-2. Cross-tenant joins can be rejected close to the API boundary.
-3. Audit, export, and retention jobs do not have to reconstruct ownership.
-4. Future row-level security can use the same column.
-
-`tenant_for_request` resolves the authenticated membership. Factory querysets are then
-intersected with the membership's factory access. Frontend filters never grant access.
-
-## Upload lifecycle
-
-The lifecycle is encoded in `UploadState` and `ALLOWED_TRANSITIONS`. A caller cannot skip from
-`CREATED` to `COMPLETED`.
-
-```text
-CREATED → UPLOADING → UPLOADED → QUEUED → INSPECTING
-        → MAPPING_REQUIRED → READY_FOR_VALIDATION → VALIDATING
-        → VALIDATION_REVIEW → APPROVED → STANDARDISING
-        → CALCULATING_KPIS → GENERATING_ALERTS → COMPLETED
+```
+Industry → Operating Archetype → Sub-sector → Scope
 ```
 
-Each worker stage has a unique `(upload, stage, processing_version)` job key. Completed jobs
-return without repeating side effects; recoverable worker errors retry with exponential backoff
-and jitter. Raw object keys include tenant, factory, template, calendar partition, and upload ID.
-They are never overwritten.
+| Code | Meaning |
+|------|---------|
+| MFG | Manufacturing |
+| DA | Discrete Assembly |
+| PMC | Process Manufacturing Continuous |
+| AUTO | Automotive |
+| AGRI | Agriculture |
+| ALL | Complete platform capability |
 
-## Processing safety
+Examples:
+- `MFG.DA.AUTO.ALL` — Automotive discrete assembly, full platform
+- `MFG.PMC.AGRI.ALL` — Agriculture process manufacturing, full platform
 
-- CSV inspection handles UTF-8 BOMs and samples without loading the full file.
-- XLSX inspection uses read-only and `data_only` modes with external links disabled. Formulas
-  are never executed.
-- Mapping uses stable header normalisation, approved profiles, aliases, and deterministic
-  similarity. It cannot auto-approve an LLM guess.
-- Validation emits structured rule codes and distinguishes warnings from rejected rows.
-- OEE calculation validates reconciliation and returns availability, performance, quality,
-  result, and formula version.
-- Large intermediate datasets belong in Parquet/S3; only approved records and aggregates belong
-  in PostgreSQL.
+## Branch Hierarchy
 
-## Dashboard contract
+```
+main (Platform Core)
+├── MFG.DA.AUTO.ALL (Operating Template)
+│   ├── client/MFG.DA.AUTO.ALL/MYPOL
+│   └── client/MFG.DA.AUTO.ALL/INFINEXXGEN
+└── MFG.PMC.AGRI.ALL (Operating Template)
+    └── client/MFG.PMC.AGRI.ALL/SANJ
+```
 
-Charts consume aggregate responses with fewer than 5,000 visible points. KPI responses retain
-their inputs and definition version. The API never returns raw operational histories merely to
-calculate a chart in the browser.
+### Platform Core (`main`)
 
-The frontend's `lib/api-client.ts` is the only data boundary. There is no browser database,
-local-storage fallback, validation engine, or KPI engine. Django returns presentation-ready
-aggregates; the frontend formats and visualises them.
+Shared framework code that is NOT deployable on its own:
+- Authentication and authorization
+- Common UI shell and components
+- REST API framework
+- Data ingestion and processing framework
+- Database layer and migrations
+- KPI calculation primitives (OEE, steam recovery)
+- Deployment infrastructure (scripts, Terraform, CI/CD)
+- Documentation
 
-## Authentication and request boundary
+### Operating Template (e.g. `MFG.DA.AUTO.ALL`)
 
-The public surface is the full-viewport landing page and its email/password form. All operational
-application routes and business API endpoints require an authenticated Django session. Next.js
-proxies `/api/backend/*` to Django, so browser requests, cookies, and CSRF protection remain on one
-origin; the backend URL is never a public browser configuration value.
+Complete, deployable application for one industry vertical:
+- Industry-specific field templates and labels
+- Industry-specific KPIs and analytics
+- Industry-specific alerts and workflows
+- Seed data and test fixtures
+- `platform.json` manifest with display names, terminology, features
 
-Sign-in follows this sequence:
+### Client Branch (e.g. `client/MFG.DA.AUTO.ALL/MYPOL`)
 
-1. The browser fetches a masked CSRF token and keeps it in memory. It sends that token on the
-   sign-in request and every later unsafe request; credentials and session material are never
-   persisted in local storage.
-2. Django resolves a unique, Unicode-normalised `EmailIdentity`. Unknown identities take the
-   same password-hash path as known identities, and failures use one generic response. Passwords
-   are stored with Argon2id by preference and Django's supported hashers remain available for
-   gradual upgrades.
-3. Per-IP and per-account sign-in throttles use opaque cache keys. Production requires the shared
-   Redis-backed cache so limits work across application processes.
-4. A successful password check must also resolve an active membership in an active tenant.
-   Django rotates the session and CSRF secrets, stores the active membership in the server-side
-   session, and records the sign-in event in the audit history.
-5. Each protected query is scoped again through that membership and its factory access. A factory
-   ID from the browser can narrow access but can never expand it. Sign-out is a CSRF-protected POST
-   that invalidates the session and records an audit event.
+Customer-specific configuration layered on top of the operating template:
+- `config/config.json` with versioned client configuration
+- Customer-specific connectors or integrations (rare)
+- Customer-specific workflow overrides (rare)
 
-Authentication and personalised API responses are marked private and `no-store`. Session cookies
-are HTTP-only and `SameSite=Lax`; non-debug deployments additionally use Secure `__Host-` cookies,
-HTTPS redirection, HSTS, clickjacking denial, MIME-sniffing protection, a same-origin referrer
-policy, and frontend security headers including a restrictive Content Security Policy. Next.js
-generates a fresh nonce for every document request and applies it to framework/page scripts, so
-production script execution does not depend on `unsafe-inline`.
+## Artifact Architecture
 
-Every backend response carries a server-generated request ID that is also bound to structured JSON
-production logs. Common credential, session, and token fields are redacted before formatting.
-Anonymous sign-in failures are logged without request bodies or plaintext addresses: the account
-dimension is a secret-keyed, truncated fingerprint and client IP resolution follows the same
-explicit trusted-proxy count as throttling and audit records.
+```
+GitHub Actions → Build → Test → Container Build → Security/QA → Immutable Artifact → Tamaso Artifact Registry
+```
 
-Production configuration fails closed by default: debug mode must be explicitly enabled for local
-work, while non-debug startup requires a high-entropy secret key, PostgreSQL URL, Redis/cache URLs,
-an exact HTTPS CSRF origin, and an explicit host allowlist; wildcard hosts are rejected.
-CORS origins and CSRF trusted origins are separate allowlists. Forwarded protocol/host trust is
-disabled unless the deployment explicitly enables it for a known proxy topology, and HSTS
-subdomain coverage and preload are separate opt-ins rather than assumptions.
-The Django admin URL is registered only in explicit debug mode so its stock login cannot become an
-unthrottled production authentication path.
+Each operating template produces exactly two artifacts:
+- `mfg-da-auto-all-backend:1.0.0` (Django + Gunicorn)
+- `mfg-da-auto-all-frontend:1.0.0` (Next.js)
 
-## Current lightweight data shape
+Production deployments reference artifacts by immutable digest:
+```
+mfg-da-auto-all-backend@sha256:abc123...
+```
 
-Factory identity and master data are relational and factory-scoped. Each upload preserves its
-headers, raw rows, approved mapping, omitted columns, validation issues and lineage in Django.
-Approved rows become searchable `StandardRecord` rows with common dimensions plus typed JSON
-values. Project master and project-stage sheets use the same layer; analytics resolves the newest
-approved source per stable project/stage key before building the portfolio, tracker, prediction and
-alerts. This keeps the MVP schema small while preserving a clean migration path to dedicated
-production, downtime, quality, inventory, order and project fact tables once their grains stabilize.
+## Deployment Models
 
-Trusted seed commands may construct a workspace identity outside an HTTP request, but that helper
-is not available to request handlers. Seeded development users require an explicitly supplied
-email and password; the repository contains no shared or default login credential.
+### Customer GCE (Production)
 
-## Next delivery slices
+Customer owns the GCP infrastructure. Tamaso deploys artifacts via:
+1. GitHub Actions triggers deployment
+2. Authenticated access to customer GCP via Workload Identity + IAP
+3. Deploy script on customer VM pulls images by digest
+4. Automated backup → migration → health check → rollback on failure
 
-1. Add metadata-driven template and rule administration APIs.
-2. Connect the pure readers/validators to worker object downloads and Parquet outputs.
-3. Add standardised production, downtime, quality, and inventory fact models after the open
-   grain/unit/correction decisions in the specification are locked.
-4. Materialise line, machine, SKU, shift, inventory-risk, and data-quality aggregates.
-5. Add malware scanning and multipart-upload completion.
-6. Add object-level approval and recommendation-publication permissions.
-7. Add passkeys and phishing-resistant MFA, session inventory/revocation, and step-up checks for
-   high-impact administrative actions.
-8. Add OpenTelemetry/Sentry with request correlation and redaction, queue-depth autoscaling,
-   backup-restore tests, and representative load tests.
+### Tamaso Demo (Internal)
+
+Cloud Run deployment for internal showcases:
+- Same artifacts as customer deployments (digest-pinned)
+- IAM-restricted to Tamaso team members
+- Managed via Terraform in `infra/tamaso-demo/`
+
+## Ownership Boundaries
+
+| Tamaso Controls | Customer Controls |
+|-----------------|-------------------|
+| Source code | GCP infrastructure |
+| Platform architecture | Operational data |
+| Container artifacts | Factory data |
+| Release process | Customer users |
+| Deployment tooling | Configuration data |
+| License (future) | |
+
+## Version Identity
+
+Complete deployment identity:
+```
+Artifact Family / Platform Version / Client Config / Digest / Deployment ID
+MFG.DA.AUTO.ALL / 1.0.0 / MYPOL-C01 / sha256:abc123 / mypol-prod-01
+```

@@ -27,17 +27,17 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useFactory } from "@/lib/factory-context";
-import { useVariant } from "@/lib/variant";
+import { usePlatform } from "@/lib/variant";
 
 function Brand() {
-  const variant = useVariant();
-  const BrandIcon = variant.features.mushroomAnalytics ? Sprout : Factory;
+  const variant = usePlatform();
+  const BrandIcon = false ? Sprout : Factory;
   return <Link className="brand" href="/dashboard" aria-label={`${variant.displayName} home`}><span className="brand-mark"><BrandIcon size={18} strokeWidth={2.8} /></span><span><strong>{variant.displayName.toLocaleUpperCase("en-US")}</strong><small>{variant.descriptor}</small></span></Link>;
 }
 
 function Sidebar({ open, closed, onClose, onNavigate }: { open: boolean; closed: boolean; onClose: () => void; onNavigate: () => void }) {
   const pathname = usePathname();
-  const variant = useVariant();
+  const variant = usePlatform();
   const { state, intelligence, setActiveFactory } = useFactory();
   const [factoryMenu, setFactoryMenu] = useState(false);
   const activeFactory = state.factories.find((factory) => factory.id === state.activeFactoryId) ?? state.factories[0];
@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { intelligence, filters, state, toggleAction } = useFactory();
   const { user, logout } = useAuth();
-  const variant = useVariant();
+  const variant = usePlatform();
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const openActions = state.actions.filter((action) => action.status === "open");
@@ -140,7 +140,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <button className="sidebar-toggle" onClick={toggleSidebar} aria-label="Open or close sidebar"><PanelLeftClose className="sidebar-close-icon" size={17} /><PanelLeftOpen className="sidebar-open-icon" size={17} /></button>
     <div className="app-main">
       <header className="topbar">
-        <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark">{variant.features.mushroomAnalytics ? <Sprout size={16} /> : <Factory size={16} />}</span><strong>{variant.displayName.toLocaleUpperCase("en-US")}</strong></div></div>
+        <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark">{false ? <Sprout size={16} /> : <Factory size={16} />}</span><strong>{variant.displayName.toLocaleUpperCase("en-US")}</strong></div></div>
         <div className="topbar-context"><span className="shift-label">{filters.shift === "all" ? "All shifts" : filters.shift} · {filters.from} to {filters.to}</span></div>
         <div className="topbar-actions" ref={topbarActionsRef}>
           <button className="icon-button action-menu-button" aria-label={`${openActions.length} open action items`} onClick={() => { setActionsOpen((value) => !value); setNotificationsOpen(false); setProfileOpen(false); }}><ClipboardList size={19} />{openActions.length > 0 && <span className="action-counter">{openActions.length > 99 ? "99+" : openActions.length}</span>}</button>

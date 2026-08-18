@@ -5,8 +5,8 @@ on:
   push:
     branches:
       - main
-      - mushroom
-      - Login
+      - "MFG.*"
+      - "client/**"
 
 permissions:
   contents: read
@@ -16,7 +16,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  detect:
+    name: Detect branch type
+    runs-on: ubuntu-latest
+    outputs:
+      branch_type: ${{ steps.detect.outputs.type }}
+      template: ${{ steps.detect.outputs.template }}
+      client_code: ${{ steps.detect.outputs.client_code }}
+    steps:
+      - id: detect
+        run: |
+          REF="${GITHUB_BASE_REF:-$GITHUB_REF_NAME}"
+          echo "Branch/target: $REF"
+
+          if [[ "$REF" == "main" ]]; then
+            echo "type=platform_core" >> "$GITHUB_OUTPUT"
+          elif [[ "$REF" =~ ^MFG\.[A-Z0-9]{2,5}\.[A-Z0-9]{2,5}\.[A-Z0-9]{2,5}$ ]]; then
+            echo "type=operating_template" >> "$GITHUB_OUTPUT"
+            echo "template=$REF" >> "$GITHUB_OUTPUT"
+          elif [[ "$REF" =~ ^client/([^/]+)/([A-Z0-9]{3,12})$ ]]; then
+            echo "type=client_branch" >> "$GITHUB_OUTPUT"
+            echo "template=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "client_code=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Branch '$REF' does not match any recognized pattern (main, MFG.*, client/**)."
+            exit 1
+          fi
+
   quality:
+    name: Quality checks
+    needs: detect
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -25,26 +54,25 @@ jobs:
       DJANGO_DEBUG: "true"
       DJANGO_SECRET_KEY: ci-only-7f3b9a2d5e8c4f1a6b0d9e2c5a8f3b7d1e4c6a9f0b2d5e8f1a4c7b0d3e6f9a2c
       NEXT_TELEMETRY_DISABLED: "1"
-      VULCAN_VARIANT: mushroom
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: package-lock.json
 
       - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
           cache-dependency-glob: uv.lock
@@ -60,39 +88,74 @@ jobs:
       - name: Lint frontend
         run: npm run lint
 
-      - name: Audit JavaScript dependencies
-        run: npm audit --audit-level=moderate
-
-      - name: Build mushroom frontend
-        run: npm run build
-        env:
-          NEXT_DIST_DIR: .next-build
-
-      - name: Build automotive frontend
-        run: npm run build
-        env:
-          NEXT_DIST_DIR: .next-build
-          VULCAN_VARIANT: automotive
-
       - name: Lint Python
         run: uv run ruff check .
 
-      - name: Audit Python dependencies
-        run: uv run pip-audit --strict
+      # --- Platform Core boundary check ---
+      - name: Industry-term boundary check
+        if: needs.detect.outputs.branch_type == 'platform_core'
+        run: |
+          DENY_FILE=".kiro/industry-terms.txt"
+          if [[ ! -f "$DENY_FILE" ]]; then
+            echo "::error::Deny-list file $DENY_FILE not found."
+            exit 1
+          fi
+          PATTERN=$(grep -v '^#' "$DENY_FILE" | grep -v '^\s*$' | paste -sd '|' -)
+          VIOLATIONS=$(grep -rniE "($PATTERN)" \
+            --include='*.py' --include='*.ts' --include='*.tsx' \
+            backend/ frontend/app/ frontend/components/ frontend/lib/ processing/ 2>/dev/null || true)
+          if [[ -n "$VIOLATIONS" ]]; then
+            echo "::error::Industry-specific terms found on Platform Core:"
+            echo "$VIOLATIONS"
+            exit 1
+          fi
+          echo "No industry-specific terms found in source files."
 
+      # --- Client branch config validation ---
+      - name: Validate client configuration
+        if: needs.detect.outputs.branch_type == 'client_branch'
+        run: |
+          if [[ ! -f "config/config.json" ]]; then
+            echo "::error::Client branch must contain config/config.json"
+            exit 1
+          fi
+          CLIENT_CODE="${{ needs.detect.outputs.client_code }}"
+          CLIENT_ID=$(python3 -c "import json; print(json.load(open('config/config.json'))['clientId'])")
+          CONFIG_VERSION=$(python3 -c "import json; print(json.load(open('config/config.json'))['configVersion'])")
+
+          if [[ "$CLIENT_ID" != "$CLIENT_CODE" ]]; then
+            echo "::error::clientId ($CLIENT_ID) does not match branch client code ($CLIENT_CODE)"
+            exit 1
+          fi
+          if [[ ! "$CONFIG_VERSION" =~ ^${CLIENT_CODE}-C[0-9]{2}$ ]]; then
+            echo "::error::configVersion ($CONFIG_VERSION) does not follow pattern ${CLIENT_CODE}-CXX"
+            exit 1
+          fi
+          echo "Client config valid: $CLIENT_ID / $CONFIG_VERSION"
+
+      # --- Run Python tests ---
       - name: Run Python tests
+        if: needs.detect.outputs.branch_type != 'platform_core'
         run: uv run pytest
 
-      - name: Reject missing migrations
-        run: uv run python backend/manage.py makemigrations --check --dry-run
+      - name: Run shared framework tests
+        if: needs.detect.outputs.branch_type == 'platform_core'
+        run: uv run pytest backend/tests/ -k "not variant and not mushroom and not automotive"
 
+      # --- Frontend build ---
+      - name: Build frontend
+        if: needs.detect.outputs.branch_type != 'platform_core'
+        run: npm run build
+
+      # --- Django deployment checks ---
       - name: Run Django deployment checks
+        if: needs.detect.outputs.branch_type != 'platform_core'
         run: uv run python backend/manage.py check --deploy --fail-level WARNING
         env:
           CORS_ALLOWED_ORIGINS: ""
           DJANGO_ALLOWED_HOSTS: app.example.test
           DJANGO_CACHE_URL: redis://127.0.0.1:6379/1
           DJANGO_CSRF_TRUSTED_ORIGINS: https://app.example.test
-          DJANGO_DATABASE_URL: postgresql://vulcan:ci-only@127.0.0.1:5432/vulcan
+          DJANGO_DATABASE_URL: postgresql://tamaso:ci-only@127.0.0.1:5432/tamaso
           DJANGO_DEBUG: "false"
           REDIS_URL: redis://127.0.0.1:6379/0

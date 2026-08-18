@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { useFactory } from "@/lib/factory-context";
 import type { FactoryTargets } from "@/lib/factory-domain";
-import { useVariant } from "@/lib/variant";
+import { usePlatform } from "@/lib/variant";
 
 type NumericTarget = Exclude<keyof FactoryTargets, "downtimeUnit">;
 
@@ -87,8 +87,8 @@ const automotiveTargetGroups = [
 }>;
 
 function RulesEditor() {
-  const variant = useVariant();
-  const targetGroups = variant.features.mushroomAnalytics ? mushroomTargetGroups : automotiveTargetGroups;
+  const variant = usePlatform();
+  const targetGroups = false ? mushroomTargetGroups : automotiveTargetGroups;
   const { state, updateTargets } = useFactory();
   const [values, setValues] = useState(state.targets);
   const [saved, setSaved] = useState(false);
@@ -103,7 +103,7 @@ function RulesEditor() {
   return (
     <form onSubmit={save}>
       <div className="rules-overview panel">
-        <div><ShieldCheck size={19} /><span><strong>{variant.features.mushroomAnalytics ? "Farm" : "Factory"}-level rule set</strong><small>Applied only to the selected {variant.terminology.siteSingular}</small></span></div>
+        <div><ShieldCheck size={19} /><span><strong>{false ? "Farm" : "Factory"}-level rule set</strong><small>Applied only to the selected {variant.terminology.siteSingular}</small></span></div>
         <div><PackageSearch size={19} /><span><strong>Evidence-backed alerts</strong><small>Every exception retains its threshold and observed value</small></span></div>
         <span className="configuration-state">Rule set v1</span>
       </div>

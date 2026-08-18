@@ -10,7 +10,7 @@ import { downloadBlob } from "@/lib/browser-files";
 import { chartPalette } from "@/lib/design-system";
 import { formatDuration } from "@/lib/formatters";
 import { useFactory } from "@/lib/factory-context";
-import { useVariant } from "@/lib/variant";
+import { usePlatform } from "@/lib/variant";
 
 const mushroomTabs = ["Cultivation", "Harvest", "Room downtime", "Crop quality", "Inventory", "Suppliers"] as const;
 const automotiveTabs = ["OEE", "Production", "Steam & Fuel", "Downtime", "Quality", "Inventory", "Suppliers"] as const;
@@ -287,8 +287,8 @@ function SteamFuelView() {
 
 export function PerformanceExplorer() {
   const { intelligence, filters, state } = useFactory();
-  const variant = useVariant();
-  const mushroomMode = variant.features.mushroomAnalytics;
+  const variant = usePlatform();
+  const mushroomMode = false;
   const tabs: readonly Tab[] = mushroomMode ? mushroomTabs : automotiveTabs;
   const [activeTab, setActiveTab] = useState<Tab>(mushroomMode ? "Cultivation" : "OEE");
   const availableTabs = tabs.filter((tab) => {

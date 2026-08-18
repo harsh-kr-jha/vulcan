@@ -25,7 +25,7 @@ import { formatDuration } from "@/lib/formatters";
 import { useFactory } from "@/lib/factory-context";
 import type { DatasetType } from "@/lib/factory-domain";
 import { useProjects } from "@/lib/project-context";
-import { useVariant } from "@/lib/variant";
+import { usePlatform } from "@/lib/variant";
 
 const colors = {
   plan: chartPalette.planned,
@@ -34,7 +34,7 @@ const colors = {
 };
 
 function HomeModuleGrid() {
-  const variant = useVariant();
+  const variant = usePlatform();
   const { projects } = useProjects();
   const { intelligence } = useFactory();
   const delayed = projects.filter((project) => project.status === "Delayed" || project.deliveryPrediction.state !== "On track").length;
@@ -42,7 +42,7 @@ function HomeModuleGrid() {
   const criticalAlerts = activeAlerts.filter((alert) => alert.severity === "critical").length;
   const twin = intelligence.digitalTwin.summary;
   const hasProduction = intelligence.dataAvailability.production > 0;
-  const mushroom = variant.features.mushroomAnalytics;
+  const mushroom = false;
   const modules = [
     { href: "/projects", label: variant.navigation.projects, description: mushroom ? "Track every batch from compost preparation to cold room." : "Track customer projects, stages and delivery risk.", value: projects.filter((project) => project.status !== "Completed").length.toString(), status: `active ${variant.terminology.projectPlural}`, meta: `${delayed} at risk`, icon: FolderKanban },
     { href: "/digital-twin", label: variant.navigation["digital-twin"], description: mushroom ? "See crop stages, growing rooms and current conditions." : "See production lines, processes, machines and current state.", value: twin.running.toString(), status: `of ${twin.machines} assets healthy`, meta: `${twin.attention} need attention`, icon: Workflow },
@@ -94,7 +94,7 @@ function EmptyData({ type }: { type: string }) {
 const coreMonitoredDatasets = ["production", "downtime", "quality", "inventory", "supplier"] as const;
 
 function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof useFactory>["intelligence"] }) {
-  const { datasets: datasetLabels, terminology } = useVariant();
+  const { datasets: datasetLabels, terminology } = usePlatform();
   const monitoredDatasets: DatasetType[] = intelligence.digitalTwin.summary.processes
     ? ["process", ...coreMonitoredDatasets]
     : [...coreMonitoredDatasets];
@@ -124,8 +124,8 @@ function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof us
 
 function ProductionWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
-  const variant = useVariant();
-  const mushroom = variant.features.mushroomAnalytics;
+  const variant = usePlatform();
+  const mushroom = false;
   const unit = mushroom ? " kg" : "";
   const option = useMemo<EChartsOption>(
     () => ({
@@ -211,8 +211,8 @@ function ProductionWidget({ number }: { number: number }) {
 
 function MajorLossesWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
-  const variant = useVariant();
-  const mushroom = variant.features.mushroomAnalytics;
+  const variant = usePlatform();
+  const mushroom = false;
   const unit = mushroom ? " kg" : "";
   const maxDowntime = intelligence.machineLoss[0]?.minutes || 1;
   const maxDefect = intelligence.defectLoss[0]?.rejected || 1;
@@ -275,7 +275,7 @@ function MajorLossesWidget({ number }: { number: number }) {
 
 function RoomConditionsWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
-  const mushroom = useVariant().features.mushroomAnalytics;
+  const mushroom = false;
   return <section className="panel command-widget room-conditions-widget">
     <PanelHeader number={number} title={mushroom ? "Growing-room conditions" : "Process conditions"} subtitle={`Latest temperature, humidity and CO2 by ${mushroom ? "room" : "process"}`} href="/digital-twin" />
     <div className="room-condition-list">
@@ -357,8 +357,8 @@ function SupplierPerformanceWidget({ number }: { number: number }) {
 }
 
 export function DashboardOverview() {
-  const variant = useVariant();
-  const mushroom = variant.features.mushroomAnalytics;
+  const variant = usePlatform();
+  const mushroom = false;
   const { state, filters, intelligence } = useFactory();
   const activeFactory = state.factories.find((factory) => factory.id === state.activeFactoryId);
   const latestUpload = state.uploads[0];

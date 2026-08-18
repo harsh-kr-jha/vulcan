@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { api } from "./api-client";
 import type { CustomKpiDefinition, DashboardFilters, FactoryConfig, FactoryMasters, FactoryState, FactoryTargets, Intelligence, MasterItem } from "./factory-domain";
 import { defaultFilters, emptyIntelligence } from "./factory-domain";
-import { useVariant } from "./variant";
+import { usePlatform } from "./variant";
 
 type MasterCollection = keyof FactoryMasters;
 interface FactoryContextValue {
@@ -23,7 +23,7 @@ const defaultTargets: FactoryTargets = { oee: 0, availability: 95, performance: 
 const FactoryContext = createContext<FactoryContextValue | null>(null);
 
 export function FactoryProvider({ children }: { children: React.ReactNode }) {
-  const variant = useVariant();
+  const variant = usePlatform();
   const [state, setState] = useState(() => ({ ...emptyState, company: { ...emptyState.company, industry: variant.industry } })); const [intelligence, setIntelligence] = useState<Intelligence>(emptyIntelligence); const [filters, setFilters] = useState(defaultFilters); const [hydrated, setHydrated] = useState(false); const [loading, setLoading] = useState(true); const [error, setError] = useState("");
   const requestSequence = useRef(0);
   const refresh = useCallback(async () => { const requestId = ++requestSequence.current; setLoading(true); setError(""); try { const payload = await api.workspace(filters); if (requestId !== requestSequence.current) return; setState(payload.state); const activeFactory = payload.state.factories.find((item) => item.id === payload.state.activeFactoryId); const recommended = activeFactory?.recommendedRange; if (!filters.factoryId && payload.state.activeFactoryId) { setFilters((current) => ({ ...current, factoryId: payload.state.activeFactoryId, ...(recommended ? recommended : {}) })); return; } setIntelligence(payload.intelligence); } catch (cause) { if (requestId === requestSequence.current) setError(cause instanceof Error ? cause.message : "Django API is unavailable."); } finally { if (requestId === requestSequence.current) { setLoading(false); setHydrated(true); } } }, [filters]);

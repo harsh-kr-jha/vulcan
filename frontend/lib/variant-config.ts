@@ -1,21 +1,41 @@
 import "server-only";
 
-import automotiveManifest from "../../variants/automotive.json";
-import mushroomManifest from "../../variants/mushroom.json";
-import type { VariantConfig, VariantId } from "@/lib/variant";
+import type { PlatformConfig } from "@/lib/variant";
 
-const manifests = {
-  automotive: automotiveManifest,
-  mushroom: mushroomManifest,
-} as const;
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
-export function getVariantConfig(): VariantConfig {
-  const configured = process.env.VULCAN_VARIANT?.trim().toLocaleLowerCase("en-US");
-  const variant = configured || (process.env.NODE_ENV === "development" ? "mushroom" : "");
-  if (!Object.prototype.hasOwnProperty.call(manifests, variant)) {
-    throw new Error(
-      `VULCAN_VARIANT must be one of ${Object.keys(manifests).join(", ")}; received ${variant || "an empty value"}.`,
-    );
+/**
+ * Load platform configuration from the backend at build/render time.
+ *
+ * Operating template branches provide a platform.json that the backend serves
+ * via /api/backend/platform-config/. Platform Core returns a minimal fallback.
+ */
+export async function getPlatformConfig(): Promise<PlatformConfig> {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/backend/platform-config/`, {
+      next: { revalidate: 3600 },
+    });
+    if (res.ok) {
+      return (await res.json()) as PlatformConfig;
+    }
+  } catch {
+    // Backend not reachable during build — use fallback
   }
-  return manifests[variant as VariantId] as VariantConfig;
+
+  return {
+    id: "platform-core",
+    displayName: "Tamaso Platform",
+    descriptor: "Platform Core",
+    industry: "",
+    modules: [],
+    datasets: {},
+    navigation: {},
+    terminology: {
+      siteSingular: "site",
+      sitePlural: "sites",
+      projectSingular: "project",
+      projectPlural: "projects",
+    },
+    features: {},
+  };
 }

@@ -1,0 +1,125 @@
+name: Deploy to Customer GCE
+run-name: ${{ inputs.customer_id }} · ${{ inputs.config_version }} · ${{ inputs.reason }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      customer_id:
+        description: "Client code (e.g. MYPOL)"
+        required: true
+        type: string
+      deployment_id:
+        description: "Deployment identifier (e.g. mypol-prod-01)"
+        required: true
+        type: string
+      backend_digest:
+        description: "Backend image digest (sha256:...)"
+        required: true
+        type: string
+      frontend_digest:
+        description: "Frontend image digest (sha256:...)"
+        required: true
+        type: string
+      config_version:
+        description: "Config version (e.g. MYPOL-C01)"
+        required: true
+        type: string
+      reason:
+        description: "Deployment reason"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-${{ inputs.customer_id }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.customer_id }}
+    runs-on: ubuntu-latest
+    environment:
+      name: gcp-${{ inputs.customer_id }}
+      url: ${{ vars.APP_URL }}
+    steps:
+      - name: Validate inputs
+        run: |
+          if [[ ! "${{ inputs.backend_digest }}" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "::error::Invalid backend digest format"
+            exit 1
+          fi
+          if [[ ! "${{ inputs.frontend_digest }}" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "::error::Invalid frontend digest format"
+            exit 1
+          fi
+          if [[ ! "${{ inputs.config_version }}" =~ ^[A-Z0-9]+-C[0-9]{2}$ ]]; then
+            echo "::error::Invalid config version format"
+            exit 1
+          fi
+          echo "Inputs validated."
+          echo "Customer: ${{ inputs.customer_id }}"
+          echo "Deployment: ${{ inputs.deployment_id }}"
+          echo "Backend: ${{ inputs.backend_digest }}"
+          echo "Frontend: ${{ inputs.frontend_digest }}"
+          echo "Config: ${{ inputs.config_version }}"
+          echo "Reason: ${{ inputs.reason }}"
+
+      - name: Check out deployment files
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Transfer deployment files
+        env:
+          GCE_INSTANCE: ${{ vars.GCE_INSTANCE }}
+          GCE_ZONE: ${{ vars.GCE_ZONE }}
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          gcloud compute ssh "$GCE_INSTANCE" \
+            --project "$GCP_PROJECT_ID" \
+            --zone "$GCE_ZONE" \
+            --tunnel-through-iap \
+            --command 'install -d -m 0755 /tmp/tamaso-deploy'
+          gcloud compute scp \
+            deploy/gce-customer/compose.yaml \
+            deploy/gce-customer/Caddyfile \
+            deploy/gce-customer/backup.sh \
+            deploy/gce-customer/deploy.sh \
+            "$GCE_INSTANCE:/tmp/tamaso-deploy/" \
+            --project "$GCP_PROJECT_ID" \
+            --zone "$GCE_ZONE" \
+            --tunnel-through-iap
+          gcloud compute ssh "$GCE_INSTANCE" \
+            --project "$GCP_PROJECT_ID" \
+            --zone "$GCE_ZONE" \
+            --tunnel-through-iap \
+            --command "sudo install -d -m 0755 /opt/tamaso && sudo install -m 0644 /tmp/tamaso-deploy/compose.yaml /opt/tamaso/compose.yaml && sudo install -m 0644 /tmp/tamaso-deploy/Caddyfile /opt/tamaso/Caddyfile && sudo install -m 0755 /tmp/tamaso-deploy/backup.sh /opt/tamaso/backup.sh && sudo install -m 0755 /tmp/tamaso-deploy/deploy.sh /opt/tamaso/deploy.sh"
+
+      - name: Execute deployment
+        env:
+          GCE_INSTANCE: ${{ vars.GCE_INSTANCE }}
+          GCE_ZONE: ${{ vars.GCE_ZONE }}
+          GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+        run: |
+          gcloud compute ssh "$GCE_INSTANCE" \
+            --project "$GCP_PROJECT_ID" \
+            --zone "$GCE_ZONE" \
+            --tunnel-through-iap \
+            --command "sudo /opt/tamaso/deploy.sh '${{ inputs.backend_digest }}' '${{ inputs.frontend_digest }}' '${{ inputs.config_version }}' '${{ inputs.deployment_id }}'"
+
+      - name: Verify application health
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: |
+          curl --fail --show-error --silent --retry 12 --retry-all-errors \
+            --retry-delay 10 "$APP_URL/api/backend/health/"

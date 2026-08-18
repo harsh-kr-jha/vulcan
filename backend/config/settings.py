@@ -5,8 +5,6 @@ from urllib.parse import urlsplit
 import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 
-from config.variants import load_variant_manifest
-
 BASE_DIR = Path(__file__).resolve().parent.parent
 REPOSITORY_ROOT = BASE_DIR.parent
 
@@ -45,11 +43,6 @@ def redis_location(location: str) -> bool:
 DEBUG = environment_boolean("DJANGO_DEBUG", default=False)
 SINGLE_NODE = environment_boolean("VULCAN_SINGLE_NODE", default=False)
 ADMIN_ENABLED = environment_boolean("VULCAN_ADMIN_ENABLED", default=False)
-variant_value = os.getenv("VULCAN_VARIANT", "mushroom" if DEBUG else "").strip().lower()
-if not variant_value:
-    raise ImproperlyConfigured("VULCAN_VARIANT is required when DJANGO_DEBUG is false.")
-VULCAN_VARIANT = variant_value
-VULCAN_VARIANT_CONFIG = load_variant_manifest(VULCAN_VARIANT)
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
 if not SECRET_KEY:
     if not DEBUG:

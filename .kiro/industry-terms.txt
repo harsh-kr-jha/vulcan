@@ -1,0 +1,19 @@
+# Industry-specific terms that must not appear on Platform Core source files.
+# Used by CI to grep-scan backend/, frontend/, and processing/ directories.
+# One term per line. Matching is case-insensitive.
+# Lines starting with # are comments.
+mushroom
+automotive
+agri
+cultivation
+harvest
+crop
+spawn
+substrate
+flush
+compost
+MYPOL
+INFINEXXGEN
+SANJ
+seed_mushroom
+seed_mypol

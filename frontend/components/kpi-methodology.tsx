@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useFactory } from "@/lib/factory-context";
 import { formatDuration } from "@/lib/formatters";
 import type { CustomKpiDefinition, CustomKpiResult, CustomKpiVariable, FactoryTargets, Intelligence } from "@/lib/factory-domain";
-import { useVariant } from "@/lib/variant";
+import { usePlatform } from "@/lib/variant";
 
 type Family = "OEE" | "Production" | "Energy" | "Cultivation" | "Harvest" | "Quality" | "Environment" | "Loss" | "Supply" | "Governance";
 type MetricDefinition = {
@@ -86,8 +86,8 @@ function CustomKpiBuilder({ variables, onClose, onSave }: { variables: CustomKpi
 
 export function KpiMethodology() {
   const { intelligence, state, updateCustomKpis } = useFactory();
-  const variant = useVariant();
-  const mushroomMode = variant.features.mushroomAnalytics;
+  const variant = usePlatform();
+  const mushroomMode = false;
   const metrics = mushroomMode ? mushroomMetrics : automotiveMetrics;
   const families: readonly (Family | "All")[] = mushroomMode ? mushroomFamilies : automotiveFamilies;
   const [family, setFamily] = useState<Family | "All">("All");

@@ -43,7 +43,7 @@ import {
   type StageStatus,
 } from "@/lib/project-data";
 import { useProjects } from "@/lib/project-context";
-import { useVariant } from "@/lib/variant";
+import { usePlatform } from "@/lib/variant";
 
 type TrackerTab = "Overview" | "Timeline" | "Activity" | "Documents";
 
@@ -184,8 +184,8 @@ function ProjectInfoStrip({ project, mushroomMode }: { project: FactoryProject; 
 }
 
 export function ProjectTracker({ projectId }: { projectId: string }) {
-  const variant = useVariant();
-  const mushroomMode = variant.features.mushroomAnalytics;
+  const variant = usePlatform();
+  const mushroomMode = false;
   const { getProject } = useProjects();
   const project = getProject(projectId);
   const [activeTab, setActiveTab] = useState<TrackerTab>("Overview");

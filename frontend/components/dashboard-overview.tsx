@@ -110,6 +110,7 @@ function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof us
       <div className="data-health-notice-list">
         {issues.map((issue) => {
           const label = datasetLabels[issue.datasetType as DatasetType];
+          if (!label) return null;
           const detail = issue.status === "absent"
             ? `No ${label.toLowerCase()} sheet has been approved.`
             : issue.ageDays === null

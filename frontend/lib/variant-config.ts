@@ -12,7 +12,7 @@ const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
  */
 export async function getPlatformConfig(): Promise<PlatformConfig> {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/backend/platform-config/`, {
+    const res = await fetch(`${BACKEND_URL}/api/platform/config/`, {
       next: { revalidate: 3600 },
     });
     if (res.ok) {

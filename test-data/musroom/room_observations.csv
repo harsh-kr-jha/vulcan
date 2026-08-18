@@ -1,0 +1,29 @@
+date,line,process,machine,shift,status,input_quantity,output_quantity,rejected_quantity,run_minutes,cycle_time_minutes,temperature_c,humidity_pct,co2_ppm,substrate_moisture_pct,water_litres,treatment,treatment_quantity,temperature_min_c,temperature_max_c,humidity_min_pct,humidity_max_pct,co2_max_ppm,pressure_bar,energy_kwh,downtime_minutes,operator,batch_id
+2026-07-30,Growing Wing A,CROP,GR-01,Day Crop Care,running,308.88,297,6,1432,30240,17.6,88.5,925,68.5,245,,0,16,19,85,92,1200,,52,8,Musroom Crop Team,MUS-2607-R1
+2026-07-30,Growing Wing A,CROP,GR-02,Day Crop Care,running,314.08,302,7,1432,30240,17.8,89.0,970,68.5,255,,0,16,19,85,92,1200,,60,8,Musroom Crop Team,MUS-2607-R2
+2026-07-30,Growing Wing A,CROP,GR-03,Day Crop Care,running,319.28000000000003,307,8,1432,30240,18.0,89.5,1015,68.5,265,,0,16,19,85,92,1200,,68,8,Musroom Crop Team,MUS-2607-R3
+2026-07-30,Growing Wing A,CROP,GR-04,Day Crop Care,running,324.48,312,9,1432,30240,18.2,90.0,1060,68.5,275,,0,16,19,85,92,1200,,76,8,Musroom Crop Team,MUS-2607-R4
+2026-07-31,Growing Wing A,CROP,GR-01,Day Crop Care,running,313.04,301,6,1432,30240,17.6,88.5,925,68.5,245,Lime + approved crop-care spray,30,16,19,85,92,1200,,52,8,Musroom Crop Team,MUS-2607-R1
+2026-07-31,Growing Wing A,CROP,GR-02,Day Crop Care,running,318.24,306,7,1432,30240,17.8,89.0,970,68.5,255,Lime + approved crop-care spray,30,16,19,85,92,1200,,60,8,Musroom Crop Team,MUS-2607-R2
+2026-07-31,Growing Wing A,CROP,GR-03,Day Crop Care,running,323.44,311,8,1432,30240,18.0,89.5,1015,68.5,265,Lime + approved crop-care spray,30,16,19,85,92,1200,,68,8,Musroom Crop Team,MUS-2607-R3
+2026-07-31,Growing Wing A,CROP,GR-04,Day Crop Care,running,328.64,316,9,1432,30240,18.2,90.0,1060,68.5,275,Lime + approved crop-care spray,30,16,19,85,92,1200,,76,8,Musroom Crop Team,MUS-2607-R4
+2026-08-01,Growing Wing A,CROP,GR-01,Day Crop Care,running,317.2,305,6,1432,30240,17.6,88.5,925,68.5,245,,0,16,19,85,92,1200,,52,8,Musroom Crop Team,MUS-2607-R1
+2026-08-01,Growing Wing A,CROP,GR-02,Day Crop Care,running,322.40000000000003,310,7,1432,30240,17.8,89.0,970,68.5,255,,0,16,19,85,92,1200,,60,8,Musroom Crop Team,MUS-2607-R2
+2026-08-01,Growing Wing A,CROP,GR-03,Day Crop Care,running,327.6,315,8,1432,30240,18.0,89.5,1015,68.5,265,,0,16,19,85,92,1200,,68,8,Musroom Crop Team,MUS-2607-R3
+2026-08-01,Growing Wing A,CROP,GR-04,Day Crop Care,running,332.8,320,9,1432,30240,18.2,90.0,1060,68.5,275,,0,16,19,85,92,1200,,76,8,Musroom Crop Team,MUS-2607-R4
+2026-08-02,Growing Wing A,CROP,GR-01,Day Crop Care,running,321.36,309,6,1432,30240,17.6,88.5,925,68.5,245,,0,16,19,85,92,1200,,52,8,Musroom Crop Team,MUS-2607-R1
+2026-08-02,Growing Wing A,CROP,GR-02,Day Crop Care,running,326.56,314,7,1432,30240,17.8,89.0,970,68.5,255,,0,16,19,85,92,1200,,60,8,Musroom Crop Team,MUS-2607-R2
+2026-08-02,Growing Wing A,CROP,GR-03,Day Crop Care,running,331.76,319,8,1432,30240,18.0,89.5,1015,68.5,265,,0,16,19,85,92,1200,,68,8,Musroom Crop Team,MUS-2607-R3
+2026-08-02,Growing Wing A,CROP,GR-04,Day Crop Care,running,336.96000000000004,324,9,1432,30240,18.2,90.0,1060,68.5,275,,0,16,19,85,92,1200,,76,8,Musroom Crop Team,MUS-2607-R4
+2026-08-03,Growing Wing A,CROP,GR-01,Day Crop Care,running,325.52000000000004,313,6,1432,30240,17.6,88.5,925,68.5,245,,0,16,19,85,92,1200,,52,8,Musroom Crop Team,MUS-2607-R1
+2026-08-03,Growing Wing A,CROP,GR-02,Day Crop Care,running,330.72,318,7,1432,30240,17.8,89.0,970,68.5,255,,0,16,19,85,92,1200,,60,8,Musroom Crop Team,MUS-2607-R2
+2026-08-03,Growing Wing A,CROP,GR-03,Day Crop Care,running,335.92,323,8,1432,30240,18.0,89.5,1015,68.5,265,,0,16,19,85,92,1200,,68,8,Musroom Crop Team,MUS-2607-R3
+2026-08-03,Growing Wing A,CROP,GR-04,Day Crop Care,running,341.12,328,9,1432,30240,18.2,90.0,1060,68.5,275,,0,16,19,85,92,1200,,76,8,Musroom Crop Team,MUS-2607-R4
+2026-08-04,Growing Wing A,CROP,GR-01,Day Crop Care,running,329.68,317,6,1432,30240,17.6,88.5,925,68.5,245,Lime + approved crop-care spray,30,16,19,85,92,1200,,52,8,Musroom Crop Team,MUS-2607-R1
+2026-08-04,Growing Wing A,CROP,GR-02,Day Crop Care,running,334.88,322,7,1432,30240,17.8,89.0,970,68.5,255,Lime + approved crop-care spray,30,16,19,85,92,1200,,60,8,Musroom Crop Team,MUS-2607-R2
+2026-08-04,Growing Wing A,CROP,GR-03,Day Crop Care,running,340.08,327,12,1432,30240,18.0,89.5,1015,68.5,265,Lime + approved crop-care spray,30,16,19,85,92,1200,,68,8,Musroom Crop Team,MUS-2607-R3
+2026-08-04,Growing Wing A,CROP,GR-04,Day Crop Care,running,345.28000000000003,332,9,1432,30240,18.2,90.0,1060,68.5,275,Lime + approved crop-care spray,30,16,19,85,92,1200,,76,8,Musroom Crop Team,MUS-2607-R4
+2026-08-05,Growing Wing A,CROP,GR-01,Day Crop Care,running,333.84000000000003,321,6,1432,30240,17.6,88.5,925,68.5,245,,0,16,19,85,92,1200,,52,8,Musroom Crop Team,MUS-2607-R1
+2026-08-05,Growing Wing A,CROP,GR-02,Day Crop Care,running,339.04,326,7,1432,30240,17.8,89.0,970,68.5,255,,0,16,19,85,92,1200,,60,8,Musroom Crop Team,MUS-2607-R2
+2026-08-05,Growing Wing A,CROP,GR-03,Day Crop Care,warning,344.24,331,12,1366,30240,18.0,80.5,1620,68.5,265,,0,16,19,85,92,1200,,68,74,Musroom Crop Team,MUS-2607-R3
+2026-08-05,Growing Wing A,CROP,GR-04,Day Crop Care,running,349.44,336,9,1432,30240,18.2,90.0,1060,68.5,275,,0,16,19,85,92,1200,,76,8,Musroom Crop Team,MUS-2607-R4

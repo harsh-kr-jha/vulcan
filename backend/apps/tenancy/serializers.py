@@ -63,6 +63,7 @@ class WorkspaceFactorySerializer(serializers.ModelSerializer):
     location = serializers.CharField(source="address", required=False, allow_blank=True)
     currency = serializers.SerializerMethodField()
     details = serializers.SerializerMethodField()
+    recommendedRange = serializers.SerializerMethodField()
 
     class Meta:
         model = Factory
@@ -75,6 +76,7 @@ class WorkspaceFactorySerializer(serializers.ModelSerializer):
             "timezone",
             "currency",
             "details",
+            "recommendedRange",
         ]
 
     def get_currency(self, obj):
@@ -82,6 +84,13 @@ class WorkspaceFactorySerializer(serializers.ModelSerializer):
 
     def get_details(self, obj):
         return obj.configuration.get("factoryDetails", {})
+
+    def get_recommendedRange(self, obj):
+        showcase = obj.configuration.get("showcase", {})
+        value = showcase.get("recommendedRange") if isinstance(showcase, dict) else None
+        if not isinstance(value, dict) or not value.get("from") or not value.get("to"):
+            return None
+        return {"from": str(value["from"]), "to": str(value["to"])}
 
     def validate(self, attrs):
         attrs = super().validate(attrs)

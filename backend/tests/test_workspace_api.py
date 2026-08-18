@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from apps.operations.models import StandardRecord, Upload
 from apps.tenancy.models import Company
+from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from openpyxl import load_workbook
 
@@ -42,12 +43,12 @@ def test_project_templates_are_downloaded_as_excel_workbooks(api_client):
     response = api_client.get("/api/imports/template/projects/")
 
     assert response.status_code == 200
-    assert response["Content-Disposition"].endswith('"vulcan_projects_template.xlsx"')
+    assert response["Content-Disposition"].endswith('"mushroom_projects_template.xlsx"')
     workbook = load_workbook(BytesIO(response.content), read_only=True)
     worksheet = workbook.active
     headers = [cell.value for cell in next(worksheet.iter_rows())]
     assert headers[:4] == ["project_number", "customer", "project_name", "po_number"]
-    assert worksheet["A2"].value == "IG-2026-047"
+    assert worksheet["A2"].value == "MUS-2608-R1"
     workbook.close()
 
 
@@ -77,7 +78,7 @@ def test_mock_project_workbooks_import_end_to_end(api_client):
 
 
 @pytest.mark.django_db
-def test_factory_and_master_data_are_persisted_without_login(api_client):
+def test_factory_and_master_data_are_persisted_for_authenticated_admin(api_client):
     factory_response = api_client.post(
         "/api/factories/",
         {
@@ -101,7 +102,8 @@ def test_factory_and_master_data_are_persisted_without_login(api_client):
 
     workspace = api_client.get(f"/api/workspace/?factory={factory_id}")
     assert workspace.status_code == 200
-    assert workspace.data["state"]["factories"][0]["name"] == "Mysuru Plant"
+    factories = {item["id"]: item for item in workspace.data["state"]["factories"]}
+    assert factories[factory_id]["name"] == "Mysuru Plant"
     assert workspace.data["state"]["masters"]["lines"][0]["code"] == "CURE-01"
 
 
@@ -110,16 +112,17 @@ def test_company_identity_survives_profile_rename_and_reload(api_client):
     initial = api_client.get("/api/workspace/")
     factory_id = initial.data["state"]["activeFactoryId"]
     company_id = initial.data["state"]["company"]["id"]
+    industry = settings.VULCAN_VARIANT_CONFIG["industry"]
 
     renamed = api_client.patch(
         f"/api/workspace/configuration/?factory={factory_id}",
-        {"name": "Renamed Manufacturing Company", "industry": "Automotive"},
+        {"name": "Renamed Manufacturing Company", "industry": industry},
         format="json",
     )
     reloaded = api_client.get(f"/api/workspace/?factory={factory_id}")
     saved_again = api_client.patch(
         f"/api/workspace/configuration/?factory={factory_id}",
-        {"name": "Renamed Manufacturing Company", "industry": "Automotive"},
+        {"name": "Renamed Manufacturing Company", "industry": industry},
         format="json",
     )
 
@@ -127,7 +130,7 @@ def test_company_identity_survives_profile_rename_and_reload(api_client):
     assert reloaded.data["state"]["company"] == {
         "id": company_id,
         "name": "Renamed Manufacturing Company",
-        "industry": "Automotive",
+        "industry": industry,
     }
     assert saved_again.status_code == 200
     assert Company.objects.count() == 1
@@ -253,6 +256,38 @@ def test_import_is_inspected_validated_and_calculated_in_django(api_client):
         item["key"] == "downtime.minutes"
         for item in result.data["intelligence"]["customKpiVariables"]
     )
+
+
+@pytest.mark.django_db
+def test_utility_log_calculates_mypol_steam_recovery_kpis(api_client):
+    factory_id = api_client.get("/api/workspace/").data["state"]["activeFactoryId"]
+    utility_csv = (
+        b"date,shift,boiler,feedwater_kg,feedwater_inlet_temperature_c,"
+        b"feedwater_tank_temperature_c,steam_generated_kg,recovered_condensate_kg,"
+        b"flash_steam_recovered_kg,briquette_used_kg,briquette_gcv_kcal_per_kg,"
+        b"boiler_efficiency_percent\n"
+        b"2026-07-31,Shift A,BB-01,10000,30,70,9000,4500,450,1800,3800,72\n"
+    )
+    import_sheet(api_client, factory_id, "utilities", "utilities.csv", utility_csv)
+    production_csv = (
+        b"date,line,machine,sku,shift,planned_quantity,actual_quantity,good_quantity\n"
+        b"2026-07-31,Line 1,Press 1,SKU-1,Shift A,6500,6000,5900\n"
+    )
+    import_sheet(api_client, factory_id, "production", "production.csv", production_csv)
+
+    result = api_client.get(
+        f"/api/workspace/?factory={factory_id}&from=2026-07-31&to=2026-07-31"
+    ).data["intelligence"]
+    steam = result["steamRecovery"]
+
+    assert result["dataAvailability"]["utilities"] == 1
+    assert steam["temperatureLiftC"] == 40
+    assert steam["heatRecoveredMj"] == 1674.4
+    assert steam["condensateRecoveryPercent"] == 50
+    assert steam["flashSteamRecoveryPercent"] == 5
+    assert steam["specificSteamKgPerUnit"] == 1.5
+    assert steam["specificBriquetteKgPerTonneSteam"] == 200
+    assert len(steam["trend"]) == 1
 
 
 @pytest.mark.django_db

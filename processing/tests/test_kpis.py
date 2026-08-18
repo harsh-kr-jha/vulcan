@@ -2,7 +2,15 @@ from decimal import Decimal
 
 import pytest
 
-from processing.kpis import KPIInputError, OEEInputs, calculate_oee
+from processing.kpis import (
+    KPIInputError,
+    MushroomKPIInputs,
+    OEEInputs,
+    SteamRecoveryInputs,
+    calculate_mushroom_kpis,
+    calculate_oee,
+    calculate_steam_recovery,
+)
 
 
 def test_calculate_oee_returns_components_and_version():
@@ -34,3 +42,75 @@ def test_calculate_oee_rejects_invalid_reconciliation():
                 good_quantity=Decimal("101"),
             )
         )
+
+
+def test_calculate_mushroom_kpis_returns_cultivation_measures():
+    result = calculate_mushroom_kpis(
+        MushroomKPIInputs(
+            planned_harvest_kg=Decimal("1000"),
+            total_harvest_kg=Decimal("940"),
+            saleable_harvest_kg=Decimal("880"),
+            contaminated_harvest_kg=Decimal("20"),
+            dry_substrate_kg=Decimal("1000"),
+            growing_area_m2=Decimal("200"),
+            water_litres=Decimal("4000"),
+            compliant_environment_readings=Decimal("18"),
+            total_environment_readings=Decimal("20"),
+            crop_age_days_total=Decimal("70"),
+            crop_batches=Decimal("2"),
+        )
+    )
+
+    assert result.plan_attainment == Decimal("94.000000")
+    assert result.biological_efficiency == Decimal("94.000000")
+    assert result.saleable_yield == Decimal("93.617021")
+    assert result.contamination_rate == Decimal("2.127660")
+    assert result.yield_per_m2 == Decimal("4.400000")
+    assert result.water_productivity_kg_per_kl == Decimal("220.000000")
+    assert result.environment_compliance == Decimal("90.000000")
+    assert result.average_crop_age_days == Decimal("35.000000")
+    assert result.formula_version == "mushroom-kpis-v1"
+
+
+def test_calculate_mushroom_kpis_rejects_impossible_saleable_harvest():
+    with pytest.raises(KPIInputError, match="Saleable harvest"):
+        calculate_mushroom_kpis(
+            MushroomKPIInputs(
+                planned_harvest_kg=Decimal("100"),
+                total_harvest_kg=Decimal("90"),
+                saleable_harvest_kg=Decimal("91"),
+                contaminated_harvest_kg=Decimal("0"),
+                dry_substrate_kg=Decimal("100"),
+                growing_area_m2=Decimal("20"),
+                water_litres=Decimal("100"),
+                compliant_environment_readings=Decimal("1"),
+                total_environment_readings=Decimal("1"),
+                crop_age_days_total=Decimal("35"),
+                crop_batches=Decimal("1"),
+            )
+        )
+
+
+def test_steam_recovery_uses_measured_temperature_lift_without_double_counting():
+    result = calculate_steam_recovery(
+        SteamRecoveryInputs(
+            feedwater_kg=Decimal("10000"),
+            feedwater_inlet_temperature_c=Decimal("30"),
+            feedwater_tank_temperature_c=Decimal("70"),
+            steam_generated_kg=Decimal("9000"),
+            recovered_condensate_kg=Decimal("4500"),
+            flash_steam_recovered_kg=Decimal("450"),
+            briquette_used_kg=Decimal("1800"),
+            briquette_gcv_kcal_per_kg=Decimal("3800"),
+            boiler_efficiency_percent=Decimal("72"),
+            production_quantity=Decimal("6000"),
+        )
+    )
+
+    assert result.temperature_lift_c == Decimal("40.000")
+    assert result.heat_recovered_mj == Decimal("1674.400")
+    assert result.condensate_recovery_percent == Decimal("50.000000")
+    assert result.flash_steam_recovery_percent == Decimal("5.000000")
+    assert result.specific_steam_kg_per_unit == Decimal("1.500000")
+    assert result.specific_briquette_kg_per_tonne_steam == Decimal("200.000000")
+    assert result.equivalent_briquette_saved_kg > Decimal("140")

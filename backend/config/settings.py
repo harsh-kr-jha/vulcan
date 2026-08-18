@@ -143,7 +143,8 @@ if not database_url and DEBUG:
         )
     except (subprocess.CalledProcessError, FileNotFoundError):
         _branch = "default"
-    # Sanitize branch name for filesystem: client/MFG.DA.AUTO.ALL/MYPOL -> client-MFG.DA.AUTO.ALL-MYPOL
+    # Sanitize branch name for filesystem:
+    # client/MFG.DA.AUTO.ALL/MYPOL -> client-MFG.DA.AUTO.ALL-MYPOL
     _db_name = _branch.replace("/", "-").replace(" ", "-") or "default"
     database_url = f"sqlite:///{_data_dir / f'{_db_name}.sqlite3'}"
 

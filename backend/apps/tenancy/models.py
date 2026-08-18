@@ -1,7 +1,42 @@
+import unicodedata
+
 from django.conf import settings
+from django.core.validators import validate_email
 from django.db import models
 
 from apps.common.models import TimestampedModel, UUIDModel
+
+
+def normalize_login_email(value: str) -> str:
+    """Return the canonical, case-insensitive address used for authentication."""
+    return unicodedata.normalize("NFKC", str(value or "")).strip().casefold()
+
+
+class EmailIdentity(UUIDModel, TimestampedModel):
+    """A unique login address for projects that still use Django's built-in User."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="email_identity",
+    )
+    email = models.CharField(max_length=254, unique=True)
+
+    class Meta:
+        verbose_name_plural = "email identities"
+
+    def clean(self):
+        super().clean()
+        self.email = normalize_login_email(self.email)
+        validate_email(self.email)
+
+    def save(self, *args, **kwargs):
+        self.email = normalize_login_email(self.email)
+        validate_email(self.email)
+        return super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return self.email
 
 
 class Tenant(UUIDModel, TimestampedModel):

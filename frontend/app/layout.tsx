@@ -8,7 +8,7 @@ import { PlatformProvider } from "@/lib/variant";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const variant = await getPlatformConfig();
+  const variant = getPlatformConfig();
   return {
     title: {
       default: `${variant.displayName} · Industrial Intelligence`,
@@ -22,7 +22,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   // A fresh CSP nonce is attached by proxy.ts on every document request.
   // Dynamic rendering lets Next apply it to framework and page scripts.
   await connection();
-  const variant = await getPlatformConfig();
+  const variant = getPlatformConfig();
   return (
     <html lang="en" suppressHydrationWarning style={designSystemStyle}>
       <head>

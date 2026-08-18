@@ -1,41 +1,37 @@
 import "server-only";
 
+import { readFileSync } from "fs";
+import { resolve } from "path";
 import type { PlatformConfig } from "@/lib/variant";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
-
 /**
- * Load platform configuration from the backend at build/render time.
+ * Load platform configuration from platform.json at the repository root.
  *
- * Operating template branches provide a platform.json that the backend serves
- * via /api/backend/platform-config/. Platform Core returns a minimal fallback.
+ * Each operating template branch provides this file with industry-specific
+ * display names, terminology, navigation labels, and feature flags.
  */
-export async function getPlatformConfig(): Promise<PlatformConfig> {
+export function getPlatformConfig(): PlatformConfig {
+  const manifestPath = resolve(process.cwd(), "platform.json");
   try {
-    const res = await fetch(`${BACKEND_URL}/api/platform/config/`, {
-      next: { revalidate: 3600 },
-    });
-    if (res.ok) {
-      return (await res.json()) as PlatformConfig;
-    }
+    const raw = readFileSync(manifestPath, "utf-8");
+    return JSON.parse(raw) as PlatformConfig;
   } catch {
-    // Backend not reachable during build — use fallback
+    // Platform Core or missing file — return fallback
+    return {
+      id: "platform-core",
+      displayName: "Tamaso Platform",
+      descriptor: "Platform Core",
+      industry: "",
+      modules: [],
+      datasets: {},
+      navigation: {},
+      terminology: {
+        siteSingular: "site",
+        sitePlural: "sites",
+        projectSingular: "project",
+        projectPlural: "projects",
+      },
+      features: {},
+    };
   }
-
-  return {
-    id: "platform-core",
-    displayName: "Tamaso Platform",
-    descriptor: "Platform Core",
-    industry: "",
-    modules: [],
-    datasets: {},
-    navigation: {},
-    terminology: {
-      siteSingular: "site",
-      sitePlural: "sites",
-      projectSingular: "project",
-      projectPlural: "projects",
-    },
-    features: {},
-  };
 }

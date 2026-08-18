@@ -1,0 +1,9 @@
+entity_type,code,name,parent_code,uom,notes
+factory,MUSROOM-01,Musroom,,,Synthetic showcase farm
+line,WING-A,Growing Wing A,MUSROOM-01,,Four climate-controlled rooms
+room,GR-01,Growing Room 1,WING-A,kg,Cropping room
+room,GR-02,Growing Room 2,WING-A,kg,Cropping room
+room,GR-03,Growing Room 3,WING-A,kg,Cropping room
+room,GR-04,Growing Room 4,WING-A,kg,Cropping room
+process,CROP,Cropping & Harvest,WING-A,kg,"Climate, irrigation and harvest"
+sku,MUSH-BUTTON-A,Button Mushroom Grade A,,kg,Saleable grade

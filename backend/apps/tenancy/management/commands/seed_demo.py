@@ -3,7 +3,7 @@ from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
 from apps.alerts.models import Alert, AlertRule
@@ -11,6 +11,7 @@ from apps.analytics.models import DailyMetric, LossEvent
 from apps.operations.models import Upload, UploadState
 from apps.tenancy.models import (
     Company,
+    EmailIdentity,
     Factory,
     Machine,
     Membership,
@@ -24,6 +25,9 @@ class Command(BaseCommand):
     help = "Create a safe, repeatable local demo dataset."
 
     def handle(self, *args, **options):
+        demo_password = os.getenv("DEMO_PASSWORD", "")
+        if len(demo_password) < 15:
+            raise CommandError("Set DEMO_PASSWORD to a unique value of at least 15 characters.")
         tenant, _ = Tenant.objects.get_or_create(
             slug="vulcan-demo", defaults={"name": "Vulcan Manufacturing India"}
         )
@@ -49,8 +53,9 @@ class Command(BaseCommand):
             },
         )
         if created:
-            user.set_password(os.getenv("DEMO_PASSWORD", "vulcan-demo"))
+            user.set_password(demo_password)
             user.save(update_fields=["password"])
+        EmailIdentity.objects.get_or_create(user=user, defaults={"email": user.email})
         Membership.objects.get_or_create(
             user=user,
             tenant=tenant,
@@ -81,7 +86,7 @@ class Command(BaseCommand):
         self._create_uploads(tenant, factory, user)
         self.stdout.write(
             self.style.SUCCESS(
-                "Demo ready: login with username 'harsh' and DEMO_PASSWORD (default: vulcan-demo)."
+                "Demo ready: login with harsh@example.com and the configured DEMO_PASSWORD."
             )
         )
 

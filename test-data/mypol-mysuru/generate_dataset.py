@@ -842,8 +842,54 @@ def create_expected_results(
     }
 
 
+def create_utilities(production: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Create synthetic shift boiler logs correlated with factory output.
+
+    The final fortnight models steadily improving condensate/flash recovery so
+    the dashboard exposes a visible reduction in specific briquette use.
+    """
+
+    output_by_shift: dict[tuple[str, str], float] = {}
+    for row in production:
+        key = (str(row["date"]), str(row["shift"]))
+        output_by_shift[key] = output_by_shift.get(key, 0) + float(row["actual_quantity"])
+
+    logs = []
+    for day_index in range(NUMBER_OF_DAYS):
+        current = START_DATE + timedelta(days=day_index)
+        recovery_gain = max(day_index - 45, 0) / 15
+        for shift_index, shift in enumerate(SHIFTS):
+            output = output_by_shift.get((current.isoformat(), shift), 0)
+            steam = round(output * (0.82 + shift_index * 0.018), 1)
+            condensate_rate = 0.48 + recovery_gain * 0.12
+            flash_rate = 0.025 + recovery_gain * 0.025
+            inlet_temp = 31.0 + 0.8 * math.sin(day_index / 6)
+            tank_temp = 61.0 + recovery_gain * 11 + shift_index * 0.6
+            feedwater = round(steam * 1.08, 1)
+            # Improved recovery lowers the fuel required for the same steam duty.
+            briquette = round(steam * (0.205 - recovery_gain * 0.022), 1)
+            logs.append(
+                {
+                    "date": current.isoformat(),
+                    "shift": shift,
+                    "boiler": "Biomass Boiler BB-01",
+                    "feedwater_kg": feedwater,
+                    "feedwater_inlet_temperature_c": round(inlet_temp, 1),
+                    "feedwater_tank_temperature_c": round(tank_temp, 1),
+                    "steam_generated_kg": steam,
+                    "recovered_condensate_kg": round(steam * condensate_rate, 1),
+                    "flash_steam_recovered_kg": round(steam * flash_rate, 1),
+                    "briquette_used_kg": briquette,
+                    "briquette_gcv_kcal_per_kg": 3_850,
+                    "boiler_efficiency_percent": 72.5,
+                }
+            )
+    return logs
+
+
 def main() -> None:
     production, downtime, quality = create_production()
+    utilities = create_utilities(production)
     inventory = create_inventory()
     orders = create_orders()
     supplier_deliveries = create_supplier_deliveries()
@@ -941,6 +987,17 @@ def main() -> None:
             line_terminator="\n",
         ),
         write_csv(
+            "utilities.csv",
+            [
+                "date", "shift", "boiler", "feedwater_kg",
+                "feedwater_inlet_temperature_c", "feedwater_tank_temperature_c",
+                "steam_generated_kg", "recovered_condensate_kg",
+                "flash_steam_recovered_kg", "briquette_used_kg",
+                "briquette_gcv_kcal_per_kg", "boiler_efficiency_percent",
+            ],
+            utilities,
+        ),
+        write_csv(
             "factory_master_reference.csv",
             ["entity_type", "code", "name", "parent_code", "uom", "notes"],
             master_reference,
@@ -969,8 +1026,8 @@ def main() -> None:
         "files": files,
         "expected_results_file": "expected_results.json",
         "totals": {
-            "importable_rows": sum(item["rows"] for item in files[:6]),
-            "reference_rows": files[6]["rows"],
+            "importable_rows": sum(item["rows"] for item in files[:7]),
+            "reference_rows": files[7]["rows"],
         },
         "expected_signals_for_2026-07-25_to_2026-07-31": [
             "Tube Cure Press HC-02 should rank as the largest downtime bottleneck.",

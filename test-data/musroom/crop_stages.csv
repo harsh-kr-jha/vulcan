@@ -1,0 +1,33 @@
+project_number,stage_code,stage_name,sequence,stage_status,progress,planned_start,actual_start,planned_completion,actual_completion,assigned_to,delay_days,notes,attachments
+MUS-2607-R1,STAGE-01,Compost Preparation,1,Completed,100,2026-06-19,2026-06-19,2026-06-24,2026-06-24,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r1-stage-01.pdf
+MUS-2607-R1,STAGE-02,Pasteurisation & Conditioning,2,Completed,100,2026-06-25,2026-06-25,2026-06-30,2026-06-30,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r1-stage-02.pdf
+MUS-2607-R1,STAGE-03,Spawning,3,Completed,100,2026-07-01,2026-07-01,2026-07-06,2026-07-06,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r1-stage-03.pdf
+MUS-2607-R1,STAGE-04,Spawn Run,4,Completed,100,2026-07-07,2026-07-07,2026-07-12,2026-07-12,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r1-stage-04.pdf
+MUS-2607-R1,STAGE-05,Casing,5,Completed,100,2026-07-13,2026-07-13,2026-07-18,2026-07-18,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r1-stage-05.pdf
+MUS-2607-R1,STAGE-06,Pinning,6,Completed,100,2026-07-19,2026-07-19,2026-07-24,2026-07-24,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r1-stage-06.pdf
+MUS-2607-R1,STAGE-07,Cropping & Harvest,7,In Progress,68,2026-07-25,2026-07-25,2026-07-30,,Ravi Malik,0,Active crop stage,mus-2607-r1-stage-07.pdf
+MUS-2607-R1,STAGE-08,Packing & Cold Room,8,In Progress,68,2026-07-31,2026-07-31,2026-08-05,,Ravi Malik,0,Active crop stage,mus-2607-r1-stage-08.pdf
+MUS-2607-R2,STAGE-01,Compost Preparation,1,Completed,100,2026-06-20,2026-06-20,2026-06-25,2026-06-25,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r2-stage-01.pdf
+MUS-2607-R2,STAGE-02,Pasteurisation & Conditioning,2,Completed,100,2026-06-26,2026-06-26,2026-07-01,2026-07-01,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r2-stage-02.pdf
+MUS-2607-R2,STAGE-03,Spawning,3,Completed,100,2026-07-02,2026-07-02,2026-07-07,2026-07-07,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r2-stage-03.pdf
+MUS-2607-R2,STAGE-04,Spawn Run,4,Completed,100,2026-07-08,2026-07-08,2026-07-13,2026-07-13,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r2-stage-04.pdf
+MUS-2607-R2,STAGE-05,Casing,5,Completed,100,2026-07-14,2026-07-14,2026-07-19,2026-07-19,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r2-stage-05.pdf
+MUS-2607-R2,STAGE-06,Pinning,6,Completed,100,2026-07-20,2026-07-20,2026-07-25,2026-07-25,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r2-stage-06.pdf
+MUS-2607-R2,STAGE-07,Cropping & Harvest,7,In Progress,68,2026-07-26,2026-07-26,2026-07-31,,Ravi Malik,0,Active crop stage,mus-2607-r2-stage-07.pdf
+MUS-2607-R2,STAGE-08,Packing & Cold Room,8,In Progress,68,2026-08-01,2026-08-01,2026-08-06,,Ravi Malik,0,Active crop stage,mus-2607-r2-stage-08.pdf
+MUS-2607-R3,STAGE-01,Compost Preparation,1,Completed,100,2026-06-21,2026-06-21,2026-06-26,2026-06-26,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r3-stage-01.pdf
+MUS-2607-R3,STAGE-02,Pasteurisation & Conditioning,2,Completed,100,2026-06-27,2026-06-27,2026-07-02,2026-07-02,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r3-stage-02.pdf
+MUS-2607-R3,STAGE-03,Spawning,3,Completed,100,2026-07-03,2026-07-03,2026-07-08,2026-07-08,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r3-stage-03.pdf
+MUS-2607-R3,STAGE-04,Spawn Run,4,Completed,100,2026-07-09,2026-07-09,2026-07-14,2026-07-14,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r3-stage-04.pdf
+MUS-2607-R3,STAGE-05,Casing,5,Completed,100,2026-07-15,2026-07-15,2026-07-20,2026-07-20,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r3-stage-05.pdf
+MUS-2607-R3,STAGE-06,Pinning,6,Completed,100,2026-07-21,2026-07-21,2026-07-26,2026-07-26,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r3-stage-06.pdf
+MUS-2607-R3,STAGE-07,Cropping & Harvest,7,Delayed,55,2026-07-27,2026-07-27,2026-08-01,,Ravi Malik,2,Active crop stage,mus-2607-r3-stage-07.pdf
+MUS-2607-R3,STAGE-08,Packing & Cold Room,8,In Progress,68,2026-08-02,2026-08-02,2026-08-07,,Ravi Malik,0,Active crop stage,mus-2607-r3-stage-08.pdf
+MUS-2607-R4,STAGE-01,Compost Preparation,1,Completed,100,2026-06-22,2026-06-22,2026-06-27,2026-06-27,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r4-stage-01.pdf
+MUS-2607-R4,STAGE-02,Pasteurisation & Conditioning,2,Completed,100,2026-06-28,2026-06-28,2026-07-03,2026-07-03,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r4-stage-02.pdf
+MUS-2607-R4,STAGE-03,Spawning,3,Completed,100,2026-07-04,2026-07-04,2026-07-09,2026-07-09,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r4-stage-03.pdf
+MUS-2607-R4,STAGE-04,Spawn Run,4,Completed,100,2026-07-10,2026-07-10,2026-07-15,2026-07-15,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r4-stage-04.pdf
+MUS-2607-R4,STAGE-05,Casing,5,Completed,100,2026-07-16,2026-07-16,2026-07-21,2026-07-21,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r4-stage-05.pdf
+MUS-2607-R4,STAGE-06,Pinning,6,Completed,100,2026-07-22,2026-07-22,2026-07-27,2026-07-27,Asha Verma,0,Room climate and hygiene records verified,mus-2607-r4-stage-06.pdf
+MUS-2607-R4,STAGE-07,Cropping & Harvest,7,In Progress,68,2026-07-28,2026-07-28,2026-08-02,,Ravi Malik,0,Active crop stage,mus-2607-r4-stage-07.pdf
+MUS-2607-R4,STAGE-08,Packing & Cold Room,8,In Progress,68,2026-08-03,2026-08-03,2026-08-08,,Ravi Malik,0,Active crop stage,mus-2607-r4-stage-08.pdf

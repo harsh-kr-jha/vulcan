@@ -288,7 +288,7 @@ function SteamFuelView() {
 export function PerformanceExplorer() {
   const { intelligence, filters, state } = useFactory();
   const variant = usePlatform();
-  const mushroomMode = false;
+  const mushroomMode = variant.features.mushroomAnalytics;
   const tabs: readonly Tab[] = mushroomMode ? mushroomTabs : automotiveTabs;
   const [activeTab, setActiveTab] = useState<Tab>(mushroomMode ? "Cultivation" : "OEE");
   const availableTabs = tabs.filter((tab) => {

@@ -4,9 +4,13 @@
 
 Vulcan is a modular monolith with independently scalable background workers.
 
+The same application images can run as an allowlisted `mushroom` or `automotive` deployment. Each
+vertical cell has a separate hostname, Cloud Run service, database, bucket, identities and secrets;
+the runtime variant cannot be selected by a request. See the [product variant guide](variants.md).
+
 ```mermaid
 flowchart LR
-    Browser[Next.js display layer] -->|same-origin requests| Next[Next.js server]
+    Browser[Next.js display layer] -->|same-origin session + CSRF| Next[Next.js server]
     Next -->|JSON and multipart files| API[Django + DRF]
     API -->|optional large objects| S3[(S3 / MinIO)]
     API --> DB[(PostgreSQL)]
@@ -22,8 +26,10 @@ flowchart LR
     API -->|precomputed aggregates| Browser
 ```
 
-API and workers deploy from the same backend image. This keeps domain logic in one codebase
-while allowing expensive queues to scale independently.
+API and future workers deploy from the same backend image. This keeps domain logic in one codebase
+while allowing expensive queues to scale independently. The current synchronous import path is the
+only complete ingestion route; object-backed worker ingestion remains disabled until download,
+malware scanning, parsing and retry handling are implemented end to end.
 
 ## Domain boundaries
 
@@ -92,6 +98,53 @@ The frontend's `lib/api-client.ts` is the only data boundary. There is no browse
 local-storage fallback, validation engine, or KPI engine. Django returns presentation-ready
 aggregates; the frontend formats and visualises them.
 
+## Authentication and request boundary
+
+The public surface is the full-viewport landing page and its email/password form. All operational
+application routes and business API endpoints require an authenticated Django session. Next.js
+proxies `/api/backend/*` to Django, so browser requests, cookies, and CSRF protection remain on one
+origin; the backend URL is never a public browser configuration value.
+
+Sign-in follows this sequence:
+
+1. The browser fetches a masked CSRF token and keeps it in memory. It sends that token on the
+   sign-in request and every later unsafe request; credentials and session material are never
+   persisted in local storage.
+2. Django resolves a unique, Unicode-normalised `EmailIdentity`. Unknown identities take the
+   same password-hash path as known identities, and failures use one generic response. Passwords
+   are stored with Argon2id by preference and Django's supported hashers remain available for
+   gradual upgrades.
+3. Per-IP and per-account sign-in throttles use opaque cache keys. Production requires the shared
+   Redis-backed cache so limits work across application processes.
+4. A successful password check must also resolve an active membership in an active tenant.
+   Django rotates the session and CSRF secrets, stores the active membership in the server-side
+   session, and records the sign-in event in the audit history.
+5. Each protected query is scoped again through that membership and its factory access. A factory
+   ID from the browser can narrow access but can never expand it. Sign-out is a CSRF-protected POST
+   that invalidates the session and records an audit event.
+
+Authentication and personalised API responses are marked private and `no-store`. Session cookies
+are HTTP-only and `SameSite=Lax`; non-debug deployments additionally use Secure `__Host-` cookies,
+HTTPS redirection, HSTS, clickjacking denial, MIME-sniffing protection, a same-origin referrer
+policy, and frontend security headers including a restrictive Content Security Policy. Next.js
+generates a fresh nonce for every document request and applies it to framework/page scripts, so
+production script execution does not depend on `unsafe-inline`.
+
+Every backend response carries a server-generated request ID that is also bound to structured JSON
+production logs. Common credential, session, and token fields are redacted before formatting.
+Anonymous sign-in failures are logged without request bodies or plaintext addresses: the account
+dimension is a secret-keyed, truncated fingerprint and client IP resolution follows the same
+explicit trusted-proxy count as throttling and audit records.
+
+Production configuration fails closed by default: debug mode must be explicitly enabled for local
+work, while non-debug startup requires a high-entropy secret key, PostgreSQL URL, Redis/cache URLs,
+an exact HTTPS CSRF origin, and an explicit host allowlist; wildcard hosts are rejected.
+CORS origins and CSRF trusted origins are separate allowlists. Forwarded protocol/host trust is
+disabled unless the deployment explicitly enables it for a known proxy topology, and HSTS
+subdomain coverage and preload are separate opt-ins rather than assumptions.
+The Django admin URL is registered only in explicit debug mode so its stock login cannot become an
+unthrottled production authentication path.
+
 ## Current lightweight data shape
 
 Factory identity and master data are relational and factory-scoped. Each upload preserves its
@@ -102,9 +155,9 @@ approved source per stable project/stage key before building the portfolio, trac
 alerts. This keeps the MVP schema small while preserving a clean migration path to dedicated
 production, downtime, quality, inventory, order and project fact tables once their grains stabilize.
 
-Authentication is intentionally bypassed through a single implicit workspace identity in this
-slice. This is a temporary boundary, not an authorization design; tenant and factory foreign keys
-remain in place so user validation can be restored without moving operational data.
+Trusted seed commands may construct a workspace identity outside an HTTP request, but that helper
+is not available to request handlers. Seeded development users require an explicitly supplied
+email and password; the repository contains no shared or default login credential.
 
 ## Next delivery slices
 
@@ -115,4 +168,7 @@ remain in place so user validation can be restored without moving operational da
 4. Materialise line, machine, SKU, shift, inventory-risk, and data-quality aggregates.
 5. Add malware scanning and multipart-upload completion.
 6. Add object-level approval and recommendation-publication permissions.
-7. Add OpenTelemetry/Sentry, queue-depth autoscaling, backup tests, and representative load tests.
+7. Add passkeys and phishing-resistant MFA, session inventory/revocation, and step-up checks for
+   high-impact administrative actions.
+8. Add OpenTelemetry/Sentry with request correlation and redaction, queue-depth autoscaling,
+   backup-restore tests, and representative load tests.

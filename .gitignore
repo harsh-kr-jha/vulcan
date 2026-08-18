@@ -21,8 +21,10 @@ db.sqlite3
 .env.local
 .env.*.local
 .data/
+MUSHROOM-DATA/
 media/
 staticfiles/
+deploy/gce-micro/.env
 
 # Editors and operating systems
 .DS_Store

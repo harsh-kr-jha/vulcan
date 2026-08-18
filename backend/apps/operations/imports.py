@@ -2,17 +2,18 @@ import hashlib
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
 from django.db import transaction
 
 from apps.operations.models import MappingProfile, StandardRecord, ValidationIssue
 from apps.tenancy.models import FactoryMaster
 from processing.mapping import header_signature, suggest_mappings
-from processing.templates import TEMPLATES, field_rules, serialize_fields
+from processing.templates import field_rules, serialize_fields, templates_for_variant
 from processing.validation import Severity, validate_record
 
 
 def inspection_payload(upload):
-    fields = TEMPLATES[upload.dataset_type]
+    fields = templates_for_variant(settings.VULCAN_VARIANT)[upload.dataset_type]
     signature = header_signature({"data": upload.headers})
     saved = MappingProfile.objects.filter(
         factory=upload.factory,
@@ -26,7 +27,7 @@ def inspection_payload(upload):
         "upload": serialize_upload(upload),
         "headers": upload.headers,
         "samples": upload.raw_rows[:3],
-        "fields": serialize_fields(upload.dataset_type),
+        "fields": serialize_fields(upload.dataset_type, settings.VULCAN_VARIANT),
         "mapping": upload.mapping or suggested_mapping,
         "suggestions": [
             {
@@ -41,7 +42,10 @@ def inspection_payload(upload):
 
 
 def validate_mapping(upload, mapping):
-    fields = {item.key: item for item in TEMPLATES[upload.dataset_type]}
+    fields = {
+        item.key: item
+        for item in templates_for_variant(settings.VULCAN_VARIANT)[upload.dataset_type]
+    }
     selected = [target for target in mapping.values() if target]
     contextual = set(import_context_values(upload))
     issues = []
@@ -84,7 +88,9 @@ def validate_mapping(upload, mapping):
             if str(values.get("project_number", "")).strip()
         }
         for index, row in enumerate(mapped_rows, start=2):
-            for record_issue in validate_record(row, field_rules(upload.dataset_type)):
+            for record_issue in validate_record(
+                row, field_rules(upload.dataset_type, settings.VULCAN_VARIANT)
+            ):
                 issues.append(
                     issue(
                         index,
@@ -290,7 +296,10 @@ def validate_import_context(upload, row, row_number):
 
 
 def normalize_values(values, dataset_type):
-    definitions = {item.key: item for item in TEMPLATES[dataset_type]}
+    definitions = {
+        item.key: item
+        for item in templates_for_variant(settings.VULCAN_VARIANT)[dataset_type]
+    }
     normalized = {}
     for key, value in values.items():
         if value is None:

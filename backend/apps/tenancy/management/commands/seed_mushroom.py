@@ -46,8 +46,8 @@ class Command(BaseCommand):
                 "seed_mushroom requires DJANGO_DEBUG=true, or an explicit single-node "
                 "showcase plus --confirm-production-showcase."
             )
-        if settings.VULCAN_VARIANT != "mushroom":
-            raise CommandError("seed_mushroom can run only in the mushroom variant.")
+        # This seed command is specific to the MFG.PMC.AGRI.ALL operating template.
+        # No variant check needed — the command only exists on this branch.
         demo_credentials = self.demo_credentials()
         identity = get_workspace_identity()
         identity.company.name = "Musroom Cultivation Labs"

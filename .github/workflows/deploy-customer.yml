@@ -69,6 +69,9 @@ jobs:
 
       - name: Check out deployment files
         uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.DEPLOY_REPO || 'harsh-kr-jha/vulcan-deploy' }}
+          path: deploy-files
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
@@ -91,10 +94,10 @@ jobs:
             --tunnel-through-iap \
             --command 'install -d -m 0755 /tmp/tamaso-deploy'
           gcloud compute scp \
-            deploy/gce-customer/compose.yaml \
-            deploy/gce-customer/Caddyfile \
-            deploy/gce-customer/backup.sh \
-            deploy/gce-customer/deploy.sh \
+            deploy-files/compose.yaml \
+            deploy-files/Caddyfile \
+            deploy-files/backup.sh \
+            deploy-files/deploy.sh \
             "$GCE_INSTANCE:/tmp/tamaso-deploy/" \
             --project "$GCP_PROJECT_ID" \
             --zone "$GCE_ZONE" \

@@ -87,7 +87,7 @@ function CustomKpiBuilder({ variables, onClose, onSave }: { variables: CustomKpi
 export function KpiMethodology() {
   const { intelligence, state, updateCustomKpis } = useFactory();
   const variant = usePlatform();
-  const mushroomMode = false;
+  const mushroomMode = variant.features.mushroomAnalytics;
   const metrics = mushroomMode ? mushroomMetrics : automotiveMetrics;
   const families: readonly (Family | "All")[] = mushroomMode ? mushroomFamilies : automotiveFamilies;
   const [family, setFamily] = useState<Family | "All">("All");

@@ -77,7 +77,7 @@ function Metric({ icon, label, value, note }: { icon: React.ReactNode; label: st
 
 function ProcessDetail({ process }: { process: TwinProcess }) {
   const variant = usePlatform();
-  const mushroom = false;
+  const mushroom = variant.features.mushroomAnalytics;
   const metrics = process.metrics;
   const processUpload = `/uploads?add=process&process=${encodeURIComponent(process.id)}`;
   return <section className="panel twin-detail" aria-live="polite">
@@ -136,7 +136,7 @@ function ProcessDetail({ process }: { process: TwinProcess }) {
 
 export function DigitalTwin() {
   const variant = usePlatform();
-  const mushroom = false;
+  const mushroom = variant.features.mushroomAnalytics;
   const { intelligence, filters, loading, refresh } = useFactory();
   const twin = intelligence.digitalTwin ?? emptyTwin;
   const [selectedLineId, setSelectedLineId] = useState("");

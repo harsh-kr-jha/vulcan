@@ -114,9 +114,12 @@ TEMPLATES: dict[str, list[TemplateField]] = {
         field("actual_start", "Actual start date", data_type="date", aliases=(
             "start date", "real start", "commenced",
         )),
-        field("planned_completion", "Planned completion date", data_type="date", required=True, aliases=(
-            "plan end", "scheduled end", "target completion", "planned end",
-        )),
+        field(
+            "planned_completion", "Planned completion date",
+            data_type="date", required=True, aliases=(
+                "plan end", "scheduled end", "target completion", "planned end",
+            ),
+        ),
         field("actual_completion", "Actual completion date", data_type="date", aliases=(
             "end date", "real end", "completed date", "actual end",
         )),
@@ -288,12 +291,18 @@ TEMPLATES: dict[str, list[TemplateField]] = {
         field("shift", "Shift", required=True, aliases=(
             "work shift", "shift id", "shift name",
         )),
-        field("inspected_quantity", "Inspected quantity", data_type="decimal", required=True, aliases=(
-            "inspected qty", "checked qty", "sample size", "total inspected",
-        )),
-        field("rejected_quantity", "Rejected quantity", data_type="decimal", required=True, aliases=(
-            "reject qty", "rejects", "defective qty", "ng qty",
-        )),
+        field(
+            "inspected_quantity", "Inspected quantity",
+            data_type="decimal", required=True, aliases=(
+                "inspected qty", "checked qty", "sample size", "total inspected",
+            ),
+        ),
+        field(
+            "rejected_quantity", "Rejected quantity",
+            data_type="decimal", required=True, aliases=(
+                "reject qty", "rejects", "defective qty", "ng qty",
+            ),
+        ),
         field("reworked_quantity", "Reworked quantity", data_type="decimal", aliases=(
             "rework qty", "reworked", "rework count",
         )),
@@ -318,12 +327,18 @@ TEMPLATES: dict[str, list[TemplateField]] = {
         field("unit", "Unit of measure", aliases=(
             "uom", "measure", "unit of measurement",
         )),
-        field("available_quantity", "Available quantity", data_type="decimal", required=True, aliases=(
-            "available qty", "stock on hand", "qty available", "balance",
-        )),
-        field("daily_consumption", "Daily consumption", data_type="decimal", required=True, aliases=(
-            "daily usage", "consumption rate", "usage per day",
-        )),
+        field(
+            "available_quantity", "Available quantity",
+            data_type="decimal", required=True, aliases=(
+                "available qty", "stock on hand", "qty available", "balance",
+            ),
+        ),
+        field(
+            "daily_consumption", "Daily consumption",
+            data_type="decimal", required=True, aliases=(
+                "daily usage", "consumption rate", "usage per day",
+            ),
+        ),
         field("safety_stock", "Safety stock", data_type="decimal", aliases=(
             "min stock", "reorder level", "buffer stock", "minimum quantity",
         )),
@@ -357,18 +372,27 @@ TEMPLATES: dict[str, list[TemplateField]] = {
         field("promised_date", "Promised delivery date", data_type="date", required=True, aliases=(
             "expected date", "committed date", "eta", "delivery due date",
         )),
-        field("actual_delivery_date", "Actual delivery date", data_type="date", required=True, aliases=(
-            "delivered date", "receipt date", "grn date", "actual date",
-        )),
+        field(
+            "actual_delivery_date", "Actual delivery date",
+            data_type="date", required=True, aliases=(
+                "delivered date", "receipt date", "grn date", "actual date",
+            ),
+        ),
         field("ordered_quantity", "Ordered quantity", data_type="decimal", required=True, aliases=(
             "ordered qty", "po qty", "order qty",
         )),
-        field("received_quantity", "Received quantity", data_type="decimal", required=True, aliases=(
-            "received qty", "delivered qty", "grn qty",
-        )),
-        field("accepted_quantity", "Accepted quantity", data_type="decimal", required=True, aliases=(
-            "accepted qty", "approved qty", "passed qty", "ok qty",
-        )),
+        field(
+            "received_quantity", "Received quantity",
+            data_type="decimal", required=True, aliases=(
+                "received qty", "delivered qty", "grn qty",
+            ),
+        ),
+        field(
+            "accepted_quantity", "Accepted quantity",
+            data_type="decimal", required=True, aliases=(
+                "accepted qty", "approved qty", "passed qty", "ok qty",
+            ),
+        ),
         field("terms_met", "Delivery terms fulfilled", required=True, aliases=(
             "on time", "otif", "terms fulfilled", "delivery compliance",
         )),
@@ -387,12 +411,18 @@ TEMPLATES: dict[str, list[TemplateField]] = {
         field("line", "Production line", required=True, aliases=(
             "production line", "line id", "manufacturing line", "cell",
         )),
-        field("required_quantity", "Required quantity", data_type="decimal", required=True, aliases=(
-            "required qty", "demand qty", "order qty", "target qty",
-        )),
-        field("produced_quantity", "Produced quantity", data_type="decimal", required=True, aliases=(
-            "produced qty", "completed qty", "output qty", "made qty",
-        )),
+        field(
+            "required_quantity", "Required quantity",
+            data_type="decimal", required=True, aliases=(
+                "required qty", "demand qty", "order qty", "target qty",
+            ),
+        ),
+        field(
+            "produced_quantity", "Produced quantity",
+            data_type="decimal", required=True, aliases=(
+                "produced qty", "completed qty", "output qty", "made qty",
+            ),
+        ),
         field("due_date", "Due date", data_type="date", required=True, aliases=(
             "delivery date", "deadline", "required date", "target date",
         )),
@@ -420,30 +450,48 @@ TEMPLATES: dict[str, list[TemplateField]] = {
         field("feedwater_kg", "Feedwater supplied", data_type="decimal", required=True, aliases=(
             "feedwater", "feed water kg", "water supplied",
         )),
-        field("feedwater_inlet_temperature_c", "Feedwater inlet temperature", data_type="decimal", required=True, aliases=(
-            "inlet temp", "feedwater inlet temp", "water inlet temperature",
-        )),
-        field("feedwater_tank_temperature_c", "Feedwater tank temperature", data_type="decimal", required=True, aliases=(
-            "tank temp", "feedwater tank temp", "water tank temperature",
-        )),
+        field(
+            "feedwater_inlet_temperature_c", "Feedwater inlet temperature",
+            data_type="decimal", required=True, aliases=(
+                "inlet temp", "feedwater inlet temp", "water inlet temperature",
+            ),
+        ),
+        field(
+            "feedwater_tank_temperature_c", "Feedwater tank temperature",
+            data_type="decimal", required=True, aliases=(
+                "tank temp", "feedwater tank temp", "water tank temperature",
+            ),
+        ),
         field("steam_generated_kg", "Steam generated", data_type="decimal", required=True, aliases=(
             "steam output", "steam produced", "steam kg",
         )),
-        field("recovered_condensate_kg", "Recovered condensate", data_type="decimal", required=True, aliases=(
-            "condensate", "condensate recovered", "condensate kg",
-        )),
-        field("flash_steam_recovered_kg", "Flash steam recovered", data_type="decimal", required=True, aliases=(
-            "flash steam", "flash recovery", "flash steam kg",
-        )),
+        field(
+            "recovered_condensate_kg", "Recovered condensate",
+            data_type="decimal", required=True, aliases=(
+                "condensate", "condensate recovered", "condensate kg",
+            ),
+        ),
+        field(
+            "flash_steam_recovered_kg", "Flash steam recovered",
+            data_type="decimal", required=True, aliases=(
+                "flash steam", "flash recovery", "flash steam kg",
+            ),
+        ),
         field("briquette_used_kg", "Briquettes used", data_type="decimal", required=True, aliases=(
             "fuel used", "briquettes", "briquette kg", "solid fuel",
         )),
-        field("briquette_gcv_kcal_per_kg", "Briquette GCV", data_type="decimal", required=True, aliases=(
-            "gcv", "calorific value", "fuel gcv", "briquette calorific value",
-        )),
-        field("boiler_efficiency_percent", "Boiler efficiency", data_type="decimal", required=True, aliases=(
-            "efficiency", "boiler efficiency %", "thermal efficiency",
-        )),
+        field(
+            "briquette_gcv_kcal_per_kg", "Briquette GCV",
+            data_type="decimal", required=True, aliases=(
+                "gcv", "calorific value", "fuel gcv", "briquette calorific value",
+            ),
+        ),
+        field(
+            "boiler_efficiency_percent", "Boiler efficiency",
+            data_type="decimal", required=True, aliases=(
+                "efficiency", "boiler efficiency %", "thermal efficiency",
+            ),
+        ),
     ],
 }
 

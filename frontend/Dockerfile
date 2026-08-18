@@ -1,4 +1,4 @@
-FROM node:22-alpine AS dependencies
+FROM node:26-alpine AS dependencies
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY frontend/package.json ./frontend/package.json
@@ -12,7 +12,7 @@ COPY frontend ./frontend
 COPY platform.json ./platform.json
 RUN npm run build --workspace frontend
 
-FROM node:22-alpine AS runtime
+FROM node:26-alpine AS runtime
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app

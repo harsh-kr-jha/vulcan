@@ -1,0 +1,8 @@
+{
+  "clientId": "MYPOL",
+  "displayName": "MyPol Automotive Mysuru",
+  "factoryCode": "MYPOL-MYSURU",
+  "configVersion": "MYPOL-C01",
+  "deploymentId": "mypol-prod-01",
+  "environmentOverrides": {}
+}

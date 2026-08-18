@@ -1,0 +1,43 @@
+{
+  "id": "automotive",
+  "displayName": "Tamaso",
+  "descriptor": "Automotive intelligence",
+  "industry": "automotive-manufacturing",
+  "modules": [
+    "dashboard",
+    "projects",
+    "digital-twin",
+    "uploads",
+    "performance",
+    "alerts",
+    "settings",
+    "rules",
+    "methodology"
+  ],
+  "datasets": {
+    "process": "Process runs",
+    "production": "Production",
+    "downtime": "Downtime",
+    "quality": "Quality",
+    "inventory": "Inventory",
+    "supplier": "Supplier deliveries",
+    "orders": "Customer orders",
+    "projects": "Project master",
+    "project_stages": "Project stages",
+    "utilities": "Steam & boiler utilities"
+  },
+  "navigation": {
+    "projects": "Projects",
+    "digital-twin": "Factory twin",
+    "settings": "Factory setup"
+  },
+  "terminology": {
+    "siteSingular": "factory",
+    "sitePlural": "factories",
+    "projectSingular": "project",
+    "projectPlural": "projects"
+  },
+  "features": {
+    "asyncUploads": false
+  }
+}

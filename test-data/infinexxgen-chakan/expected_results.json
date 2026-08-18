@@ -1,0 +1,126 @@
+{
+  "filters": {
+    "from": "2026-08-06",
+    "to": "2026-08-12",
+    "factory": "InfinexxGen Chakan Works — Synthetic Twin",
+    "line": "all",
+    "machine": "all",
+    "sku": "all",
+    "shift": "all"
+  },
+  "production": {
+    "records": 28,
+    "planned_work_packages": 363,
+    "actual_work_packages": 274,
+    "good_work_packages": 239,
+    "plan_attainment_percent": 75.48
+  },
+  "oee": {
+    "availability_percent": 85.42,
+    "performance_percent": 81.31,
+    "quality_percent": 87.23,
+    "oee_percent": 60.58,
+    "formula": "availability × performance × quality"
+  },
+  "top_bottlenecks": [
+    {
+      "machine": "Orbital Welding Machine",
+      "minutes": 700.0
+    },
+    {
+      "machine": "Plate Rolling Machine",
+      "minutes": 655.0
+    },
+    {
+      "machine": "Portable Hydro Test Rig",
+      "minutes": 45.0
+    },
+    {
+      "machine": "Hydro Test Machine",
+      "minutes": 33.0
+    },
+    {
+      "machine": "Precision Pipe Cutting Saw",
+      "minutes": 23.0
+    }
+  ],
+  "top_downtime_reasons": [
+    {
+      "reason": "Orbital weld-head calibration",
+      "minutes": 700.0
+    },
+    {
+      "reason": "Rolling hydraulic pressure fluctuation",
+      "minutes": 655.0
+    },
+    {
+      "reason": "Material traceability hold",
+      "minutes": 33.0
+    },
+    {
+      "reason": "Isometric clarification hold",
+      "minutes": 29.0
+    },
+    {
+      "reason": "Pipe saw blade inspection",
+      "minutes": 23.0
+    },
+    {
+      "reason": "Pressure-test fixture changeover",
+      "minutes": 16.0
+    }
+  ],
+  "top_defects": [
+    {
+      "defect_reason": "Weld porosity indication",
+      "rejected_quantity": 15.0
+    },
+    {
+      "defect_reason": "Shell roundness deviation",
+      "rejected_quantity": 7.0
+    },
+    {
+      "defect_reason": "Skid diagonal out of tolerance",
+      "rejected_quantity": 0.0
+    },
+    {
+      "defect_reason": "Orbital weld discoloration",
+      "rejected_quantity": 0.0
+    }
+  ],
+  "material_risks": [
+    {
+      "material": "SA516 Gr.70 Plate 20 mm",
+      "stock_cover_days": 1.5,
+      "receipt_status": "delayed"
+    },
+    {
+      "material": "SS316L Process Pipe",
+      "stock_cover_days": 1.6,
+      "receipt_status": "delayed"
+    },
+    {
+      "material": "Forged SS316L Flanges",
+      "stock_cover_days": 1.75,
+      "receipt_status": "delayed"
+    },
+    {
+      "material": "High-Purity Argon",
+      "stock_cover_days": 1.85,
+      "receipt_status": "delayed"
+    }
+  ],
+  "critical_orders": [
+    "IXG-2026-042",
+    "IXG-2026-048"
+  ],
+  "delayed_projects": [
+    "IXG-2026-042",
+    "IXG-2026-045",
+    "IXG-2026-048"
+  ],
+  "process_files_with_attention_on_final_day": [
+    "process/02-plate-rolling.csv",
+    "process/08-orbital-welding.csv"
+  ]
+}

@@ -1,0 +1,827 @@
+date,material,supplier,unit,available_quantity,daily_consumption,safety_stock,expected_receipt_date,required_date,receipt_status
+2026-06-15,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10172.58,924.78,2760,2026-06-19,2026-06-21,received
+2026-06-15,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7264.31,666.45,2160,2026-06-20,2026-06-22,scheduled
+2026-06-15,SS316L Process Pipe,Approved Pipe Supplier C,metre,878.28,85.27,258,2026-06-21,2026-06-23,scheduled
+2026-06-15,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1557.19,169.26,540,2026-06-22,2026-06-24,scheduled
+2026-06-15,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,296.73,25.58,78,2026-06-19,2026-06-21,scheduled
+2026-06-15,Forged SS316L Flanges,Approved Forging Supplier E,piece,140.0,17.5,54,2026-06-20,2026-06-22,scheduled
+2026-06-15,MS Structural Sections,Approved Structural Supplier F,kg,7206.76,581.19,1620,2026-06-21,2026-06-23,scheduled
+2026-06-15,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,29.3,3.33,10.5,2026-06-22,2026-06-24,scheduled
+2026-06-15,ER316L Welding Wire,Approved Welding Supplier H,kg,216.24,21.2,63,2026-06-19,2026-06-21,scheduled
+2026-06-15,E7018 Welding Electrodes,Approved Welding Supplier H,kg,385.35,33.22,102,2026-06-20,2026-06-22,scheduled
+2026-06-15,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,53.92,6.74,21,2026-06-21,2026-06-23,scheduled
+2026-06-15,SS316L Process Valves,Approved Valve Supplier J,piece,114.02,12.13,36,2026-06-22,2026-06-24,scheduled
+2026-06-15,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,396.51,40.46,114,2026-06-19,2026-06-21,scheduled
+2026-06-15,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,53.2,4.75,15,2026-06-20,2026-06-22,received
+2026-06-16,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,9761.14,856.24,2760,2026-06-20,2026-06-22,scheduled
+2026-06-16,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8526.75,754.58,2160,2026-06-21,2026-06-23,scheduled
+2026-06-16,SS316L Process Pipe,Approved Pipe Supplier C,metre,954.23,89.18,258,2026-06-22,2026-06-24,scheduled
+2026-06-16,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1612.99,168.02,540,2026-06-23,2026-06-25,scheduled
+2026-06-16,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,260.7,26.07,78,2026-06-20,2026-06-22,scheduled
+2026-06-16,Forged SS316L Flanges,Approved Forging Supplier E,piece,161.11,19.18,54,2026-06-21,2026-06-23,scheduled
+2026-06-16,MS Structural Sections,Approved Structural Supplier F,kg,6791.42,530.58,1620,2026-06-22,2026-06-24,scheduled
+2026-06-16,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,31.56,3.43,10.5,2026-06-23,2026-06-25,scheduled
+2026-06-16,ER316L Welding Wire,Approved Welding Supplier H,kg,217.51,20.52,63,2026-06-20,2026-06-22,scheduled
+2026-06-16,E7018 Welding Electrodes,Approved Welding Supplier H,kg,340.6,34.06,102,2026-06-21,2026-06-23,scheduled
+2026-06-16,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,60.65,7.22,21,2026-06-22,2026-06-24,scheduled
+2026-06-16,SS316L Process Valves,Approved Valve Supplier J,piece,126.52,12.91,36,2026-06-23,2026-06-25,scheduled
+2026-06-16,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,407.59,39.96,114,2026-06-20,2026-06-22,received
+2026-06-16,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,58.58,5.05,15,2026-06-21,2026-06-23,scheduled
+2026-06-17,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10097.61,855.73,2760,2026-06-21,2026-06-23,scheduled
+2026-06-17,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,9060.6,774.41,2160,2026-06-22,2026-06-24,scheduled
+2026-06-17,SS316L Process Pipe,Approved Pipe Supplier C,metre,910.2,82.0,258,2026-06-23,2026-06-25,scheduled
+2026-06-17,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1462.0,182.75,540,2026-06-24,2026-06-26,scheduled
+2026-06-17,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,270.19,25.98,78,2026-06-21,2026-06-23,scheduled
+2026-06-17,Forged SS316L Flanges,Approved Forging Supplier E,piece,157.52,17.9,54,2026-06-22,2026-06-24,scheduled
+2026-06-17,MS Structural Sections,Approved Structural Supplier F,kg,7589.87,574.99,1620,2026-06-23,2026-06-25,scheduled
+2026-06-17,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,31.1,3.24,10.5,2026-06-24,2026-06-26,scheduled
+2026-06-17,ER316L Welding Wire,Approved Welding Supplier H,kg,197.73,21.97,63,2026-06-21,2026-06-23,scheduled
+2026-06-17,E7018 Welding Electrodes,Approved Welding Supplier H,kg,329.06,31.64,102,2026-06-22,2026-06-24,scheduled
+2026-06-17,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,60.63,6.89,21,2026-06-23,2026-06-25,scheduled
+2026-06-17,SS316L Process Valves,Approved Valve Supplier J,piece,127.09,12.46,36,2026-06-24,2026-06-26,received
+2026-06-17,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,408.74,38.56,114,2026-06-21,2026-06-23,scheduled
+2026-06-17,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,49.0,4.9,15,2026-06-22,2026-06-24,scheduled
+2026-06-18,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10976.95,899.75,2760,2026-06-22,2026-06-24,scheduled
+2026-06-18,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8564.86,707.84,2160,2026-06-23,2026-06-25,scheduled
+2026-06-18,SS316L Process Pipe,Approved Pipe Supplier C,metre,866.97,91.26,258,2026-06-24,2026-06-26,scheduled
+2026-06-18,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1570.13,186.92,540,2026-06-25,2026-06-27,scheduled
+2026-06-18,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,294.41,27.26,78,2026-06-22,2026-06-24,scheduled
+2026-06-18,Forged SS316L Flanges,Approved Forging Supplier E,piece,154.28,16.77,54,2026-06-23,2026-06-25,scheduled
+2026-06-18,MS Structural Sections,Approved Structural Supplier F,kg,7675.7,564.39,1620,2026-06-24,2026-06-26,scheduled
+2026-06-18,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,29.12,3.64,10.5,2026-06-25,2026-06-27,scheduled
+2026-06-18,ER316L Welding Wire,Approved Welding Supplier H,kg,200.22,21.3,63,2026-06-22,2026-06-24,scheduled
+2026-06-18,E7018 Welding Electrodes,Approved Welding Supplier H,kg,345.06,31.95,102,2026-06-23,2026-06-25,scheduled
+2026-06-18,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,68.72,7.47,21,2026-06-24,2026-06-26,received
+2026-06-18,SS316L Process Valves,Approved Valve Supplier J,piece,119.14,11.24,36,2026-06-25,2026-06-27,scheduled
+2026-06-18,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,337.77,37.53,114,2026-06-22,2026-06-24,scheduled
+2026-06-18,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,53.46,5.14,15,2026-06-23,2026-06-25,scheduled
+2026-06-19,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10689.84,848.4,2760,2026-06-23,2026-06-25,scheduled
+2026-06-19,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7121.62,678.25,2160,2026-06-24,2026-06-26,scheduled
+2026-06-19,SS316L Process Pipe,Approved Pipe Supplier C,metre,869.12,87.79,258,2026-06-25,2026-06-27,scheduled
+2026-06-19,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1559.54,177.22,540,2026-06-26,2026-06-28,scheduled
+2026-06-19,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,283.47,25.31,78,2026-06-23,2026-06-25,scheduled
+2026-06-19,Forged SS316L Flanges,Approved Forging Supplier E,piece,178.46,18.59,54,2026-06-24,2026-06-26,scheduled
+2026-06-19,MS Structural Sections,Approved Structural Supplier F,kg,6116.88,509.74,1620,2026-06-25,2026-06-27,scheduled
+2026-06-19,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,29.23,3.48,10.5,2026-06-26,2026-06-28,scheduled
+2026-06-19,ER316L Welding Wire,Approved Welding Supplier H,kg,197.47,20.15,63,2026-06-23,2026-06-25,scheduled
+2026-06-19,E7018 Welding Electrodes,Approved Welding Supplier H,kg,380.24,33.95,102,2026-06-24,2026-06-26,received
+2026-06-19,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,63.46,6.61,21,2026-06-25,2026-06-27,scheduled
+2026-06-19,SS316L Process Valves,Approved Valve Supplier J,piece,101.07,11.23,36,2026-06-26,2026-06-28,scheduled
+2026-06-19,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,361.71,38.48,114,2026-06-23,2026-06-25,scheduled
+2026-06-19,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,52.49,4.86,15,2026-06-24,2026-06-26,scheduled
+2026-06-20,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10283.46,934.86,2760,2026-06-24,2026-06-26,scheduled
+2026-06-20,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8007.79,734.66,2160,2026-06-25,2026-06-27,scheduled
+2026-06-20,SS316L Process Pipe,Approved Pipe Supplier C,metre,881.99,85.63,258,2026-06-26,2026-06-28,scheduled
+2026-06-20,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1568.69,170.51,540,2026-06-27,2026-06-29,scheduled
+2026-06-20,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,291.86,25.16,78,2026-06-24,2026-06-26,scheduled
+2026-06-20,Forged SS316L Flanges,Approved Forging Supplier E,piece,142.08,17.76,54,2026-06-25,2026-06-27,scheduled
+2026-06-20,MS Structural Sections,Approved Structural Supplier F,kg,6817.77,549.82,1620,2026-06-26,2026-06-28,scheduled
+2026-06-20,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,30.8,3.5,10.5,2026-06-27,2026-06-29,scheduled
+2026-06-20,ER316L Welding Wire,Approved Welding Supplier H,kg,214.4,21.02,63,2026-06-24,2026-06-26,received
+2026-06-20,E7018 Welding Electrodes,Approved Welding Supplier H,kg,407.39,35.12,102,2026-06-25,2026-06-27,scheduled
+2026-06-20,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,56.64,7.08,21,2026-06-26,2026-06-28,scheduled
+2026-06-20,SS316L Process Valves,Approved Valve Supplier J,piece,103.96,11.06,36,2026-06-27,2026-06-29,scheduled
+2026-06-20,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,357.8,36.51,114,2026-06-24,2026-06-26,scheduled
+2026-06-20,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,58.02,5.18,15,2026-06-25,2026-06-27,scheduled
+2026-06-21,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10292.83,902.88,2760,2026-06-25,2026-06-27,scheduled
+2026-06-21,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7533.82,666.71,2160,2026-06-26,2026-06-28,scheduled
+2026-06-21,SS316L Process Pipe,Approved Pipe Supplier C,metre,944.6,88.28,258,2026-06-27,2026-06-29,scheduled
+2026-06-21,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1821.31,189.72,540,2026-06-28,2026-06-30,scheduled
+2026-06-21,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,279.3,27.93,78,2026-06-25,2026-06-27,scheduled
+2026-06-21,Forged SS316L Flanges,Approved Forging Supplier E,piece,153.38,18.26,54,2026-06-26,2026-06-28,scheduled
+2026-06-21,MS Structural Sections,Approved Structural Supplier F,kg,7145.09,558.21,1620,2026-06-27,2026-06-29,scheduled
+2026-06-21,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,30.73,3.34,10.5,2026-06-28,2026-06-30,received
+2026-06-21,ER316L Welding Wire,Approved Welding Supplier H,kg,230.87,21.78,63,2026-06-25,2026-06-27,scheduled
+2026-06-21,E7018 Welding Electrodes,Approved Welding Supplier H,kg,343.8,34.38,102,2026-06-26,2026-06-28,scheduled
+2026-06-21,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,60.9,7.25,21,2026-06-27,2026-06-29,scheduled
+2026-06-21,SS316L Process Valves,Approved Valve Supplier J,piece,123.68,12.62,36,2026-06-28,2026-06-30,scheduled
+2026-06-21,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,390.25,38.26,114,2026-06-25,2026-06-27,scheduled
+2026-06-21,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,60.55,5.22,15,2026-06-26,2026-06-28,scheduled
+2026-06-22,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10380.11,879.67,2760,2026-06-26,2026-06-28,scheduled
+2026-06-22,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,9003.62,769.54,2160,2026-06-27,2026-06-29,scheduled
+2026-06-22,SS316L Process Pipe,Approved Pipe Supplier C,metre,1005.66,90.6,258,2026-06-28,2026-06-30,scheduled
+2026-06-22,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1544.08,193.01,540,2026-06-29,2026-07-01,scheduled
+2026-06-22,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,258.02,24.81,78,2026-06-26,2026-06-28,scheduled
+2026-06-22,Forged SS316L Flanges,Approved Forging Supplier E,piece,154.53,17.56,54,2026-06-27,2026-06-29,scheduled
+2026-06-22,MS Structural Sections,Approved Structural Supplier F,kg,6566.6,497.47,1620,2026-06-28,2026-06-30,received
+2026-06-22,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,31.3,3.26,10.5,2026-06-29,2026-07-01,scheduled
+2026-06-22,ER316L Welding Wire,Approved Welding Supplier H,kg,198.36,22.04,63,2026-06-26,2026-06-28,scheduled
+2026-06-22,E7018 Welding Electrodes,Approved Welding Supplier H,kg,332.18,31.94,102,2026-06-27,2026-06-29,scheduled
+2026-06-22,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,60.19,6.84,21,2026-06-28,2026-06-30,scheduled
+2026-06-22,SS316L Process Valves,Approved Valve Supplier J,piece,115.67,11.34,36,2026-06-29,2026-07-01,scheduled
+2026-06-22,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,382.24,36.06,114,2026-06-26,2026-06-28,scheduled
+2026-06-22,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,51.2,5.12,15,2026-06-27,2026-06-29,scheduled
+2026-06-23,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10652.8,873.18,2760,2026-06-27,2026-06-29,scheduled
+2026-06-23,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8923.99,737.52,2160,2026-06-28,2026-06-30,scheduled
+2026-06-23,SS316L Process Pipe,Approved Pipe Supplier C,metre,830.87,87.46,258,2026-06-29,2026-07-01,scheduled
+2026-06-23,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1490.92,177.49,540,2026-06-30,2026-07-02,scheduled
+2026-06-23,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,293.22,27.15,78,2026-06-27,2026-06-29,scheduled
+2026-06-23,Forged SS316L Flanges,Approved Forging Supplier E,piece,174.89,19.01,54,2026-06-28,2026-06-30,received
+2026-06-23,MS Structural Sections,Approved Structural Supplier F,kg,7844.07,576.77,1620,2026-06-29,2026-07-01,scheduled
+2026-06-23,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,29.12,3.64,10.5,2026-06-30,2026-07-02,scheduled
+2026-06-23,ER316L Welding Wire,Approved Welding Supplier H,kg,185.93,19.78,63,2026-06-27,2026-06-29,scheduled
+2026-06-23,E7018 Welding Electrodes,Approved Welding Supplier H,kg,358.67,33.21,102,2026-06-28,2026-06-30,scheduled
+2026-06-23,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,65.78,7.15,21,2026-06-29,2026-07-01,scheduled
+2026-06-23,SS316L Process Valves,Approved Valve Supplier J,piece,122.85,11.59,36,2026-06-30,2026-07-02,scheduled
+2026-06-23,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,341.55,37.95,114,2026-06-27,2026-06-29,scheduled
+2026-06-23,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,49.3,4.74,15,2026-06-28,2026-06-30,scheduled
+2026-06-24,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,12251.61,972.35,2760,2026-06-28,2026-06-30,scheduled
+2026-06-24,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8117.34,773.08,2160,2026-06-29,2026-07-01,scheduled
+2026-06-24,SS316L Process Pipe,Approved Pipe Supplier C,metre,878.72,88.76,258,2026-06-30,2026-07-02,scheduled
+2026-06-24,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1606.7,182.58,540,2026-07-01,2026-07-03,scheduled
+2026-06-24,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,274.18,24.48,78,2026-06-28,2026-06-30,received
+2026-06-24,Forged SS316L Flanges,Approved Forging Supplier E,piece,164.93,17.18,54,2026-06-29,2026-07-01,scheduled
+2026-06-24,MS Structural Sections,Approved Structural Supplier F,kg,6274.56,522.88,1620,2026-06-30,2026-07-02,scheduled
+2026-06-24,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,29.06,3.46,10.5,2026-07-01,2026-07-03,scheduled
+2026-06-24,ER316L Welding Wire,Approved Welding Supplier H,kg,219.62,22.41,63,2026-06-28,2026-06-30,scheduled
+2026-06-24,E7018 Welding Electrodes,Approved Welding Supplier H,kg,372.96,33.3,102,2026-06-29,2026-07-01,scheduled
+2026-06-24,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,70.27,7.32,21,2026-06-30,2026-07-02,scheduled
+2026-06-24,SS316L Process Valves,Approved Valve Supplier J,piece,106.02,11.78,36,2026-07-01,2026-07-03,scheduled
+2026-06-24,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,339.62,36.13,114,2026-06-28,2026-06-30,scheduled
+2026-06-24,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,51.52,4.77,15,2026-06-29,2026-07-01,scheduled
+2026-06-25,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10439.0,949.0,2760,2026-06-29,2026-07-01,scheduled
+2026-06-25,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7845.17,719.74,2160,2026-06-30,2026-07-02,scheduled
+2026-06-25,SS316L Process Pipe,Approved Pipe Supplier C,metre,845.12,82.05,258,2026-07-01,2026-07-03,scheduled
+2026-06-25,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1573.38,171.02,540,2026-07-02,2026-07-04,received
+2026-06-25,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,308.91,26.63,78,2026-06-29,2026-07-01,scheduled
+2026-06-25,Forged SS316L Flanges,Approved Forging Supplier E,piece,133.44,16.68,54,2026-06-30,2026-07-02,scheduled
+2026-06-25,MS Structural Sections,Approved Structural Supplier F,kg,6694.76,539.9,1620,2026-07-01,2026-07-03,scheduled
+2026-06-25,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,32.82,3.73,10.5,2026-07-02,2026-07-04,scheduled
+2026-06-25,ER316L Welding Wire,Approved Welding Supplier H,kg,197.06,19.32,63,2026-06-29,2026-07-01,scheduled
+2026-06-25,E7018 Welding Electrodes,Approved Welding Supplier H,kg,369.92,31.89,102,2026-06-30,2026-07-02,scheduled
+2026-06-25,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,52.48,6.56,21,2026-07-01,2026-07-03,scheduled
+2026-06-25,SS316L Process Valves,Approved Valve Supplier J,piece,105.84,11.26,36,2026-07-02,2026-07-04,scheduled
+2026-06-25,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,351.82,35.9,114,2026-06-29,2026-07-01,scheduled
+2026-06-25,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,54.88,4.9,15,2026-06-30,2026-07-02,scheduled
+2026-06-26,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11317.69,992.78,2760,2026-06-30,2026-07-02,scheduled
+2026-06-26,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8256.35,730.65,2160,2026-07-01,2026-07-03,scheduled
+2026-06-26,SS316L Process Pipe,Approved Pipe Supplier C,metre,850.33,79.47,258,2026-07-02,2026-07-04,received
+2026-06-26,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1716.77,178.83,540,2026-07-03,2026-07-05,scheduled
+2026-06-26,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,259.0,25.9,78,2026-06-30,2026-07-02,scheduled
+2026-06-26,Forged SS316L Flanges,Approved Forging Supplier E,piece,156.32,18.61,54,2026-07-01,2026-07-03,scheduled
+2026-06-26,MS Structural Sections,Approved Structural Supplier F,kg,7405.82,578.58,1620,2026-07-02,2026-07-04,scheduled
+2026-06-26,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,33.76,3.67,10.5,2026-07-03,2026-07-05,scheduled
+2026-06-26,ER316L Welding Wire,Approved Welding Supplier H,kg,217.72,20.54,63,2026-06-30,2026-07-02,scheduled
+2026-06-26,E7018 Welding Electrodes,Approved Welding Supplier H,kg,320.7,32.07,102,2026-07-01,2026-07-03,scheduled
+2026-06-26,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,55.19,6.57,21,2026-07-02,2026-07-04,scheduled
+2026-06-26,SS316L Process Valves,Approved Valve Supplier J,piece,121.81,12.43,36,2026-07-03,2026-07-05,scheduled
+2026-06-26,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,388.31,38.07,114,2026-06-30,2026-07-02,scheduled
+2026-06-26,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,56.72,4.89,15,2026-07-01,2026-07-03,scheduled
+2026-06-27,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10389.66,880.48,2760,2026-07-01,2026-07-03,scheduled
+2026-06-27,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7882.87,673.75,2160,2026-07-02,2026-07-04,received
+2026-06-27,SS316L Process Pipe,Approved Pipe Supplier C,metre,894.66,80.6,258,2026-07-03,2026-07-05,scheduled
+2026-06-27,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1475.36,184.42,540,2026-07-04,2026-07-06,scheduled
+2026-06-27,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,282.78,27.19,78,2026-07-01,2026-07-03,scheduled
+2026-06-27,Forged SS316L Flanges,Approved Forging Supplier E,piece,156.38,17.77,54,2026-07-02,2026-07-04,scheduled
+2026-06-27,MS Structural Sections,Approved Structural Supplier F,kg,7228.72,547.63,1620,2026-07-03,2026-07-05,scheduled
+2026-06-27,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,31.49,3.28,10.5,2026-07-04,2026-07-06,scheduled
+2026-06-27,ER316L Welding Wire,Approved Welding Supplier H,kg,195.21,21.69,63,2026-07-01,2026-07-03,scheduled
+2026-06-27,E7018 Welding Electrodes,Approved Welding Supplier H,kg,355.68,34.2,102,2026-07-02,2026-07-04,scheduled
+2026-06-27,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,63.62,7.23,21,2026-07-03,2026-07-05,scheduled
+2026-06-27,SS316L Process Valves,Approved Valve Supplier J,piece,116.08,11.38,36,2026-07-04,2026-07-06,scheduled
+2026-06-27,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,413.93,39.05,114,2026-07-01,2026-07-03,scheduled
+2026-06-27,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,52.6,5.26,15,2026-07-02,2026-07-04,scheduled
+2026-06-28,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10331.94,846.88,2760,2026-07-02,2026-07-04,received
+2026-06-28,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8227.15,679.93,2160,2026-07-03,2026-07-05,scheduled
+2026-06-28,SS316L Process Pipe,Approved Pipe Supplier C,metre,770.73,81.13,258,2026-07-04,2026-07-06,scheduled
+2026-06-28,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1439.0,171.31,540,2026-07-05,2026-07-07,scheduled
+2026-06-28,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,294.95,27.31,78,2026-07-02,2026-07-04,scheduled
+2026-06-28,Forged SS316L Flanges,Approved Forging Supplier E,piece,155.02,16.85,54,2026-07-03,2026-07-05,scheduled
+2026-06-28,MS Structural Sections,Approved Structural Supplier F,kg,6934.37,509.88,1620,2026-07-04,2026-07-06,scheduled
+2026-06-28,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,30.0,3.75,10.5,2026-07-05,2026-07-07,scheduled
+2026-06-28,ER316L Welding Wire,Approved Welding Supplier H,kg,206.8,22.0,63,2026-07-02,2026-07-04,scheduled
+2026-06-28,E7018 Welding Electrodes,Approved Welding Supplier H,kg,345.92,32.03,102,2026-07-03,2026-07-05,scheduled
+2026-06-28,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,66.88,7.27,21,2026-07-04,2026-07-06,scheduled
+2026-06-28,SS316L Process Valves,Approved Valve Supplier J,piece,129.32,12.2,36,2026-07-05,2026-07-07,scheduled
+2026-06-28,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,318.24,35.36,114,2026-07-02,2026-07-04,scheduled
+2026-06-28,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,53.25,5.12,15,2026-07-03,2026-07-05,received
+2026-06-29,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11404.13,905.09,2760,2026-07-03,2026-07-05,scheduled
+2026-06-29,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7596.44,723.47,2160,2026-07-04,2026-07-06,scheduled
+2026-06-29,SS316L Process Pipe,Approved Pipe Supplier C,metre,914.17,92.34,258,2026-07-05,2026-07-07,scheduled
+2026-06-29,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1543.08,175.35,540,2026-07-06,2026-07-08,scheduled
+2026-06-29,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,268.91,24.01,78,2026-07-03,2026-07-05,scheduled
+2026-06-29,Forged SS316L Flanges,Approved Forging Supplier E,piece,178.85,18.63,54,2026-07-04,2026-07-06,scheduled
+2026-06-29,MS Structural Sections,Approved Structural Supplier F,kg,6694.2,557.85,1620,2026-07-05,2026-07-07,scheduled
+2026-06-29,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,27.64,3.29,10.5,2026-07-06,2026-07-08,scheduled
+2026-06-29,ER316L Welding Wire,Approved Welding Supplier H,kg,204.62,20.88,63,2026-07-03,2026-07-05,scheduled
+2026-06-29,E7018 Welding Electrodes,Approved Welding Supplier H,kg,351.79,31.41,102,2026-07-04,2026-07-06,scheduled
+2026-06-29,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,64.9,6.76,21,2026-07-05,2026-07-07,scheduled
+2026-06-29,SS316L Process Valves,Approved Valve Supplier J,piece,109.89,12.21,36,2026-07-06,2026-07-08,scheduled
+2026-06-29,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,342.07,36.39,114,2026-07-03,2026-07-05,received
+2026-06-29,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,54.11,5.01,15,2026-07-04,2026-07-06,scheduled
+2026-06-30,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10505.88,955.08,2760,2026-07-04,2026-07-06,scheduled
+2026-06-30,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8294.9,761.0,2160,2026-07-05,2026-07-07,scheduled
+2026-06-30,SS316L Process Pipe,Approved Pipe Supplier C,metre,873.85,84.84,258,2026-07-06,2026-07-08,scheduled
+2026-06-30,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1785.9,194.12,540,2026-07-07,2026-07-09,scheduled
+2026-06-30,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,305.78,26.36,78,2026-07-04,2026-07-06,scheduled
+2026-06-30,Forged SS316L Flanges,Approved Forging Supplier E,piece,142.64,17.83,54,2026-07-05,2026-07-07,scheduled
+2026-06-30,MS Structural Sections,Approved Structural Supplier F,kg,6210.54,500.85,1620,2026-07-06,2026-07-08,scheduled
+2026-06-30,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,31.5,3.58,10.5,2026-07-07,2026-07-09,scheduled
+2026-06-30,ER316L Welding Wire,Approved Welding Supplier H,kg,216.34,21.21,63,2026-07-04,2026-07-06,scheduled
+2026-06-30,E7018 Welding Electrodes,Approved Welding Supplier H,kg,396.95,34.22,102,2026-07-05,2026-07-07,scheduled
+2026-06-30,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,54.24,6.78,21,2026-07-06,2026-07-08,scheduled
+2026-06-30,SS316L Process Valves,Approved Valve Supplier J,piece,107.25,11.41,36,2026-07-07,2026-07-09,received
+2026-06-30,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,356.23,36.35,114,2026-07-04,2026-07-06,scheduled
+2026-06-30,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,59.02,5.27,15,2026-07-05,2026-07-07,scheduled
+2026-07-01,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11130.16,976.33,2760,2026-07-05,2026-07-07,scheduled
+2026-07-01,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7955.31,704.01,2160,2026-07-06,2026-07-08,scheduled
+2026-07-01,SS316L Process Pipe,Approved Pipe Supplier C,metre,872.16,81.51,258,2026-07-07,2026-07-09,scheduled
+2026-07-01,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1632.48,170.05,540,2026-07-08,2026-07-10,scheduled
+2026-07-01,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,278.7,27.87,78,2026-07-05,2026-07-07,scheduled
+2026-07-01,Forged SS316L Flanges,Approved Forging Supplier E,piece,157.5,18.75,54,2026-07-06,2026-07-08,scheduled
+2026-07-01,MS Structural Sections,Approved Structural Supplier F,kg,6852.86,535.38,1620,2026-07-07,2026-07-09,scheduled
+2026-07-01,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,29.81,3.24,10.5,2026-07-08,2026-07-10,scheduled
+2026-07-01,ER316L Welding Wire,Approved Welding Supplier H,kg,211.58,19.96,63,2026-07-05,2026-07-07,scheduled
+2026-07-01,E7018 Welding Electrodes,Approved Welding Supplier H,kg,315.6,31.56,102,2026-07-06,2026-07-08,scheduled
+2026-07-01,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,62.24,7.41,21,2026-07-07,2026-07-09,received
+2026-07-01,SS316L Process Valves,Approved Valve Supplier J,piece,124.85,12.74,36,2026-07-08,2026-07-10,scheduled
+2026-07-01,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,408.31,40.03,114,2026-07-05,2026-07-07,scheduled
+2026-07-01,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,54.75,4.72,15,2026-07-06,2026-07-08,scheduled
+2026-07-02,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10820.36,916.98,2760,2026-07-06,2026-07-08,scheduled
+2026-07-02,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8898.9,760.59,2160,2026-07-07,2026-07-09,scheduled
+2026-07-02,SS316L Process Pipe,Approved Pipe Supplier C,metre,932.84,84.04,258,2026-07-08,2026-07-10,scheduled
+2026-07-02,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1342.32,167.79,540,2026-07-09,2026-07-11,scheduled
+2026-07-02,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,287.35,27.63,78,2026-07-06,2026-07-08,scheduled
+2026-07-02,Forged SS316L Flanges,Approved Forging Supplier E,piece,163.06,18.53,54,2026-07-07,2026-07-09,scheduled
+2026-07-02,MS Structural Sections,Approved Structural Supplier F,kg,7263.3,550.25,1620,2026-07-08,2026-07-10,scheduled
+2026-07-02,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,31.01,3.23,10.5,2026-07-09,2026-07-11,scheduled
+2026-07-02,ER316L Welding Wire,Approved Welding Supplier H,kg,185.4,20.6,63,2026-07-06,2026-07-08,scheduled
+2026-07-02,E7018 Welding Electrodes,Approved Welding Supplier H,kg,354.74,34.11,102,2026-07-07,2026-07-09,received
+2026-07-02,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,64.15,7.29,21,2026-07-08,2026-07-10,scheduled
+2026-07-02,SS316L Process Valves,Approved Valve Supplier J,piece,113.73,11.15,36,2026-07-09,2026-07-11,scheduled
+2026-07-02,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,402.38,37.96,114,2026-07-06,2026-07-08,scheduled
+2026-07-02,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,50.3,5.03,15,2026-07-07,2026-07-09,scheduled
+2026-07-03,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11084.31,908.55,2760,2026-07-07,2026-07-09,scheduled
+2026-07-03,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8516.95,703.88,2160,2026-07-08,2026-07-10,scheduled
+2026-07-03,SS316L Process Pipe,Approved Pipe Supplier C,metre,787.64,82.91,258,2026-07-09,2026-07-11,scheduled
+2026-07-03,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1584.41,188.62,540,2026-07-10,2026-07-12,scheduled
+2026-07-03,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,281.88,26.1,78,2026-07-07,2026-07-09,scheduled
+2026-07-03,Forged SS316L Flanges,Approved Forging Supplier E,piece,156.86,17.05,54,2026-07-08,2026-07-10,scheduled
+2026-07-03,MS Structural Sections,Approved Structural Supplier F,kg,7903.5,581.14,1620,2026-07-09,2026-07-11,scheduled
+2026-07-03,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,26.72,3.34,10.5,2026-07-10,2026-07-12,scheduled
+2026-07-03,ER316L Welding Wire,Approved Welding Supplier H,kg,185.27,19.71,63,2026-07-07,2026-07-09,received
+2026-07-03,E7018 Welding Electrodes,Approved Welding Supplier H,kg,344.74,31.92,102,2026-07-08,2026-07-10,scheduled
+2026-07-03,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,60.26,6.55,21,2026-07-09,2026-07-11,scheduled
+2026-07-03,SS316L Process Valves,Approved Valve Supplier J,piece,132.61,12.51,36,2026-07-10,2026-07-12,scheduled
+2026-07-03,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,347.85,38.65,114,2026-07-07,2026-07-09,scheduled
+2026-07-03,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,51.06,4.91,15,2026-07-08,2026-07-10,scheduled
+2026-07-04,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11130.84,883.4,2760,2026-07-08,2026-07-10,scheduled
+2026-07-04,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8152.62,776.44,2160,2026-07-09,2026-07-11,scheduled
+2026-07-04,SS316L Process Pipe,Approved Pipe Supplier C,metre,808.63,81.68,258,2026-07-10,2026-07-12,scheduled
+2026-07-04,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1657.3,188.33,540,2026-07-11,2026-07-13,scheduled
+2026-07-04,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,300.5,26.83,78,2026-07-08,2026-07-10,scheduled
+2026-07-04,Forged SS316L Flanges,Approved Forging Supplier E,piece,167.14,17.41,54,2026-07-09,2026-07-11,scheduled
+2026-07-04,MS Structural Sections,Approved Structural Supplier F,kg,6902.64,575.22,1620,2026-07-10,2026-07-12,scheduled
+2026-07-04,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,29.9,3.56,10.5,2026-07-11,2026-07-13,received
+2026-07-04,ER316L Welding Wire,Approved Welding Supplier H,kg,198.16,20.22,63,2026-07-08,2026-07-10,scheduled
+2026-07-04,E7018 Welding Electrodes,Approved Welding Supplier H,kg,372.4,33.25,102,2026-07-09,2026-07-11,scheduled
+2026-07-04,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,71.04,7.4,21,2026-07-10,2026-07-12,scheduled
+2026-07-04,SS316L Process Valves,Approved Valve Supplier J,piece,110.34,12.26,36,2026-07-11,2026-07-13,scheduled
+2026-07-04,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,349.77,37.21,114,2026-07-08,2026-07-10,scheduled
+2026-07-04,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,54.0,5.0,15,2026-07-09,2026-07-11,scheduled
+2026-07-05,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10612.69,964.79,2760,2026-07-09,2026-07-11,scheduled
+2026-07-05,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8180.56,750.51,2160,2026-07-10,2026-07-12,scheduled
+2026-07-05,SS316L Process Pipe,Approved Pipe Supplier C,metre,935.45,90.82,258,2026-07-11,2026-07-13,scheduled
+2026-07-05,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1570.16,170.67,540,2026-07-12,2026-07-14,scheduled
+2026-07-05,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,303.92,26.2,78,2026-07-09,2026-07-11,scheduled
+2026-07-05,Forged SS316L Flanges,Approved Forging Supplier E,piece,153.2,19.15,54,2026-07-10,2026-07-12,scheduled
+2026-07-05,MS Structural Sections,Approved Structural Supplier F,kg,6195.91,499.67,1620,2026-07-11,2026-07-13,received
+2026-07-05,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,28.51,3.24,10.5,2026-07-12,2026-07-14,scheduled
+2026-07-05,ER316L Welding Wire,Approved Welding Supplier H,kg,202.37,19.84,63,2026-07-09,2026-07-11,scheduled
+2026-07-05,E7018 Welding Electrodes,Approved Welding Supplier H,kg,395.21,34.07,102,2026-07-10,2026-07-12,scheduled
+2026-07-05,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,56.4,7.05,21,2026-07-11,2026-07-13,scheduled
+2026-07-05,SS316L Process Valves,Approved Valve Supplier J,piece,112.52,11.97,36,2026-07-12,2026-07-14,scheduled
+2026-07-05,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,373.77,38.14,114,2026-07-09,2026-07-11,scheduled
+2026-07-05,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,52.19,4.66,15,2026-07-10,2026-07-12,scheduled
+2026-07-06,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,9851.77,864.19,2760,2026-07-10,2026-07-12,scheduled
+2026-07-06,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8134.87,719.9,2160,2026-07-11,2026-07-13,scheduled
+2026-07-06,SS316L Process Pipe,Approved Pipe Supplier C,metre,907.79,84.84,258,2026-07-12,2026-07-14,scheduled
+2026-07-06,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1762.75,183.62,540,2026-07-13,2026-07-15,scheduled
+2026-07-06,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,244.3,24.43,78,2026-07-10,2026-07-12,scheduled
+2026-07-06,Forged SS316L Flanges,Approved Forging Supplier E,piece,155.32,18.49,54,2026-07-11,2026-07-13,received
+2026-07-06,MS Structural Sections,Approved Structural Supplier F,kg,7434.5,580.82,1620,2026-07-12,2026-07-14,scheduled
+2026-07-06,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,33.49,3.64,10.5,2026-07-13,2026-07-15,scheduled
+2026-07-06,ER316L Welding Wire,Approved Welding Supplier H,kg,225.57,21.28,63,2026-07-10,2026-07-12,scheduled
+2026-07-06,E7018 Welding Electrodes,Approved Welding Supplier H,kg,316.3,31.63,102,2026-07-11,2026-07-13,scheduled
+2026-07-06,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,57.79,6.88,21,2026-07-12,2026-07-14,scheduled
+2026-07-06,SS316L Process Valves,Approved Valve Supplier J,piece,108.19,11.04,36,2026-07-13,2026-07-15,scheduled
+2026-07-06,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,383.11,37.56,114,2026-07-10,2026-07-12,scheduled
+2026-07-06,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,62.41,5.38,15,2026-07-11,2026-07-13,scheduled
+2026-07-07,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10201.22,864.51,2760,2026-07-11,2026-07-13,scheduled
+2026-07-07,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8855.03,756.84,2160,2026-07-12,2026-07-14,scheduled
+2026-07-07,SS316L Process Pipe,Approved Pipe Supplier C,metre,884.23,79.66,258,2026-07-13,2026-07-15,scheduled
+2026-07-07,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1538.56,192.32,540,2026-07-14,2026-07-16,scheduled
+2026-07-07,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,251.99,24.23,78,2026-07-11,2026-07-13,received
+2026-07-07,Forged SS316L Flanges,Approved Forging Supplier E,piece,161.48,18.35,54,2026-07-12,2026-07-14,scheduled
+2026-07-07,MS Structural Sections,Approved Structural Supplier F,kg,7582.87,574.46,1620,2026-07-13,2026-07-15,scheduled
+2026-07-07,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,35.14,3.66,10.5,2026-07-14,2026-07-16,scheduled
+2026-07-07,ER316L Welding Wire,Approved Welding Supplier H,kg,191.43,21.27,63,2026-07-11,2026-07-13,scheduled
+2026-07-07,E7018 Welding Electrodes,Approved Welding Supplier H,kg,354.54,34.09,102,2026-07-12,2026-07-14,scheduled
+2026-07-07,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,59.14,6.72,21,2026-07-13,2026-07-15,scheduled
+2026-07-07,SS316L Process Valves,Approved Valve Supplier J,piece,115.16,11.29,36,2026-07-14,2026-07-16,scheduled
+2026-07-07,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,417.22,39.36,114,2026-07-11,2026-07-13,scheduled
+2026-07-07,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,49.8,4.98,15,2026-07-12,2026-07-14,scheduled
+2026-07-08,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11168.0,915.41,2760,2026-07-12,2026-07-14,scheduled
+2026-07-08,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,9067.38,749.37,2160,2026-07-13,2026-07-15,scheduled
+2026-07-08,SS316L Process Pipe,Approved Pipe Supplier C,metre,816.14,85.91,258,2026-07-14,2026-07-16,scheduled
+2026-07-08,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1515.44,180.41,540,2026-07-15,2026-07-17,received
+2026-07-08,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,262.98,24.35,78,2026-07-12,2026-07-14,scheduled
+2026-07-08,Forged SS316L Flanges,Approved Forging Supplier E,piece,160.36,17.43,54,2026-07-13,2026-07-15,scheduled
+2026-07-08,MS Structural Sections,Approved Structural Supplier F,kg,7771.99,571.47,1620,2026-07-14,2026-07-16,scheduled
+2026-07-08,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,29.36,3.67,10.5,2026-07-15,2026-07-17,scheduled
+2026-07-08,ER316L Welding Wire,Approved Welding Supplier H,kg,186.31,19.82,63,2026-07-12,2026-07-14,scheduled
+2026-07-08,E7018 Welding Electrodes,Approved Welding Supplier H,kg,359.75,33.31,102,2026-07-13,2026-07-15,scheduled
+2026-07-08,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,63.3,6.88,21,2026-07-14,2026-07-16,scheduled
+2026-07-08,SS316L Process Valves,Approved Valve Supplier J,piece,123.38,11.64,36,2026-07-15,2026-07-17,scheduled
+2026-07-08,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,327.24,36.36,114,2026-07-12,2026-07-14,scheduled
+2026-07-08,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,50.34,4.84,15,2026-07-13,2026-07-15,scheduled
+2026-07-09,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10821.51,858.85,2760,2026-07-13,2026-07-15,scheduled
+2026-07-09,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7599.48,723.76,2160,2026-07-14,2026-07-16,scheduled
+2026-07-09,SS316L Process Pipe,Approved Pipe Supplier C,metre,817.44,82.57,258,2026-07-15,2026-07-17,received
+2026-07-09,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1502.34,170.72,540,2026-07-16,2026-07-18,scheduled
+2026-07-09,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,279.1,24.92,78,2026-07-13,2026-07-15,scheduled
+2026-07-09,Forged SS316L Flanges,Approved Forging Supplier E,piece,179.62,18.71,54,2026-07-14,2026-07-16,scheduled
+2026-07-09,MS Structural Sections,Approved Structural Supplier F,kg,6821.4,568.45,1620,2026-07-15,2026-07-17,scheduled
+2026-07-09,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,30.41,3.62,10.5,2026-07-16,2026-07-18,scheduled
+2026-07-09,ER316L Welding Wire,Approved Welding Supplier H,kg,199.43,20.35,63,2026-07-13,2026-07-15,scheduled
+2026-07-09,E7018 Welding Electrodes,Approved Welding Supplier H,kg,364.11,32.51,102,2026-07-14,2026-07-16,scheduled
+2026-07-09,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,66.34,6.91,21,2026-07-15,2026-07-17,scheduled
+2026-07-09,SS316L Process Valves,Approved Valve Supplier J,piece,104.49,11.61,36,2026-07-16,2026-07-18,scheduled
+2026-07-09,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,373.09,39.69,114,2026-07-13,2026-07-15,scheduled
+2026-07-09,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,50.33,4.66,15,2026-07-14,2026-07-16,scheduled
+2026-07-10,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10480.25,952.75,2760,2026-07-14,2026-07-16,scheduled
+2026-07-10,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7483.07,686.52,2160,2026-07-15,2026-07-17,received
+2026-07-10,SS316L Process Pipe,Approved Pipe Supplier C,metre,826.78,80.27,258,2026-07-16,2026-07-18,scheduled
+2026-07-10,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1688.75,183.56,540,2026-07-17,2026-07-19,scheduled
+2026-07-10,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,309.26,26.66,78,2026-07-14,2026-07-16,scheduled
+2026-07-10,Forged SS316L Flanges,Approved Forging Supplier E,piece,152.56,19.07,54,2026-07-15,2026-07-17,scheduled
+2026-07-10,MS Structural Sections,Approved Structural Supplier F,kg,6971.9,562.25,1620,2026-07-16,2026-07-18,scheduled
+2026-07-10,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,32.47,3.69,10.5,2026-07-17,2026-07-19,scheduled
+2026-07-10,ER316L Welding Wire,Approved Welding Supplier H,kg,208.49,20.44,63,2026-07-14,2026-07-16,scheduled
+2026-07-10,E7018 Welding Electrodes,Approved Welding Supplier H,kg,395.33,34.08,102,2026-07-15,2026-07-17,scheduled
+2026-07-10,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,60.08,7.51,21,2026-07-16,2026-07-18,scheduled
+2026-07-10,SS316L Process Valves,Approved Valve Supplier J,piece,112.42,11.96,36,2026-07-17,2026-07-19,scheduled
+2026-07-10,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,373.97,38.16,114,2026-07-14,2026-07-16,scheduled
+2026-07-10,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,54.21,4.84,15,2026-07-15,2026-07-17,scheduled
+2026-07-11,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10751.11,943.08,2760,2026-07-15,2026-07-17,received
+2026-07-11,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8758.18,775.06,2160,2026-07-16,2026-07-18,scheduled
+2026-07-11,SS316L Process Pipe,Approved Pipe Supplier C,metre,929.29,86.85,258,2026-07-17,2026-07-19,scheduled
+2026-07-11,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1783.78,185.81,540,2026-07-18,2026-07-20,scheduled
+2026-07-11,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,241.1,24.11,78,2026-07-15,2026-07-17,scheduled
+2026-07-11,Forged SS316L Flanges,Approved Forging Supplier E,piece,154.06,18.34,54,2026-07-16,2026-07-18,scheduled
+2026-07-11,MS Structural Sections,Approved Structural Supplier F,kg,6397.95,499.84,1620,2026-07-17,2026-07-19,scheduled
+2026-07-11,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,32.66,3.55,10.5,2026-07-18,2026-07-20,scheduled
+2026-07-11,ER316L Welding Wire,Approved Welding Supplier H,kg,228.11,21.52,63,2026-07-15,2026-07-17,scheduled
+2026-07-11,E7018 Welding Electrodes,Approved Welding Supplier H,kg,338.7,33.87,102,2026-07-16,2026-07-18,scheduled
+2026-07-11,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,58.55,6.97,21,2026-07-17,2026-07-19,scheduled
+2026-07-11,SS316L Process Valves,Approved Valve Supplier J,piece,125.54,12.81,36,2026-07-18,2026-07-20,scheduled
+2026-07-11,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,363.22,35.61,114,2026-07-15,2026-07-17,scheduled
+2026-07-11,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,55.91,4.82,15,2026-07-16,2026-07-18,received
+2026-07-12,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10051.83,851.85,2760,2026-07-16,2026-07-18,scheduled
+2026-07-12,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8955.65,765.44,2160,2026-07-17,2026-07-19,scheduled
+2026-07-12,SS316L Process Pipe,Approved Pipe Supplier C,metre,920.19,82.9,258,2026-07-18,2026-07-20,scheduled
+2026-07-12,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1496.4,187.05,540,2026-07-19,2026-07-21,scheduled
+2026-07-12,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,268.22,25.79,78,2026-07-16,2026-07-18,scheduled
+2026-07-12,Forged SS316L Flanges,Approved Forging Supplier E,piece,146.61,16.66,54,2026-07-17,2026-07-19,scheduled
+2026-07-12,MS Structural Sections,Approved Structural Supplier F,kg,7092.23,537.29,1620,2026-07-18,2026-07-20,scheduled
+2026-07-12,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,33.79,3.52,10.5,2026-07-19,2026-07-21,scheduled
+2026-07-12,ER316L Welding Wire,Approved Welding Supplier H,kg,200.61,22.29,63,2026-07-16,2026-07-18,scheduled
+2026-07-12,E7018 Welding Electrodes,Approved Welding Supplier H,kg,355.06,34.14,102,2026-07-17,2026-07-19,scheduled
+2026-07-12,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,57.02,6.48,21,2026-07-18,2026-07-20,scheduled
+2026-07-12,SS316L Process Valves,Approved Valve Supplier J,piece,129.03,12.65,36,2026-07-19,2026-07-21,scheduled
+2026-07-12,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,405.98,38.3,114,2026-07-16,2026-07-18,received
+2026-07-12,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,51.9,5.19,15,2026-07-17,2026-07-19,scheduled
+2026-07-13,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11536.08,945.58,2760,2026-07-17,2026-07-19,scheduled
+2026-07-13,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8417.85,695.69,2160,2026-07-18,2026-07-20,scheduled
+2026-07-13,SS316L Process Pipe,Approved Pipe Supplier C,metre,829.45,87.31,258,2026-07-19,2026-07-21,scheduled
+2026-07-13,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1597.18,190.14,540,2026-07-20,2026-07-22,scheduled
+2026-07-13,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,265.14,24.55,78,2026-07-17,2026-07-19,scheduled
+2026-07-13,Forged SS316L Flanges,Approved Forging Supplier E,piece,172.59,18.76,54,2026-07-18,2026-07-20,scheduled
+2026-07-13,MS Structural Sections,Approved Structural Supplier F,kg,7689.98,565.44,1620,2026-07-19,2026-07-21,scheduled
+2026-07-13,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,28.32,3.54,10.5,2026-07-20,2026-07-22,scheduled
+2026-07-13,ER316L Welding Wire,Approved Welding Supplier H,kg,210.0,22.34,63,2026-07-17,2026-07-19,scheduled
+2026-07-13,E7018 Welding Electrodes,Approved Welding Supplier H,kg,379.84,35.17,102,2026-07-18,2026-07-20,scheduled
+2026-07-13,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,60.17,6.54,21,2026-07-19,2026-07-21,scheduled
+2026-07-13,SS316L Process Valves,Approved Valve Supplier J,piece,127.31,12.01,36,2026-07-20,2026-07-22,received
+2026-07-13,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,368.91,40.99,114,2026-07-17,2026-07-19,scheduled
+2026-07-13,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,50.65,4.87,15,2026-07-18,2026-07-20,scheduled
+2026-07-14,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11628.29,922.88,2760,2026-07-18,2026-07-20,scheduled
+2026-07-14,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7118.69,677.97,2160,2026-07-19,2026-07-21,scheduled
+2026-07-14,SS316L Process Pipe,Approved Pipe Supplier C,metre,882.29,89.12,258,2026-07-20,2026-07-22,scheduled
+2026-07-14,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1520.29,172.76,540,2026-07-21,2026-07-23,scheduled
+2026-07-14,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,268.58,23.98,78,2026-07-18,2026-07-20,scheduled
+2026-07-14,Forged SS316L Flanges,Approved Forging Supplier E,piece,160.51,16.72,54,2026-07-19,2026-07-21,scheduled
+2026-07-14,MS Structural Sections,Approved Structural Supplier F,kg,6865.92,572.16,1620,2026-07-20,2026-07-22,scheduled
+2026-07-14,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,30.83,3.67,10.5,2026-07-21,2026-07-23,scheduled
+2026-07-14,ER316L Welding Wire,Approved Welding Supplier H,kg,222.17,22.67,63,2026-07-18,2026-07-20,scheduled
+2026-07-14,E7018 Welding Electrodes,Approved Welding Supplier H,kg,359.3,32.08,102,2026-07-19,2026-07-21,scheduled
+2026-07-14,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,70.37,7.33,21,2026-07-20,2026-07-22,received
+2026-07-14,SS316L Process Valves,Approved Valve Supplier J,piece,114.84,12.76,36,2026-07-21,2026-07-23,scheduled
+2026-07-14,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,341.88,36.37,114,2026-07-18,2026-07-20,scheduled
+2026-07-14,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,58.1,5.38,15,2026-07-19,2026-07-21,scheduled
+2026-07-15,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10528.54,957.14,2760,2026-07-19,2026-07-21,scheduled
+2026-07-15,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7561.55,693.72,2160,2026-07-20,2026-07-22,scheduled
+2026-07-15,SS316L Process Pipe,Approved Pipe Supplier C,metre,875.6,85.01,258,2026-07-21,2026-07-23,scheduled
+2026-07-15,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1558.76,169.43,540,2026-07-22,2026-07-24,scheduled
+2026-07-15,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,313.66,27.04,78,2026-07-19,2026-07-21,scheduled
+2026-07-15,Forged SS316L Flanges,Approved Forging Supplier E,piece,145.52,18.19,54,2026-07-20,2026-07-22,scheduled
+2026-07-15,MS Structural Sections,Approved Structural Supplier F,kg,6867.49,553.83,1620,2026-07-21,2026-07-23,scheduled
+2026-07-15,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,33.18,3.77,10.5,2026-07-22,2026-07-24,scheduled
+2026-07-15,ER316L Welding Wire,Approved Welding Supplier H,kg,203.29,19.93,63,2026-07-19,2026-07-21,scheduled
+2026-07-15,E7018 Welding Electrodes,Approved Welding Supplier H,kg,409.83,35.33,102,2026-07-20,2026-07-22,received
+2026-07-15,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,54.48,6.81,21,2026-07-21,2026-07-23,scheduled
+2026-07-15,SS316L Process Valves,Approved Valve Supplier J,piece,113.08,12.03,36,2026-07-22,2026-07-24,scheduled
+2026-07-15,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,379.65,38.74,114,2026-07-19,2026-07-21,scheduled
+2026-07-15,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,56.11,5.01,15,2026-07-20,2026-07-22,scheduled
+2026-07-16,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10103.14,886.24,2760,2026-07-20,2026-07-22,scheduled
+2026-07-16,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7499.02,663.63,2160,2026-07-21,2026-07-23,scheduled
+2026-07-16,SS316L Process Pipe,Approved Pipe Supplier C,metre,910.89,85.13,258,2026-07-22,2026-07-24,scheduled
+2026-07-16,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1840.42,191.71,540,2026-07-23,2026-07-25,scheduled
+2026-07-16,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,275.3,27.53,78,2026-07-20,2026-07-22,scheduled
+2026-07-16,Forged SS316L Flanges,Approved Forging Supplier E,piece,160.61,19.12,54,2026-07-21,2026-07-23,scheduled
+2026-07-16,MS Structural Sections,Approved Structural Supplier F,kg,6368.9,497.57,1620,2026-07-22,2026-07-24,scheduled
+2026-07-16,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,32.2,3.5,10.5,2026-07-23,2026-07-25,scheduled
+2026-07-16,ER316L Welding Wire,Approved Welding Supplier H,kg,235.32,22.2,63,2026-07-20,2026-07-22,received
+2026-07-16,E7018 Welding Electrodes,Approved Welding Supplier H,kg,332.1,33.21,102,2026-07-21,2026-07-23,scheduled
+2026-07-16,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,60.82,7.24,21,2026-07-22,2026-07-24,scheduled
+2026-07-16,SS316L Process Valves,Approved Valve Supplier J,piece,114.76,11.71,36,2026-07-23,2026-07-25,scheduled
+2026-07-16,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,373.42,36.61,114,2026-07-20,2026-07-22,scheduled
+2026-07-16,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,56.61,4.88,15,2026-07-21,2026-07-23,scheduled
+2026-07-17,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11577.81,981.17,2760,2026-07-21,2026-07-23,scheduled
+2026-07-17,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,9015.79,770.58,2160,2026-07-22,2026-07-24,scheduled
+2026-07-17,SS316L Process Pipe,Approved Pipe Supplier C,metre,1003.33,90.39,258,2026-07-23,2026-07-25,scheduled
+2026-07-17,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1521.2,190.15,540,2026-07-24,2026-07-26,scheduled
+2026-07-17,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,284.54,27.36,78,2026-07-21,2026-07-23,scheduled
+2026-07-17,Forged SS316L Flanges,Approved Forging Supplier E,piece,153.91,17.49,54,2026-07-22,2026-07-24,scheduled
+2026-07-17,MS Structural Sections,Approved Structural Supplier F,kg,7213.8,546.5,1620,2026-07-23,2026-07-25,scheduled
+2026-07-17,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,33.79,3.52,10.5,2026-07-24,2026-07-26,received
+2026-07-17,ER316L Welding Wire,Approved Welding Supplier H,kg,192.24,21.36,63,2026-07-21,2026-07-23,scheduled
+2026-07-17,E7018 Welding Electrodes,Approved Welding Supplier H,kg,356.93,34.32,102,2026-07-22,2026-07-24,scheduled
+2026-07-17,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,61.34,6.97,21,2026-07-23,2026-07-25,scheduled
+2026-07-17,SS316L Process Valves,Approved Valve Supplier J,piece,131.27,12.87,36,2026-07-24,2026-07-26,scheduled
+2026-07-17,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,378.1,35.67,114,2026-07-21,2026-07-23,scheduled
+2026-07-17,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,53.1,5.31,15,2026-07-22,2026-07-24,scheduled
+2026-07-18,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11133.72,912.6,2760,2026-07-22,2026-07-24,scheduled
+2026-07-18,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8521.18,704.23,2160,2026-07-23,2026-07-25,scheduled
+2026-07-18,SS316L Process Pipe,Approved Pipe Supplier C,metre,751.73,79.13,258,2026-07-24,2026-07-26,scheduled
+2026-07-18,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1606.33,191.23,540,2026-07-25,2026-07-27,scheduled
+2026-07-18,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,272.7,25.25,78,2026-07-22,2026-07-24,scheduled
+2026-07-18,Forged SS316L Flanges,Approved Forging Supplier E,piece,168.73,18.34,54,2026-07-23,2026-07-25,scheduled
+2026-07-18,MS Structural Sections,Approved Structural Supplier F,kg,6825.02,501.84,1620,2026-07-24,2026-07-26,received
+2026-07-18,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,28.56,3.57,10.5,2026-07-25,2026-07-27,scheduled
+2026-07-18,ER316L Welding Wire,Approved Welding Supplier H,kg,196.27,20.88,63,2026-07-22,2026-07-24,scheduled
+2026-07-18,E7018 Welding Electrodes,Approved Welding Supplier H,kg,382.97,35.46,102,2026-07-23,2026-07-25,scheduled
+2026-07-18,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,66.24,7.2,21,2026-07-24,2026-07-26,scheduled
+2026-07-18,SS316L Process Valves,Approved Valve Supplier J,piece,124.44,11.74,36,2026-07-25,2026-07-27,scheduled
+2026-07-18,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,360.72,40.08,114,2026-07-22,2026-07-24,scheduled
+2026-07-18,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,50.75,4.88,15,2026-07-23,2026-07-25,scheduled
+2026-07-19,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10731.67,851.72,2760,2026-07-23,2026-07-25,scheduled
+2026-07-19,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,6999.61,666.63,2160,2026-07-24,2026-07-26,scheduled
+2026-07-19,SS316L Process Pipe,Approved Pipe Supplier C,metre,819.72,82.8,258,2026-07-25,2026-07-27,scheduled
+2026-07-19,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1470.22,167.07,540,2026-07-26,2026-07-28,scheduled
+2026-07-19,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,271.94,24.28,78,2026-07-23,2026-07-25,scheduled
+2026-07-19,Forged SS316L Flanges,Approved Forging Supplier E,piece,183.36,19.1,54,2026-07-24,2026-07-26,received
+2026-07-19,MS Structural Sections,Approved Structural Supplier F,kg,6351.6,529.3,1620,2026-07-25,2026-07-27,scheduled
+2026-07-19,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,28.56,3.4,10.5,2026-07-26,2026-07-28,scheduled
+2026-07-19,ER316L Welding Wire,Approved Welding Supplier H,kg,201.68,20.58,63,2026-07-23,2026-07-25,scheduled
+2026-07-19,E7018 Welding Electrodes,Approved Welding Supplier H,kg,352.13,31.44,102,2026-07-24,2026-07-26,scheduled
+2026-07-19,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,63.26,6.59,21,2026-07-25,2026-07-27,scheduled
+2026-07-19,SS316L Process Valves,Approved Valve Supplier J,piece,112.95,12.55,36,2026-07-26,2026-07-28,scheduled
+2026-07-19,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,353.91,37.65,114,2026-07-23,2026-07-25,scheduled
+2026-07-19,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,53.78,4.98,15,2026-07-24,2026-07-26,scheduled
+2026-07-20,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,9340.76,849.16,2760,2026-07-24,2026-07-26,scheduled
+2026-07-20,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7927.9,727.33,2160,2026-07-25,2026-07-27,scheduled
+2026-07-20,SS316L Process Pipe,Approved Pipe Supplier C,metre,908.36,88.19,258,2026-07-26,2026-07-28,scheduled
+2026-07-20,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1635.76,177.8,540,2026-07-27,2026-07-29,scheduled
+2026-07-20,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,320.39,27.62,78,2026-07-24,2026-07-26,received
+2026-07-20,Forged SS316L Flanges,Approved Forging Supplier E,piece,153.76,19.22,54,2026-07-25,2026-07-27,scheduled
+2026-07-20,MS Structural Sections,Approved Structural Supplier F,kg,6562.82,529.26,1620,2026-07-26,2026-07-28,scheduled
+2026-07-20,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,30.62,3.48,10.5,2026-07-27,2026-07-29,scheduled
+2026-07-20,ER316L Welding Wire,Approved Welding Supplier H,kg,230.01,22.55,63,2026-07-24,2026-07-26,scheduled
+2026-07-20,E7018 Welding Electrodes,Approved Welding Supplier H,kg,400.66,34.54,102,2026-07-25,2026-07-27,scheduled
+2026-07-20,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,56.56,7.07,21,2026-07-26,2026-07-28,scheduled
+2026-07-20,SS316L Process Valves,Approved Valve Supplier J,piece,105.19,11.19,36,2026-07-27,2026-07-29,scheduled
+2026-07-20,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,369.36,37.69,114,2026-07-24,2026-07-26,scheduled
+2026-07-20,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,54.1,4.83,15,2026-07-25,2026-07-27,scheduled
+2026-07-21,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11317.58,992.77,2760,2026-07-25,2026-07-27,scheduled
+2026-07-21,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8208.89,726.45,2160,2026-07-26,2026-07-28,scheduled
+2026-07-21,SS316L Process Pipe,Approved Pipe Supplier C,metre,892.49,83.41,258,2026-07-27,2026-07-29,scheduled
+2026-07-21,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1647.46,171.61,540,2026-07-28,2026-07-30,received
+2026-07-21,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,240.2,24.02,78,2026-07-25,2026-07-27,scheduled
+2026-07-21,Forged SS316L Flanges,Approved Forging Supplier E,piece,141.88,16.89,54,2026-07-26,2026-07-28,scheduled
+2026-07-21,MS Structural Sections,Approved Structural Supplier F,kg,6758.78,528.03,1620,2026-07-27,2026-07-29,scheduled
+2026-07-21,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,33.67,3.66,10.5,2026-07-28,2026-07-30,scheduled
+2026-07-21,ER316L Welding Wire,Approved Welding Supplier H,kg,220.69,20.82,63,2026-07-25,2026-07-27,scheduled
+2026-07-21,E7018 Welding Electrodes,Approved Welding Supplier H,kg,362.1,36.21,102,2026-07-26,2026-07-28,scheduled
+2026-07-21,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,58.04,6.91,21,2026-07-27,2026-07-29,scheduled
+2026-07-21,SS316L Process Valves,Approved Valve Supplier J,piece,119.85,12.23,36,2026-07-28,2026-07-30,scheduled
+2026-07-21,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,389.54,38.19,114,2026-07-25,2026-07-27,scheduled
+2026-07-21,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,58.81,5.07,15,2026-07-26,2026-07-28,scheduled
+2026-07-22,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10942.73,927.35,2760,2026-07-26,2026-07-28,scheduled
+2026-07-22,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8625.47,737.22,2160,2026-07-27,2026-07-29,scheduled
+2026-07-22,SS316L Process Pipe,Approved Pipe Supplier C,metre,998.67,89.97,258,2026-07-28,2026-07-30,received
+2026-07-22,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1388.0,173.5,540,2026-07-29,2026-07-31,scheduled
+2026-07-22,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,266.34,25.61,78,2026-07-26,2026-07-28,scheduled
+2026-07-22,Forged SS316L Flanges,Approved Forging Supplier E,piece,159.98,18.18,54,2026-07-27,2026-07-29,scheduled
+2026-07-22,MS Structural Sections,Approved Structural Supplier F,kg,6987.42,529.35,1620,2026-07-28,2026-07-30,scheduled
+2026-07-22,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,34.56,3.6,10.5,2026-07-29,2026-07-31,scheduled
+2026-07-22,ER316L Welding Wire,Approved Welding Supplier H,kg,203.04,22.56,63,2026-07-26,2026-07-28,scheduled
+2026-07-22,E7018 Welding Electrodes,Approved Welding Supplier H,kg,363.9,34.99,102,2026-07-27,2026-07-29,scheduled
+2026-07-22,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,65.56,7.45,21,2026-07-28,2026-07-30,scheduled
+2026-07-22,SS316L Process Valves,Approved Valve Supplier J,piece,120.26,11.79,36,2026-07-29,2026-07-31,scheduled
+2026-07-22,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,425.7,40.16,114,2026-07-26,2026-07-28,scheduled
+2026-07-22,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,49.1,4.91,15,2026-07-27,2026-07-29,scheduled
+2026-07-23,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10741.98,880.49,2760,2026-07-27,2026-07-29,scheduled
+2026-07-23,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,9037.01,746.86,2160,2026-07-28,2026-07-30,received
+2026-07-23,SS316L Process Pipe,Approved Pipe Supplier C,metre,852.05,89.69,258,2026-07-29,2026-07-31,scheduled
+2026-07-23,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1471.76,175.21,540,2026-07-30,2026-08-01,scheduled
+2026-07-23,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,283.39,26.24,78,2026-07-27,2026-07-29,scheduled
+2026-07-23,Forged SS316L Flanges,Approved Forging Supplier E,piece,171.49,18.64,54,2026-07-28,2026-07-30,scheduled
+2026-07-23,MS Structural Sections,Approved Structural Supplier F,kg,7866.78,578.44,1620,2026-07-29,2026-07-31,scheduled
+2026-07-23,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,25.76,3.22,10.5,2026-07-30,2026-08-01,scheduled
+2026-07-23,ER316L Welding Wire,Approved Welding Supplier H,kg,200.41,21.32,63,2026-07-27,2026-07-29,scheduled
+2026-07-23,E7018 Welding Electrodes,Approved Welding Supplier H,kg,373.46,34.58,102,2026-07-28,2026-07-30,scheduled
+2026-07-23,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,62.01,6.74,21,2026-07-29,2026-07-31,scheduled
+2026-07-23,SS316L Process Valves,Approved Valve Supplier J,piece,128.47,12.12,36,2026-07-30,2026-08-01,scheduled
+2026-07-23,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,319.77,35.53,114,2026-07-27,2026-07-29,scheduled
+2026-07-23,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,51.69,4.97,15,2026-07-28,2026-07-30,scheduled
+2026-07-24,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11243.36,892.33,2760,2026-07-28,2026-07-30,received
+2026-07-24,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7492.59,713.58,2160,2026-07-29,2026-07-31,scheduled
+2026-07-24,SS316L Process Pipe,Approved Pipe Supplier C,metre,819.03,82.73,258,2026-07-30,2026-08-01,scheduled
+2026-07-24,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1654.66,188.03,540,2026-07-31,2026-08-02,scheduled
+2026-07-24,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,285.82,25.52,78,2026-07-28,2026-07-30,scheduled
+2026-07-24,Forged SS316L Flanges,Approved Forging Supplier E,piece,163.2,17.0,54,2026-07-29,2026-07-31,scheduled
+2026-07-24,MS Structural Sections,Approved Structural Supplier F,kg,6094.68,507.89,1620,2026-07-30,2026-08-01,scheduled
+2026-07-24,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,31.5,3.75,10.5,2026-07-31,2026-08-02,scheduled
+2026-07-24,ER316L Welding Wire,Approved Welding Supplier H,kg,217.66,22.21,63,2026-07-28,2026-07-30,scheduled
+2026-07-24,E7018 Welding Electrodes,Approved Welding Supplier H,kg,352.13,31.44,102,2026-07-29,2026-07-31,scheduled
+2026-07-24,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,67.78,7.06,21,2026-07-30,2026-08-01,scheduled
+2026-07-24,SS316L Process Valves,Approved Valve Supplier J,piece,115.56,12.84,36,2026-07-31,2026-08-02,scheduled
+2026-07-24,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,377.88,40.2,114,2026-07-28,2026-07-30,scheduled
+2026-07-24,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,53.46,4.95,15,2026-07-29,2026-07-31,received
+2026-07-25,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10165.21,924.11,2760,2026-07-29,2026-07-31,scheduled
+2026-07-25,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7278.04,667.71,2160,2026-07-30,2026-08-01,scheduled
+2026-07-25,SS316L Process Pipe,Approved Pipe Supplier C,metre,838.11,81.37,258,2026-07-31,2026-08-02,scheduled
+2026-07-25,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1702.28,185.03,540,2026-08-01,2026-08-03,scheduled
+2026-07-25,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,308.33,26.58,78,2026-07-29,2026-07-31,scheduled
+2026-07-25,Forged SS316L Flanges,Approved Forging Supplier E,piece,153.04,19.13,54,2026-07-30,2026-08-01,scheduled
+2026-07-25,MS Structural Sections,Approved Structural Supplier F,kg,6981.45,563.02,1620,2026-07-31,2026-08-02,scheduled
+2026-07-25,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,31.94,3.63,10.5,2026-08-01,2026-08-03,scheduled
+2026-07-25,ER316L Welding Wire,Approved Welding Supplier H,kg,222.05,21.77,63,2026-07-29,2026-07-31,scheduled
+2026-07-25,E7018 Welding Electrodes,Approved Welding Supplier H,kg,422.94,36.46,102,2026-07-30,2026-08-01,scheduled
+2026-07-25,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,56.56,7.07,21,2026-07-31,2026-08-02,scheduled
+2026-07-25,SS316L Process Valves,Approved Valve Supplier J,piece,119.0,12.66,36,2026-08-01,2026-08-03,scheduled
+2026-07-25,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,389.45,39.74,114,2026-07-29,2026-07-31,received
+2026-07-25,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,52.53,4.69,15,2026-07-30,2026-08-01,scheduled
+2026-07-26,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10944.0,960.0,2760,2026-07-30,2026-08-01,scheduled
+2026-07-26,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8211.03,726.64,2160,2026-07-31,2026-08-02,scheduled
+2026-07-26,SS316L Process Pipe,Approved Pipe Supplier C,metre,940.21,87.87,258,2026-08-01,2026-08-03,scheduled
+2026-07-26,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1776.86,185.09,540,2026-08-02,2026-08-04,scheduled
+2026-07-26,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,266.2,26.62,78,2026-07-30,2026-08-01,scheduled
+2026-07-26,Forged SS316L Flanges,Approved Forging Supplier E,piece,160.19,19.07,54,2026-07-31,2026-08-02,scheduled
+2026-07-26,MS Structural Sections,Approved Structural Supplier F,kg,6756.61,527.86,1620,2026-08-01,2026-08-03,scheduled
+2026-07-26,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,30.91,3.36,10.5,2026-08-02,2026-08-04,scheduled
+2026-07-26,ER316L Welding Wire,Approved Welding Supplier H,kg,215.82,20.36,63,2026-07-30,2026-08-01,scheduled
+2026-07-26,E7018 Welding Electrodes,Approved Welding Supplier H,kg,343.3,34.33,102,2026-07-31,2026-08-02,scheduled
+2026-07-26,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,54.43,6.48,21,2026-08-01,2026-08-03,scheduled
+2026-07-26,SS316L Process Valves,Approved Valve Supplier J,piece,121.72,12.42,36,2026-08-02,2026-08-04,received
+2026-07-26,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,376.89,36.95,114,2026-07-30,2026-08-01,scheduled
+2026-07-26,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,55.1,4.75,15,2026-07-31,2026-08-02,scheduled
+2026-07-27,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11242.33,952.74,2760,2026-07-31,2026-08-02,scheduled
+2026-07-27,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7878.43,673.37,2160,2026-08-01,2026-08-03,scheduled
+2026-07-27,SS316L Process Pipe,Approved Pipe Supplier C,metre,928.96,83.69,258,2026-08-02,2026-08-04,scheduled
+2026-07-27,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1409.76,176.22,540,2026-08-03,2026-08-05,scheduled
+2026-07-27,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,289.02,27.79,78,2026-07-31,2026-08-02,scheduled
+2026-07-27,Forged SS316L Flanges,Approved Forging Supplier E,piece,158.66,18.03,54,2026-08-01,2026-08-03,scheduled
+2026-07-27,MS Structural Sections,Approved Structural Supplier F,kg,6832.98,517.65,1620,2026-08-02,2026-08-04,scheduled
+2026-07-27,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,33.6,3.5,10.5,2026-08-03,2026-08-05,scheduled
+2026-07-27,ER316L Welding Wire,Approved Welding Supplier H,kg,190.53,21.17,63,2026-07-31,2026-08-02,scheduled
+2026-07-27,E7018 Welding Electrodes,Approved Welding Supplier H,kg,359.22,34.54,102,2026-08-01,2026-08-03,scheduled
+2026-07-27,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,57.46,6.53,21,2026-08-02,2026-08-04,received
+2026-07-27,SS316L Process Valves,Approved Valve Supplier J,piece,113.73,11.15,36,2026-08-03,2026-08-05,scheduled
+2026-07-27,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,412.66,38.93,114,2026-07-31,2026-08-02,scheduled
+2026-07-27,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,47.2,4.72,15,2026-08-01,2026-08-03,scheduled
+2026-07-28,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11273.78,924.08,2760,2026-08-01,2026-08-03,scheduled
+2026-07-28,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8801.06,727.36,2160,2026-08-02,2026-08-04,scheduled
+2026-07-28,SS316L Process Pipe,Approved Pipe Supplier C,metre,861.37,90.67,258,2026-08-03,2026-08-05,scheduled
+2026-07-28,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1491.67,177.58,540,2026-08-04,2026-08-06,scheduled
+2026-07-28,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,286.74,26.55,78,2026-08-01,2026-08-03,scheduled
+2026-07-28,Forged SS316L Flanges,Approved Forging Supplier E,piece,173.6,18.87,54,2026-08-02,2026-08-04,scheduled
+2026-07-28,MS Structural Sections,Approved Structural Supplier F,kg,7223.37,531.13,1620,2026-08-03,2026-08-05,scheduled
+2026-07-28,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,28.0,3.5,10.5,2026-08-04,2026-08-06,scheduled
+2026-07-28,ER316L Welding Wire,Approved Welding Supplier H,kg,186.21,19.81,63,2026-08-01,2026-08-03,scheduled
+2026-07-28,E7018 Welding Electrodes,Approved Welding Supplier H,kg,394.31,36.51,102,2026-08-02,2026-08-04,received
+2026-07-28,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,67.16,7.3,21,2026-08-03,2026-08-05,scheduled
+2026-07-28,SS316L Process Valves,Approved Valve Supplier J,piece,130.8,12.34,36,2026-08-04,2026-08-06,scheduled
+2026-07-28,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,325.53,36.17,114,2026-08-01,2026-08-03,scheduled
+2026-07-28,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,55.64,5.35,15,2026-08-02,2026-08-04,scheduled
+2026-07-29,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11522.07,914.45,2760,2026-08-02,2026-08-04,scheduled
+2026-07-29,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7293.72,694.64,2160,2026-08-03,2026-08-05,scheduled
+2026-07-29,SS316L Process Pipe,Approved Pipe Supplier C,metre,829.32,83.77,258,2026-08-04,2026-08-06,scheduled
+2026-07-29,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1526.98,173.52,540,2026-08-05,2026-08-07,scheduled
+2026-07-29,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,302.96,27.05,78,2026-08-02,2026-08-04,scheduled
+2026-07-29,Forged SS316L Flanges,Approved Forging Supplier E,piece,186.43,19.42,54,2026-08-03,2026-08-05,scheduled
+2026-07-29,MS Structural Sections,Approved Structural Supplier F,kg,6158.52,513.21,1620,2026-08-04,2026-08-06,scheduled
+2026-07-29,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,27.13,3.23,10.5,2026-08-05,2026-08-07,scheduled
+2026-07-29,ER316L Welding Wire,Approved Welding Supplier H,kg,203.25,20.74,63,2026-08-02,2026-08-04,received
+2026-07-29,E7018 Welding Electrodes,Approved Welding Supplier H,kg,367.7,32.83,102,2026-08-03,2026-08-05,scheduled
+2026-07-29,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,61.82,6.44,21,2026-08-04,2026-08-06,scheduled
+2026-07-29,SS316L Process Valves,Approved Valve Supplier J,piece,113.85,12.65,36,2026-08-05,2026-08-07,scheduled
+2026-07-29,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,365.38,38.87,114,2026-08-02,2026-08-04,scheduled
+2026-07-29,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,50.22,4.65,15,2026-08-03,2026-08-05,scheduled
+2026-07-30,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10487.18,953.38,2760,2026-08-03,2026-08-05,scheduled
+2026-07-30,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7370.36,676.18,2160,2026-08-04,2026-08-06,scheduled
+2026-07-30,SS316L Process Pipe,Approved Pipe Supplier C,metre,925.97,89.9,258,2026-08-05,2026-08-07,scheduled
+2026-07-30,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1618.74,175.95,540,2026-08-06,2026-08-08,scheduled
+2026-07-30,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,314.36,27.1,78,2026-08-03,2026-08-05,scheduled
+2026-07-30,Forged SS316L Flanges,Approved Forging Supplier E,piece,145.6,18.2,54,2026-08-04,2026-08-06,scheduled
+2026-07-30,MS Structural Sections,Approved Structural Supplier F,kg,6571.75,529.98,1620,2026-08-05,2026-08-07,scheduled
+2026-07-30,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,29.74,3.38,10.5,2026-08-06,2026-08-08,received
+2026-07-30,ER316L Welding Wire,Approved Welding Supplier H,kg,199.51,19.56,63,2026-08-03,2026-08-05,scheduled
+2026-07-30,E7018 Welding Electrodes,Approved Welding Supplier H,kg,408.9,35.25,102,2026-08-04,2026-08-06,scheduled
+2026-07-30,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,55.84,6.98,21,2026-08-05,2026-08-07,scheduled
+2026-07-30,SS316L Process Valves,Approved Valve Supplier J,piece,109.23,11.62,36,2026-08-06,2026-08-08,scheduled
+2026-07-30,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,353.98,36.12,114,2026-08-03,2026-08-05,scheduled
+2026-07-30,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,53.54,4.78,15,2026-08-04,2026-08-06,scheduled
+2026-07-31,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11037.71,968.22,2760,2026-08-04,2026-08-06,scheduled
+2026-07-31,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8718.63,771.56,2160,2026-08-05,2026-08-07,scheduled
+2026-07-31,SS316L Process Pipe,Approved Pipe Supplier C,metre,950.27,88.81,258,2026-08-06,2026-08-08,scheduled
+2026-07-31,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1785.12,185.95,540,2026-08-07,2026-08-09,scheduled
+2026-07-31,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,270.7,27.07,78,2026-08-04,2026-08-06,scheduled
+2026-07-31,Forged SS316L Flanges,Approved Forging Supplier E,piece,144.31,17.18,54,2026-08-05,2026-08-07,scheduled
+2026-07-31,MS Structural Sections,Approved Structural Supplier F,kg,6984.58,545.67,1620,2026-08-06,2026-08-08,received
+2026-07-31,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,34.78,3.78,10.5,2026-08-07,2026-08-09,scheduled
+2026-07-31,ER316L Welding Wire,Approved Welding Supplier H,kg,215.82,20.36,63,2026-08-04,2026-08-06,scheduled
+2026-07-31,E7018 Welding Electrodes,Approved Welding Supplier H,kg,341.7,34.17,102,2026-08-05,2026-08-07,scheduled
+2026-07-31,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,61.82,7.36,21,2026-08-06,2026-08-08,scheduled
+2026-07-31,SS316L Process Valves,Approved Valve Supplier J,piece,116.91,11.93,36,2026-08-07,2026-08-09,scheduled
+2026-07-31,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,414.12,40.6,114,2026-08-04,2026-08-06,scheduled
+2026-07-31,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,61.71,5.32,15,2026-08-05,2026-08-07,scheduled
+2026-08-01,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11366.47,963.26,2760,2026-08-05,2026-08-07,scheduled
+2026-08-01,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8283.25,707.97,2160,2026-08-06,2026-08-08,scheduled
+2026-08-01,SS316L Process Pipe,Approved Pipe Supplier C,metre,942.28,84.89,258,2026-08-07,2026-08-09,scheduled
+2026-08-01,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1395.76,174.47,540,2026-08-08,2026-08-10,scheduled
+2026-08-01,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,263.64,25.35,78,2026-08-05,2026-08-07,scheduled
+2026-08-01,Forged SS316L Flanges,Approved Forging Supplier E,piece,153.38,17.43,54,2026-08-06,2026-08-08,received
+2026-08-01,MS Structural Sections,Approved Structural Supplier F,kg,6809.09,515.84,1620,2026-08-07,2026-08-09,scheduled
+2026-08-01,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,35.33,3.68,10.5,2026-08-08,2026-08-10,scheduled
+2026-08-01,ER316L Welding Wire,Approved Welding Supplier H,kg,175.05,19.45,63,2026-08-05,2026-08-07,scheduled
+2026-08-01,E7018 Welding Electrodes,Approved Welding Supplier H,kg,371.59,35.73,102,2026-08-06,2026-08-08,scheduled
+2026-08-01,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,56.85,6.46,21,2026-08-07,2026-08-09,scheduled
+2026-08-01,SS316L Process Valves,Approved Valve Supplier J,piece,121.28,11.89,36,2026-08-08,2026-08-10,scheduled
+2026-08-01,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,401.0,37.83,114,2026-08-05,2026-08-07,scheduled
+2026-08-01,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,46.3,4.63,15,2026-08-06,2026-08-08,scheduled
+2026-08-02,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,11506.06,943.12,2760,2026-08-06,2026-08-08,scheduled
+2026-08-02,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8646.42,714.58,2160,2026-08-07,2026-08-09,scheduled
+2026-08-02,SS316L Process Pipe,Approved Pipe Supplier C,metre,763.99,80.42,258,2026-08-08,2026-08-10,scheduled
+2026-08-02,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1493.44,177.79,540,2026-08-09,2026-08-11,scheduled
+2026-08-02,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,296.57,27.46,78,2026-08-06,2026-08-08,received
+2026-08-02,Forged SS316L Flanges,Approved Forging Supplier E,piece,172.13,18.71,54,2026-08-07,2026-08-09,scheduled
+2026-08-02,MS Structural Sections,Approved Structural Supplier F,kg,7171.14,527.29,1620,2026-08-08,2026-08-10,scheduled
+2026-08-02,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,29.84,3.73,10.5,2026-08-09,2026-08-11,scheduled
+2026-08-02,ER316L Welding Wire,Approved Welding Supplier H,kg,211.03,22.45,63,2026-08-06,2026-08-08,scheduled
+2026-08-02,E7018 Welding Electrodes,Approved Welding Supplier H,kg,352.19,32.61,102,2026-08-07,2026-08-09,scheduled
+2026-08-02,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,66.24,7.2,21,2026-08-08,2026-08-10,scheduled
+2026-08-02,SS316L Process Valves,Approved Valve Supplier J,piece,127.84,12.06,36,2026-08-09,2026-08-11,scheduled
+2026-08-02,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,362.79,40.31,114,2026-08-06,2026-08-08,scheduled
+2026-08-02,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,54.39,5.23,15,2026-08-07,2026-08-09,scheduled
+2026-08-03,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,12444.89,987.69,2760,2026-08-07,2026-08-09,scheduled
+2026-08-03,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7029.96,669.52,2160,2026-08-08,2026-08-10,scheduled
+2026-08-03,SS316L Process Pipe,Approved Pipe Supplier C,metre,832.19,84.06,258,2026-08-09,2026-08-11,scheduled
+2026-08-03,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1460.71,165.99,540,2026-08-10,2026-08-12,received
+2026-08-03,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,301.5,26.92,78,2026-08-07,2026-08-09,scheduled
+2026-08-03,Forged SS316L Flanges,Approved Forging Supplier E,piece,170.02,17.71,54,2026-08-08,2026-08-10,scheduled
+2026-08-03,MS Structural Sections,Approved Structural Supplier F,kg,6434.76,536.23,1620,2026-08-09,2026-08-11,scheduled
+2026-08-03,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,30.83,3.67,10.5,2026-08-10,2026-08-12,scheduled
+2026-08-03,ER316L Welding Wire,Approved Welding Supplier H,kg,222.26,22.68,63,2026-08-07,2026-08-09,scheduled
+2026-08-03,E7018 Welding Electrodes,Approved Welding Supplier H,kg,361.42,32.27,102,2026-08-08,2026-08-10,scheduled
+2026-08-03,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,63.36,6.6,21,2026-08-09,2026-08-11,scheduled
+2026-08-03,SS316L Process Valves,Approved Valve Supplier J,piece,102.78,11.42,36,2026-08-10,2026-08-12,scheduled
+2026-08-03,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,382.3,40.67,114,2026-08-07,2026-08-09,scheduled
+2026-08-03,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,53.68,4.97,15,2026-08-08,2026-08-10,scheduled
+2026-08-04,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10445.05,949.55,2760,2026-08-08,2026-08-10,scheduled
+2026-08-04,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7580.95,695.5,2160,2026-08-09,2026-08-11,scheduled
+2026-08-04,SS316L Process Pipe,Approved Pipe Supplier C,metre,929.78,90.27,258,2026-08-10,2026-08-12,received
+2026-08-04,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1564.46,170.05,540,2026-08-11,2026-08-13,scheduled
+2026-08-04,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,304.85,26.28,78,2026-08-08,2026-08-10,scheduled
+2026-08-04,Forged SS316L Flanges,Approved Forging Supplier E,piece,144.4,18.05,54,2026-08-09,2026-08-11,scheduled
+2026-08-04,MS Structural Sections,Approved Structural Supplier F,kg,6701.21,540.42,1620,2026-08-10,2026-08-12,scheduled
+2026-08-04,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,29.04,3.3,10.5,2026-08-11,2026-08-13,scheduled
+2026-08-04,ER316L Welding Wire,Approved Welding Supplier H,kg,203.8,19.98,63,2026-08-08,2026-08-10,scheduled
+2026-08-04,E7018 Welding Electrodes,Approved Welding Supplier H,kg,378.74,32.65,102,2026-08-09,2026-08-11,scheduled
+2026-08-04,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,59.12,7.39,21,2026-08-10,2026-08-12,scheduled
+2026-08-04,SS316L Process Valves,Approved Valve Supplier J,piece,116.09,12.35,36,2026-08-11,2026-08-13,scheduled
+2026-08-04,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,379.16,38.69,114,2026-08-08,2026-08-10,scheduled
+2026-08-04,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,59.7,5.33,15,2026-08-09,2026-08-11,scheduled
+2026-08-05,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,10097.09,885.71,2760,2026-08-09,2026-08-11,scheduled
+2026-08-05,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7768.19,687.45,2160,2026-08-10,2026-08-12,received
+2026-08-05,SS316L Process Pipe,Approved Pipe Supplier C,metre,943.63,88.19,258,2026-08-11,2026-08-13,scheduled
+2026-08-05,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1794.05,186.88,540,2026-08-12,2026-08-14,scheduled
+2026-08-05,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,279.9,27.99,78,2026-08-09,2026-08-11,scheduled
+2026-08-05,Forged SS316L Flanges,Approved Forging Supplier E,piece,147.17,17.52,54,2026-08-10,2026-08-12,scheduled
+2026-08-05,MS Structural Sections,Approved Structural Supplier F,kg,6751.87,527.49,1620,2026-08-11,2026-08-13,scheduled
+2026-08-05,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,34.68,3.77,10.5,2026-08-12,2026-08-14,scheduled
+2026-08-05,ER316L Welding Wire,Approved Welding Supplier H,kg,225.78,21.3,63,2026-08-09,2026-08-11,scheduled
+2026-08-05,E7018 Welding Electrodes,Approved Welding Supplier H,kg,347.4,34.74,102,2026-08-10,2026-08-12,scheduled
+2026-08-05,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,61.66,7.34,21,2026-08-11,2026-08-13,scheduled
+2026-08-05,SS316L Process Valves,Approved Valve Supplier J,piece,119.27,12.17,36,2026-08-12,2026-08-14,scheduled
+2026-08-05,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,395.66,38.79,114,2026-08-09,2026-08-11,scheduled
+2026-08-05,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,60.67,5.23,15,2026-08-10,2026-08-12,scheduled
+2026-08-06,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,4749.41,989.46,2760,2026-08-15,2026-08-13,delayed
+2026-08-06,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8839.58,755.52,2160,2026-08-11,2026-08-13,scheduled
+2026-08-06,SS316L Process Pipe,Approved Pipe Supplier C,metre,405.43,82.74,258,2026-08-17,2026-08-13,delayed
+2026-08-06,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1335.84,166.98,540,2026-08-13,2026-08-15,scheduled
+2026-08-06,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,256.57,24.67,78,2026-08-10,2026-08-12,scheduled
+2026-08-06,Forged SS316L Flanges,Approved Forging Supplier E,piece,95.29,18.87,54,2026-08-17,2026-08-13,delayed
+2026-08-06,MS Structural Sections,Approved Structural Supplier F,kg,6558.42,496.85,1620,2026-08-12,2026-08-14,scheduled
+2026-08-06,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,18.9,3.67,10.5,2026-08-16,2026-08-13,delayed
+2026-08-06,ER316L Welding Wire,Approved Welding Supplier H,kg,180.63,20.07,63,2026-08-10,2026-08-12,scheduled
+2026-08-06,E7018 Welding Electrodes,Approved Welding Supplier H,kg,369.2,35.5,102,2026-08-11,2026-08-13,scheduled
+2026-08-06,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,62.3,7.08,21,2026-08-12,2026-08-14,scheduled
+2026-08-06,SS316L Process Valves,Approved Valve Supplier J,piece,118.93,11.66,36,2026-08-13,2026-08-15,scheduled
+2026-08-06,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,423.58,39.96,114,2026-08-10,2026-08-12,scheduled
+2026-08-06,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,51.0,5.1,15,2026-08-11,2026-08-13,received
+2026-08-07,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,3816.75,898.06,2760,2026-08-15,2026-08-13,delayed
+2026-08-07,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,8260.55,682.69,2160,2026-08-12,2026-08-14,scheduled
+2026-08-07,SS316L Process Pipe,Approved Pipe Supplier C,metre,402.55,92.54,258,2026-08-17,2026-08-13,delayed
+2026-08-07,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1407.5,167.56,540,2026-08-14,2026-08-16,scheduled
+2026-08-07,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,286.52,26.53,78,2026-08-11,2026-08-13,scheduled
+2026-08-07,Forged SS316L Flanges,Approved Forging Supplier E,piece,80.64,17.92,54,2026-08-17,2026-08-13,delayed
+2026-08-07,MS Structural Sections,Approved Structural Supplier F,kg,7191.27,528.77,1620,2026-08-13,2026-08-15,scheduled
+2026-08-07,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,15.92,3.46,10.5,2026-08-16,2026-08-13,delayed
+2026-08-07,ER316L Welding Wire,Approved Welding Supplier H,kg,211.88,22.54,63,2026-08-11,2026-08-13,scheduled
+2026-08-07,E7018 Welding Electrodes,Approved Welding Supplier H,kg,363.2,33.63,102,2026-08-12,2026-08-14,scheduled
+2026-08-07,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,62.38,6.78,21,2026-08-13,2026-08-15,scheduled
+2026-08-07,SS316L Process Valves,Approved Valve Supplier J,piece,121.79,11.49,36,2026-08-14,2026-08-16,scheduled
+2026-08-07,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,365.76,40.64,114,2026-08-11,2026-08-13,received
+2026-08-07,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,51.06,4.91,15,2026-08-12,2026-08-14,scheduled
+2026-08-08,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,3457.95,934.58,2760,2026-08-15,2026-08-13,delayed
+2026-08-08,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7200.27,685.74,2160,2026-08-13,2026-08-15,scheduled
+2026-08-08,SS316L Process Pipe,Approved Pipe Supplier C,metre,305.37,80.36,258,2026-08-17,2026-08-13,delayed
+2026-08-08,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1675.43,190.39,540,2026-08-15,2026-08-17,scheduled
+2026-08-08,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,301.62,26.93,78,2026-08-12,2026-08-14,scheduled
+2026-08-08,Forged SS316L Flanges,Approved Forging Supplier E,piece,75.13,19.02,54,2026-08-17,2026-08-13,delayed
+2026-08-08,MS Structural Sections,Approved Structural Supplier F,kg,6286.08,523.84,1620,2026-08-14,2026-08-16,scheduled
+2026-08-08,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,13.69,3.38,10.5,2026-08-16,2026-08-13,delayed
+2026-08-08,ER316L Welding Wire,Approved Welding Supplier H,kg,216.58,22.1,63,2026-08-12,2026-08-14,scheduled
+2026-08-08,E7018 Welding Electrodes,Approved Welding Supplier H,kg,378.45,33.79,102,2026-08-13,2026-08-15,scheduled
+2026-08-08,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,65.86,6.86,21,2026-08-14,2026-08-16,scheduled
+2026-08-08,SS316L Process Valves,Approved Valve Supplier J,piece,112.23,12.47,36,2026-08-15,2026-08-17,received
+2026-08-08,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,377.79,40.19,114,2026-08-12,2026-08-14,scheduled
+2026-08-08,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,58.0,5.37,15,2026-08-13,2026-08-15,scheduled
+2026-08-09,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,3024.76,960.24,2760,2026-08-15,2026-08-13,delayed
+2026-08-09,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7877.98,722.75,2160,2026-08-14,2026-08-16,scheduled
+2026-08-09,SS316L Process Pipe,Approved Pipe Supplier C,metre,266.21,81.91,258,2026-08-17,2026-08-13,delayed
+2026-08-09,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1730.8,188.13,540,2026-08-16,2026-08-18,scheduled
+2026-08-09,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,293.94,25.34,78,2026-08-13,2026-08-15,scheduled
+2026-08-09,Forged SS316L Flanges,Approved Forging Supplier E,piece,63.41,18.65,54,2026-08-17,2026-08-13,delayed
+2026-08-09,MS Structural Sections,Approved Structural Supplier F,kg,6977.98,562.74,1620,2026-08-15,2026-08-17,scheduled
+2026-08-09,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,13.16,3.76,10.5,2026-08-16,2026-08-13,delayed
+2026-08-09,ER316L Welding Wire,Approved Welding Supplier H,kg,229.5,22.5,63,2026-08-13,2026-08-15,scheduled
+2026-08-09,E7018 Welding Electrodes,Approved Welding Supplier H,kg,405.3,34.94,102,2026-08-14,2026-08-16,scheduled
+2026-08-09,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,59.2,7.4,21,2026-08-15,2026-08-17,received
+2026-08-09,SS316L Process Valves,Approved Valve Supplier J,piece,116.94,12.44,36,2026-08-16,2026-08-18,scheduled
+2026-08-09,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,353.68,36.09,114,2026-08-13,2026-08-15,scheduled
+2026-08-09,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,60.26,5.38,15,2026-08-14,2026-08-16,scheduled
+2026-08-10,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,2563.24,985.86,2760,2026-08-15,2026-08-13,delayed
+2026-08-10,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,7990.12,707.09,2160,2026-08-15,2026-08-17,scheduled
+2026-08-10,SS316L Process Pipe,Approved Pipe Supplier C,metre,229.74,85.09,258,2026-08-17,2026-08-13,delayed
+2026-08-10,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1697.66,176.84,540,2026-08-17,2026-08-19,scheduled
+2026-08-10,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,269.1,26.91,78,2026-08-14,2026-08-16,scheduled
+2026-08-10,Forged SS316L Flanges,Approved Forging Supplier E,piece,48.31,16.95,54,2026-08-17,2026-08-13,delayed
+2026-08-10,MS Structural Sections,Approved Structural Supplier F,kg,6568.83,513.19,1620,2026-08-16,2026-08-18,scheduled
+2026-08-10,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,10.47,3.55,10.5,2026-08-16,2026-08-13,delayed
+2026-08-10,ER316L Welding Wire,Approved Welding Supplier H,kg,232.99,21.98,63,2026-08-14,2026-08-16,scheduled
+2026-08-10,E7018 Welding Electrodes,Approved Welding Supplier H,kg,331.4,33.14,102,2026-08-15,2026-08-17,received
+2026-08-10,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,60.65,7.22,21,2026-08-16,2026-08-18,scheduled
+2026-08-10,SS316L Process Valves,Approved Valve Supplier J,piece,112.6,11.49,36,2026-08-17,2026-08-19,scheduled
+2026-08-10,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,411.57,40.35,114,2026-08-14,2026-08-16,scheduled
+2026-08-10,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,59.86,5.16,15,2026-08-15,2026-08-17,scheduled
+2026-08-11,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,1988.25,969.88,2760,2026-08-15,2026-08-13,delayed
+2026-08-11,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,9030.18,771.81,2160,2026-08-16,2026-08-18,scheduled
+2026-08-11,SS316L Process Pipe,Approved Pipe Supplier C,metre,192.3,89.44,258,2026-08-17,2026-08-13,delayed
+2026-08-11,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1511.36,188.92,540,2026-08-18,2026-08-20,scheduled
+2026-08-11,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,252.93,24.32,78,2026-08-15,2026-08-17,scheduled
+2026-08-11,Forged SS316L Flanges,Approved Forging Supplier E,piece,44.37,19.29,54,2026-08-17,2026-08-13,delayed
+2026-08-11,MS Structural Sections,Approved Structural Supplier F,kg,7431.73,563.01,1620,2026-08-17,2026-08-19,scheduled
+2026-08-11,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,8.45,3.52,10.5,2026-08-16,2026-08-13,delayed
+2026-08-11,ER316L Welding Wire,Approved Welding Supplier H,kg,194.4,21.6,63,2026-08-15,2026-08-17,received
+2026-08-11,E7018 Welding Electrodes,Approved Welding Supplier H,kg,371.28,35.7,102,2026-08-16,2026-08-18,scheduled
+2026-08-11,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,64.68,7.35,21,2026-08-17,2026-08-19,scheduled
+2026-08-11,SS316L Process Valves,Approved Valve Supplier J,piece,129.85,12.73,36,2026-08-18,2026-08-20,scheduled
+2026-08-11,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,422.62,39.87,114,2026-08-15,2026-08-17,scheduled
+2026-08-11,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,49.5,4.95,15,2026-08-16,2026-08-18,scheduled
+2026-08-12,SA516 Gr.70 Plate 20 mm,Approved Plate Supplier A,kg,1306.44,870.96,2760,2026-08-15,2026-08-13,delayed
+2026-08-12,SS304L Sheet 6 mm,Approved Stainless Supplier B,kg,9063.02,749.01,2160,2026-08-17,2026-08-19,scheduled
+2026-08-12,SS316L Process Pipe,Approved Pipe Supplier C,metre,126.74,79.21,258,2026-08-17,2026-08-13,delayed
+2026-08-12,SS316L Heat Exchanger Tube,Approved Tube Supplier D,metre,1578.28,187.89,540,2026-08-19,2026-08-21,scheduled
+2026-08-12,Forged Carbon Steel Flanges,Approved Forging Supplier E,piece,297.32,27.53,78,2026-08-16,2026-08-18,scheduled
+2026-08-12,Forged SS316L Flanges,Approved Forging Supplier E,piece,31.71,18.12,54,2026-08-17,2026-08-13,delayed
+2026-08-12,MS Structural Sections,Approved Structural Supplier F,kg,7378.0,542.5,1620,2026-08-18,2026-08-20,scheduled
+2026-08-12,High-Purity Argon,Approved Industrial Gas Supplier G,cylinder,6.07,3.28,10.5,2026-08-16,2026-08-13,delayed
+2026-08-12,ER316L Welding Wire,Approved Welding Supplier H,kg,208.21,22.15,63,2026-08-16,2026-08-18,scheduled
+2026-08-12,E7018 Welding Electrodes,Approved Welding Supplier H,kg,340.96,31.57,102,2026-08-17,2026-08-19,scheduled
+2026-08-12,Hydro-Test Gasket Set,Approved Sealing Supplier I,set,65.78,7.15,21,2026-08-18,2026-08-20,scheduled
+2026-08-12,SS316L Process Valves,Approved Valve Supplier J,piece,117.34,11.07,36,2026-08-19,2026-08-21,scheduled
+2026-08-12,Pickling & Passivation Chemical,Approved Chemical Supplier K,litre,328.95,36.55,114,2026-08-16,2026-08-18,scheduled
+2026-08-12,Export Packing Timber & Barrier Film,Approved Packaging Supplier L,set,55.33,5.32,15,2026-08-17,2026-08-19,scheduled

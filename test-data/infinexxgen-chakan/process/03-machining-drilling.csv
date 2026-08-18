@@ -1,0 +1,237 @@
+date,line,process,machine,shift,status,input_quantity,output_quantity,rejected_quantity,run_minutes,cycle_time_minutes,temperature_c,temperature_min_c,temperature_max_c,pressure_bar,energy_kwh,downtime_minutes,operator,batch_id
+2026-06-15,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.48,13.27,0.06,423,28.4,,,,,78.64,17,Synthetic Operator 3,PROC-L1-MACH-260615-A
+2026-06-15,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.37,14.03,0.19,426,27.39,,,,,55.8,14,Synthetic Operator 4,PROC-L1-MACH-260615-A
+2026-06-15,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.6,13.34,0.21,422,28.34,,,,,85.64,18,Synthetic Operator 4,PROC-L1-MACH-260615-B
+2026-06-15,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.71,14.63,0.15,421,26.81,,,,,50.09,19,Synthetic Operator 5,PROC-L1-MACH-260615-B
+2026-06-16,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.15,13.81,0,437,26.65,,,,,93.61,3,Synthetic Operator 4,PROC-L1-MACH-260616-A
+2026-06-16,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.8,14.7,0.1,427,28.87,,,,,53.39,13,Synthetic Operator 5,PROC-L1-MACH-260616-A
+2026-06-16,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.35,13.16,0.21,422,27.77,,,,,75.89,18,Synthetic Operator 5,PROC-L1-MACH-260616-B
+2026-06-16,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,15.61,15.45,0.23,437,27.15,,,,,61.96,3,Synthetic Operator 6,PROC-L1-MACH-260616-B
+2026-06-17,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,12.9,12.79,0.01,417,29.27,,,,,97.3,23,Synthetic Operator 5,PROC-L1-MACH-260617-A
+2026-06-17,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.3,13.07,0.06,425,27.93,,,,,63.25,15,Synthetic Operator 6,PROC-L1-MACH-260617-A
+2026-06-17,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.43,14.17,0.13,423,27.66,,,,,67.82,17,Synthetic Operator 6,PROC-L1-MACH-260617-B
+2026-06-17,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.38,14.16,0.02,435,27.63,,,,,62.98,5,Synthetic Operator 7,PROC-L1-MACH-260617-B
+2026-06-18,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.95,13.69,0.01,421,29.52,,,,,102.25,19,Synthetic Operator 6,PROC-L1-MACH-260618-A
+2026-06-18,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.93,14.72,0.01,419,27.42,,,,,40.43,21,Synthetic Operator 7,PROC-L1-MACH-260618-A
+2026-06-18,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.21,13.95,0.25,418,28.47,,,,,102.58,22,Synthetic Operator 7,PROC-L1-MACH-260618-B
+2026-06-18,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.02,13.71,0.02,435,26.9,,,,,48.2,5,Synthetic Operator 8,PROC-L1-MACH-260618-B
+2026-06-19,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.07,13.95,0.06,416,26.92,,,,,75.47,24,Synthetic Operator 7,PROC-L1-MACH-260619-A
+2026-06-19,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.46,14.28,0.07,426,28.27,,,,,54.84,14,Synthetic Operator 8,PROC-L1-MACH-260619-A
+2026-06-19,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.79,14.59,0.25,420,29.51,,,,,87.6,20,Synthetic Operator 8,PROC-L1-MACH-260619-B
+2026-06-19,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,15.36,14.99,0.06,425,28.42,,,,,56.57,15,Synthetic Operator 1,PROC-L1-MACH-260619-B
+2026-06-20,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,15.37,15.23,0.22,437,28.8,,,,,79.27,3,Synthetic Operator 8,PROC-L1-MACH-260620-A
+2026-06-20,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.05,12.9,0.09,417,28.75,,,,,41.15,23,Synthetic Operator 1,PROC-L1-MACH-260620-A
+2026-06-20,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.65,14.29,0.23,418,27.65,,,,,93.91,22,Synthetic Operator 1,PROC-L1-MACH-260620-B
+2026-06-20,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.5,14.29,0.18,426,28.49,,,,,41.89,14,Synthetic Operator 2,PROC-L1-MACH-260620-B
+2026-06-21,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,9.69,9.62,0.15,309,28.65,,,,,68.65,21,Synthetic Operator 1,PROC-L1-MACH-260621-A
+2026-06-21,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,11.13,10.97,0.01,317,27.31,,,,,45.31,13,Synthetic Operator 2,PROC-L1-MACH-260621-A
+2026-06-21,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Idle,8.55,8.35,0.14,269,28.13,,,,,48.3,61,Synthetic Operator 2,PROC-L1-MACH-260621-B
+2026-06-21,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Idle,9.04,8.89,0.03,277,27.92,,,,,34.06,53,Synthetic Operator 3,PROC-L1-MACH-260621-B
+2026-06-22,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.44,14.36,0.02,418,27.85,,,,,101.01,22,Synthetic Operator 2,PROC-L1-MACH-260622-A
+2026-06-22,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.14,13.87,0.17,434,27.48,,,,,60.68,6,Synthetic Operator 3,PROC-L1-MACH-260622-A
+2026-06-22,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.93,13.81,0.09,428,28.43,,,,,100.45,12,Synthetic Operator 3,PROC-L1-MACH-260622-B
+2026-06-22,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.8,14.53,0.24,423,26.9,,,,,56.72,17,Synthetic Operator 4,PROC-L1-MACH-260622-B
+2026-06-23,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.99,14.8,0.26,424,28.36,,,,,93.0,16,Synthetic Operator 3,PROC-L1-MACH-260623-A
+2026-06-23,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.24,13.08,0.22,429,27.15,,,,,55.81,11,Synthetic Operator 4,PROC-L1-MACH-260623-A
+2026-06-23,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.61,14.27,0.14,424,27.53,,,,,99.55,16,Synthetic Operator 4,PROC-L1-MACH-260623-B
+2026-06-23,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.93,14.57,0.02,423,27.87,,,,,58.44,17,Synthetic Operator 5,PROC-L1-MACH-260623-B
+2026-06-24,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.89,14.66,0.13,428,29.1,,,,,71.11,12,Synthetic Operator 4,PROC-L1-MACH-260624-A
+2026-06-24,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.2,13.98,0.1,437,26.56,,,,,43.15,3,Synthetic Operator 5,PROC-L1-MACH-260624-A
+2026-06-24,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.26,13.95,0.17,425,28.78,,,,,100.04,15,Synthetic Operator 5,PROC-L1-MACH-260624-B
+2026-06-24,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.43,13.18,0.19,431,27.35,,,,,46.74,9,Synthetic Operator 6,PROC-L1-MACH-260624-B
+2026-06-25,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.26,13.93,0.13,430,27.14,,,,,86.57,10,Synthetic Operator 5,PROC-L1-MACH-260625-A
+2026-06-25,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.81,13.54,0.09,430,26.67,,,,,57.7,10,Synthetic Operator 6,PROC-L1-MACH-260625-A
+2026-06-25,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.1,13.87,0.02,433,28.03,,,,,71.27,7,Synthetic Operator 6,PROC-L1-MACH-260625-B
+2026-06-25,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.33,14.21,0.03,424,28.11,,,,,57.49,16,Synthetic Operator 7,PROC-L1-MACH-260625-B
+2026-06-26,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.54,14.21,0.12,434,29.62,,,,,93.14,6,Synthetic Operator 6,PROC-L1-MACH-260626-A
+2026-06-26,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.36,13.06,0.22,433,27.39,,,,,64.25,7,Synthetic Operator 7,PROC-L1-MACH-260626-A
+2026-06-26,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.98,14.84,0.03,416,27.67,,,,,71.73,24,Synthetic Operator 7,PROC-L1-MACH-260626-B
+2026-06-26,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,12.95,12.83,0.09,420,28.87,,,,,50.34,20,Synthetic Operator 8,PROC-L1-MACH-260626-B
+2026-06-27,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,15.08,14.82,0.04,431,28.09,,,,,82.22,9,Synthetic Operator 7,PROC-L1-MACH-260627-A
+2026-06-27,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.15,12.9,0.1,426,27.38,,,,,55.45,14,Synthetic Operator 8,PROC-L1-MACH-260627-A
+2026-06-27,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.25,13.92,0.06,430,27.72,,,,,94.26,10,Synthetic Operator 8,PROC-L1-MACH-260627-B
+2026-06-27,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.0,13.82,0.18,422,27.69,,,,,56.66,18,Synthetic Operator 1,PROC-L1-MACH-260627-B
+2026-06-28,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,10.65,10.47,0.08,328,28.61,,,,,55.4,2,Synthetic Operator 8,PROC-L1-MACH-260628-A
+2026-06-28,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,11.66,11.49,0.08,321,28.95,,,,,44.11,9,Synthetic Operator 1,PROC-L1-MACH-260628-A
+2026-06-28,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Idle,9.14,9.05,0.08,283,28.25,,,,,53.15,47,Synthetic Operator 1,PROC-L1-MACH-260628-B
+2026-06-28,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Idle,9.6,9.47,0.02,278,28.65,,,,,29.48,52,Synthetic Operator 2,PROC-L1-MACH-260628-B
+2026-06-29,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.28,14.05,0.16,418,27.26,,,,,104.59,22,Synthetic Operator 1,PROC-L1-MACH-260629-A
+2026-06-29,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.68,14.38,0.07,430,27.95,,,,,53.78,10,Synthetic Operator 2,PROC-L1-MACH-260629-A
+2026-06-29,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,15.18,15.09,0.06,435,27.2,,,,,105.93,5,Synthetic Operator 2,PROC-L1-MACH-260629-B
+2026-06-29,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.76,14.54,0.18,431,26.56,,,,,57.77,9,Synthetic Operator 3,PROC-L1-MACH-260629-B
+2026-06-30,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.6,13.28,0.14,429,29.14,,,,,94.01,11,Synthetic Operator 2,PROC-L1-MACH-260630-A
+2026-06-30,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,15.17,14.93,0.06,419,29.35,,,,,51.35,21,Synthetic Operator 3,PROC-L1-MACH-260630-A
+2026-06-30,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.96,13.87,0.09,429,28.79,,,,,69.46,11,Synthetic Operator 3,PROC-L1-MACH-260630-B
+2026-06-30,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.69,13.53,0.17,433,29.3,,,,,47.93,7,Synthetic Operator 4,PROC-L1-MACH-260630-B
+2026-07-01,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.22,13.92,0.24,423,27.86,,,,,77.48,17,Synthetic Operator 3,PROC-L1-MACH-260701-A
+2026-07-01,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.38,14.18,0.23,423,27.92,,,,,52.77,17,Synthetic Operator 4,PROC-L1-MACH-260701-A
+2026-07-01,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.11,13.97,0.11,435,27.92,,,,,106.14,5,Synthetic Operator 4,PROC-L1-MACH-260701-B
+2026-07-01,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.94,13.63,0.11,416,29.61,,,,,56.87,24,Synthetic Operator 5,PROC-L1-MACH-260701-B
+2026-07-02,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.82,14.52,0.07,426,29.22,,,,,107.59,14,Synthetic Operator 4,PROC-L1-MACH-260702-A
+2026-07-02,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.31,13.23,0.04,421,28.17,,,,,58.98,19,Synthetic Operator 5,PROC-L1-MACH-260702-A
+2026-07-02,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.93,14.71,0.13,421,27.79,,,,,102.12,19,Synthetic Operator 5,PROC-L1-MACH-260702-B
+2026-07-02,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.64,13.33,0.19,420,26.35,,,,,60.18,20,Synthetic Operator 6,PROC-L1-MACH-260702-B
+2026-07-03,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.8,14.62,0.18,416,26.9,,,,,92.13,24,Synthetic Operator 5,PROC-L1-MACH-260703-A
+2026-07-03,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,12.87,12.61,0.03,417,26.95,,,,,52.39,23,Synthetic Operator 6,PROC-L1-MACH-260703-A
+2026-07-03,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.12,13.99,0.16,423,27.72,,,,,88.99,17,Synthetic Operator 6,PROC-L1-MACH-260703-B
+2026-07-03,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.79,14.61,0.12,431,28.26,,,,,55.2,9,Synthetic Operator 7,PROC-L1-MACH-260703-B
+2026-07-04,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.66,14.53,0.14,426,27.61,,,,,75.34,14,Synthetic Operator 6,PROC-L1-MACH-260704-A
+2026-07-04,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.99,14.63,0.26,427,26.63,,,,,61.48,13,Synthetic Operator 7,PROC-L1-MACH-260704-A
+2026-07-04,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.7,14.54,0.15,434,26.65,,,,,74.33,6,Synthetic Operator 7,PROC-L1-MACH-260704-B
+2026-07-04,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.76,14.58,0.01,422,27.63,,,,,40.68,18,Synthetic Operator 8,PROC-L1-MACH-260704-B
+2026-07-05,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,10.13,9.93,0.05,321,27.25,,,,,79.96,9,Synthetic Operator 7,PROC-L1-MACH-260705-A
+2026-07-05,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,11.13,10.87,0.01,306,26.34,,,,,35.71,24,Synthetic Operator 8,PROC-L1-MACH-260705-A
+2026-07-05,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Idle,9.46,9.3,0.07,269,29.53,,,,,50.31,61,Synthetic Operator 8,PROC-L1-MACH-260705-B
+2026-07-05,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Idle,8.88,8.79,0.09,279,29.0,,,,,36.7,51,Synthetic Operator 1,PROC-L1-MACH-260705-B
+2026-07-06,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.52,13.29,0,436,29.14,,,,,108.1,4,Synthetic Operator 8,PROC-L1-MACH-260706-A
+2026-07-06,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.6,13.35,0.09,417,28.66,,,,,55.78,23,Synthetic Operator 1,PROC-L1-MACH-260706-A
+2026-07-06,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,15.17,15.01,0.15,419,29.58,,,,,92.88,21,Synthetic Operator 1,PROC-L1-MACH-260706-B
+2026-07-06,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.82,13.5,0.17,421,29.08,,,,,44.81,19,Synthetic Operator 2,PROC-L1-MACH-260706-B
+2026-07-07,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,15.74,15.56,0.17,436,27.34,,,,,73.64,4,Synthetic Operator 1,PROC-L1-MACH-260707-A
+2026-07-07,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.86,13.66,0.17,436,27.87,,,,,50.65,4,Synthetic Operator 2,PROC-L1-MACH-260707-A
+2026-07-07,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,15.57,15.3,0.16,433,26.92,,,,,97.98,7,Synthetic Operator 2,PROC-L1-MACH-260707-B
+2026-07-07,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,15.65,15.49,0.19,434,27.17,,,,,64.35,6,Synthetic Operator 3,PROC-L1-MACH-260707-B
+2026-07-08,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.49,13.37,0.24,421,29.24,,,,,73.84,19,Synthetic Operator 2,PROC-L1-MACH-260708-A
+2026-07-08,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.23,13.01,0.18,422,27.34,,,,,42.61,18,Synthetic Operator 3,PROC-L1-MACH-260708-A
+2026-07-08,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.89,13.73,0.02,430,27.3,,,,,97.85,10,Synthetic Operator 3,PROC-L1-MACH-260708-B
+2026-07-08,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.64,13.3,0.05,431,28.9,,,,,53.87,9,Synthetic Operator 4,PROC-L1-MACH-260708-B
+2026-07-09,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.71,14.36,0.04,421,26.76,,,,,104.35,19,Synthetic Operator 3,PROC-L1-MACH-260709-A
+2026-07-09,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.94,13.86,0.14,426,27.16,,,,,47.99,14,Synthetic Operator 4,PROC-L1-MACH-260709-A
+2026-07-09,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.93,13.75,0.02,416,27.54,,,,,90.87,24,Synthetic Operator 4,PROC-L1-MACH-260709-B
+2026-07-09,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.22,14.0,0.12,419,28.53,,,,,48.29,21,Synthetic Operator 5,PROC-L1-MACH-260709-B
+2026-07-10,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.09,12.87,0.05,422,29.39,,,,,103.73,18,Synthetic Operator 4,PROC-L1-MACH-260710-A
+2026-07-10,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.47,14.34,0.18,425,29.52,,,,,43.34,15,Synthetic Operator 5,PROC-L1-MACH-260710-A
+2026-07-10,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.4,13.31,0.12,434,28.66,,,,,74.54,6,Synthetic Operator 5,PROC-L1-MACH-260710-B
+2026-07-10,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.71,14.52,0.01,419,26.9,,,,,52.25,21,Synthetic Operator 6,PROC-L1-MACH-260710-B
+2026-07-11,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.99,13.73,0.21,418,26.6,,,,,101.36,22,Synthetic Operator 5,PROC-L1-MACH-260711-A
+2026-07-11,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.19,13.02,0.14,424,29.62,,,,,55.26,16,Synthetic Operator 6,PROC-L1-MACH-260711-A
+2026-07-11,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.99,13.72,0.24,438,27.12,,,,,100.24,2,Synthetic Operator 6,PROC-L1-MACH-260711-B
+2026-07-11,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.77,14.67,0.16,437,29.47,,,,,64.81,3,Synthetic Operator 7,PROC-L1-MACH-260711-B
+2026-07-12,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,9.68,9.53,0.06,313,28.4,,,,,74.12,17,Synthetic Operator 6,PROC-L1-MACH-260712-A
+2026-07-12,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,10.82,10.58,0.02,312,28.44,,,,,35.53,18,Synthetic Operator 7,PROC-L1-MACH-260712-A
+2026-07-12,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Idle,9.43,9.37,0.09,280,28.36,,,,,66.49,50,Synthetic Operator 7,PROC-L1-MACH-260712-B
+2026-07-12,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Idle,8.37,8.3,0.11,271,29.54,,,,,40.58,59,Synthetic Operator 8,PROC-L1-MACH-260712-B
+2026-07-13,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.33,14.14,0.06,429,27.01,,,,,99.7,11,Synthetic Operator 7,PROC-L1-MACH-260713-A
+2026-07-13,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.51,13.25,0.13,429,28.33,,,,,52.02,11,Synthetic Operator 8,PROC-L1-MACH-260713-A
+2026-07-13,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,15.59,15.47,0.17,431,26.36,,,,,101.05,9,Synthetic Operator 8,PROC-L1-MACH-260713-B
+2026-07-13,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,15.31,14.99,0.06,425,28.54,,,,,60.98,15,Synthetic Operator 1,PROC-L1-MACH-260713-B
+2026-07-14,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.74,14.49,0.06,433,26.86,,,,,86.54,7,Synthetic Operator 8,PROC-L1-MACH-260714-A
+2026-07-14,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.01,13.93,0.13,433,28.19,,,,,56.76,7,Synthetic Operator 1,PROC-L1-MACH-260714-A
+2026-07-14,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.56,13.23,0.14,433,27.18,,,,,108.94,7,Synthetic Operator 1,PROC-L1-MACH-260714-B
+2026-07-14,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.08,12.83,0.18,419,26.55,,,,,60.3,21,Synthetic Operator 2,PROC-L1-MACH-260714-B
+2026-07-15,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.02,12.9,0.17,419,29.62,,,,,95.01,21,Synthetic Operator 1,PROC-L1-MACH-260715-A
+2026-07-15,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,15.65,15.49,0.22,435,27.0,,,,,49.97,5,Synthetic Operator 2,PROC-L1-MACH-260715-A
+2026-07-15,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.2,13.98,0.14,436,26.72,,,,,99.45,4,Synthetic Operator 2,PROC-L1-MACH-260715-B
+2026-07-15,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.6,13.33,0.14,428,27.19,,,,,54.71,12,Synthetic Operator 3,PROC-L1-MACH-260715-B
+2026-07-16,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.46,13.25,0.02,419,28.79,,,,,75.95,21,Synthetic Operator 2,PROC-L1-MACH-260716-A
+2026-07-16,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,15.13,14.81,0.25,431,27.36,,,,,56.21,9,Synthetic Operator 3,PROC-L1-MACH-260716-A
+2026-07-16,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,15.03,14.9,0.2,427,29.64,,,,,101.95,13,Synthetic Operator 3,PROC-L1-MACH-260716-B
+2026-07-16,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.9,13.62,0.08,434,28.03,,,,,57.66,6,Synthetic Operator 4,PROC-L1-MACH-260716-B
+2026-07-17,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.89,14.8,0.09,416,27.72,,,,,82.21,24,Synthetic Operator 3,PROC-L1-MACH-260717-A
+2026-07-17,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.68,14.43,0.22,432,29.29,,,,,64.09,8,Synthetic Operator 4,PROC-L1-MACH-260717-A
+2026-07-17,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.16,12.89,0.02,419,27.55,,,,,92.6,21,Synthetic Operator 4,PROC-L1-MACH-260717-B
+2026-07-17,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.37,13.14,0.19,430,27.32,,,,,50.93,10,Synthetic Operator 5,PROC-L1-MACH-260717-B
+2026-07-18,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,15.79,15.6,0.22,434,27.71,,,,,87.5,6,Synthetic Operator 4,PROC-L1-MACH-260718-A
+2026-07-18,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.8,13.52,0.06,435,26.77,,,,,42.57,5,Synthetic Operator 5,PROC-L1-MACH-260718-A
+2026-07-18,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.35,14.18,0.19,431,28.47,,,,,88.53,9,Synthetic Operator 5,PROC-L1-MACH-260718-B
+2026-07-18,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.03,13.8,0.23,433,28.02,,,,,47.02,7,Synthetic Operator 6,PROC-L1-MACH-260718-B
+2026-07-19,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,11.18,11.04,0.03,322,26.83,,,,,73.02,8,Synthetic Operator 5,PROC-L1-MACH-260719-A
+2026-07-19,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,11.16,10.95,0.03,308,29.16,,,,,29.52,22,Synthetic Operator 6,PROC-L1-MACH-260719-A
+2026-07-19,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Idle,9.32,9.21,0.14,276,29.04,,,,,59.1,54,Synthetic Operator 6,PROC-L1-MACH-260719-B
+2026-07-19,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Idle,9.58,9.49,0.1,271,26.99,,,,,31.87,59,Synthetic Operator 7,PROC-L1-MACH-260719-B
+2026-07-20,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.75,14.41,0.13,426,27.39,,,,,77.79,14,Synthetic Operator 6,PROC-L1-MACH-260720-A
+2026-07-20,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.66,14.42,0,421,28.86,,,,,45.35,19,Synthetic Operator 7,PROC-L1-MACH-260720-A
+2026-07-20,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.35,14.18,0.13,424,28.97,,,,,102.95,16,Synthetic Operator 7,PROC-L1-MACH-260720-B
+2026-07-20,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.84,13.73,0.08,434,27.89,,,,,55.25,6,Synthetic Operator 8,PROC-L1-MACH-260720-B
+2026-07-21,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.76,14.43,0.21,437,29.16,,,,,92.55,3,Synthetic Operator 7,PROC-L1-MACH-260721-A
+2026-07-21,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.68,13.53,0.12,434,27.7,,,,,59.27,6,Synthetic Operator 8,PROC-L1-MACH-260721-A
+2026-07-21,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.72,13.4,0.08,426,26.8,,,,,97.85,14,Synthetic Operator 8,PROC-L1-MACH-260721-B
+2026-07-21,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,15.74,15.5,0.05,436,28.09,,,,,51.25,4,Synthetic Operator 1,PROC-L1-MACH-260721-B
+2026-07-22,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.61,13.54,0.08,431,27.74,,,,,99.3,9,Synthetic Operator 8,PROC-L1-MACH-260722-A
+2026-07-22,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.21,12.92,0.14,424,29.42,,,,,40.67,16,Synthetic Operator 1,PROC-L1-MACH-260722-A
+2026-07-22,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.02,12.79,0.12,422,29.38,,,,,75.01,18,Synthetic Operator 1,PROC-L1-MACH-260722-B
+2026-07-22,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.82,14.74,0.09,417,26.43,,,,,54.33,23,Synthetic Operator 2,PROC-L1-MACH-260722-B
+2026-07-23,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.26,13.11,0.22,422,27.97,,,,,103.43,18,Synthetic Operator 1,PROC-L1-MACH-260723-A
+2026-07-23,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.08,13.87,0.11,423,29.15,,,,,54.7,17,Synthetic Operator 2,PROC-L1-MACH-260723-A
+2026-07-23,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,15.66,15.53,0.11,432,27.45,,,,,91.31,8,Synthetic Operator 2,PROC-L1-MACH-260723-B
+2026-07-23,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.63,13.29,0.04,420,28.79,,,,,54.06,20,Synthetic Operator 3,PROC-L1-MACH-260723-B
+2026-07-24,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.45,13.18,0.12,426,26.83,,,,,89.37,14,Synthetic Operator 2,PROC-L1-MACH-260724-A
+2026-07-24,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.31,14.17,0.22,434,27.85,,,,,53.65,6,Synthetic Operator 3,PROC-L1-MACH-260724-A
+2026-07-24,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,15.43,15.05,0.18,433,28.72,,,,,76.58,7,Synthetic Operator 3,PROC-L1-MACH-260724-B
+2026-07-24,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.61,13.5,0.11,430,29.13,,,,,62.89,10,Synthetic Operator 4,PROC-L1-MACH-260724-B
+2026-07-25,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.64,13.48,0.04,422,27.41,,,,,83.22,18,Synthetic Operator 3,PROC-L1-MACH-260725-A
+2026-07-25,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.71,14.35,0.21,424,26.34,,,,,41.37,16,Synthetic Operator 4,PROC-L1-MACH-260725-A
+2026-07-25,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.0,13.68,0.11,425,27.37,,,,,104.95,15,Synthetic Operator 4,PROC-L1-MACH-260725-B
+2026-07-25,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.78,13.51,0.12,432,28.48,,,,,42.95,8,Synthetic Operator 5,PROC-L1-MACH-260725-B
+2026-07-26,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,10.33,10.18,0.09,324,29.25,,,,,59.29,6,Synthetic Operator 4,PROC-L1-MACH-260726-A
+2026-07-26,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,10.3,10.16,0.13,312,28.86,,,,,31.46,18,Synthetic Operator 5,PROC-L1-MACH-260726-A
+2026-07-26,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Idle,9.73,9.59,0.09,277,27.04,,,,,54.76,53,Synthetic Operator 5,PROC-L1-MACH-260726-B
+2026-07-26,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Idle,8.67,8.51,0.03,266,28.49,,,,,36.06,64,Synthetic Operator 6,PROC-L1-MACH-260726-B
+2026-07-27,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.4,13.07,0.11,428,29.0,,,,,104.93,12,Synthetic Operator 5,PROC-L1-MACH-260727-A
+2026-07-27,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.69,13.48,0.07,426,29.33,,,,,51.86,14,Synthetic Operator 6,PROC-L1-MACH-260727-A
+2026-07-27,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.52,14.37,0.25,418,28.4,,,,,102.04,22,Synthetic Operator 6,PROC-L1-MACH-260727-B
+2026-07-27,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.56,14.32,0.05,429,26.74,,,,,51.21,11,Synthetic Operator 7,PROC-L1-MACH-260727-B
+2026-07-28,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.4,13.22,0.19,430,27.33,,,,,93.75,10,Synthetic Operator 6,PROC-L1-MACH-260728-A
+2026-07-28,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,15.08,14.79,0.17,419,28.25,,,,,50.18,21,Synthetic Operator 7,PROC-L1-MACH-260728-A
+2026-07-28,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.14,12.9,0.11,419,28.86,,,,,76.86,21,Synthetic Operator 7,PROC-L1-MACH-260728-B
+2026-07-28,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.25,12.93,0.14,428,26.78,,,,,61.0,12,Synthetic Operator 8,PROC-L1-MACH-260728-B
+2026-07-29,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.36,14.26,0.06,424,27.3,,,,,82.4,16,Synthetic Operator 7,PROC-L1-MACH-260729-A
+2026-07-29,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.48,13.21,0.17,429,26.62,,,,,50.88,11,Synthetic Operator 8,PROC-L1-MACH-260729-A
+2026-07-29,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.12,13.92,0.22,426,27.68,,,,,82.17,14,Synthetic Operator 8,PROC-L1-MACH-260729-B
+2026-07-29,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.73,13.6,0.13,425,27.23,,,,,57.11,15,Synthetic Operator 1,PROC-L1-MACH-260729-B
+2026-07-30,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.18,14.08,0.08,430,27.9,,,,,99.04,10,Synthetic Operator 8,PROC-L1-MACH-260730-A
+2026-07-30,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.65,13.48,0.15,426,27.84,,,,,55.37,14,Synthetic Operator 1,PROC-L1-MACH-260730-A
+2026-07-30,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.24,13.01,0.22,425,28.39,,,,,100.8,15,Synthetic Operator 1,PROC-L1-MACH-260730-B
+2026-07-30,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.0,12.9,0.21,418,27.4,,,,,60.02,22,Synthetic Operator 2,PROC-L1-MACH-260730-B
+2026-07-31,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,12.88,12.72,0.04,417,26.61,,,,,85.4,23,Synthetic Operator 1,PROC-L1-MACH-260731-A
+2026-07-31,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.59,13.27,0.17,438,27.96,,,,,47.61,2,Synthetic Operator 2,PROC-L1-MACH-260731-A
+2026-07-31,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.24,14.11,0.21,436,28.12,,,,,96.55,4,Synthetic Operator 2,PROC-L1-MACH-260731-B
+2026-07-31,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.7,14.38,0.16,427,29.23,,,,,56.9,13,Synthetic Operator 3,PROC-L1-MACH-260731-B
+2026-08-01,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.47,14.3,0.11,438,29.22,,,,,73.02,2,Synthetic Operator 2,PROC-L1-MACH-260801-A
+2026-08-01,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.11,13.0,0.11,416,26.77,,,,,41.05,24,Synthetic Operator 3,PROC-L1-MACH-260801-A
+2026-08-01,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.52,13.25,0.02,437,28.66,,,,,78.81,3,Synthetic Operator 3,PROC-L1-MACH-260801-B
+2026-08-01,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,15.16,15.06,0.16,427,27.29,,,,,63.97,13,Synthetic Operator 4,PROC-L1-MACH-260801-B
+2026-08-02,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,11.54,11.44,0.03,321,29.24,,,,,76.09,9,Synthetic Operator 3,PROC-L1-MACH-260802-A
+2026-08-02,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,10.59,10.38,0.03,307,27.42,,,,,37.79,23,Synthetic Operator 4,PROC-L1-MACH-260802-A
+2026-08-02,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Idle,9.88,9.82,0.01,284,26.66,,,,,57.97,46,Synthetic Operator 4,PROC-L1-MACH-260802-B
+2026-08-02,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Idle,8.75,8.59,0.13,272,26.33,,,,,30.58,58,Synthetic Operator 5,PROC-L1-MACH-260802-B
+2026-08-03,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.67,13.47,0.06,418,27.47,,,,,78.95,22,Synthetic Operator 4,PROC-L1-MACH-260803-A
+2026-08-03,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.64,13.44,0.18,421,29.46,,,,,43.51,19,Synthetic Operator 5,PROC-L1-MACH-260803-A
+2026-08-03,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.88,14.53,0.17,423,27.73,,,,,76.11,17,Synthetic Operator 5,PROC-L1-MACH-260803-B
+2026-08-03,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.61,14.52,0.15,437,26.76,,,,,54.18,3,Synthetic Operator 6,PROC-L1-MACH-260803-B
+2026-08-04,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.41,13.16,0.06,435,27.51,,,,,103.13,5,Synthetic Operator 5,PROC-L1-MACH-260804-A
+2026-08-04,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.55,13.4,0.2,437,29.49,,,,,52.82,3,Synthetic Operator 6,PROC-L1-MACH-260804-A
+2026-08-04,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.3,14.16,0.15,421,28.5,,,,,74.74,19,Synthetic Operator 6,PROC-L1-MACH-260804-B
+2026-08-04,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,15.34,15.23,0.14,426,26.39,,,,,45.05,14,Synthetic Operator 7,PROC-L1-MACH-260804-B
+2026-08-05,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.35,13.23,0.05,426,26.67,,,,,93.18,14,Synthetic Operator 6,PROC-L1-MACH-260805-A
+2026-08-05,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.06,13.93,0.24,426,26.57,,,,,45.28,14,Synthetic Operator 7,PROC-L1-MACH-260805-A
+2026-08-05,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,14.78,14.48,0.03,437,29.14,,,,,104.99,3,Synthetic Operator 7,PROC-L1-MACH-260805-B
+2026-08-05,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.07,12.84,0.1,418,26.69,,,,,56.57,22,Synthetic Operator 8,PROC-L1-MACH-260805-B
+2026-08-06,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.51,13.29,0.1,431,27.97,,,,,108.34,9,Synthetic Operator 7,PROC-L1-MACH-260806-A
+2026-08-06,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.01,13.81,0.1,434,26.32,,,,,56.5,6,Synthetic Operator 8,PROC-L1-MACH-260806-A
+2026-08-06,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.65,13.55,0.24,419,28.71,,,,,92.58,21,Synthetic Operator 8,PROC-L1-MACH-260806-B
+2026-08-06,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.17,13.99,0.02,423,28.68,,,,,40.85,17,Synthetic Operator 1,PROC-L1-MACH-260806-B
+2026-08-07,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.13,13.99,0.08,417,26.66,,,,,82.12,23,Synthetic Operator 8,PROC-L1-MACH-260807-A
+2026-08-07,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,15.12,14.97,0.07,428,29.03,,,,,62.44,12,Synthetic Operator 1,PROC-L1-MACH-260807-A
+2026-08-07,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,15.57,15.37,0.18,431,27.93,,,,,72.6,9,Synthetic Operator 1,PROC-L1-MACH-260807-B
+2026-08-07,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,14.23,14.02,0.07,438,26.69,,,,,64.18,2,Synthetic Operator 2,PROC-L1-MACH-260807-B
+2026-08-08,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.64,14.46,0.08,431,28.78,,,,,84.66,9,Synthetic Operator 1,PROC-L1-MACH-260808-A
+2026-08-08,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.64,13.38,0.16,433,28.4,,,,,43.97,7,Synthetic Operator 2,PROC-L1-MACH-260808-A
+2026-08-08,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.69,13.61,0.2,437,28.84,,,,,95.36,3,Synthetic Operator 2,PROC-L1-MACH-260808-B
+2026-08-08,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.68,13.43,0.1,420,26.7,,,,,52.11,20,Synthetic Operator 3,PROC-L1-MACH-260808-B
+2026-08-09,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,10.39,10.32,0.08,307,27.95,,,,,55.42,23,Synthetic Operator 2,PROC-L1-MACH-260809-A
+2026-08-09,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,9.69,9.53,0.1,306,28.32,,,,,40.61,24,Synthetic Operator 3,PROC-L1-MACH-260809-A
+2026-08-09,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Idle,8.94,8.85,0.04,268,28.57,,,,,43.45,62,Synthetic Operator 3,PROC-L1-MACH-260809-B
+2026-08-09,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Idle,8.98,8.83,0.13,280,28.99,,,,,41.18,50,Synthetic Operator 4,PROC-L1-MACH-260809-B
+2026-08-10,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.11,12.91,0.02,419,28.63,,,,,88.55,21,Synthetic Operator 3,PROC-L1-MACH-260810-A
+2026-08-10,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,14.39,14.18,0,438,28.7,,,,,55.39,2,Synthetic Operator 4,PROC-L1-MACH-260810-A
+2026-08-10,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.97,13.67,0.19,434,28.0,,,,,96.66,6,Synthetic Operator 4,PROC-L1-MACH-260810-B
+2026-08-10,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,15.16,15.05,0.26,432,26.89,,,,,44.63,8,Synthetic Operator 5,PROC-L1-MACH-260810-B
+2026-08-11,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,13.37,13.22,0.04,416,27.81,,,,,86.75,24,Synthetic Operator 4,PROC-L1-MACH-260811-A
+2026-08-11,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,13.4,13.22,0.2,425,28.58,,,,,42.91,15,Synthetic Operator 5,PROC-L1-MACH-260811-A
+2026-08-11,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.39,13.3,0.08,427,29.13,,,,,78.77,13,Synthetic Operator 5,PROC-L1-MACH-260811-B
+2026-08-11,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,13.78,13.58,0.02,432,26.85,,,,,49.91,8,Synthetic Operator 6,PROC-L1-MACH-260811-B
+2026-08-12,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift A,Running,14.01,13.81,0.22,417,28.13,,,,,87.2,23,Synthetic Operator 5,PROC-L1-MACH-260812-A
+2026-08-12,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift A,Running,15.26,15.03,0.18,421,28.83,,,,,43.19,19,Synthetic Operator 6,PROC-L1-MACH-260812-A
+2026-08-12,Process Equipment & Vessel Fabrication Line,L1-MACH,Lathe Machine,Shift B,Running,13.34,13.15,0.16,418,27.82,,,,,85.93,22,Synthetic Operator 6,PROC-L1-MACH-260812-B
+2026-08-12,Process Equipment & Vessel Fabrication Line,L1-MACH,Heavy Duty Drill Machine,Shift B,Running,15.53,15.31,0.17,433,28.83,,,,,52.75,7,Synthetic Operator 7,PROC-L1-MACH-260812-B

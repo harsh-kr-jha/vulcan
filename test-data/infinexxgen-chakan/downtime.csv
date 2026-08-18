@@ -1,0 +1,258 @@
+date,line,machine,shift,reason,minutes,occurrences
+2026-06-15,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift A,Plasma torch consumable change,16,1
+2026-06-15,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Material traceability hold,16,1
+2026-06-15,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift B,Tool insert replacement,8,1
+2026-06-15,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift A,Pipe saw blade inspection,8,1
+2026-06-15,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Shielding gas purge setup,5,1
+2026-06-16,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling setup and alignment,13,1
+2026-06-16,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift B,Drill setup and clamping,15,1
+2026-06-16,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift A,Tube expander torque calibration,18,1
+2026-06-16,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift B,Skid alignment correction,7,1
+2026-06-17,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift A,Tool insert replacement,13,1
+2026-06-17,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift B,Electrode oven temperature recovery,13,1
+2026-06-17,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Shielding gas purge setup,8,1
+2026-06-17,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Pressure-test fixture changeover,9,1
+2026-06-18,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift A,Drill setup and clamping,14,1
+2026-06-18,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Hydro-test fixture changeover,16,1
+2026-06-18,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift A,Skid alignment correction,7,1
+2026-06-18,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift B,Generator preventive check,17,1
+2026-06-19,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift A,Electrode oven temperature recovery,7,1
+2026-06-19,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift B,Plasma torch consumable change,21,1
+2026-06-19,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Pressure-test fixture changeover,8,1
+2026-06-19,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift B,Pipe saw blade inspection,5,1
+2026-06-20,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Hydro-test fixture changeover,5,1
+2026-06-20,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling setup and alignment,14,1
+2026-06-20,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift A,Generator preventive check,9,1
+2026-06-20,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift B,Tube expander torque calibration,13,1
+2026-06-21,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift A,Plasma torch consumable change,9,1
+2026-06-21,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift B,Tool insert replacement,6,1
+2026-06-21,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift A,Pipe saw blade inspection,14,1
+2026-06-21,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Shielding gas purge setup,16,1
+2026-06-22,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling setup and alignment,7,1
+2026-06-22,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift B,Drill setup and clamping,17,1
+2026-06-22,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift A,Tube expander torque calibration,21,1
+2026-06-22,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift B,Skid alignment correction,14,1
+2026-06-23,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift A,Tool insert replacement,10,1
+2026-06-23,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift B,Electrode oven temperature recovery,9,1
+2026-06-23,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Shielding gas purge setup,19,1
+2026-06-23,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Pressure-test fixture changeover,11,1
+2026-06-24,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift A,Drill setup and clamping,8,1
+2026-06-24,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Hydro-test fixture changeover,6,1
+2026-06-24,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift A,Skid alignment correction,9,1
+2026-06-24,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift B,Generator preventive check,10,1
+2026-06-24,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Isometric clarification hold,11,1
+2026-06-25,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift A,Electrode oven temperature recovery,12,1
+2026-06-25,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift B,Plasma torch consumable change,9,1
+2026-06-25,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Material traceability hold,22,1
+2026-06-25,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Pressure-test fixture changeover,17,1
+2026-06-25,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Isometric clarification hold,8,1
+2026-06-25,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift B,Pipe saw blade inspection,19,1
+2026-06-26,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Hydro-test fixture changeover,19,1
+2026-06-26,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Material traceability hold,18,1
+2026-06-26,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling setup and alignment,12,1
+2026-06-26,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift A,Generator preventive check,12,1
+2026-06-26,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift B,Tube expander torque calibration,9,1
+2026-06-27,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift A,Plasma torch consumable change,9,1
+2026-06-27,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift B,Tool insert replacement,8,1
+2026-06-27,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift A,Pipe saw blade inspection,16,1
+2026-06-27,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Shielding gas purge setup,21,1
+2026-06-28,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling setup and alignment,13,1
+2026-06-28,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift B,Drill setup and clamping,14,1
+2026-06-28,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift A,Tube expander torque calibration,13,1
+2026-06-28,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift B,Skid alignment correction,16,1
+2026-06-29,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift A,Tool insert replacement,17,1
+2026-06-29,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift B,Electrode oven temperature recovery,10,1
+2026-06-29,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Shielding gas purge setup,22,1
+2026-06-29,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Pressure-test fixture changeover,14,1
+2026-06-30,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift A,Drill setup and clamping,12,1
+2026-06-30,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Hydro-test fixture changeover,12,1
+2026-06-30,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift A,Skid alignment correction,23,1
+2026-06-30,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift B,Generator preventive check,18,1
+2026-07-01,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift A,Electrode oven temperature recovery,10,1
+2026-07-01,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift B,Plasma torch consumable change,17,1
+2026-07-01,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Pressure-test fixture changeover,8,1
+2026-07-01,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift B,Pipe saw blade inspection,15,1
+2026-07-02,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Hydro-test fixture changeover,19,1
+2026-07-02,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling setup and alignment,20,1
+2026-07-02,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift A,Generator preventive check,11,1
+2026-07-02,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift B,Tube expander torque calibration,19,1
+2026-07-03,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift A,Plasma torch consumable change,7,1
+2026-07-03,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift B,Tool insert replacement,9,1
+2026-07-03,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift A,Pipe saw blade inspection,21,1
+2026-07-03,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Shielding gas purge setup,19,1
+2026-07-04,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling setup and alignment,9,1
+2026-07-04,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift B,Drill setup and clamping,10,1
+2026-07-04,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift A,Tube expander torque calibration,10,1
+2026-07-04,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift B,Skid alignment correction,24,1
+2026-07-05,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift A,Tool insert replacement,15,1
+2026-07-05,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift B,Electrode oven temperature recovery,5,1
+2026-07-05,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Shielding gas purge setup,7,1
+2026-07-05,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Pressure-test fixture changeover,12,1
+2026-07-05,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Isometric clarification hold,9,1
+2026-07-06,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift A,Drill setup and clamping,15,1
+2026-07-06,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Hydro-test fixture changeover,10,1
+2026-07-06,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Material traceability hold,24,1
+2026-07-06,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift A,Skid alignment correction,17,1
+2026-07-06,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Isometric clarification hold,20,1
+2026-07-06,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift B,Generator preventive check,17,1
+2026-07-07,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift A,Electrode oven temperature recovery,17,1
+2026-07-07,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Material traceability hold,9,1
+2026-07-07,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift B,Plasma torch consumable change,11,1
+2026-07-07,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Pressure-test fixture changeover,8,1
+2026-07-07,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift B,Pipe saw blade inspection,13,1
+2026-07-08,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Hydro-test fixture changeover,22,1
+2026-07-08,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling setup and alignment,19,1
+2026-07-08,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift A,Generator preventive check,5,1
+2026-07-08,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift B,Tube expander torque calibration,15,1
+2026-07-09,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift A,Plasma torch consumable change,11,1
+2026-07-09,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift B,Tool insert replacement,22,1
+2026-07-09,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift A,Pipe saw blade inspection,18,1
+2026-07-09,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Shielding gas purge setup,8,1
+2026-07-10,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling setup and alignment,7,1
+2026-07-10,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift B,Drill setup and clamping,6,1
+2026-07-10,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift A,Tube expander torque calibration,17,1
+2026-07-10,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift B,Skid alignment correction,10,1
+2026-07-11,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift A,Tool insert replacement,9,1
+2026-07-11,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift B,Electrode oven temperature recovery,19,1
+2026-07-11,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Shielding gas purge setup,13,1
+2026-07-11,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Pressure-test fixture changeover,15,1
+2026-07-12,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift A,Drill setup and clamping,11,1
+2026-07-12,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Hydro-test fixture changeover,12,1
+2026-07-12,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift A,Skid alignment correction,9,1
+2026-07-12,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift B,Generator preventive check,19,1
+2026-07-13,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift A,Electrode oven temperature recovery,8,1
+2026-07-13,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift B,Plasma torch consumable change,12,1
+2026-07-13,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Pressure-test fixture changeover,6,1
+2026-07-13,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift B,Pipe saw blade inspection,13,1
+2026-07-14,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Hydro-test fixture changeover,11,1
+2026-07-14,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling setup and alignment,15,1
+2026-07-14,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift A,Generator preventive check,21,1
+2026-07-14,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift B,Tube expander torque calibration,15,1
+2026-07-15,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift A,Plasma torch consumable change,9,1
+2026-07-15,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift B,Tool insert replacement,16,1
+2026-07-15,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift A,Pipe saw blade inspection,18,1
+2026-07-15,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Shielding gas purge setup,8,1
+2026-07-16,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling setup and alignment,9,1
+2026-07-16,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift B,Drill setup and clamping,13,1
+2026-07-16,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift A,Tube expander torque calibration,17,1
+2026-07-16,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift B,Skid alignment correction,10,1
+2026-07-16,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Isometric clarification hold,15,1
+2026-07-17,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift A,Tool insert replacement,18,1
+2026-07-17,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift B,Electrode oven temperature recovery,12,1
+2026-07-17,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Material traceability hold,14,1
+2026-07-17,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Shielding gas purge setup,9,1
+2026-07-17,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Isometric clarification hold,16,1
+2026-07-17,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Pressure-test fixture changeover,7,1
+2026-07-18,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift A,Drill setup and clamping,10,1
+2026-07-18,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Material traceability hold,24,1
+2026-07-18,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Hydro-test fixture changeover,8,1
+2026-07-18,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift A,Skid alignment correction,17,1
+2026-07-18,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift B,Generator preventive check,15,1
+2026-07-19,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift A,Electrode oven temperature recovery,17,1
+2026-07-19,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift B,Plasma torch consumable change,9,1
+2026-07-19,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Pressure-test fixture changeover,14,1
+2026-07-19,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift B,Pipe saw blade inspection,19,1
+2026-07-20,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Hydro-test fixture changeover,7,1
+2026-07-20,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling setup and alignment,6,1
+2026-07-20,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift A,Generator preventive check,10,1
+2026-07-20,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift B,Tube expander torque calibration,9,1
+2026-07-21,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift A,Plasma torch consumable change,19,1
+2026-07-21,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift B,Tool insert replacement,9,1
+2026-07-21,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift A,Pipe saw blade inspection,13,1
+2026-07-21,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Shielding gas purge setup,17,1
+2026-07-22,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling setup and alignment,12,1
+2026-07-22,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift B,Drill setup and clamping,20,1
+2026-07-22,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift A,Tube expander torque calibration,11,1
+2026-07-22,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift B,Skid alignment correction,18,1
+2026-07-23,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift A,Tool insert replacement,20,1
+2026-07-23,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift B,Electrode oven temperature recovery,8,1
+2026-07-23,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Shielding gas purge setup,14,1
+2026-07-23,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Pressure-test fixture changeover,20,1
+2026-07-24,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift A,Drill setup and clamping,21,1
+2026-07-24,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Hydro-test fixture changeover,9,1
+2026-07-24,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift A,Skid alignment correction,10,1
+2026-07-24,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift B,Generator preventive check,9,1
+2026-07-25,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift A,Electrode oven temperature recovery,12,1
+2026-07-25,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift B,Plasma torch consumable change,6,1
+2026-07-25,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Pressure-test fixture changeover,12,1
+2026-07-25,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift B,Pipe saw blade inspection,10,1
+2026-07-26,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Hydro-test fixture changeover,14,1
+2026-07-26,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling setup and alignment,7,1
+2026-07-26,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift A,Generator preventive check,20,1
+2026-07-26,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift B,Tube expander torque calibration,6,1
+2026-07-27,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift A,Plasma torch consumable change,10,1
+2026-07-27,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift B,Tool insert replacement,16,1
+2026-07-27,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift A,Pipe saw blade inspection,15,1
+2026-07-27,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Shielding gas purge setup,10,1
+2026-07-27,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Isometric clarification hold,9,1
+2026-07-28,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling setup and alignment,20,1
+2026-07-28,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift B,Drill setup and clamping,15,1
+2026-07-28,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Material traceability hold,18,1
+2026-07-28,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift A,Tube expander torque calibration,7,1
+2026-07-28,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Isometric clarification hold,9,1
+2026-07-28,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift B,Skid alignment correction,17,1
+2026-07-29,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift A,Tool insert replacement,15,1
+2026-07-29,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Material traceability hold,18,1
+2026-07-29,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift B,Electrode oven temperature recovery,9,1
+2026-07-29,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Shielding gas purge setup,10,1
+2026-07-29,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Pressure-test fixture changeover,21,1
+2026-07-30,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift A,Drill setup and clamping,10,1
+2026-07-30,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Hydro-test fixture changeover,9,1
+2026-07-30,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift A,Skid alignment correction,14,1
+2026-07-30,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift B,Generator preventive check,21,1
+2026-07-31,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift A,Electrode oven temperature recovery,16,1
+2026-07-31,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift B,Plasma torch consumable change,19,1
+2026-07-31,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Pressure-test fixture changeover,10,1
+2026-07-31,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift B,Pipe saw blade inspection,16,1
+2026-08-01,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Hydro-test fixture changeover,7,1
+2026-08-01,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling setup and alignment,6,1
+2026-08-01,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift A,Generator preventive check,10,1
+2026-08-01,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift B,Tube expander torque calibration,5,1
+2026-08-02,Process Equipment & Vessel Fabrication Line,CNC Plasma Cutting Machine,Shift A,Plasma torch consumable change,22,1
+2026-08-02,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift B,Tool insert replacement,10,1
+2026-08-02,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift A,Pipe saw blade inspection,12,1
+2026-08-02,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Shielding gas purge setup,23,1
+2026-08-03,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling setup and alignment,9,1
+2026-08-03,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift B,Drill setup and clamping,21,1
+2026-08-03,Precision Piping & Modular Skid Line,Tube Expander Machine,Shift A,Tube expander torque calibration,10,1
+2026-08-03,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift B,Skid alignment correction,8,1
+2026-08-04,Process Equipment & Vessel Fabrication Line,Lathe Machine,Shift A,Tool insert replacement,17,1
+2026-08-04,Process Equipment & Vessel Fabrication Line,Electrode Drying Oven,Shift B,Electrode oven temperature recovery,22,1
+2026-08-04,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Shielding gas purge setup,12,1
+2026-08-04,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Pressure-test fixture changeover,13,1
+2026-08-05,Process Equipment & Vessel Fabrication Line,Heavy Duty Drill Machine,Shift A,Drill setup and clamping,12,1
+2026-08-05,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Hydro-test fixture changeover,20,1
+2026-08-05,Precision Piping & Modular Skid Line,Structural Skid Assembly Bay,Shift A,Skid alignment correction,11,1
+2026-08-05,Precision Piping & Modular Skid Line,DG-63KVA Generator,Shift B,Generator preventive check,25,1
+2026-08-06,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling hydraulic pressure fluctuation,55,2
+2026-08-06,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling hydraulic pressure fluctuation,39,1
+2026-08-06,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Pressure-test fixture changeover,16,1
+2026-08-06,Precision Piping & Modular Skid Line,Precision Pipe Cutting Saw,Shift B,Pipe saw blade inspection,23,1
+2026-08-07,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling hydraulic pressure fluctuation,41,1
+2026-08-07,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling hydraulic pressure fluctuation,53,1
+2026-08-07,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Orbital weld-head calibration,71,2
+2026-08-07,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Orbital weld-head calibration,59,2
+2026-08-07,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift B,Isometric clarification hold,14,1
+2026-08-08,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling hydraulic pressure fluctuation,59,2
+2026-08-08,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling hydraulic pressure fluctuation,45,1
+2026-08-08,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift B,Material traceability hold,10,1
+2026-08-08,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Orbital weld-head calibration,41,1
+2026-08-08,Precision Piping & Modular Skid Line,Portable Hydro Test Rig,Shift A,Isometric clarification hold,15,1
+2026-08-08,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Orbital weld-head calibration,45,1
+2026-08-09,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling hydraulic pressure fluctuation,52,1
+2026-08-09,Process Equipment & Vessel Fabrication Line,Hydro Test Machine,Shift A,Material traceability hold,23,1
+2026-08-09,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling hydraulic pressure fluctuation,45,1
+2026-08-09,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Orbital weld-head calibration,57,2
+2026-08-09,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Orbital weld-head calibration,66,2
+2026-08-10,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling hydraulic pressure fluctuation,35,1
+2026-08-10,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling hydraulic pressure fluctuation,52,1
+2026-08-10,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Orbital weld-head calibration,71,2
+2026-08-10,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Orbital weld-head calibration,66,2
+2026-08-11,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling hydraulic pressure fluctuation,50,1
+2026-08-11,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling hydraulic pressure fluctuation,51,1
+2026-08-11,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Orbital weld-head calibration,55,2
+2026-08-11,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Orbital weld-head calibration,70,2
+2026-08-12,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift A,Rolling hydraulic pressure fluctuation,30,1
+2026-08-12,Process Equipment & Vessel Fabrication Line,Plate Rolling Machine,Shift B,Rolling hydraulic pressure fluctuation,48,1
+2026-08-12,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift A,Orbital weld-head calibration,36,1
+2026-08-12,Precision Piping & Modular Skid Line,Orbital Welding Machine,Shift B,Orbital weld-head calibration,63,2

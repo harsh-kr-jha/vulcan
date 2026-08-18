@@ -36,8 +36,17 @@ DEFAULT_TARGETS = {
 
 NUMERIC_TARGETS = set(DEFAULT_TARGETS) - {"downtimeUnit"}
 
-# Empty by default — operating template branches fill this with their workflow stages.
-DEFAULT_PROJECT_WORKFLOW = []
+# Automotive manufacturing project workflow stages.
+DEFAULT_PROJECT_WORKFLOW = [
+    "Order & Feasibility Review",
+    "Process Planning",
+    "Tooling & Validation",
+    "Material Readiness",
+    "Pilot Production",
+    "Quality Approval",
+    "Volume Production",
+    "Dispatch",
+]
 
 _workspace_lock_guard = Lock()
 _workspace_locks = {}

@@ -185,7 +185,7 @@ function ProjectInfoStrip({ project, mushroomMode }: { project: FactoryProject; 
 
 export function ProjectTracker({ projectId }: { projectId: string }) {
   const variant = usePlatform();
-  const mushroomMode = false;
+  const mushroomMode = variant.features.mushroomAnalytics;
   const { getProject } = useProjects();
   const project = getProject(projectId);
   const [activeTab, setActiveTab] = useState<TrackerTab>("Overview");

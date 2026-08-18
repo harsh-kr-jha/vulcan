@@ -1,41 +1,48 @@
 import "server-only";
 
+import { existsSync, readFileSync } from "fs";
+import { resolve } from "path";
 import type { PlatformConfig } from "@/lib/variant";
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+const FALLBACK: PlatformConfig = {
+  id: "platform-core",
+  displayName: "Tamaso Platform",
+  descriptor: "Platform Core",
+  industry: "",
+  modules: [],
+  datasets: {},
+  navigation: {},
+  terminology: {
+    siteSingular: "site",
+    sitePlural: "sites",
+    projectSingular: "project",
+    projectPlural: "projects",
+  },
+  features: {},
+};
 
 /**
- * Load platform configuration from the backend at build/render time.
+ * Load platform configuration from platform.json at the repository root.
  *
- * Operating template branches provide a platform.json that the backend serves
- * via /api/backend/platform-config/. Platform Core returns a minimal fallback.
+ * Checks both process.cwd() and one directory up (handles npm workspace
+ * invocation where cwd may be the frontend/ subdirectory).
  */
-export async function getPlatformConfig(): Promise<PlatformConfig> {
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/backend/platform-config/`, {
-      next: { revalidate: 3600 },
-    });
-    if (res.ok) {
-      return (await res.json()) as PlatformConfig;
+export function getPlatformConfig(): PlatformConfig {
+  const candidates = [
+    resolve(process.cwd(), "platform.json"),
+    resolve(process.cwd(), "..", "platform.json"),
+  ];
+
+  for (const path of candidates) {
+    if (existsSync(path)) {
+      try {
+        const raw = readFileSync(path, "utf-8");
+        return JSON.parse(raw) as PlatformConfig;
+      } catch {
+        continue;
+      }
     }
-  } catch {
-    // Backend not reachable during build — use fallback
   }
 
-  return {
-    id: "platform-core",
-    displayName: "Tamaso Platform",
-    descriptor: "Platform Core",
-    industry: "",
-    modules: [],
-    datasets: {},
-    navigation: {},
-    terminology: {
-      siteSingular: "site",
-      sitePlural: "sites",
-      projectSingular: "project",
-      projectPlural: "projects",
-    },
-    features: {},
-  };
+  return FALLBACK;
 }

@@ -10,6 +10,10 @@ permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   GCP_PROJECT_ID: gentle-broker-505219-d0
   GCP_REGION: us-central1

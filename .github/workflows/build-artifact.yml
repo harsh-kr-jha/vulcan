@@ -38,7 +38,7 @@ jobs:
           BRANCH="${GITHUB_REF_NAME}"
           TEMPLATE=$(echo "$BRANCH" | cut -d'/' -f2)
           CLIENT=$(echo "$BRANCH" | cut -d'/' -f3)
-          PREFIX=$(echo "$TEMPLATE" | tr '.' '-' | tr 'A-Z' 'a-z')
+          PREFIX=$(echo "$TEMPLATE-$CLIENT" | tr '.' '-' | tr 'A-Z' 'a-z')
           echo "template=$TEMPLATE" >> "$GITHUB_OUTPUT"
           echo "client_code=$CLIENT" >> "$GITHUB_OUTPUT"
           echo "image_prefix=$PREFIX" >> "$GITHUB_OUTPUT"

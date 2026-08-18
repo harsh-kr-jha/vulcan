@@ -18,17 +18,19 @@ from apps.operations.import_views import (
 )
 from apps.operations.views import UploadViewSet
 from apps.tenancy.views import (
+    CsrfTokenView,
     FactoryMasterViewSet,
     FactoryViewSet,
     MeView,
     SessionLoginView,
     SessionLogoutView,
 )
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from config.views import HealthView
+from config.views import HealthView, PlatformConfigView
 
 router = DefaultRouter()
 router.register("factories", FactoryViewSet, basename="factory")
@@ -37,8 +39,9 @@ router.register("uploads", UploadViewSet, basename="upload")
 router.register("alerts", AlertViewSet, basename="alert")
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path("health/", HealthView.as_view(), name="health"),
+    path("api/platform/config/", PlatformConfigView.as_view(), name="platform-config"),
+    path("api/auth/csrf/", CsrfTokenView.as_view(), name="csrf-token"),
     path("api/auth/login/", SessionLoginView.as_view(), name="session-login"),
     path("api/auth/logout/", SessionLogoutView.as_view(), name="session-logout"),
     path("api/auth/me/", MeView.as_view(), name="me"),
@@ -87,3 +90,15 @@ urlpatterns = [
     path("api/imports/<uuid:upload_id>/cancel/", ImportCancelView.as_view(), name="import-cancel"),
     path("api/", include(router.urls)),
 ]
+
+# Production admin remains absent by default. Any explicitly configured deployment
+# can opt in so its operator can manage that variant's users and data.
+if settings.DEBUG or settings.ADMIN_ENABLED:
+    from apps.tenancy.admin import configure_vulcan_user_admin
+
+    configure_vulcan_user_admin()
+    if settings.ADMIN_ENABLED and not settings.DEBUG:
+        admin.site.site_header = f"Vulcan {settings.VULCAN_VARIANT.title()} Administration"
+        admin.site.site_title = "Vulcan Admin"
+        admin.site.index_title = f"{settings.VULCAN_VARIANT.title()} deployment"
+    urlpatterns.insert(0, path("admin/", admin.site.urls))

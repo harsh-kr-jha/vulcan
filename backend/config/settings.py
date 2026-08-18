@@ -123,6 +123,30 @@ TEMPLATES = [
 database_url = os.getenv("DJANGO_DATABASE_URL", "")
 if not database_url and not DEBUG:
     raise ImproperlyConfigured("DJANGO_DATABASE_URL is required when DJANGO_DEBUG is false.")
+
+# In development, isolate databases per git branch so switching branches
+# doesn't corrupt or mix data. Each branch gets its own .sqlite3 file in .data/
+if not database_url and DEBUG:
+    import subprocess
+
+    _data_dir = BASE_DIR.parent / ".data"
+    _data_dir.mkdir(exist_ok=True)
+    try:
+        _branch = (
+            subprocess.check_output(
+                ["git", "branch", "--show-current"],
+                cwd=str(BASE_DIR.parent),
+                stderr=subprocess.DEVNULL,
+            )
+            .decode()
+            .strip()
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        _branch = "default"
+    # Sanitize branch name for filesystem: client/MFG.DA.AUTO.ALL/MYPOL -> client-MFG.DA.AUTO.ALL-MYPOL
+    _db_name = _branch.replace("/", "-").replace(" ", "-") or "default"
+    database_url = f"sqlite:///{_data_dir / f'{_db_name}.sqlite3'}"
+
 DATABASES = {
     "default": dj_database_url.config(
         env="DJANGO_DATABASE_URL",

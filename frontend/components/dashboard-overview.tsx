@@ -109,7 +109,7 @@ function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof us
       <div className="data-health-notice-heading"><CircleAlert size={20} /><div><h2>Data needs attention</h2><p>Refresh these sheets so decisions use current {terminology.siteSingular} facts.</p></div></div>
       <div className="data-health-notice-list">
         {issues.map((issue) => {
-          const label = datasetLabels[issue.datasetType as DatasetType];
+          const label = datasetLabels[issue.datasetType as DatasetType] || issue.datasetType.replace("_", " ");
           const detail = issue.status === "absent"
             ? `No ${label.toLowerCase()} sheet has been approved.`
             : issue.ageDays === null

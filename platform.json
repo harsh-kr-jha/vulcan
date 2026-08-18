@@ -1,0 +1,44 @@
+{
+  "id": "agri",
+  "displayName": "Tamaso",
+  "descriptor": "Cultivation intelligence",
+  "industry": "mushroom-cultivation",
+  "modules": [
+    "dashboard",
+    "projects",
+    "digital-twin",
+    "uploads",
+    "performance",
+    "alerts",
+    "settings",
+    "rules",
+    "methodology"
+  ],
+  "datasets": {
+    "process": "Room & process observations",
+    "production": "Harvest",
+    "downtime": "Room downtime",
+    "quality": "Crop quality",
+    "inventory": "Materials inventory",
+    "supplier": "Supplier receipts",
+    "orders": "Customer orders",
+    "projects": "Crop cycle master",
+    "project_stages": "Crop cycle stages",
+    "utilities": "Steam & boiler utilities"
+  },
+  "navigation": {
+    "projects": "Crop cycles",
+    "digital-twin": "Farm twin",
+    "settings": "Farm setup"
+  },
+  "terminology": {
+    "siteSingular": "farm",
+    "sitePlural": "farms",
+    "projectSingular": "crop cycle",
+    "projectPlural": "crop cycles"
+  },
+  "features": {
+    "asyncUploads": false,
+    "mushroomAnalytics": true
+  }
+}

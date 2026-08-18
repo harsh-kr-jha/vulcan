@@ -36,8 +36,17 @@ DEFAULT_TARGETS = {
 
 NUMERIC_TARGETS = set(DEFAULT_TARGETS) - {"downtimeUnit"}
 
-# Empty by default — operating template branches fill this with their workflow stages.
-DEFAULT_PROJECT_WORKFLOW = []
+# Mushroom cultivation project workflow stages.
+DEFAULT_PROJECT_WORKFLOW = [
+    "Compost Preparation",
+    "Pasteurisation & Conditioning",
+    "Spawning",
+    "Spawn Run",
+    "Casing",
+    "Pinning",
+    "Cropping & Harvest",
+    "Packing & Cold Room",
+]
 
 _workspace_lock_guard = Lock()
 _workspace_locks = {}

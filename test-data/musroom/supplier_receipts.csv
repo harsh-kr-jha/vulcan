@@ -1,0 +1,6 @@
+supplier,material,purchase_order,order_date,promised_date,actual_delivery_date,ordered_quantity,received_quantity,accepted_quantity,terms_met
+Haryana Straw Collective,Wheat straw,MUS-PO-001,2026-07-26,2026-08-05,2026-08-05,30000,29700,29403,yes
+North India Poultry Inputs,Chicken manure,MUS-PO-002,2026-07-23,2026-08-02,2026-08-04,18000,17280,16934,yes
+Mycelium Genetics Lab,Mushroom spawn,MUS-PO-003,2026-07-21,2026-07-31,2026-08-03,2400,2256,2245,yes
+Green Casing Materials,Cocopeat casing,MUS-PO-004,2026-07-19,2026-07-29,2026-08-02,8000,7280,7062,no
+FreshPack Solutions,Packing punnets,MUS-PO-005,2026-07-16,2026-07-26,2026-08-01,15000,12600,11970,no

@@ -1,23 +1,40 @@
+/* eslint-disable @next/next/no-page-custom-font */
 import type { Metadata } from "next";
-import { AppShell } from "@/components/app-shell";
-import { FactoryProvider } from "@/lib/factory-context";
-import { ProjectProvider } from "@/lib/project-context";
+import { connection } from "next/server";
+import { ApplicationBoundary } from "@/lib/auth-context";
+import { designSystemStyle } from "@/lib/design-system";
+import { getPlatformConfig } from "@/lib/variant-config";
+import { PlatformProvider } from "@/lib/variant";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "Vulcan · Factory Intelligence",
-  description: "Operational intelligence for modern factories",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await getPlatformConfig();
+  return {
+    title: {
+      default: `${config.displayName} · Industrial Intelligence`,
+      template: `%s · ${config.displayName}`,
+    },
+    description: `${config.displayName} ${config.descriptor.toLocaleLowerCase("en-US")}.`,
+  };
+}
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  await connection();
+  const config = await getPlatformConfig();
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning style={designSystemStyle}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body suppressHydrationWarning>
-        <FactoryProvider>
-          <ProjectProvider>
-            <AppShell>{children}</AppShell>
-          </ProjectProvider>
-        </FactoryProvider>
+        <PlatformProvider config={config}>
+          <ApplicationBoundary>{children}</ApplicationBoundary>
+        </PlatformProvider>
       </body>
     </html>
   );

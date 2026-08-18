@@ -6,28 +6,30 @@ import { useState } from "react";
 
 import { useFactory } from "@/lib/factory-context";
 import type { FactoryTargets } from "@/lib/factory-domain";
+import { usePlatform } from "@/lib/variant";
 
 type NumericTarget = Exclude<keyof FactoryTargets, "downtimeUnit">;
 
-const targetGroups = [
+const mushroomTargetGroups = [
   {
-    title: "Equipment effectiveness",
-    description: "Targets used to judge OEE and its three components.",
+    title: "Crop performance",
+    description: "Targets used to judge substrate conversion, harvest and saleability.",
     icon: Activity,
     rules: [
-      { key: "oee", label: "OEE target", help: "Minimum combined effectiveness", unit: "%" },
-      { key: "availability", label: "Availability target", help: "Minimum planned time running", unit: "%" },
-      { key: "performance", label: "Performance target", help: "Minimum ideal-speed achievement", unit: "%" },
-      { key: "quality", label: "Quality target", help: "Minimum good output share", unit: "%" },
+      { key: "biologicalEfficiency", label: "Biological efficiency", help: "Minimum harvest per dry substrate", unit: "%" },
+      { key: "planAttainment", label: "Harvest plan attainment", help: "Minimum actual against planned harvest", unit: "%" },
+      { key: "saleableYield", label: "Saleable yield", help: "Minimum saleable share of harvest", unit: "%" },
     ],
   },
   {
-    title: "Operational guardrails",
-    description: "Thresholds that turn measured losses into priority exceptions.",
+    title: "Room & crop guardrails",
+    description: "Limits that turn climate, contamination and farm losses into exceptions.",
     icon: Wrench,
     rules: [
-      { key: "downtimeMinutes", label: "Downtime alert", help: "Alert above this machine loss", unit: "min" },
-      { key: "rejectionRate", label: "Maximum rejection", help: "Alert above this rejected share", unit: "%" },
+      { key: "contaminationRate", label: "Maximum contamination", help: "Alert above this contaminated share", unit: "%" },
+      { key: "environmentCompliance", label: "Climate compliance", help: "Minimum readings within stage limits", unit: "%" },
+      { key: "waterProductivity", label: "Water productivity", help: "Minimum harvest per kilolitre", unit: "kg/kL" },
+      { key: "downtimeMinutes", label: "Room downtime alert", help: "Alert above this room or asset loss", unit: "min" },
     ],
   },
   {
@@ -46,7 +48,47 @@ const targetGroups = [
     rules: ReadonlyArray<{ key: NumericTarget; label: string; help: string; unit: string }>;
 }>;
 
+const automotiveTargetGroups = [
+  {
+    title: "Equipment effectiveness",
+    description: "Targets used to judge productive time, speed and accepted output.",
+    icon: Activity,
+    rules: [
+      { key: "oee", label: "Overall equipment effectiveness", help: "Minimum combined availability, performance and quality", unit: "%" },
+      { key: "availability", label: "Availability", help: "Minimum runtime against planned production time", unit: "%" },
+      { key: "performance", label: "Performance", help: "Minimum ideal output against actual run time", unit: "%" },
+      { key: "quality", label: "Quality", help: "Minimum accepted share of total output", unit: "%" },
+    ],
+  },
+  {
+    title: "Production guardrails",
+    description: "Limits that turn missed plans, rejects and downtime into exceptions.",
+    icon: Wrench,
+    rules: [
+      { key: "planAttainment", label: "Plan attainment", help: "Minimum actual against planned output", unit: "%" },
+      { key: "rejectionRate", label: "Maximum rejection", help: "Alert above this rejected share", unit: "%" },
+      { key: "downtimeMinutes", label: "Downtime alert", help: "Alert above this machine or line loss", unit: "min" },
+    ],
+  },
+  {
+    title: "Supply continuity",
+    description: "Minimum performance expected from inventory and suppliers.",
+    icon: Truck,
+    rules: [
+      { key: "stockCoverDays", label: "Material risk threshold", help: "Flag material below this cover", unit: "days" },
+      { key: "supplierScore", label: "Minimum supplier score", help: "Alert below this delivery score", unit: "/ 100" },
+    ],
+  },
+] as const satisfies ReadonlyArray<{
+  title: string;
+  description: string;
+  icon: typeof Activity;
+  rules: ReadonlyArray<{ key: NumericTarget; label: string; help: string; unit: string }>;
+}>;
+
 function RulesEditor() {
+  const variant = usePlatform();
+  const targetGroups = false ? mushroomTargetGroups : automotiveTargetGroups;
   const { state, updateTargets } = useFactory();
   const [values, setValues] = useState(state.targets);
   const [saved, setSaved] = useState(false);
@@ -61,7 +103,7 @@ function RulesEditor() {
   return (
     <form onSubmit={save}>
       <div className="rules-overview panel">
-        <div><ShieldCheck size={19} /><span><strong>Factory-level rule set</strong><small>Applied only to the selected factory</small></span></div>
+        <div><ShieldCheck size={19} /><span><strong>{false ? "Farm" : "Factory"}-level rule set</strong><small>Applied only to the selected {variant.terminology.siteSingular}</small></span></div>
         <div><PackageSearch size={19} /><span><strong>Evidence-backed alerts</strong><small>Every exception retains its threshold and observed value</small></span></div>
         <span className="configuration-state">Rule set v1</span>
       </div>

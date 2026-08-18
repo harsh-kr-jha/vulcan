@@ -1,3 +1,11 @@
+"""
+Shared KPI calculation primitives for the Tamaso platform.
+
+Contains auditable, framework-free KPI calculations that apply across all
+operating templates: OEE and steam/utility recovery. Industry-specific KPI
+calculations live on their respective operating template branches.
+"""
+
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
@@ -36,6 +44,58 @@ class OEEResult:
         }
 
 
+@dataclass(frozen=True)
+class SteamRecoveryInputs:
+    """Aggregated boiler-house observations for one selected period.
+
+    Heat recovered is deliberately derived from the measured feedwater-tank
+    temperature lift. Flash steam and condensate masses are reported as
+    recovery indicators, but are not added to heat again (which would double
+    count their contribution to the tank temperature).
+    """
+
+    feedwater_kg: Decimal
+    feedwater_inlet_temperature_c: Decimal
+    feedwater_tank_temperature_c: Decimal
+    steam_generated_kg: Decimal
+    recovered_condensate_kg: Decimal
+    flash_steam_recovered_kg: Decimal
+    briquette_used_kg: Decimal
+    briquette_gcv_kcal_per_kg: Decimal
+    boiler_efficiency_percent: Decimal
+    production_quantity: Decimal
+
+
+@dataclass(frozen=True)
+class SteamRecoveryResult:
+    temperature_lift_c: Decimal
+    heat_recovered_mj: Decimal
+    heat_recovered_gj: Decimal
+    equivalent_briquette_saved_kg: Decimal
+    condensate_recovery_percent: Decimal
+    flash_steam_recovery_percent: Decimal
+    specific_steam_kg_per_unit: Decimal
+    specific_briquette_kg_per_tonne_steam: Decimal
+    briquette_avoidance_percent: Decimal
+    formula_version: str = "steam-recovery-v1"
+
+    def as_dict(self) -> dict:
+        return {
+            "temperatureLiftC": float(self.temperature_lift_c),
+            "heatRecoveredMj": float(self.heat_recovered_mj),
+            "heatRecoveredGj": float(self.heat_recovered_gj),
+            "equivalentBriquetteSavedKg": float(self.equivalent_briquette_saved_kg),
+            "condensateRecoveryPercent": float(self.condensate_recovery_percent),
+            "flashSteamRecoveryPercent": float(self.flash_steam_recovery_percent),
+            "specificSteamKgPerUnit": float(self.specific_steam_kg_per_unit),
+            "specificBriquetteKgPerTonneSteam": float(
+                self.specific_briquette_kg_per_tonne_steam
+            ),
+            "briquetteAvoidancePercent": float(self.briquette_avoidance_percent),
+            "formulaVersion": self.formula_version,
+        }
+
+
 def calculate_oee(inputs: OEEInputs) -> OEEResult:
     values = vars(inputs)
     if any(value < 0 for value in values.values()):
@@ -60,6 +120,59 @@ def calculate_oee(inputs: OEEInputs) -> OEEResult:
     )
 
 
+def calculate_steam_recovery(inputs: SteamRecoveryInputs) -> SteamRecoveryResult:
+    """Convert measured recovery into energy and avoided briquette consumption.
+
+    Water specific heat is fixed at 4.186 kJ/kg.K and the kcal-to-kJ
+    conversion at 4.1868. GCV and boiler efficiency remain measured inputs so
+    the fuel saving is plant-specific and auditable.
+    """
+
+    if any(value < 0 for value in vars(inputs).values()):
+        raise KPIInputError("Steam recovery KPI inputs cannot be negative.")
+    if inputs.boiler_efficiency_percent > 100:
+        raise KPIInputError("Boiler efficiency cannot exceed 100 percent.")
+
+    temperature_lift = max(
+        inputs.feedwater_tank_temperature_c - inputs.feedwater_inlet_temperature_c,
+        Decimal(0),
+    )
+    heat_recovered_mj = (
+        inputs.feedwater_kg * Decimal("4.186") * temperature_lift / Decimal(1000)
+    )
+    useful_fuel_mj_per_kg = (
+        inputs.briquette_gcv_kcal_per_kg
+        * Decimal("4.1868")
+        / Decimal(1000)
+        * inputs.boiler_efficiency_percent
+        / Decimal(100)
+    )
+    briquette_saved = _ratio(heat_recovered_mj, useful_fuel_mj_per_kg)
+    briquette_without_recovery = inputs.briquette_used_kg + briquette_saved
+
+    return SteamRecoveryResult(
+        temperature_lift_c=temperature_lift.quantize(Decimal("0.001")),
+        heat_recovered_mj=heat_recovered_mj.quantize(Decimal("0.001")),
+        heat_recovered_gj=(heat_recovered_mj / Decimal(1000)).quantize(Decimal("0.001")),
+        equivalent_briquette_saved_kg=briquette_saved,
+        condensate_recovery_percent=_ratio_percent(
+            inputs.recovered_condensate_kg, inputs.steam_generated_kg
+        ),
+        flash_steam_recovery_percent=_ratio_percent(
+            inputs.flash_steam_recovered_kg, inputs.steam_generated_kg
+        ),
+        specific_steam_kg_per_unit=_ratio(
+            inputs.steam_generated_kg, inputs.production_quantity
+        ),
+        specific_briquette_kg_per_tonne_steam=_ratio(
+            inputs.briquette_used_kg * Decimal(1000), inputs.steam_generated_kg
+        ),
+        briquette_avoidance_percent=_ratio_percent(
+            briquette_saved, briquette_without_recovery
+        ),
+    )
+
+
 def decimal(value: object) -> Decimal:
     try:
         return Decimal(str(value))
@@ -69,3 +182,15 @@ def decimal(value: object) -> Decimal:
 
 def _bounded(value: Decimal) -> Decimal:
     return min(max(value, Decimal(0)), Decimal(1)).quantize(Decimal("0.000001"))
+
+
+def _ratio(numerator: Decimal, denominator: Decimal) -> Decimal:
+    if not denominator:
+        return Decimal(0).quantize(Decimal("0.000001"))
+    return (numerator / denominator).quantize(Decimal("0.000001"))
+
+
+def _ratio_percent(numerator: Decimal, denominator: Decimal) -> Decimal:
+    if not denominator:
+        return Decimal(0).quantize(Decimal("0.000001"))
+    return ((numerator / denominator) * Decimal(100)).quantize(Decimal("0.000001"))

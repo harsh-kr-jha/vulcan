@@ -1,108 +1,70 @@
-# Vulcan Factory Intelligence
+# Tamaso Factory Intelligence Platform
 
-Vulcan turns factory CSV and Excel files into validated operating records, explainable KPIs,
-quantified losses, and traceable recommendations.
+Platform Core for the Tamaso multi-customer factory operations intelligence system.
 
-This repository contains one lightweight application:
+This branch (`main`) contains the shared framework — authentication, common UI,
+data ingestion, analytics primitives, and deployment infrastructure. It is NOT
+independently deployable. Operating template branches (e.g. `MFG.DA.AUTO.ALL`)
+add industry-specific logic to create deployable applications.
 
-- Next.js display layer for the command centre, Projects, Digital Twin, performance, uploads,
-  alerts, and process-aware factory setup
-- Django API as the validated analytical store for factories, source lineage, mappings, records
-  and rules; connected factory sheets remain authoritative for operational facts
-- Server-side CSV/XLSX inspection, mapping suggestions, validation and KPI calculation
-- PostgreSQL-ready relational ownership with SQLite as the zero-infrastructure local default
-- Optional Celery, Redis and S3/MinIO deployment path for larger asynchronous workloads
+## Architecture
 
-The browser keeps only transient interaction state such as filters and the open tab. It does not
-use local storage or IndexedDB and contains no import validation or KPI engine. Authentication is
-temporarily disabled while the single-workspace model is being proven.
+```
+main (Platform Core)
+├── MFG.DA.AUTO.ALL (Automotive operating template)
+│   ├── client/MFG.DA.AUTO.ALL/MYPOL
+│   └── client/MFG.DA.AUTO.ALL/INFINEXXGEN
+└── MFG.PMC.AGRI.ALL (Agriculture operating template)
+    └── client/MFG.PMC.AGRI.ALL/SANJ
+```
 
-## Lightweight local development
+See [docs/architecture.md](docs/architecture.md) for the four-layer model,
+[docs/branching-strategy.md](docs/branching-strategy.md) for naming conventions and merge rules.
+
+## Repository Structure
+
+```
+backend/                  Django REST API, data models, analytics framework
+frontend/                 Next.js display layer and UI components
+processing/               Framework-free data readers, templates, validation, KPIs
+deploy/gce-customer/      Customer GCE deployment (Docker Compose + deploy script)
+infra/tamaso-demo/        Tamaso internal Cloud Run demo (Terraform)
+.github/workflows/        CI, build, and deployment pipelines
+config/                   Client configuration schema (populated on client branches)
+docs/                     Architecture and operational documentation
+test-data/                Shared test fixtures
+```
+
+## Quick Start (Operating Template Branch)
+
+On an operating template branch (not `main`):
 
 ```bash
-npm install
-uv sync
+npm ci
+uv sync --frozen
+export DJANGO_DEBUG=true
 .venv/bin/python backend/manage.py migrate
-.venv/bin/python backend/manage.py seed_mypol
 .venv/bin/python backend/manage.py runserver
 ```
 
-In another terminal:
-
+In a second terminal:
 ```bash
 cp frontend/.env.example frontend/.env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The idempotent seed provides the complete
-MyPol showcase factory; you can also create a factory, configure its process flow, and import
-CSV/XLSX files. Django inspects every file. Optional source columns may be set to
-**Do not import**; required-field and row mismatches include a correction, and rejected rows stay
-outside the standard record table.
+## CI/CD Pipelines
 
-Projects use the same source-connected path. Import **Project master** first, then **Project
-stages**. The latest approved row for each project number and `(project number, stage code)` key
-drives the portfolio, tracker, delivery prediction, documents, activities, Home counts and project
-alerts. Re-uploads refresh those analytical views without creating browser-local project data.
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `ci.yml` | Push/PR to main, MFG.*, client/** | Branch-type-aware quality checks |
+| `build-artifact.yml` | Push to client/** | Build + publish Docker images to Artifact Registry |
+| `deploy-customer.yml` | Manual dispatch | Deploy specific digest to customer GCE VM |
+| `deploy-tamaso-demo.yml` | Manual dispatch | Deploy to Tamaso internal Cloud Run demo |
 
-## Full local stack
+## Documentation
 
-```bash
-cp backend/.env.example backend/.env
-docker compose up --build
-```
-
-- Application: [http://localhost:3000](http://localhost:3000)
-- API health: [http://localhost:8000/health/](http://localhost:8000/health/)
-- Django admin: [http://localhost:8000/admin/](http://localhost:8000/admin/)
-- MinIO console: [http://localhost:9001](http://localhost:9001)
-
-PostgreSQL, Redis, and object storage are optional for the lightweight local workflow. Next.js
-proxies `/api/backend/*` to `BACKEND_URL`, so the browser uses one origin and needs no public API
-environment variable.
-
-Django reads an optional `DJANGO_DATABASE_URL`. If it is absent, local management commands and
-the development server use `backend/db.sqlite3`. Compose sets the PostgreSQL URL explicitly.
-
-## Quality checks
-
-```bash
-npm run typecheck
-npm run lint
-npm run build
-UV_CACHE_DIR=/tmp/vulcan-uv-cache uv run ruff check .
-UV_CACHE_DIR=/tmp/vulcan-uv-cache uv run pytest
-```
-
-The UI smoke suite needs Django and a production Next.js server running. It covers the dashboard,
-server-side CSV mapping/import, database persistence, actions, and factory creation.
-
-```bash
-npm start --workspace frontend -- -p 3100
-VULCAN_BASE_URL=http://127.0.0.1:3100 npm run smoke:ui
-```
-
-## Repository map
-
-```text
-frontend/app/             Next.js routes and global styles
-frontend/components/      Display components and transient interaction state
-frontend/lib/             Typed Django API client and response contracts
-backend/config/           Django settings, routing, WSGI/ASGI and Celery
-backend/apps/tenancy/     Companies, factories and factory-owned master data
-backend/apps/operations/  Upload inspection, mapping, validation, lineage and records
-backend/apps/analytics/   Server-side aggregates, KPI definitions and loss events
-backend/apps/alerts/      Rules, alerts and action register
-backend/apps/audit/       Immutable business audit history
-processing/               Framework-free readers, templates, mapping, validation and KPI primitives
-test-data/                Synthetic import packs and expected results
-docs/                     Architecture and implementation decisions
-```
-
-See [docs/architecture.md](docs/architecture.md) for the data boundaries and delivery path.
-
-## Production boundary
-
-Before a production launch, restore real user authentication/authorization and add managed
-secrets, TLS termination, private object storage, malware scanning, observability, backup
-verification, representative load tests, and a deliberate retention policy for raw rows.
+- [Architecture](docs/architecture.md) — Four-layer model, classification, ownership
+- [Branching Strategy](docs/branching-strategy.md) — Naming, merge direction, versioning
+- [Deployment](docs/deployment.md) — Customer GCE and Tamaso demo models
+- [Client Onboarding](docs/client-onboarding.md) — Step-by-step new customer procedure

@@ -2,6 +2,14 @@
 
 All notable changes to Vulcan are documented in this file.
 
+## 2026-08-13 — V6 readable, focused workspace
+
+- Aligned landing-page copy to normal responsive page margins and removed the oversized centered constraint.
+- Added a show/hide password control to the secure sign-in form.
+- Made action, notification and profile panels dismiss on outside interaction, Escape and navigation.
+- Raised legacy interface and chart labels to an 11px minimum for readable operational detail.
+- Made every home intelligence card occupy a complete grid row so process conditions and optional cards cannot collapse into unintended half-width layouts.
+
 ## 2026-08-01 — V3.1 workflow usability
 
 ### Added

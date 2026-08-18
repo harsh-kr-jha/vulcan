@@ -1,0 +1,109 @@
+name: Build Artifact
+run-name: ${{ github.ref_name }} · ${{ github.sha }}
+
+on:
+  push:
+    branches:
+      - "client/**"
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  GCP_PROJECT_ID: gentle-broker-505219-d0
+  GCP_REGION: us-central1
+  AR_REPOSITORY: vulcan
+
+jobs:
+  prepare:
+    name: Parse branch and read metadata
+    runs-on: ubuntu-latest
+    outputs:
+      template: ${{ steps.parse.outputs.template }}
+      client_code: ${{ steps.parse.outputs.client_code }}
+      image_prefix: ${{ steps.parse.outputs.image_prefix }}
+      version: ${{ steps.version.outputs.version }}
+      config_version: ${{ steps.config.outputs.config_version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse branch name
+        id: parse
+        run: |
+          BRANCH="${GITHUB_REF_NAME}"
+          TEMPLATE=$(echo "$BRANCH" | cut -d'/' -f2)
+          CLIENT=$(echo "$BRANCH" | cut -d'/' -f3)
+          PREFIX=$(echo "$TEMPLATE" | tr '.' '-' | tr 'A-Z' 'a-z')
+          echo "template=$TEMPLATE" >> "$GITHUB_OUTPUT"
+          echo "client_code=$CLIENT" >> "$GITHUB_OUTPUT"
+          echo "image_prefix=$PREFIX" >> "$GITHUB_OUTPUT"
+          echo "Template: $TEMPLATE | Client: $CLIENT | Image prefix: $PREFIX"
+
+      - name: Read platform version
+        id: version
+        run: |
+          VERSION=$(cat VERSION)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Platform version: $VERSION"
+
+      - name: Read client config version
+        id: config
+        run: |
+          CONFIG_VERSION=$(python3 -c "import json; print(json.load(open('config/config.json'))['configVersion'])")
+          echo "config_version=$CONFIG_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Config version: $CONFIG_VERSION"
+
+  build:
+    name: Build ${{ matrix.image }} image
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        image: [backend, frontend]
+    outputs:
+      backend_digest: ${{ steps.push.outputs.digest }}
+      frontend_digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Authenticate Docker to Artifact Registry
+        run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.image }}/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ needs.prepare.outputs.image_prefix }}-${{ matrix.image }}:${{ needs.prepare.outputs.version }}
+            ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.AR_REPOSITORY }}/${{ needs.prepare.outputs.image_prefix }}-${{ matrix.image }}:${{ github.sha }}
+          labels: |
+            com.tamaso.config-version=${{ needs.prepare.outputs.config_version }}
+            com.tamaso.platform-version=${{ needs.prepare.outputs.version }}
+            com.tamaso.template=${{ needs.prepare.outputs.template }}
+            com.tamaso.client=${{ needs.prepare.outputs.client_code }}
+          cache-from: type=gha,scope=${{ needs.prepare.outputs.client_code }}-${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ needs.prepare.outputs.client_code }}-${{ matrix.image }}
+
+      - name: Report digest
+        run: |
+          echo "### ${{ matrix.image }} artifact" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image: \`${{ needs.prepare.outputs.image_prefix }}-${{ matrix.image }}:${{ needs.prepare.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Digest: \`${{ steps.push.outputs.digest }}\`" >> "$GITHUB_STEP_SUMMARY"

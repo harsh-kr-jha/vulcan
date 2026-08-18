@@ -1,14 +1,16 @@
 import pytest
-from apps.tenancy.models import Company, Factory, Membership, Role, Tenant
+from apps.tenancy.models import Company, EmailIdentity, Factory, Membership, Role, Tenant
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
 
 @pytest.fixture
 def user():
-    return get_user_model().objects.create_user(
+    user = get_user_model().objects.create_user(
         username="manager", email="manager@example.com", password="test-password"
     )
+    EmailIdentity.objects.create(user=user, email=user.email)
+    return user
 
 
 @pytest.fixture
@@ -28,11 +30,11 @@ def factory(tenant):
 
 
 @pytest.fixture
-def membership(user, tenant):
+def membership(user, tenant, factory):
     return Membership.objects.create(
         user=user,
         tenant=tenant,
-        role=Role.FACTORY_MANAGER,
+        role=Role.COMPANY_ADMIN,
         all_factories=True,
     )
 

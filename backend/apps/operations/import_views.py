@@ -11,10 +11,17 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.analytics.cache import invalidate_workspace
+from apps.common.permissions import (
+    CanApproveUploads,
+    CanOperateUploads,
+    factories_for_request,
+    tenant_for_request,
+)
 from apps.operations.imports import (
     checksum,
     import_valid_rows,
@@ -24,53 +31,14 @@ from apps.operations.imports import (
 )
 from apps.operations.models import Upload
 from apps.tenancy.models import Factory, FactoryMaster
-from apps.tenancy.services import get_workspace_identity
 from processing.readers.tabular import read_rows
 from processing.templates import TEMPLATES
 
-TEMPLATE_EXAMPLES = {
-    "projects": [
-        "IG-2026-047",
-        "Customer name",
-        "Purified Water Distribution Skid",
-        "PO-4821",
-        "Process Equipment",
-        1,
-        "Set",
-        "Unit-I",
-        4_850_000,
-        "2026-07-25",
-        "2026-07-28",
-        "2026-08-24",
-        "2026-08-24",
-        "",
-        "High",
-        "In Progress",
-        58,
-        "Nisha Rao|Project lead; Imran Shaikh|Production",
-    ],
-    "project_stages": [
-        "IG-2026-047",
-        "RAW-MATERIAL",
-        "Raw Material Delivery",
-        1,
-        "Completed",
-        100,
-        "2026-07-28",
-        "2026-07-29",
-        "2026-07-30",
-        "2026-07-30",
-        "Ajay Kumar",
-        0,
-        "Material certificate verified",
-        "material-test-certificate.pdf; goods-receipt-note.pdf",
-    ],
-}
+TEMPLATE_EXAMPLES: dict[str, list] = {}
 
 
 class ImportTemplateView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, dataset_type):
         fields = TEMPLATES.get(dataset_type)
@@ -94,23 +62,20 @@ class ImportTemplateView(APIView):
         workbook.close()
         response = HttpResponse(
             content.getvalue(),
-            content_type=(
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            ),
+            content_type=("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
         )
         response["Content-Disposition"] = (
-            f'attachment; filename="vulcan_{dataset_type}_template.xlsx"'
+            f'attachment; filename="{dataset_type}_template.xlsx"'
         )
         return response
 
 
 class ImportInspectView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [CanOperateUploads]
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
-        identity = get_workspace_identity()
+        tenant = tenant_for_request(request)
         file = request.FILES.get("file")
         dataset_type = request.data.get("datasetType", "")
         if not file or dataset_type not in TEMPLATES:
@@ -133,9 +98,7 @@ class ImportInspectView(APIView):
                 status=400,
             )
         try:
-            factory = Factory.objects.get(
-                id=request.data.get("factory"), tenant=identity.tenant, is_active=True
-            )
+            factory = factories_for_request(request).get(id=request.data.get("factory"))
         except (Factory.DoesNotExist, DjangoValidationError, ValueError):
             return Response({"detail": "Choose a valid factory."}, status=400)
 
@@ -168,13 +131,13 @@ class ImportInspectView(APIView):
             }
 
         upload = Upload.objects.create(
-            tenant=identity.tenant,
+            tenant=tenant,
             factory=factory,
             original_filename=file.name,
             checksum=checksum(content),
             file_size=len(content),
             file_type=extension.removeprefix("."),
-            uploaded_by=identity.user,
+            uploaded_by=request.user,
             template_code=dataset_type,
             template_version="1",
             dataset_type=dataset_type,
@@ -189,11 +152,10 @@ class ImportInspectView(APIView):
 
 
 class ImportValidationView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [CanOperateUploads]
 
     def post(self, request, upload_id):
-        upload = get_upload(upload_id)
+        upload = get_upload(request, upload_id)
         mapping = request.data.get("mapping")
         if not isinstance(mapping, dict):
             return Response(
@@ -203,11 +165,10 @@ class ImportValidationView(APIView):
 
 
 class ImportPreviewView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, upload_id):
-        upload = get_upload(upload_id)
+        upload = get_upload(request, upload_id)
         return Response(
             {
                 "upload": serialize_upload(upload),
@@ -223,19 +184,30 @@ class ImportPreviewView(APIView):
 class ImportEditView(APIView):
     """Return the stored source and mapping so it can be revalidated in place."""
 
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, upload_id):
-        return Response(inspection_payload(get_upload(upload_id)))
+        return Response(inspection_payload(get_upload(request, upload_id)))
 
 
 class ImportDeleteView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [CanOperateUploads]
 
     def delete(self, request, upload_id):
-        upload = get_upload(upload_id)
+        upload = (
+            Upload.objects.select_related("factory", "tenant")
+            .filter(
+                id=upload_id,
+                tenant=tenant_for_request(request),
+                factory_id__in=factories_for_request(request).values("id"),
+            )
+            .first()
+        )
+        # DELETE is idempotent. A retry after a successful request must not turn
+        # a completed user action into a misleading 404 error.
+        if upload is None:
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        factory_id = upload.factory_id
         try:
             upload.delete()
         except ProtectedError:
@@ -243,37 +215,37 @@ class ImportDeleteView(APIView):
                 {"detail": "This source is used by a later import and cannot be deleted."},
                 status=status.HTTP_409_CONFLICT,
             )
+        invalidate_workspace(factory_id)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ImportCommitView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [CanApproveUploads]
 
     def post(self, request, upload_id):
-        identity = get_workspace_identity()
-        upload = get_upload(upload_id)
+        upload = get_upload(request, upload_id)
         try:
-            result = import_valid_rows(upload, identity.user)
+            result = import_valid_rows(upload, request.user)
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=400)
+        invalidate_workspace(upload.factory_id)
         return Response(result)
 
 
 class ImportCancelView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [CanOperateUploads]
 
     def post(self, request, upload_id):
-        upload = get_upload(upload_id)
+        upload = get_upload(request, upload_id)
         upload.status = "CANCELLED"
         upload.save(update_fields=["status", "updated_at"])
         return Response(serialize_upload(upload))
 
 
-def get_upload(upload_id):
+def get_upload(request, upload_id):
     return get_object_or_404(
         Upload.objects.select_related("factory", "tenant"),
         id=upload_id,
-        tenant=get_workspace_identity().tenant,
+        tenant=tenant_for_request(request),
+        factory_id__in=factories_for_request(request).values("id"),
     )

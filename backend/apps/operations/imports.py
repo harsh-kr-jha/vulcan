@@ -41,7 +41,10 @@ def inspection_payload(upload):
 
 
 def validate_mapping(upload, mapping):
-    fields = {item.key: item for item in TEMPLATES[upload.dataset_type]}
+    fields = {
+        item.key: item
+        for item in TEMPLATES[upload.dataset_type]
+    }
     selected = [target for target in mapping.values() if target]
     contextual = set(import_context_values(upload))
     issues = []
@@ -84,7 +87,9 @@ def validate_mapping(upload, mapping):
             if str(values.get("project_number", "")).strip()
         }
         for index, row in enumerate(mapped_rows, start=2):
-            for record_issue in validate_record(row, field_rules(upload.dataset_type)):
+            for record_issue in validate_record(
+                row, field_rules(upload.dataset_type)
+            ):
                 issues.append(
                     issue(
                         index,
@@ -190,14 +195,16 @@ def import_valid_rows(upload, user):
     ).exists():
         raise ValueError("Resolve mapping errors before importing.")
 
-    records = []
+    accepted_rows = 0
+    batch = []
+    upload.standard_records.all().delete()
     for source_row, raw in enumerate(upload.raw_rows, start=2):
         if source_row in rejected:
             continue
         values = normalize_values(
             apply_import_context(upload, map_row(raw, upload.mapping)), upload.dataset_type
         )
-        records.append(
+        batch.append(
             StandardRecord(
                 tenant=upload.tenant,
                 upload=upload,
@@ -212,8 +219,13 @@ def import_valid_rows(upload, user):
                 values=values,
             )
         )
-    upload.standard_records.all().delete()
-    StandardRecord.objects.bulk_create(records, batch_size=500)
+        if len(batch) == 500:
+            StandardRecord.objects.bulk_create(batch, batch_size=500)
+            accepted_rows += len(batch)
+            batch.clear()
+    if batch:
+        StandardRecord.objects.bulk_create(batch, batch_size=500)
+        accepted_rows += len(batch)
     signature = header_signature({"data": upload.headers})
     MappingProfile.objects.update_or_create(
         factory=upload.factory,
@@ -228,7 +240,7 @@ def import_valid_rows(upload, user):
         },
     )
     upload.status = "COMPLETED"
-    upload.accepted_rows = len(records)
+    upload.accepted_rows = accepted_rows
     upload.save(update_fields=["status", "accepted_rows", "updated_at"])
     return serialize_upload(upload)
 
@@ -290,7 +302,10 @@ def validate_import_context(upload, row, row_number):
 
 
 def normalize_values(values, dataset_type):
-    definitions = {item.key: item for item in TEMPLATES[dataset_type]}
+    definitions = {
+        item.key: item
+        for item in TEMPLATES[dataset_type]
+    }
     normalized = {}
     for key, value in values.items():
         if value is None:

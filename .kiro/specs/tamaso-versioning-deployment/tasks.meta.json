@@ -1,0 +1,258 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Create `variants/manifest.schema.json` with the JSON Schema for variant manifests": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039105683
+      },
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039119038
+      }
+    ],
+    "1.2 Rewrite `backend/config/variants.py` to generic schema-validated loader": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039105733
+      }
+    ],
+    "2.1 Rewrite `processing/templates.py` to a generic registry framework": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039105792
+      }
+    ],
+    "2.2 Create `processing/apps.py` with `AppConfig.ready()` for template discovery": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039105859
+      }
+    ],
+    "3.1 Rewrite `backend/apps/analytics/workspace.py` to a generic analytics framework": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039105922
+      }
+    ],
+    "3.2 Update `backend/apps/analytics/apps.py` for analytics plugin discovery": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039105980
+      }
+    ],
+    "4. Checkpoint - Verify backend frameworks": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106079
+      }
+    ],
+    "5.1 Rewrite `frontend/lib/variant.tsx` to use extensible types": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106140
+      }
+    ],
+    "5.2 Rewrite `frontend/lib/variant-config.ts` to dynamic manifest loader": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106194
+      }
+    ],
+    "6.1 Update `backend/apps/tenancy/services.py` to derive factory codes from variant config": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106245
+      }
+    ],
+    "7. Checkpoint - Verify all framework changes": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106294
+      }
+    ],
+    "8.1 Remove dead files and directories from the repository": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106343
+      }
+    ],
+    "8.2 Create `variants/README.md` explaining how operating templates supply manifests": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106392
+      }
+    ],
+    "8.3 Rename `deploy/gce-micro/` to `deploy/gce-customer/`": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106435
+      }
+    ],
+    "8.4 Rename `infra/gcp/` to `infra/tamaso-demo/`": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106485
+      }
+    ],
+    "9.1 Create `VERSION` file at repository root": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106566
+      },
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039119614
+      }
+    ],
+    "9.2 Create `config/config.schema.json` for client branch configuration validation": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106613
+      }
+    ],
+    "10.1 Create `.kiro/industry-terms.txt` deny-list file": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106661
+      },
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039120540
+      }
+    ],
+    "11. Checkpoint - Verify cleanup and setup": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106717
+      }
+    ],
+    "12.1 Rewrite `.github/workflows/ci.yml` with branch-type detection": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106768
+      }
+    ],
+    "13.1 Create `.github/workflows/build-artifact.yml`": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106826
+      }
+    ],
+    "14.1 Create `.github/workflows/deploy-customer.yml`": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106874
+      }
+    ],
+    "14.2 Create `.github/workflows/deploy-tamaso-demo.yml`": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106927
+      }
+    ],
+    "14.3 Rewrite `deploy/gce-customer/deploy.sh` for digest-based deployment": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039106976
+      }
+    ],
+    "14.4 Update `deploy/gce-customer/compose.yaml` for new image reference format": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039107068
+      }
+    ],
+    "15.1 Rewrite `infra/tamaso-demo/variables.tf` for the new multi-template model": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039107125
+      }
+    ],
+    "15.2 Rewrite `infra/tamaso-demo/main.tf` for per-template Cloud Run services": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039107168
+      }
+    ],
+    "15.3 Create `infra/tamaso-demo/outputs.tf`": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039107218
+      }
+    ],
+    "16. Checkpoint - Verify CI/CD and infrastructure": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039107271
+      }
+    ],
+    "17.1 Rewrite `docs/architecture.md` for the Tamaso versioning model": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039107341
+      }
+    ],
+    "17.2 Create `docs/branching-strategy.md`": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039107414
+      }
+    ],
+    "17.3 Create `docs/deployment.md`": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039107476
+      }
+    ],
+    "17.4 Create `docs/client-onboarding.md`": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039107536
+      }
+    ],
+    "18. Final checkpoint - Verify all changes": [
+      {
+        "executionId": "6aaf7aab-13c8-48af-94b9-ed86152e1c6c",
+        "chatSessionId": "sess_672a4e7f-c15b-4e83-85ca-01324420025b",
+        "timestamp": 1787039107595
+      }
+    ]
+  }
+}

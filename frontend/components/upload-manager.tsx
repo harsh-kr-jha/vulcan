@@ -7,7 +7,7 @@ import { api } from "@/lib/api-client";
 import { downloadTemplate } from "@/lib/browser-files";
 import { useFactory } from "@/lib/factory-context";
 import type { DatasetType, ImportInspection, ImportPreview, ImportValidation, UploadDataset } from "@/lib/factory-domain";
-import { datasetLabels } from "@/lib/factory-domain";
+import { usePlatform } from "@/lib/variant";
 
 type WizardStep = "input" | "mapping" | "validation" | "complete";
 
@@ -24,6 +24,7 @@ function MappingEditor({ inspection, mapping, setMapping }: { inspection: Import
 }
 
 function DataWizard({ onClose, initialDatasetType = "production", initialProcessId = "", initialInspection }: { onClose: () => void; initialDatasetType?: DatasetType; initialProcessId?: string; initialInspection?: ImportInspection | null }) {
+  const { datasets: datasetLabels } = usePlatform();
   const { state, refresh } = useFactory();
   const editingExisting = Boolean(initialInspection);
   const [step, setStep] = useState<WizardStep>(initialInspection ? "mapping" : "input"); const [datasetType, setDatasetType] = useState<DatasetType>(initialInspection?.upload.datasetType ?? initialDatasetType); const [file, setFile] = useState<File | null>(null); const [inspection, setInspection] = useState<ImportInspection | null>(initialInspection ?? null); const [mapping, setMapping] = useState<Record<string, string>>(initialInspection?.mapping ?? {}); const [validation, setValidation] = useState<ImportValidation | null>(null); const [loading, setLoading] = useState(false); const [error, setError] = useState("");
@@ -61,6 +62,7 @@ function DataWizard({ onClose, initialDatasetType = "production", initialProcess
 }
 
 export function UploadManager() {
+  const { datasets: datasetLabels } = usePlatform();
   const { state, intelligence, refresh } = useFactory(); const [open, setOpen] = useState(false); const [initialDatasetType, setInitialDatasetType] = useState<DatasetType>("production"); const [initialProcessId, setInitialProcessId] = useState(""); const [editingInspection, setEditingInspection] = useState<ImportInspection | null>(null); const [selected, setSelected] = useState<UploadDataset | null>(null); const [preview, setPreview] = useState<ImportPreview | null>(null); const [previewLoading, setPreviewLoading] = useState(false); const [previewError, setPreviewError] = useState(""); const [query, setQuery] = useState(""); const [filter, setFilter] = useState("all"); const [deleteTarget, setDeleteTarget] = useState<UploadDataset | null>(null); const [rowActionLoading, setRowActionLoading] = useState(""); const [rowActionError, setRowActionError] = useState("");
   const uploads = useMemo(() => state.uploads.filter((upload) => upload.filename.toLowerCase().includes(query.toLowerCase()) && (filter === "all" || upload.datasetType === filter)), [state.uploads, query, filter]); const totalRows = state.uploads.reduce((total, upload) => total + upload.acceptedRows, 0);
   useEffect(() => {
@@ -73,7 +75,7 @@ export function UploadManager() {
       }
     }, 0);
     return () => window.clearTimeout(queryTimer);
-  }, []);
+  }, [datasetLabels]);
   function openWizard(datasetType: DatasetType = "production", processId = "") { setEditingInspection(null); setInitialDatasetType(datasetType); setInitialProcessId(processId); setOpen(true); }
   function closeWizard() { setOpen(false); setEditingInspection(null); const url = new URL(window.location.href); url.searchParams.delete("add"); url.searchParams.delete("process"); window.history.replaceState(null, "", `${url.pathname}${url.search}`); }
   async function openPreview(upload: UploadDataset) { setSelected(upload); setPreview(null); setPreviewError(""); setPreviewLoading(true); try { setPreview(await api.previewImport(upload.id)); } catch (cause) { setPreviewError(cause instanceof Error ? cause.message : "The source preview could not be loaded."); } finally { setPreviewLoading(false); } }

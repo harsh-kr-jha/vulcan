@@ -1,11 +1,25 @@
+# Platform Core – Shared analytics framework.
+# Industry-specific KPIs and workflows are provided by operating template branches.
+
 import hashlib
 from collections import defaultdict
+from contextlib import suppress
 from datetime import date, timedelta
+from decimal import Decimal
+from threading import Lock
 from uuid import uuid4
+
+from django.conf import settings
+from django.core.cache import cache
+from django.db.models import Q
 
 from apps.operations.imports import serialize_upload
 from apps.operations.models import StandardRecord, Upload
 from apps.tenancy.serializers import FactoryMasterSerializer, WorkspaceFactorySerializer
+from processing.kpis import (
+    SteamRecoveryInputs,
+    calculate_steam_recovery,
+)
 
 DEFAULT_TARGETS = {
     "oee": 78,
@@ -22,17 +36,23 @@ DEFAULT_TARGETS = {
 
 NUMERIC_TARGETS = set(DEFAULT_TARGETS) - {"downtimeUnit"}
 
-DEFAULT_PROJECT_WORKFLOW = [
-    "Raw Material Delivery",
-    "Process Operations",
-    "Profile Cutting",
-    "Bending",
-    "Machining",
-    "Other fabrication processes",
-    "Welding",
-    "Polishing",
-    "Packing",
-]
+# Empty by default — operating template branches fill this with their workflow stages.
+DEFAULT_PROJECT_WORKFLOW = []
+
+_workspace_lock_guard = Lock()
+_workspace_locks = {}
+
+
+def workspace_lock(factory_id):
+    """Return one process-local build lock per factory.
+
+    The GCE showcase intentionally runs one Gunicorn worker with threads. A
+    process-local lock therefore prevents duplicate cold-cache calculations
+    without adding Redis to the lightweight deployment.
+    """
+    key = str(factory_id)
+    with _workspace_lock_guard:
+        return _workspace_locks.setdefault(key, Lock())
 
 
 def normalise_targets(current, updates):
@@ -72,10 +92,11 @@ def duration_label(minutes):
         return f"{hours:.1f}".rstrip("0").rstrip(".") + " hr"
     return f"{value:g} min"
 
+
 CUSTOM_KPI_VARIABLES = {
-    "production.planned": ("Planned quantity", "Production", "units"),
-    "production.actual": ("Actual quantity", "Production", "units"),
-    "production.good": ("Good quantity", "Production", "units"),
+    "production.planned": ("Planned output", "Production", "units"),
+    "production.actual": ("Actual output", "Production", "units"),
+    "production.good": ("Accepted output", "Production", "units"),
     "production.run_minutes": ("Run time", "Production", "minutes"),
     "downtime.minutes": ("Downtime", "Downtime", "minutes"),
     "downtime.occurrences": ("Stoppages", "Downtime", "stops"),
@@ -87,11 +108,42 @@ CUSTOM_KPI_VARIABLES = {
     "supplier.deliveries": ("Supplier deliveries", "Supplier deliveries", "deliveries"),
     "supplier.late_deliveries": ("Late deliveries", "Supplier deliveries", "deliveries"),
     "orders.at_risk": ("Orders at risk", "Orders", "orders"),
+    "utilities.steam_generated": ("Steam generated", "Steam & boiler utilities", "kg"),
+    "utilities.briquette_used": ("Briquettes used", "Steam & boiler utilities", "kg"),
+    "utilities.heat_recovered": ("Heat recovered", "Steam & boiler utilities", "MJ"),
+    "utilities.briquette_saved": ("Equivalent briquettes saved", "Steam & boiler utilities", "kg"),
 }
 
 
 def workspace_snapshot(identity, factory, filters):
-    targets = {**DEFAULT_TARGETS, **factory.configuration.get("targets", {})}
+    # Short-lived per-factory+filters cache to avoid recomputing heavy aggregates
+    version = cache.get(f"workspace:version:{factory.id}", 1)
+    from_val = str(filters.get("from", ""))
+    to_val = str(filters.get("to", ""))
+    dimensions = ":".join(
+        str(filters.get(name, "all")) for name in ("line", "machine", "sku", "shift")
+    )
+    key = f"workspace:v{version}:{factory.id}:{from_val}:{to_val}:{dimensions}"
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
+
+    with workspace_lock(factory.id):
+        # Another request may have completed the same cold build while this
+        # thread waited for the per-factory lock.
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+        snapshot = build_workspace_snapshot(identity, factory, filters, targets=None)
+        ttl = getattr(settings, "WORKSPACE_CACHE_TTL", 300)
+        with suppress(Exception):
+            cache.set(key, snapshot, ttl)
+        return snapshot
+
+
+def build_workspace_snapshot(identity, factory, filters, targets=None):
+    targets = targets or {**DEFAULT_TARGETS, **factory.configuration.get("targets", {})}
+
     intelligence = build_intelligence(factory, targets, filters)
     masters = {
         kind: []
@@ -108,7 +160,13 @@ def workspace_snapshot(identity, factory, filters):
     }
     for item in factory.master_records.select_related("parent").order_by("kind", "name"):
         masters[item.kind].append(FactoryMasterSerializer(item).data)
-    uploads = [serialize_upload(item) for item in Upload.objects.filter(factory=factory)[:100]]
+    # Draft inspection, mapping and validation rows are implementation details of
+    # the open dialog. A source becomes part of factory history only after the
+    # operator explicitly imports its valid rows.
+    uploads = [
+        serialize_upload(item)
+        for item in Upload.objects.filter(factory=factory, status="COMPLETED")[:100]
+    ]
     actions = [
         {
             "id": str(item.id),
@@ -121,15 +179,15 @@ def workspace_snapshot(identity, factory, filters):
         }
         for item in factory.action_items.all()
     ]
-    return {
+    snapshot = {
         "state": {
             "company": {
                 "id": str(identity.company.id),
                 "name": identity.company.name,
-                "industry": factory.configuration.get("industry", "Manufacturing"),
+                "industry": factory.configuration.get("industry", ""),
             },
             "factories": WorkspaceFactorySerializer(
-                identity.tenant.factories.filter(is_active=True), many=True
+                identity.factories(), many=True
             ).data,
             "activeFactoryId": str(factory.id),
             "masters": masters,
@@ -139,13 +197,54 @@ def workspace_snapshot(identity, factory, filters):
         },
         "intelligence": intelligence,
     }
+    return snapshot
+
+
+def workspace_record_rows(factory, from_date, to_date):
+    """Stream only rows that can affect the selected workspace period.
+
+    Inventory and process data need history up to the selected end, while
+    projects and orders have their own later date semantics. Ordinary fact
+    datasets can be bounded at SQLite before their JSON payload reaches Python.
+    """
+    bounded_history_types = {"inventory", "process"}
+    unbounded_types = {"orders", "projects", "project_stages"}
+    period_types = {"production", "downtime", "quality", "utilities", "supplier"}
+    period = Q(dataset_type__in=period_types)
+    if from_date:
+        period &= Q(operational_date__isnull=True) | Q(operational_date__gte=from_date)
+    if to_date:
+        period &= Q(operational_date__isnull=True) | Q(operational_date__lte=to_date)
+
+    history = Q(dataset_type__in=bounded_history_types)
+    if to_date:
+        history &= Q(operational_date__isnull=True) | Q(operational_date__lte=to_date)
+
+    return (
+        StandardRecord.objects.filter(factory=factory)
+        .filter(period | history | Q(dataset_type__in=unbounded_types))
+        .values(
+            "dataset_type",
+            "operational_date",
+            "values",
+            "source_row",
+            "upload__created_at",
+            "upload__original_filename",
+        )
+        .iterator(chunk_size=500)
+    )
 
 
 def build_intelligence(factory, targets, filters):
-    records = StandardRecord.objects.filter(factory=factory).select_related("upload")
     from_date = parse_date(filters.get("from"))
     to_date = parse_date(filters.get("to"))
-    scoped = []
+    # Some datasets describe state at or beyond the selected period (for example,
+    # inventory history, project stages, and orders due after the range). Apply
+    # their date semantics below instead of dropping them in one global DB filter.
+    production = []
+    downtime = []
+    quality = []
+    utilities = []
     inventory_history = []
     process_history = []
     orders = []
@@ -153,53 +252,47 @@ def build_intelligence(factory, targets, filters):
     project_records = []
     project_stage_records = []
     latest_dates = {}
-    for record in records.iterator():
-        value = record.values
+    for record in workspace_record_rows(factory, from_date, to_date):
+        value = record["values"]
+        dataset_type = record["dataset_type"]
+        operational_date = record["operational_date"]
         if (
-            record.operational_date
-            and (not to_date or record.operational_date <= to_date)
+            operational_date
+            and (not to_date or operational_date <= to_date)
             and (
-                record.dataset_type not in latest_dates
-                or record.operational_date > latest_dates[record.dataset_type]
+                dataset_type not in latest_dates
+                or operational_date > latest_dates[dataset_type]
             )
         ):
-            latest_dates[record.dataset_type] = record.operational_date
-        if record.dataset_type == "projects":
+            latest_dates[dataset_type] = operational_date
+        if dataset_type == "projects":
             project_records.append(record)
             continue
-        if record.dataset_type == "project_stages":
+        if dataset_type == "project_stages":
             project_stage_records.append(record)
             continue
-        if record.dataset_type == "inventory":
-            if not to_date or not record.operational_date or record.operational_date <= to_date:
-                inventory_history.append(value)
+        if dataset_type == "inventory":
+            inventory_history.append(value)
             continue
-        if record.dataset_type == "process":
-            if record.operational_date and to_date and record.operational_date > to_date:
-                continue
+        if dataset_type == "process":
             process_history.append(value)
             continue
-        if record.dataset_type == "orders":
+        if dataset_type == "orders":
             orders.append(value)
             continue
-        if record.dataset_type == "supplier":
-            if record.operational_date and from_date and record.operational_date < from_date:
-                continue
-            if record.operational_date and to_date and record.operational_date > to_date:
-                continue
+        if dataset_type == "supplier":
             supplier_deliveries.append(value)
-            continue
-        if record.operational_date and from_date and record.operational_date < from_date:
-            continue
-        if record.operational_date and to_date and record.operational_date > to_date:
             continue
         if not matches_dimensions(value, filters):
             continue
-        scoped.append((record.dataset_type, value))
-
-    production = [value for kind, value in scoped if kind == "production"]
-    downtime = [value for kind, value in scoped if kind == "downtime"]
-    quality = [value for kind, value in scoped if kind == "quality"]
+        if dataset_type == "production":
+            production.append(value)
+        elif dataset_type == "downtime":
+            downtime.append(value)
+        elif dataset_type == "quality":
+            quality.append(value)
+        elif dataset_type == "utilities":
+            utilities.append(value)
     process_runs = process_history
     orders = [value for value in orders if matches_dimensions(value, filters, include_shift=False)]
     inventory = latest_inventory(inventory_history)
@@ -255,6 +348,11 @@ def build_intelligence(factory, targets, filters):
         if inspected
         else quality_rate
     )
+
+    # Industry-specific KPIs are empty at the platform level — template branches populate these.
+    mushroom_kpis = {}
+
+    steam_recovery = build_steam_recovery(utilities, production)
     trend, daily_oee = production_trends(production)
     machine_loss = grouped_loss(downtime, "machine", include_line=True)
     reason_loss = grouped_loss(downtime, "reason")
@@ -308,6 +406,7 @@ def build_intelligence(factory, targets, filters):
         supplier_score,
         supplier_scores,
         order_risks,
+        steam_recovery,
     )
     custom_kpis = calculate_custom_kpis(
         factory.configuration.get("customKpis", []), custom_variables
@@ -354,6 +453,9 @@ def build_intelligence(factory, targets, filters):
         "orderRisks": order_risks,
         "supplierScores": supplier_scores,
         "supplierScore": supplier_score,
+        "mushroom": mushroom_kpis,
+        "roomConditions": [],
+        "steamRecovery": steam_recovery,
         "customKpiVariables": custom_variables,
         "customKpis": custom_kpis,
         "digitalTwin": digital_twin,
@@ -369,6 +471,7 @@ def build_intelligence(factory, targets, filters):
             "process": len(process_runs),
             "projects": len(projects),
             "project_stages": len(latest_project_values(project_stage_records, stage_record_key)),
+            "utilities": len(utilities),
         },
         "dataHealth": build_data_health(latest_dates, uploaded_types, to_date),
         "alerts": alerts,
@@ -437,6 +540,7 @@ def build_custom_kpi_variables(
     supplier_score,
     supplier_scores,
     order_risks,
+    steam_recovery,
 ):
     values = {
         "production.planned": planned,
@@ -453,7 +557,12 @@ def build_custom_kpi_variables(
         "supplier.deliveries": sum(item["deliveries"] for item in supplier_scores),
         "supplier.late_deliveries": sum(item["lateDeliveries"] for item in supplier_scores),
         "orders.at_risk": len(order_risks),
+        "utilities.steam_generated": steam_recovery["steamGeneratedKg"],
+        "utilities.briquette_used": steam_recovery["briquetteUsedKg"],
+        "utilities.heat_recovered": steam_recovery["heatRecoveredMj"],
+        "utilities.briquette_saved": steam_recovery["equivalentBriquetteSavedKg"],
     }
+    variables = CUSTOM_KPI_VARIABLES
     return [
         {
             "key": key,
@@ -462,8 +571,134 @@ def build_custom_kpi_variables(
             "sourceUnit": unit,
             "value": values[key],
         }
-        for key, (label, dataset, unit) in CUSTOM_KPI_VARIABLES.items()
+        for key, (label, dataset, unit) in variables.items()
     ]
+
+
+def build_steam_recovery(utility_rows, production_rows):
+    """Build period and daily boiler KPIs from approved utility log rows."""
+
+    feedwater_kg = total(utility_rows, "feedwater_kg")
+    steam_generated_kg = total(utility_rows, "steam_generated_kg")
+    briquette_used_kg = total(utility_rows, "briquette_used_kg")
+
+    def weighted(field, weight_field):
+        denominator = total(utility_rows, weight_field)
+        return (
+            sum(number(row.get(field)) * number(row.get(weight_field)) for row in utility_rows)
+            / denominator
+            if denominator
+            else 0
+        )
+
+    result = calculate_steam_recovery(
+        SteamRecoveryInputs(
+            feedwater_kg=Decimal(str(feedwater_kg)),
+            feedwater_inlet_temperature_c=Decimal(
+                str(weighted("feedwater_inlet_temperature_c", "feedwater_kg"))
+            ),
+            feedwater_tank_temperature_c=Decimal(
+                str(weighted("feedwater_tank_temperature_c", "feedwater_kg"))
+            ),
+            steam_generated_kg=Decimal(str(steam_generated_kg)),
+            recovered_condensate_kg=Decimal(
+                str(total(utility_rows, "recovered_condensate_kg"))
+            ),
+            flash_steam_recovered_kg=Decimal(
+                str(total(utility_rows, "flash_steam_recovered_kg"))
+            ),
+            briquette_used_kg=Decimal(str(briquette_used_kg)),
+            briquette_gcv_kcal_per_kg=Decimal(
+                str(weighted("briquette_gcv_kcal_per_kg", "briquette_used_kg"))
+            ),
+            boiler_efficiency_percent=Decimal(
+                str(weighted("boiler_efficiency_percent", "briquette_used_kg"))
+            ),
+            production_quantity=Decimal(str(total(production_rows, "actual_quantity"))),
+        )
+    ).as_dict()
+    result.update(
+        {
+            "feedwaterKg": feedwater_kg,
+            "steamGeneratedKg": steam_generated_kg,
+            "recoveredCondensateKg": total(utility_rows, "recovered_condensate_kg"),
+            "flashSteamRecoveredKg": total(utility_rows, "flash_steam_recovered_kg"),
+            "briquetteUsedKg": briquette_used_kg,
+            "boilerEfficiencyPercent": weighted(
+                "boiler_efficiency_percent", "briquette_used_kg"
+            ),
+            "briquetteGcvKcalPerKg": weighted(
+                "briquette_gcv_kcal_per_kg", "briquette_used_kg"
+            ),
+        }
+    )
+
+    utility_by_date = defaultdict(list)
+    production_by_date = defaultdict(list)
+    for row in utility_rows:
+        utility_by_date[str(row.get("date", ""))].append(row)
+    for row in production_rows:
+        production_by_date[str(row.get("date", ""))].append(row)
+    result["trend"] = []
+    for day in sorted(key for key in utility_by_date if key):
+        daily = build_steam_recovery_without_trend(
+            utility_by_date[day], production_by_date.get(day, [])
+        )
+        result["trend"].append(
+            {
+                "date": day,
+                "steamGeneratedKg": daily["steamGeneratedKg"],
+                "briquetteUsedKg": daily["briquetteUsedKg"],
+                "heatRecoveredMj": daily["heatRecoveredMj"],
+                "specificSteamKgPerUnit": daily["specificSteamKgPerUnit"],
+            }
+        )
+    return result
+
+
+def build_steam_recovery_without_trend(utility_rows, production_rows):
+    """Calculate one daily point without recursively building another trend."""
+
+    feedwater = total(utility_rows, "feedwater_kg")
+    fuel = total(utility_rows, "briquette_used_kg")
+
+    def weighted(field, weight_field, denominator):
+        return (
+            sum(number(row.get(field)) * number(row.get(weight_field)) for row in utility_rows)
+            / denominator
+            if denominator
+            else 0
+        )
+
+    calculated = calculate_steam_recovery(
+        SteamRecoveryInputs(
+            feedwater_kg=Decimal(str(feedwater)),
+            feedwater_inlet_temperature_c=Decimal(
+                str(weighted("feedwater_inlet_temperature_c", "feedwater_kg", feedwater))
+            ),
+            feedwater_tank_temperature_c=Decimal(
+                str(weighted("feedwater_tank_temperature_c", "feedwater_kg", feedwater))
+            ),
+            steam_generated_kg=Decimal(str(total(utility_rows, "steam_generated_kg"))),
+            recovered_condensate_kg=Decimal(str(total(utility_rows, "recovered_condensate_kg"))),
+            flash_steam_recovered_kg=Decimal(str(total(utility_rows, "flash_steam_recovered_kg"))),
+            briquette_used_kg=Decimal(str(fuel)),
+            briquette_gcv_kcal_per_kg=Decimal(
+                str(weighted("briquette_gcv_kcal_per_kg", "briquette_used_kg", fuel))
+            ),
+            boiler_efficiency_percent=Decimal(
+                str(weighted("boiler_efficiency_percent", "briquette_used_kg", fuel))
+            ),
+            production_quantity=Decimal(str(total(production_rows, "actual_quantity"))),
+        )
+    ).as_dict()
+    calculated.update(
+        {
+            "steamGeneratedKg": total(utility_rows, "steam_generated_kg"),
+            "briquetteUsedKg": fuel,
+        }
+    )
+    return calculated
 
 
 def calculate_custom_kpis(definitions, variables):
@@ -654,6 +889,10 @@ def process_metrics(rows):
         "throughputPerHour": (output_quantity / run_minutes * 60 if run_minutes else None),
         "cycleMinutes": average(rows, "cycle_time_minutes"),
         "temperatureC": average(rows, "temperature_c"),
+        "humidityPct": average(rows, "humidity_pct"),
+        "co2Ppm": average(rows, "co2_ppm"),
+        "substrateMoisturePct": average(rows, "substrate_moisture_pct"),
+        "waterLitres": optional_total(rows, "water_litres"),
         "pressureBar": average(rows, "pressure_bar"),
         "energyKwh": optional_total(rows, "energy_kwh"),
         "downtimeMinutes": optional_total(rows, "downtime_minutes"),
@@ -844,16 +1083,17 @@ def latest_project_values(records, key_builder):
     latest = {}
     versions = {}
     for record in records:
-        values = dict(record.values)
+        values = dict(record["values"])
         key = key_builder(values)
         valid_key = all(key) if isinstance(key, tuple) else bool(key)
         if not valid_key:
             continue
-        version = (record.upload.created_at, record.source_row)
+        uploaded_at = record["upload__created_at"]
+        version = (uploaded_at, record["source_row"])
         if key in versions and versions[key] >= version:
             continue
-        values["_source_uploaded_at"] = record.upload.created_at.isoformat()
-        values["_source_filename"] = record.upload.original_filename
+        values["_source_uploaded_at"] = uploaded_at.isoformat()
+        values["_source_filename"] = record["upload__original_filename"]
         latest[key] = values
         versions[key] = version
     return latest
@@ -906,12 +1146,15 @@ def build_projects(project_records, stage_records, selected_end):
             progress = round(source_progress)
             status = source_status
         prediction = project_delivery_prediction(stages, commitment, values.get("dispatch_date"))
-        updated_at = max(
-            [
-                str(values.get("_source_uploaded_at") or ""),
-                *(str(item.get("_source_uploaded_at") or "") for item in source_stages),
-            ]
-        ) or f"{start_date}T00:00:00"
+        updated_at = (
+            max(
+                [
+                    str(values.get("_source_uploaded_at") or ""),
+                    *(str(item.get("_source_uploaded_at") or "") for item in source_stages),
+                ]
+            )
+            or f"{start_date}T00:00:00"
+        )
         team = project_team(values.get("assigned_team"), stages)
         documents = project_documents(project_number, stages, updated_at)
         activities = project_activities(
@@ -987,17 +1230,20 @@ def build_project_stage(project_number, values):
 
 
 def default_project_stages(project_number, start_value, commitment_value, progress, status):
+    workflow = DEFAULT_PROJECT_WORKFLOW
+    if not workflow:
+        return []
     start = parse_date(start_value) or date.today()
     commitment = parse_date(commitment_value) or start
-    total_days = max((commitment - start).days + 1, len(DEFAULT_PROJECT_WORKFLOW))
-    stage_position = progress / 100 * len(DEFAULT_PROJECT_WORKFLOW)
+    total_days = max((commitment - start).days + 1, len(workflow))
+    stage_position = progress / 100 * len(workflow)
     stages = []
-    for index, name in enumerate(DEFAULT_PROJECT_WORKFLOW):
+    for index, name in enumerate(workflow):
         stage_start = start + timedelta(
-            days=int(total_days * index / len(DEFAULT_PROJECT_WORKFLOW))
+            days=int(total_days * index / len(workflow))
         )
         next_start = start + timedelta(
-            days=int(total_days * (index + 1) / len(DEFAULT_PROJECT_WORKFLOW))
+            days=int(total_days * (index + 1) / len(workflow))
         )
         completed = index < int(stage_position)
         active = index == int(stage_position) and 0 < progress < 100
@@ -1130,8 +1376,7 @@ def project_activities(project_number, stages, source_filename, imported_at):
             "type": "status",
             "title": "Project source imported",
             "detail": (
-                "Latest project facts were loaded from "
-                f"{source_filename or 'the approved source'}."
+                f"Latest project facts were loaded from {source_filename or 'the approved source'}."
             ),
             "user": "Vulcan ingestion",
             "timestamp": imported_at,
@@ -1162,8 +1407,7 @@ def project_alerts(factory, projects, selected_end):
     result = []
     for project in projects:
         if project["status"] == "Completed" or (
-            project["status"] != "Delayed"
-            and project["deliveryPrediction"]["state"] == "On track"
+            project["status"] != "Delayed" and project["deliveryPrediction"]["state"] == "On track"
         ):
             continue
         delayed = [stage for stage in project["stages"] if stage["status"] == "Delayed"]
@@ -1226,9 +1470,9 @@ def split_source_list(value):
 
 
 def stable_project_id(prefix, *parts):
-    digest = hashlib.sha1(
-        "|".join(parts).casefold().encode(), usedforsecurity=False
-    ).hexdigest()[:16]
+    digest = hashlib.sha1("|".join(parts).casefold().encode(), usedforsecurity=False).hexdigest()[
+        :16
+    ]
     return f"{prefix}-{digest}"
 
 
@@ -1251,6 +1495,7 @@ def build_data_health(latest_dates, uploaded_types, selected_end):
         "quality": 7,
         "inventory": 3,
         "supplier": 14,
+        "utilities": 2,
     }
     result = {}
     for dataset_type, threshold in stale_after_days.items():
@@ -1392,6 +1637,7 @@ def generated_alerts(
 ):
     alerts = []
     end = filters.get("to") or date.today().isoformat()
+    rejection_limit = targets["rejectionRate"]
     if order_risks:
         order = order_risks[0]
         alerts.append(
@@ -1475,16 +1721,16 @@ def generated_alerts(
                 [f"Plan {planned:g}", f"Actual {actual:g}"],
             )
         )
-    if rejection_rate > targets["rejectionRate"]:
+    if rejection_rate > rejection_limit:
         alerts.append(
             alert(
                 "rejection-above-target",
                 "Rejection is above target",
                 f"Rejected output is {rejection_rate:.1f}% for the selected period.",
                 "Factory quality",
-                "high" if rejection_rate > targets["rejectionRate"] * 1.5 else "medium",
+                "high" if rejection_rate > rejection_limit * 1.5 else "medium",
                 "Review the leading defect reason and affected SKU before the next run.",
-                f"> {targets['rejectionRate']}% rejection",
+                f"> {rejection_limit}% rejection",
                 f"{rejection_rate:.1f}%",
                 end,
                 [f"Rejection rate {rejection_rate:.1f}%"],
@@ -1520,8 +1766,8 @@ def generated_alerts(
                 f"{defect['rejected']:g} rejected units share this defect reason.",
                 "Quality · Rejections",
                 "medium",
-                "Verify the process parameter at first-piece approval and sample "
-                "the next three batches.",
+                "Verify the process parameter at first-piece approval and "
+                "sample the next three batches.",
                 "Top defect reason",
                 f"{defect['rejected']:g} rejected",
                 end,
@@ -1608,7 +1854,8 @@ def answer_question(intelligence, question):
             )
     totals = intelligence["totals"]
     return response(
-        f"Production is {totals['actual']:g} units against a plan of {totals['planned']:g}.",
+        f"Production is {totals['actual']:g} units against a plan of "
+        f"{totals['planned']:g} units.",
         "This answer uses only validated records in the selected factory and date range.",
         [f"Plan {totals['planned']:g}", f"Actual {totals['actual']:g}"],
     )
@@ -1633,6 +1880,22 @@ def optional_number(value):
 
 def total(rows, key):
     return sum(number(row.get(key)) for row in rows)
+
+
+def unique_sum_and_count(rows, value_key, group_key):
+    grouped = {}
+    for index, row in enumerate(rows):
+        value = row.get(value_key)
+        if value in {None, ""}:
+            continue
+        key = str(row.get(group_key, "")).strip() or f"row-{index}"
+        grouped[key] = max(grouped.get(key, 0), number(value))
+    return sum(grouped.values()), len(grouped)
+
+
+def unique_total(rows, value_key, group_key):
+    value, _ = unique_sum_and_count(rows, value_key, group_key)
+    return value
 
 
 def optional_total(rows, key):

@@ -1,0 +1,99 @@
+name: Deploy Tamaso Demo (Cloud Run)
+run-name: ${{ inputs.template }} · demo
+
+on:
+  workflow_dispatch:
+    inputs:
+      template:
+        description: "Operating template name (e.g. mfg-da-auto-all)"
+        required: true
+        type: string
+      backend_digest:
+        description: "Backend image digest (sha256:...)"
+        required: true
+        type: string
+      frontend_digest:
+        description: "Frontend image digest (sha256:...)"
+        required: true
+        type: string
+      reason:
+        description: "Deployment reason"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-tamaso-demo-${{ inputs.template }}
+  cancel-in-progress: false
+
+env:
+  GCP_PROJECT_ID: gentle-broker-505219-d0
+  GCP_REGION: us-central1
+  AR_REPOSITORY: vulcan
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.template }} to demo
+    runs-on: ubuntu-latest
+    environment:
+      name: tamaso-demo-${{ inputs.template }}
+    steps:
+      - name: Validate inputs
+        run: |
+          if [[ ! "${{ inputs.backend_digest }}" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "::error::Invalid backend digest format"
+            exit 1
+          fi
+          if [[ ! "${{ inputs.frontend_digest }}" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "::error::Invalid frontend digest format"
+            exit 1
+          fi
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Set up Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Deploy backend to Cloud Run
+        run: |
+          BACKEND_IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${AR_REPOSITORY}/${{ inputs.template }}-backend@${{ inputs.backend_digest }}"
+          gcloud run services update "tamaso-demo-${{ inputs.template }}" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --image "$BACKEND_IMAGE" \
+            --no-traffic
+
+      - name: Deploy frontend to Cloud Run
+        run: |
+          FRONTEND_IMAGE="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${AR_REPOSITORY}/${{ inputs.template }}-frontend@${{ inputs.frontend_digest }}"
+          gcloud run services update "tamaso-demo-${{ inputs.template }}-frontend" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --image "$FRONTEND_IMAGE" \
+            --no-traffic
+
+      - name: Route traffic to new revision
+        run: |
+          gcloud run services update-traffic "tamaso-demo-${{ inputs.template }}" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --to-latest
+          gcloud run services update-traffic "tamaso-demo-${{ inputs.template }}-frontend" \
+            --project "$GCP_PROJECT_ID" \
+            --region "$GCP_REGION" \
+            --to-latest
+
+      - name: Report deployment
+        run: |
+          echo "### Tamaso Demo Deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Template: \`${{ inputs.template }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Backend digest: \`${{ inputs.backend_digest }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Frontend digest: \`${{ inputs.frontend_digest }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Reason: ${{ inputs.reason }}" >> "$GITHUB_STEP_SUMMARY"

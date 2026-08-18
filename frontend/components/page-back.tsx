@@ -7,8 +7,10 @@ export function PageBack({ fallback = "/", label = "Back" }: { fallback?: string
   const router = useRouter();
 
   function goBack() {
-    const referrer = document.referrer ? new URL(document.referrer) : null;
-    if (referrer?.origin === window.location.origin && window.history.length > 1) router.back();
+    // document.referrer is unchanged during Next.js client navigation, so it
+    // cannot tell whether this screen has an in-app predecessor. Browser history
+    // can: use it whenever present and reserve the fallback for direct entries.
+    if (window.history.length > 1) router.back();
     else router.push(fallback);
   }
 

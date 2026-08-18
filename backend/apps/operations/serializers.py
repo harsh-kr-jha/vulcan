@@ -49,6 +49,8 @@ class UploadSerializer(serializers.ModelSerializer):
     def validate_factory(self, factory: Factory):
         if factory.tenant_id != self.context["tenant"].id:
             raise serializers.ValidationError("Factory does not belong to the active tenant.")
+        if not self.context["factories"].filter(pk=factory.pk).exists():
+            raise serializers.ValidationError("Factory is not available to this membership.")
         return factory
 
     def validate(self, attrs):

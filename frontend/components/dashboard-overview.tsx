@@ -42,7 +42,7 @@ function HomeModuleGrid() {
   const criticalAlerts = activeAlerts.filter((alert) => alert.severity === "critical").length;
   const twin = intelligence.digitalTwin.summary;
   const hasProduction = intelligence.dataAvailability.production > 0;
-  const mushroom = false;
+  const mushroom = variant.features.mushroomAnalytics;
   const modules = [
     { href: "/projects", label: variant.navigation.projects, description: mushroom ? "Track every batch from compost preparation to cold room." : "Track customer projects, stages and delivery risk.", value: projects.filter((project) => project.status !== "Completed").length.toString(), status: `active ${variant.terminology.projectPlural}`, meta: `${delayed} at risk`, icon: FolderKanban },
     { href: "/digital-twin", label: variant.navigation["digital-twin"], description: mushroom ? "See crop stages, growing rooms and current conditions." : "See production lines, processes, machines and current state.", value: twin.running.toString(), status: `of ${twin.machines} assets healthy`, meta: `${twin.attention} need attention`, icon: Workflow },
@@ -110,7 +110,6 @@ function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof us
       <div className="data-health-notice-list">
         {issues.map((issue) => {
           const label = datasetLabels[issue.datasetType as DatasetType];
-          if (!label) return null;
           const detail = issue.status === "absent"
             ? `No ${label.toLowerCase()} sheet has been approved.`
             : issue.ageDays === null
@@ -126,7 +125,7 @@ function DataHealthNotice({ intelligence }: { intelligence: ReturnType<typeof us
 function ProductionWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
   const variant = usePlatform();
-  const mushroom = false;
+  const mushroom = variant.features.mushroomAnalytics;
   const unit = mushroom ? " kg" : "";
   const option = useMemo<EChartsOption>(
     () => ({
@@ -213,7 +212,7 @@ function ProductionWidget({ number }: { number: number }) {
 function MajorLossesWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
   const variant = usePlatform();
-  const mushroom = false;
+  const mushroom = variant.features.mushroomAnalytics;
   const unit = mushroom ? " kg" : "";
   const maxDowntime = intelligence.machineLoss[0]?.minutes || 1;
   const maxDefect = intelligence.defectLoss[0]?.rejected || 1;
@@ -276,7 +275,7 @@ function MajorLossesWidget({ number }: { number: number }) {
 
 function RoomConditionsWidget({ number }: { number: number }) {
   const { intelligence } = useFactory();
-  const mushroom = false;
+  const mushroom = usePlatform().features.mushroomAnalytics;
   return <section className="panel command-widget room-conditions-widget">
     <PanelHeader number={number} title={mushroom ? "Growing-room conditions" : "Process conditions"} subtitle={`Latest temperature, humidity and CO2 by ${mushroom ? "room" : "process"}`} href="/digital-twin" />
     <div className="room-condition-list">
@@ -359,7 +358,7 @@ function SupplierPerformanceWidget({ number }: { number: number }) {
 
 export function DashboardOverview() {
   const variant = usePlatform();
-  const mushroom = false;
+  const mushroom = variant.features.mushroomAnalytics;
   const { state, filters, intelligence } = useFactory();
   const activeFactory = state.factories.find((factory) => factory.id === state.activeFactoryId);
   const latestUpload = state.uploads[0];

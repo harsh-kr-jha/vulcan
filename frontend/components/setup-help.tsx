@@ -101,7 +101,7 @@ const automotiveFaqs = sharedFaqs.map((faq) => {
 
 export function SetupHelp() {
   const variant = usePlatform();
-  const mushroomMode = false;
+  const mushroomMode = variant.features.mushroomAnalytics;
   const guides = mushroomMode ? mushroomGuides : automotiveGuides;
   const faqs = mushroomMode ? sharedFaqs : automotiveFaqs;
   const [query, setQuery] = useState("");

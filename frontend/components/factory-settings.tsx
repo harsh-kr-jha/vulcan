@@ -239,7 +239,7 @@ function MasterManager({
 
 function ProcessManager() {
   const { state, upsertMaster, removeMaster } = useFactory();
-  const mushroomMode = false;
+  const mushroomMode = usePlatform().features.mushroomAnalytics;
   const [editing, setEditing] = useState<MasterItem | null | "new">(null);
   const lines = activeFactoryItems(state.masters.lines, state.activeFactoryId);
   const processes = activeFactoryItems(state.masters.processes, state.activeFactoryId).sort(
@@ -440,7 +440,7 @@ function ProcessManager() {
 
 function MachineManager() {
   const { state, upsertMaster, removeMaster } = useFactory();
-  const mushroomMode = false;
+  const mushroomMode = usePlatform().features.mushroomAnalytics;
   const [editing, setEditing] = useState<MasterItem | null | "new">(null);
   const lines = activeFactoryItems(state.masters.lines, state.activeFactoryId);
   const processes = activeFactoryItems(state.masters.processes, state.activeFactoryId);
@@ -818,7 +818,7 @@ function FactoryMasterImportDialog({
 function FactoryDialog({ onClose }: { onClose: () => void }) {
   const { createFactory } = useFactory();
   const variant = usePlatform();
-  const mushroom = false;
+  const mushroom = variant.features.mushroomAnalytics;
   const siteSingular = variant.terminology.siteSingular;
   const variantDetails = mushroom ? defaultFactoryDetails : {
     ...defaultFactoryDetails,
@@ -935,7 +935,7 @@ function FactoryDialog({ onClose }: { onClose: () => void }) {
 function ProfileSection() {
   const { state, updateCompany, updateFactory } = useFactory();
   const variant = usePlatform();
-  const mushroom = false;
+  const mushroom = variant.features.mushroomAnalytics;
   const variantDetails = mushroom ? defaultFactoryDetails : {
     ...defaultFactoryDetails,
     factoryType: "Automotive manufacturing plant",
@@ -1088,7 +1088,7 @@ function ProfileSection() {
 
 export function FactorySettings() {
   const variant = usePlatform();
-  const mushroom = false;
+  const mushroom = variant.features.mushroomAnalytics;
   const sections = baseSections.map((section) => ({
     ...section,
     label: !mushroom && section.id === "profile"

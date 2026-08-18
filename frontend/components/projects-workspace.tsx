@@ -34,7 +34,7 @@ function ProgressBar({ value, danger = false }: { value: number; danger?: boolea
 
 export function ProjectsWorkspace() {
   const variant = usePlatform();
-  const mushroom = false;
+  const mushroom = variant.features.mushroomAnalytics;
   const projectSingular = variant.terminology.projectSingular;
   const projectPlural = variant.terminology.projectPlural;
   const { projects } = useProjects();

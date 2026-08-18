@@ -15,7 +15,6 @@ RUN addgroup --system --gid 10001 app && \
 
 COPY --chown=app:app backend ./backend
 COPY --chown=app:app processing ./processing
-COPY --chown=app:app variants ./variants
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONPATH="/app/backend:/app"

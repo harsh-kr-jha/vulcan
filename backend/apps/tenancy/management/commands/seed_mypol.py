@@ -386,8 +386,8 @@ class Command(BaseCommand):
                 "seed_mypol requires DJANGO_DEBUG=true, or an explicit single-node showcase "
                 "deployment plus --confirm-production-showcase."
             )
-        if settings.VULCAN_VARIANT != "automotive":
-            raise CommandError("seed_mypol can run only with VULCAN_VARIANT=automotive.")
+        # This seed command is specific to the MFG.DA.AUTO.ALL operating template.
+        # No variant check needed — the command only exists on this branch.
 
         credentials = self.demo_credentials()
         manifest, verified_files = self.verify_fixture_pack()
@@ -491,7 +491,7 @@ class Command(BaseCommand):
         factory.configuration = {
             **factory.configuration,
             "currency": "INR",
-            "industry": settings.VULCAN_VARIANT_CONFIG["industry"],
+            "industry": "automotive-manufacturing",
             "subIndustry": "precision-rubber-engineering",
             "factoryDetails": {
                 "factoryType": (

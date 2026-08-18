@@ -1,11 +1,22 @@
 import hashlib
 from collections import defaultdict
+from contextlib import suppress
 from datetime import date, timedelta
+from decimal import Decimal
 from uuid import uuid4
+
+from django.conf import settings
+from django.core.cache import cache
 
 from apps.operations.imports import serialize_upload
 from apps.operations.models import StandardRecord, Upload
 from apps.tenancy.serializers import FactoryMasterSerializer, WorkspaceFactorySerializer
+from processing.kpis import (
+    MushroomKPIInputs,
+    SteamRecoveryInputs,
+    calculate_mushroom_kpis,
+    calculate_steam_recovery,
+)
 
 DEFAULT_TARGETS = {
     "oee": 78,
@@ -18,20 +29,35 @@ DEFAULT_TARGETS = {
     "stockCoverDays": 3,
     "downtimeMinutes": 30,
     "downtimeUnit": "minutes",
+    "biologicalEfficiency": 85,
+    "saleableYield": 94,
+    "contaminationRate": 2,
+    "environmentCompliance": 92,
+    "waterProductivity": 1100,
 }
 
 NUMERIC_TARGETS = set(DEFAULT_TARGETS) - {"downtimeUnit"}
 
 DEFAULT_PROJECT_WORKFLOW = [
-    "Raw Material Delivery",
-    "Process Operations",
-    "Profile Cutting",
-    "Bending",
-    "Machining",
-    "Other fabrication processes",
-    "Welding",
-    "Polishing",
-    "Packing",
+    "Compost Preparation",
+    "Pasteurisation & Conditioning",
+    "Spawning",
+    "Spawn Run",
+    "Casing",
+    "Pinning",
+    "Cropping & Harvest",
+    "Packing & Cold Room",
+]
+
+AUTOMOTIVE_PROJECT_WORKFLOW = [
+    "Order & Feasibility Review",
+    "Process Planning",
+    "Tooling & Validation",
+    "Material Readiness",
+    "Pilot Production",
+    "Quality Approval",
+    "Volume Production",
+    "Dispatch",
 ]
 
 
@@ -72,10 +98,11 @@ def duration_label(minutes):
         return f"{hours:.1f}".rstrip("0").rstrip(".") + " hr"
     return f"{value:g} min"
 
+
 CUSTOM_KPI_VARIABLES = {
-    "production.planned": ("Planned quantity", "Production", "units"),
-    "production.actual": ("Actual quantity", "Production", "units"),
-    "production.good": ("Good quantity", "Production", "units"),
+    "production.planned": ("Planned output", "Production", "units"),
+    "production.actual": ("Actual output", "Production", "units"),
+    "production.good": ("Accepted output", "Production", "units"),
     "production.run_minutes": ("Run time", "Production", "minutes"),
     "downtime.minutes": ("Downtime", "Downtime", "minutes"),
     "downtime.occurrences": ("Stoppages", "Downtime", "stops"),
@@ -87,10 +114,38 @@ CUSTOM_KPI_VARIABLES = {
     "supplier.deliveries": ("Supplier deliveries", "Supplier deliveries", "deliveries"),
     "supplier.late_deliveries": ("Late deliveries", "Supplier deliveries", "deliveries"),
     "orders.at_risk": ("Orders at risk", "Orders", "orders"),
+    "utilities.steam_generated": ("Steam generated", "Steam & boiler utilities", "kg"),
+    "utilities.briquette_used": ("Briquettes used", "Steam & boiler utilities", "kg"),
+    "utilities.heat_recovered": ("Heat recovered", "Steam & boiler utilities", "MJ"),
+    "utilities.briquette_saved": ("Equivalent briquettes saved", "Steam & boiler utilities", "kg"),
+    "mushroom.dry_substrate": ("Dry substrate", "Crop batches", "kg"),
+    "mushroom.water_litres": ("Water applied", "Room observations", "litres"),
+    "mushroom.biological_efficiency": (
+        "Biological efficiency",
+        "Cultivation KPIs",
+        "%",
+    ),
+    "mushroom.environment_compliance": (
+        "Environment compliance",
+        "Room observations",
+        "%",
+    ),
 }
 
 
 def workspace_snapshot(identity, factory, filters):
+    # Short-lived per-factory+filters cache to avoid recomputing heavy aggregates
+    version = cache.get(f"workspace:version:{factory.id}", 1)
+    from_val = str(filters.get("from", ""))
+    to_val = str(filters.get("to", ""))
+    dimensions = ":".join(
+        str(filters.get(name, "all")) for name in ("line", "machine", "sku", "shift")
+    )
+    key = f"workspace:v{version}:{factory.id}:{from_val}:{to_val}:{dimensions}"
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
+
     targets = {**DEFAULT_TARGETS, **factory.configuration.get("targets", {})}
     intelligence = build_intelligence(factory, targets, filters)
     masters = {
@@ -121,15 +176,17 @@ def workspace_snapshot(identity, factory, filters):
         }
         for item in factory.action_items.all()
     ]
-    return {
+    snapshot = {
         "state": {
             "company": {
                 "id": str(identity.company.id),
                 "name": identity.company.name,
-                "industry": factory.configuration.get("industry", "Manufacturing"),
+                "industry": factory.configuration.get(
+                    "industry", settings.VULCAN_VARIANT_CONFIG["industry"]
+                ),
             },
             "factories": WorkspaceFactorySerializer(
-                identity.tenant.factories.filter(is_active=True), many=True
+                identity.factories(), many=True
             ).data,
             "activeFactoryId": str(factory.id),
             "masters": masters,
@@ -139,12 +196,20 @@ def workspace_snapshot(identity, factory, filters):
         },
         "intelligence": intelligence,
     }
+    # Cache the snapshot for a short period to smooth repeated UI loads.
+    ttl = getattr(settings, "WORKSPACE_CACHE_TTL", 60)
+    with suppress(Exception):
+        cache.set(key, snapshot, ttl)
+    return snapshot
 
 
 def build_intelligence(factory, targets, filters):
-    records = StandardRecord.objects.filter(factory=factory).select_related("upload")
     from_date = parse_date(filters.get("from"))
     to_date = parse_date(filters.get("to"))
+    # Some datasets describe state at or beyond the selected period (for example,
+    # inventory history, project stages, and orders due after the range). Apply
+    # their date semantics below instead of dropping them in one global DB filter.
+    records = StandardRecord.objects.filter(factory=factory).select_related("upload")
     scoped = []
     inventory_history = []
     process_history = []
@@ -200,7 +265,23 @@ def build_intelligence(factory, targets, filters):
     production = [value for kind, value in scoped if kind == "production"]
     downtime = [value for kind, value in scoped if kind == "downtime"]
     quality = [value for kind, value in scoped if kind == "quality"]
+    utilities = [value for kind, value in scoped if kind == "utilities"]
     process_runs = process_history
+    scoped_process_runs = [
+        value
+        for value in process_history
+        if (
+            not from_date
+            or not parse_date(value.get("date"))
+            or parse_date(value.get("date")) >= from_date
+        )
+        and (
+            not to_date
+            or not parse_date(value.get("date"))
+            or parse_date(value.get("date")) <= to_date
+        )
+        and matches_dimensions(value, filters)
+    ]
     orders = [value for value in orders if matches_dimensions(value, filters, include_shift=False)]
     inventory = latest_inventory(inventory_history)
     supplier_scores = build_supplier_scores(supplier_deliveries)
@@ -255,6 +336,47 @@ def build_intelligence(factory, targets, filters):
         if inspected
         else quality_rate
     )
+    batch_ids = {
+        str(row.get("batch_id", "")).strip()
+        for row in production
+        if str(row.get("batch_id", "")).strip()
+    }
+    dry_substrate_kg = unique_total(production, "substrate_dry_kg", "batch_id")
+    growing_area_m2 = unique_total(production, "growing_area_m2", "batch_id")
+    water_litres = total(scoped_process_runs, "water_litres") or total(production, "water_litres")
+    compliant_readings, environment_readings = environment_compliance_counts(scoped_process_runs)
+    crop_age_days_total, crop_age_batches = unique_sum_and_count(
+        production, "crop_age_days", "batch_id"
+    )
+    mushroom_kpis = calculate_mushroom_kpis(
+        MushroomKPIInputs(
+            planned_harvest_kg=Decimal(str(planned)),
+            total_harvest_kg=Decimal(str(actual)),
+            saleable_harvest_kg=Decimal(str(good)),
+            contaminated_harvest_kg=Decimal(str(quality_rejected if inspected else rejected)),
+            dry_substrate_kg=Decimal(str(dry_substrate_kg)),
+            growing_area_m2=Decimal(str(growing_area_m2)),
+            water_litres=Decimal(str(water_litres)),
+            compliant_environment_readings=Decimal(str(compliant_readings)),
+            total_environment_readings=Decimal(str(environment_readings)),
+            crop_age_days_total=Decimal(str(crop_age_days_total)),
+            crop_batches=Decimal(str(crop_age_batches)),
+        )
+    ).as_dict()
+    mushroom_kpis.update(
+        {
+            "plannedHarvestKg": planned,
+            "totalHarvestKg": actual,
+            "saleableHarvestKg": good,
+            "contaminatedHarvestKg": quality_rejected if inspected else rejected,
+            "drySubstrateKg": dry_substrate_kg,
+            "growingAreaM2": growing_area_m2,
+            "waterLitres": water_litres,
+            "activeBatches": len(batch_ids),
+            "environmentReadings": environment_readings,
+        }
+    )
+    steam_recovery = build_steam_recovery(utilities, production)
     trend, daily_oee = production_trends(production)
     machine_loss = grouped_loss(downtime, "machine", include_line=True)
     reason_loss = grouped_loss(downtime, "reason")
@@ -284,6 +406,8 @@ def build_intelligence(factory, targets, filters):
         order_risks,
         supplier_scores,
         rejection_rate,
+        is_mushroom_factory(factory),
+        mushroom_kpis,
     )
     alerts = project_alerts(factory, projects, filters.get("to")) + alerts
     uploads = Upload.objects.filter(factory=factory, status="COMPLETED")
@@ -308,6 +432,8 @@ def build_intelligence(factory, targets, filters):
         supplier_score,
         supplier_scores,
         order_risks,
+        mushroom_kpis,
+        steam_recovery,
     )
     custom_kpis = calculate_custom_kpis(
         factory.configuration.get("customKpis", []), custom_variables
@@ -354,6 +480,9 @@ def build_intelligence(factory, targets, filters):
         "orderRisks": order_risks,
         "supplierScores": supplier_scores,
         "supplierScore": supplier_score,
+        "mushroom": mushroom_kpis,
+        "roomConditions": build_room_conditions(process_runs),
+        "steamRecovery": steam_recovery,
         "customKpiVariables": custom_variables,
         "customKpis": custom_kpis,
         "digitalTwin": digital_twin,
@@ -369,6 +498,7 @@ def build_intelligence(factory, targets, filters):
             "process": len(process_runs),
             "projects": len(projects),
             "project_stages": len(latest_project_values(project_stage_records, stage_record_key)),
+            "utilities": len(utilities),
         },
         "dataHealth": build_data_health(latest_dates, uploaded_types, to_date),
         "alerts": alerts,
@@ -437,6 +567,8 @@ def build_custom_kpi_variables(
     supplier_score,
     supplier_scores,
     order_risks,
+    mushroom_kpis,
+    steam_recovery,
 ):
     values = {
         "production.planned": planned,
@@ -453,7 +585,27 @@ def build_custom_kpi_variables(
         "supplier.deliveries": sum(item["deliveries"] for item in supplier_scores),
         "supplier.late_deliveries": sum(item["lateDeliveries"] for item in supplier_scores),
         "orders.at_risk": len(order_risks),
+        "utilities.steam_generated": steam_recovery["steamGeneratedKg"],
+        "utilities.briquette_used": steam_recovery["briquetteUsedKg"],
+        "utilities.heat_recovered": steam_recovery["heatRecoveredMj"],
+        "utilities.briquette_saved": steam_recovery["equivalentBriquetteSavedKg"],
+        "mushroom.dry_substrate": mushroom_kpis["drySubstrateKg"],
+        "mushroom.water_litres": mushroom_kpis["waterLitres"],
+        "mushroom.biological_efficiency": mushroom_kpis["biologicalEfficiency"],
+        "mushroom.environment_compliance": mushroom_kpis["environmentCompliance"],
     }
+    variables = CUSTOM_KPI_VARIABLES
+    if settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]:
+        variables = {
+            **CUSTOM_KPI_VARIABLES,
+            "production.planned": ("Planned harvest", "Harvest", "kg"),
+            "production.actual": ("Total harvest", "Harvest", "kg"),
+            "production.good": ("Saleable harvest", "Harvest", "kg"),
+        }
+    else:
+        variables = {
+            key: item for key, item in variables.items() if not key.startswith("mushroom.")
+        }
     return [
         {
             "key": key,
@@ -462,8 +614,134 @@ def build_custom_kpi_variables(
             "sourceUnit": unit,
             "value": values[key],
         }
-        for key, (label, dataset, unit) in CUSTOM_KPI_VARIABLES.items()
+        for key, (label, dataset, unit) in variables.items()
     ]
+
+
+def build_steam_recovery(utility_rows, production_rows):
+    """Build period and daily boiler KPIs from approved utility log rows."""
+
+    feedwater_kg = total(utility_rows, "feedwater_kg")
+    steam_generated_kg = total(utility_rows, "steam_generated_kg")
+    briquette_used_kg = total(utility_rows, "briquette_used_kg")
+
+    def weighted(field, weight_field):
+        denominator = total(utility_rows, weight_field)
+        return (
+            sum(number(row.get(field)) * number(row.get(weight_field)) for row in utility_rows)
+            / denominator
+            if denominator
+            else 0
+        )
+
+    result = calculate_steam_recovery(
+        SteamRecoveryInputs(
+            feedwater_kg=Decimal(str(feedwater_kg)),
+            feedwater_inlet_temperature_c=Decimal(
+                str(weighted("feedwater_inlet_temperature_c", "feedwater_kg"))
+            ),
+            feedwater_tank_temperature_c=Decimal(
+                str(weighted("feedwater_tank_temperature_c", "feedwater_kg"))
+            ),
+            steam_generated_kg=Decimal(str(steam_generated_kg)),
+            recovered_condensate_kg=Decimal(
+                str(total(utility_rows, "recovered_condensate_kg"))
+            ),
+            flash_steam_recovered_kg=Decimal(
+                str(total(utility_rows, "flash_steam_recovered_kg"))
+            ),
+            briquette_used_kg=Decimal(str(briquette_used_kg)),
+            briquette_gcv_kcal_per_kg=Decimal(
+                str(weighted("briquette_gcv_kcal_per_kg", "briquette_used_kg"))
+            ),
+            boiler_efficiency_percent=Decimal(
+                str(weighted("boiler_efficiency_percent", "briquette_used_kg"))
+            ),
+            production_quantity=Decimal(str(total(production_rows, "actual_quantity"))),
+        )
+    ).as_dict()
+    result.update(
+        {
+            "feedwaterKg": feedwater_kg,
+            "steamGeneratedKg": steam_generated_kg,
+            "recoveredCondensateKg": total(utility_rows, "recovered_condensate_kg"),
+            "flashSteamRecoveredKg": total(utility_rows, "flash_steam_recovered_kg"),
+            "briquetteUsedKg": briquette_used_kg,
+            "boilerEfficiencyPercent": weighted(
+                "boiler_efficiency_percent", "briquette_used_kg"
+            ),
+            "briquetteGcvKcalPerKg": weighted(
+                "briquette_gcv_kcal_per_kg", "briquette_used_kg"
+            ),
+        }
+    )
+
+    utility_by_date = defaultdict(list)
+    production_by_date = defaultdict(list)
+    for row in utility_rows:
+        utility_by_date[str(row.get("date", ""))].append(row)
+    for row in production_rows:
+        production_by_date[str(row.get("date", ""))].append(row)
+    result["trend"] = []
+    for day in sorted(key for key in utility_by_date if key):
+        daily = build_steam_recovery_without_trend(
+            utility_by_date[day], production_by_date.get(day, [])
+        )
+        result["trend"].append(
+            {
+                "date": day,
+                "steamGeneratedKg": daily["steamGeneratedKg"],
+                "briquetteUsedKg": daily["briquetteUsedKg"],
+                "heatRecoveredMj": daily["heatRecoveredMj"],
+                "specificSteamKgPerUnit": daily["specificSteamKgPerUnit"],
+            }
+        )
+    return result
+
+
+def build_steam_recovery_without_trend(utility_rows, production_rows):
+    """Calculate one daily point without recursively building another trend."""
+
+    feedwater = total(utility_rows, "feedwater_kg")
+    fuel = total(utility_rows, "briquette_used_kg")
+
+    def weighted(field, weight_field, denominator):
+        return (
+            sum(number(row.get(field)) * number(row.get(weight_field)) for row in utility_rows)
+            / denominator
+            if denominator
+            else 0
+        )
+
+    calculated = calculate_steam_recovery(
+        SteamRecoveryInputs(
+            feedwater_kg=Decimal(str(feedwater)),
+            feedwater_inlet_temperature_c=Decimal(
+                str(weighted("feedwater_inlet_temperature_c", "feedwater_kg", feedwater))
+            ),
+            feedwater_tank_temperature_c=Decimal(
+                str(weighted("feedwater_tank_temperature_c", "feedwater_kg", feedwater))
+            ),
+            steam_generated_kg=Decimal(str(total(utility_rows, "steam_generated_kg"))),
+            recovered_condensate_kg=Decimal(str(total(utility_rows, "recovered_condensate_kg"))),
+            flash_steam_recovered_kg=Decimal(str(total(utility_rows, "flash_steam_recovered_kg"))),
+            briquette_used_kg=Decimal(str(fuel)),
+            briquette_gcv_kcal_per_kg=Decimal(
+                str(weighted("briquette_gcv_kcal_per_kg", "briquette_used_kg", fuel))
+            ),
+            boiler_efficiency_percent=Decimal(
+                str(weighted("boiler_efficiency_percent", "briquette_used_kg", fuel))
+            ),
+            production_quantity=Decimal(str(total(production_rows, "actual_quantity"))),
+        )
+    ).as_dict()
+    calculated.update(
+        {
+            "steamGeneratedKg": total(utility_rows, "steam_generated_kg"),
+            "briquetteUsedKg": fuel,
+        }
+    )
+    return calculated
 
 
 def calculate_custom_kpis(definitions, variables):
@@ -654,6 +932,10 @@ def process_metrics(rows):
         "throughputPerHour": (output_quantity / run_minutes * 60 if run_minutes else None),
         "cycleMinutes": average(rows, "cycle_time_minutes"),
         "temperatureC": average(rows, "temperature_c"),
+        "humidityPct": average(rows, "humidity_pct"),
+        "co2Ppm": average(rows, "co2_ppm"),
+        "substrateMoisturePct": average(rows, "substrate_moisture_pct"),
+        "waterLitres": optional_total(rows, "water_litres"),
         "pressureBar": average(rows, "pressure_bar"),
         "energyKwh": optional_total(rows, "energy_kwh"),
         "downtimeMinutes": optional_total(rows, "downtime_minutes"),
@@ -906,12 +1188,15 @@ def build_projects(project_records, stage_records, selected_end):
             progress = round(source_progress)
             status = source_status
         prediction = project_delivery_prediction(stages, commitment, values.get("dispatch_date"))
-        updated_at = max(
-            [
-                str(values.get("_source_uploaded_at") or ""),
-                *(str(item.get("_source_uploaded_at") or "") for item in source_stages),
-            ]
-        ) or f"{start_date}T00:00:00"
+        updated_at = (
+            max(
+                [
+                    str(values.get("_source_uploaded_at") or ""),
+                    *(str(item.get("_source_uploaded_at") or "") for item in source_stages),
+                ]
+            )
+            or f"{start_date}T00:00:00"
+        )
         team = project_team(values.get("assigned_team"), stages)
         documents = project_documents(project_number, stages, updated_at)
         activities = project_activities(
@@ -987,17 +1272,22 @@ def build_project_stage(project_number, values):
 
 
 def default_project_stages(project_number, start_value, commitment_value, progress, status):
+    workflow = (
+        DEFAULT_PROJECT_WORKFLOW
+        if settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]
+        else AUTOMOTIVE_PROJECT_WORKFLOW
+    )
     start = parse_date(start_value) or date.today()
     commitment = parse_date(commitment_value) or start
-    total_days = max((commitment - start).days + 1, len(DEFAULT_PROJECT_WORKFLOW))
-    stage_position = progress / 100 * len(DEFAULT_PROJECT_WORKFLOW)
+    total_days = max((commitment - start).days + 1, len(workflow))
+    stage_position = progress / 100 * len(workflow)
     stages = []
-    for index, name in enumerate(DEFAULT_PROJECT_WORKFLOW):
+    for index, name in enumerate(workflow):
         stage_start = start + timedelta(
-            days=int(total_days * index / len(DEFAULT_PROJECT_WORKFLOW))
+            days=int(total_days * index / len(workflow))
         )
         next_start = start + timedelta(
-            days=int(total_days * (index + 1) / len(DEFAULT_PROJECT_WORKFLOW))
+            days=int(total_days * (index + 1) / len(workflow))
         )
         completed = index < int(stage_position)
         active = index == int(stage_position) and 0 < progress < 100
@@ -1130,8 +1420,7 @@ def project_activities(project_number, stages, source_filename, imported_at):
             "type": "status",
             "title": "Project source imported",
             "detail": (
-                "Latest project facts were loaded from "
-                f"{source_filename or 'the approved source'}."
+                f"Latest project facts were loaded from {source_filename or 'the approved source'}."
             ),
             "user": "Vulcan ingestion",
             "timestamp": imported_at,
@@ -1162,8 +1451,7 @@ def project_alerts(factory, projects, selected_end):
     result = []
     for project in projects:
         if project["status"] == "Completed" or (
-            project["status"] != "Delayed"
-            and project["deliveryPrediction"]["state"] == "On track"
+            project["status"] != "Delayed" and project["deliveryPrediction"]["state"] == "On track"
         ):
             continue
         delayed = [stage for stage in project["stages"] if stage["status"] == "Delayed"]
@@ -1226,9 +1514,9 @@ def split_source_list(value):
 
 
 def stable_project_id(prefix, *parts):
-    digest = hashlib.sha1(
-        "|".join(parts).casefold().encode(), usedforsecurity=False
-    ).hexdigest()[:16]
+    digest = hashlib.sha1("|".join(parts).casefold().encode(), usedforsecurity=False).hexdigest()[
+        :16
+    ]
     return f"{prefix}-{digest}"
 
 
@@ -1251,6 +1539,7 @@ def build_data_health(latest_dates, uploaded_types, selected_end):
         "quality": 7,
         "inventory": 3,
         "supplier": 14,
+        "utilities": 2,
     }
     result = {}
     for dataset_type, threshold in stale_after_days.items():
@@ -1389,16 +1678,22 @@ def generated_alerts(
     order_risks,
     supplier_scores,
     rejection_rate,
+    mushroom_mode,
+    mushroom,
 ):
     alerts = []
     end = filters.get("to") or date.today().isoformat()
+    rejection_limit = targets["contaminationRate"] if mushroom_mode else targets["rejectionRate"]
     if order_risks:
         order = order_risks[0]
         alerts.append(
             alert(
                 f"order-{order['orderId']}",
                 f"{order['orderId']} is at risk",
-                f"{order['remaining']:g} units remain before {order['dueDate']}.",
+                (
+                    f"{order['remaining']:g} "
+                    f"{'kg' if mushroom_mode else 'units'} remain before {order['dueDate']}."
+                ),
                 f"{order['sku']} · Orders",
                 "critical" if order["risk"] == "critical" else "high",
                 "Re-sequence the constrained line and secure material before "
@@ -1432,7 +1727,10 @@ def generated_alerts(
             alert(
                 f"inventory-{item['material']}",
                 f"{item['material']} stock-out projected",
-                f"Current stock covers {item['stockDays']:.1f} production days.",
+                (
+                    f"Current stock covers {item['stockDays']:.1f} "
+                    f"{'growing' if mushroom_mode else 'production'} days."
+                ),
                 f"{item['supplier']} · Inventory",
                 "critical" if item["stockDays"] < 2 else "high",
                 "Expedite the receipt or re-sequence orders that consume this material.",
@@ -1445,7 +1743,7 @@ def generated_alerts(
                 ],
             )
         )
-    if planned and oee < targets["oee"]:
+    if planned and not mushroom_mode and oee < targets["oee"]:
         alerts.append(
             alert(
                 "oee-below-target",
@@ -1464,27 +1762,46 @@ def generated_alerts(
         alerts.append(
             alert(
                 "production-below-plan",
-                "Production is below plan",
-                f"Output reached {percent(actual, planned):.1f}% of the selected-period plan.",
-                "Factory production",
+                "Harvest is below plan" if mushroom_mode else "Production is below plan",
+                (
+                    f"{'Harvest' if mushroom_mode else 'Output'} reached "
+                    f"{percent(actual, planned):.1f}% of the selected-period plan."
+                ),
+                "Farm harvest" if mushroom_mode else "Factory production",
                 "high" if percent(actual, planned) < 75 else "medium",
-                "Review the largest downtime and speed losses before changing the plan.",
+                (
+                    "Review room climate, crop age and the current flush before "
+                    "changing the harvest plan."
+                    if mushroom_mode
+                    else "Review the largest downtime and speed losses before changing the plan."
+                ),
                 f"< {targets['planAttainment']}% attainment",
                 f"{percent(actual, planned):.1f}%",
                 end,
                 [f"Plan {planned:g}", f"Actual {actual:g}"],
             )
         )
-    if rejection_rate > targets["rejectionRate"]:
+    if rejection_rate > rejection_limit:
         alerts.append(
             alert(
                 "rejection-above-target",
-                "Rejection is above target",
-                f"Rejected output is {rejection_rate:.1f}% for the selected period.",
-                "Factory quality",
-                "high" if rejection_rate > targets["rejectionRate"] * 1.5 else "medium",
-                "Review the leading defect reason and affected SKU before the next run.",
-                f"> {targets['rejectionRate']}% rejection",
+                "Contamination and discard are above limit"
+                if mushroom_mode
+                else "Rejection is above target",
+                (
+                    ("Contaminated or discarded harvest" if mushroom_mode else "Rejected output")
+                    + " "
+                    f"is {rejection_rate:.1f}% for the selected period."
+                ),
+                "Crop quality" if mushroom_mode else "Factory quality",
+                "high" if rejection_rate > rejection_limit * 1.5 else "medium",
+                (
+                    "Isolate the affected crop batch, verify hygiene records and "
+                    "inspect adjacent rooms."
+                    if mushroom_mode
+                    else "Review the leading defect reason and affected SKU before the next run."
+                ),
+                f"> {rejection_limit}% {'contamination' if mushroom_mode else 'rejection'}",
                 f"{rejection_rate:.1f}%",
                 end,
                 [f"Rejection rate {rejection_rate:.1f}%"],
@@ -1520,12 +1837,85 @@ def generated_alerts(
                 f"{defect['rejected']:g} rejected units share this defect reason.",
                 "Quality · Rejections",
                 "medium",
-                "Verify the process parameter at first-piece approval and sample "
-                "the next three batches.",
+                (
+                    "Inspect the affected room and crop batch, then verify sanitation, "
+                    "casing and climate records."
+                    if mushroom_mode
+                    else "Verify the process parameter at first-piece approval and "
+                    "sample the next three batches."
+                ),
                 "Top defect reason",
                 f"{defect['rejected']:g} rejected",
                 end,
                 [f"{defect['rejected']:g} rejected records"],
+            )
+        )
+    if (
+        mushroom_mode
+        and mushroom["drySubstrateKg"]
+        and mushroom["biologicalEfficiency"] < targets["biologicalEfficiency"]
+    ):
+        alerts.append(
+            alert(
+                "biological-efficiency-below-target",
+                "Biological efficiency is below target",
+                "Fresh mushroom yield is low for the dry substrate loaded into active batches.",
+                "Crop conversion",
+                "high"
+                if mushroom["biologicalEfficiency"] < targets["biologicalEfficiency"] * 0.8
+                else "medium",
+                "Compare recipe, compost temperature history, spawn rate and flush "
+                "performance by batch.",
+                f">= {targets['biologicalEfficiency']}% biological efficiency",
+                f"{mushroom['biologicalEfficiency']:.1f}%",
+                end,
+                [
+                    f"{mushroom['totalHarvestKg']:g} kg total harvest",
+                    f"{mushroom['drySubstrateKg']:g} kg dry substrate",
+                ],
+            )
+        )
+    if (
+        mushroom_mode
+        and mushroom["environmentReadings"]
+        and mushroom["environmentCompliance"] < targets["environmentCompliance"]
+    ):
+        alerts.append(
+            alert(
+                "environment-compliance-below-target",
+                "Growing-room climate needs attention",
+                "Temperature, humidity or CO2 readings fell outside the crop-stage limits.",
+                "Growing room climate",
+                "high" if mushroom["environmentCompliance"] < 80 else "medium",
+                "Prioritise the latest non-compliant room and verify HVAC, fresh-air "
+                "and fogging controls.",
+                f">= {targets['environmentCompliance']}% readings in range",
+                f"{mushroom['environmentCompliance']:.1f}%",
+                end,
+                [f"{mushroom['environmentReadings']:g} validated room readings"],
+            )
+        )
+    if (
+        mushroom_mode
+        and mushroom["waterLitres"]
+        and mushroom["waterProductivityKgPerKl"] < targets["waterProductivity"]
+    ):
+        alerts.append(
+            alert(
+                "water-productivity-below-target",
+                "Water productivity is below target",
+                "Saleable harvest per kilolitre is lower than the configured farm target.",
+                "Water use",
+                "medium",
+                "Check irrigation dose by room and remove watering events that do not "
+                "support crop-stage demand.",
+                f">= {targets['waterProductivity']} kg/kl",
+                f"{mushroom['waterProductivityKgPerKl']:.1f} kg/kl",
+                end,
+                [
+                    f"{mushroom['waterLitres']:g} litres applied",
+                    f"{mushroom['saleableHarvestKg']:g} kg saleable harvest",
+                ],
             )
         )
     statuses = factory.configuration.get("alertStatuses", {})
@@ -1566,6 +1956,40 @@ def alert(
 
 def answer_question(intelligence, question):
     normalized = question.casefold()
+    mushroom = intelligence.get("mushroom", {})
+    mushroom_mode = settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]
+    if mushroom_mode and any(
+        word in normalized for word in ["biological", "substrate", "conversion"]
+    ):
+        return response(
+            f"Biological efficiency is {mushroom.get('biologicalEfficiency', 0):.1f}%.",
+            "It compares total fresh mushroom harvest with the dry substrate loaded "
+            "into each crop batch.",
+            [
+                f"{mushroom.get('totalHarvestKg', 0):g} kg total harvest",
+                f"{mushroom.get('drySubstrateKg', 0):g} kg dry substrate",
+            ],
+        )
+    if mushroom_mode and any(
+        word in normalized for word in ["climate", "temperature", "humidity", "co2"]
+    ):
+        return response(
+            f"Growing-room environment compliance is "
+            f"{mushroom.get('environmentCompliance', 0):.1f}%.",
+            "Each room observation is checked against its crop-stage temperature, "
+            "humidity and CO2 limits.",
+            [f"{mushroom.get('environmentReadings', 0):g} validated readings"],
+        )
+    if mushroom_mode and any(word in normalized for word in ["water", "irrigation"]):
+        return response(
+            f"Water productivity is "
+            f"{mushroom.get('waterProductivityKgPerKl', 0):.1f} kg per kilolitre.",
+            "The measure divides saleable harvest by mapped room watering volume.",
+            [
+                f"{mushroom.get('waterLitres', 0):g} litres applied",
+                f"{mushroom.get('saleableHarvestKg', 0):g} kg saleable harvest",
+            ],
+        )
     if any(word in normalized for word in ["supplier", "delivery", "vendor"]):
         items = intelligence["supplierScores"]
         if items:
@@ -1608,7 +2032,12 @@ def answer_question(intelligence, question):
             )
     totals = intelligence["totals"]
     return response(
-        f"Production is {totals['actual']:g} units against a plan of {totals['planned']:g}.",
+        (
+            f"Harvest is {totals['actual']:g} kg against a plan of {totals['planned']:g} kg."
+            if mushroom_mode
+            else f"Production is {totals['actual']:g} units against a plan of "
+            f"{totals['planned']:g} units."
+        ),
         "This answer uses only validated records in the selected factory and date range.",
         [f"Plan {totals['planned']:g}", f"Actual {totals['actual']:g}"],
     )
@@ -1633,6 +2062,78 @@ def optional_number(value):
 
 def total(rows, key):
     return sum(number(row.get(key)) for row in rows)
+
+
+def unique_sum_and_count(rows, value_key, group_key):
+    grouped = {}
+    for index, row in enumerate(rows):
+        value = row.get(value_key)
+        if value in {None, ""}:
+            continue
+        key = str(row.get(group_key, "")).strip() or f"row-{index}"
+        grouped[key] = max(grouped.get(key, 0), number(value))
+    return sum(grouped.values()), len(grouped)
+
+
+def unique_total(rows, value_key, group_key):
+    value, _ = unique_sum_and_count(rows, value_key, group_key)
+    return value
+
+
+def environment_compliance_counts(rows):
+    results = [result for row in rows if (result := row_environment_compliance(row)) is not None]
+    return sum(results), len(results)
+
+
+def row_environment_compliance(row):
+    checks = []
+    ranges = [
+        ("temperature_c", "temperature_min_c", "temperature_max_c"),
+        ("humidity_pct", "humidity_min_pct", "humidity_max_pct"),
+    ]
+    for value_key, minimum_key, maximum_key in ranges:
+        if row.get(value_key) in {None, ""}:
+            continue
+        if row.get(minimum_key) in {None, ""} or row.get(maximum_key) in {None, ""}:
+            continue
+        value = number(row.get(value_key))
+        checks.append(number(row.get(minimum_key)) <= value <= number(row.get(maximum_key)))
+    if row.get("co2_ppm") not in {None, ""} and row.get("co2_max_ppm") not in {None, ""}:
+        checks.append(number(row.get("co2_ppm")) <= number(row.get("co2_max_ppm")))
+    return all(checks) if checks else None
+
+
+def build_room_conditions(rows):
+    latest = {}
+    for row in rows:
+        room = str(row.get("machine", "")).strip()
+        if not room:
+            continue
+        current = latest.get(room)
+        if current and str(current.get("date", "")) > str(row.get("date", "")):
+            continue
+        latest[room] = row
+    return [
+        {
+            "room": room,
+            "line": row.get("line", ""),
+            "process": row.get("process", ""),
+            "batchId": row.get("batch_id", ""),
+            "date": row.get("date", ""),
+            "status": row.get("status", ""),
+            "temperatureC": optional_number(row.get("temperature_c")),
+            "humidityPct": optional_number(row.get("humidity_pct")),
+            "co2Ppm": optional_number(row.get("co2_ppm")),
+            "substrateMoisturePct": optional_number(row.get("substrate_moisture_pct")),
+            "waterLitres": optional_number(row.get("water_litres")),
+            "compliant": row_environment_compliance(row),
+        }
+        for room, row in sorted(latest.items())
+    ]
+
+
+def is_mushroom_factory(factory):
+    return settings.VULCAN_VARIANT_CONFIG["features"]["mushroomAnalytics"]
 
 
 def optional_total(rows, key):

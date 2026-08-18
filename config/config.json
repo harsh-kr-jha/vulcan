@@ -1,0 +1,8 @@
+{
+  "clientId": "SANJ",
+  "displayName": "Sanj Mushroom Farm",
+  "factoryCode": "SANJ-FARM",
+  "configVersion": "SANJ-C01",
+  "deploymentId": "sanj-prod-01",
+  "environmentOverrides": {}
+}

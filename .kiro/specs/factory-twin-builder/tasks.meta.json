@@ -1,0 +1,836 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "1.1 Create the `backend/apps/spatial/` Django app with `__init__.py`, `apps.py`, `models.py`, `admin.py`, `urls.py`, `serializers.py`, and `views.py`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089360656
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089378345
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089907788
+      }
+    ],
+    "1.2 Implement `FactoryLayout`, `SpatialMachine`, `MachineParameter`, and `MachineCustomKpi` models": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089360770
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089914954
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089925763
+      }
+    ],
+    "1.3 Implement `MachineConnection`, `MachineObservation`, `InventoryConfiguration`, `InventoryChange`, `DispatchConfiguration`, and `DispatchEvent` models": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089360890
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089915974
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089926715
+      }
+    ],
+    "1.4 Create and run database migrations for the spatial app": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089361047
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089932689
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787090191205
+      }
+    ],
+    "2.1 Implement serializers for `FactoryLayout` (nested machines, connections, inventory, dispatch)": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089361178
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787090221310
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091064615
+      }
+    ],
+    "2.2 Implement serializers for `MachineParameter`, `MachineCustomKpi`, and observation submission": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089361291
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787090221990
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091066034
+      }
+    ],
+    "2.3 Implement serializers for inventory and dispatch operations": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089361377
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787090222803
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091066549
+      }
+    ],
+    "2.4 Implement API views: `FactoryLayoutViewSet` (create, retrieve, partial_update)": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089361463
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091082939
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091097972
+      }
+    ],
+    "2.5 Implement API views: machine entry schema and observations": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089361555
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091083946
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091098656
+      }
+    ],
+    "2.6 Implement API views: inventory and dispatch endpoints": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089361640
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091084914
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091099529
+      }
+    ],
+    "2.7 Register URL routing under `/api/backend/api/spatial/`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089361771
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091086144
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091100375
+      }
+    ],
+    "3. Checkpoint - Ensure backend tests pass": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089361876
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108389952
+      }
+    ],
+    "4.1 Create `frontend/lib/spatial-types.ts` with all TypeScript interfaces": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089362027
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089378991
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089908639
+      }
+    ],
+    "4.2 Create `frontend/lib/factory-builder-context.tsx` with `FactoryBuilderContext` and `FactoryBuilderProvider`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089362104
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089916950
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787090192133
+      }
+    ],
+    "4.3 Implement validation utility functions in `frontend/lib/spatial-validators.ts`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089362178
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089918008
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787090193135
+      }
+    ],
+    "5.1 Create `FloorCanvas` SVG component in `frontend/components/digital-twin/builder/FloorCanvas.tsx`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089362270
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787090223778
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091067595
+      }
+    ],
+    "5.2 Implement zoom and pan interactions on `FloorCanvas`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089362372
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091087108
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091101194
+      }
+    ],
+    "5.3 Implement cursor cell highlighting in edit mode": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089362464
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091108463
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091458014
+      }
+    ],
+    "5.4 Create `FactoryBuilderDialog` component for factory initiation": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089362556
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787090224682
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091068546
+      }
+    ],
+    "6.1 Implement machine placement interaction on `FloorCanvas`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089362646
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091109282
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091459146
+      }
+    ],
+    "6.2 Create `MachineConfigPanel` slide-over component": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089362740
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091110374
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091459833
+      }
+    ],
+    "6.3 Implement `ParametersSection` in `MachineConfigPanel`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089362837
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091111408
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091460723
+      }
+    ],
+    "6.4 Implement `KpiSection` in `MachineConfigPanel`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089362933
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091112536
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091461724
+      }
+    ],
+    "6.5 Render placed `MachineNode` elements on `FloorCanvas`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089363043
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091468268
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091766463
+      }
+    ],
+    "7.1 Implement `ConnectionDrawer` interaction on `FloorCanvas`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089363143
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091469137
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091767289
+      }
+    ],
+    "7.2 Create `ConnectionConfigPanel` slide-over component": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089363251
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091470175
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091768145
+      }
+    ],
+    "7.3 Render persistent `ConnectionLine` elements on `FloorCanvas`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089363411
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091471097
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091769132
+      }
+    ],
+    "8. Checkpoint - Ensure frontend builder components render correctly": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089363491
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108390652
+      }
+    ],
+    "9.1 Implement QR code generation utility in `frontend/lib/qr-generator.ts`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089363559
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091472345
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091770293
+      }
+    ],
+    "9.2 Create `QrCodePreview` component in `MachineConfigPanel`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089363662
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091777694
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092099151
+      }
+    ],
+    "9.3 Create data entry page at `frontend/app/digital-twin/entry/[machineId]/page.tsx`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089363825
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091778678
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092099997
+      }
+    ],
+    "9.4 Implement data submission logic on the data entry page": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089363893
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092117221
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092131914
+      }
+    ],
+    "10.1 Create `FactoryVisualization` component with isometric floor and 3D machine boxes": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089363976
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091780046
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092101049
+      }
+    ],
+    "10.2 Render connection paths in visualization mode": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089364062
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092118246
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108374349
+      }
+    ],
+    "10.3 Implement hover tooltip and long-press support": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089364140
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092119381
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092132740
+      }
+    ],
+    "10.4 Implement click/tap detail panel": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089364225
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092120316
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108375088
+      }
+    ],
+    "11.1 Create `InventoryPanel` component to the left of `FloorCanvas`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089364307
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091781254
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092102154
+      }
+    ],
+    "11.2 Implement inventory tree map visualization using ECharts": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089364405
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092121450
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108376095
+      }
+    ],
+    "11.3 Create inventory QR data entry page at `frontend/app/digital-twin/inventory/[layoutId]/page.tsx`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089364507
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108382375
+      }
+    ],
+    "11.4 Create `DispatchPanel` component to the right of `FloorCanvas`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089364609
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091782190
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092103031
+      }
+    ],
+    "11.5 Implement dispatch tree map visualization and QR code": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089364718
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108377045
+      }
+    ],
+    "11.6 Create dispatch QR data entry page at `frontend/app/digital-twin/dispatch/[layoutId]/page.tsx`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089364870
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108383326
+      }
+    ],
+    "12. Checkpoint - Ensure panels, QR pages, and visualization render correctly": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089364946
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108391723
+      }
+    ],
+    "13.1 Implement save layout flow in `FactoryBuilderContext`": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089365020
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108378104
+      }
+    ],
+    "13.2 Implement load layout flow on Digital Twin page": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089365124
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108379197
+      }
+    ],
+    "13.3 Implement edit mode re-entry flow": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089365216
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108380110
+      }
+    ],
+    "13.4 Wire `FactoryTwinPage` as top-level orchestrator": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089365299
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108381146
+      }
+    ],
+    "14. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787089365376
+      },
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108392628
+      }
+    ],
+    "1. Backend models and migrations (Django spatial app)": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787090191279
+      }
+    ],
+    "4. Frontend types and state management": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787090193181
+      }
+    ],
+    "2. Backend API endpoints (serializers, views, URL routing)": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091100430
+      }
+    ],
+    "5. Frontend floor canvas and grid (SVG-based)": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091458054
+      }
+    ],
+    "6. Frontend machine placement and configuration": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091766514
+      }
+    ],
+    "7. Frontend connection drawing": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787091769173
+      }
+    ],
+    "9. Frontend QR code generation and data entry page": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787092131971
+      }
+    ],
+    "10. Frontend factory visualization": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108375138
+      }
+    ],
+    "13. Integration and save/load flow": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108381207
+      }
+    ],
+    "11. Frontend inventory and dispatch panels": [
+      {
+        "executionId": "9e9c7e3c-aa03-41d7-8723-45865a7b3aea",
+        "chatSessionId": "sess_2ba7032f-afe6-4bf4-b701-fe04eb86aaf0",
+        "timestamp": 1787108383419
+      }
+    ]
+  }
+}

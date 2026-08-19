@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     "apps.analytics",
     "apps.alerts",
     "apps.audit",
+    "apps.spatial",
 ]
 
 MIDDLEWARE = [

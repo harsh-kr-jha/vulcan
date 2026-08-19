@@ -100,6 +100,7 @@ urlpatterns = [
     ),
     path("api/imports/<uuid:upload_id>/commit/", ImportCommitView.as_view(), name="import-commit"),
     path("api/imports/<uuid:upload_id>/cancel/", ImportCancelView.as_view(), name="import-cancel"),
+    path("api/spatial/", include("apps.spatial.urls")),
     path("api/", include(router.urls)),
 ]
 

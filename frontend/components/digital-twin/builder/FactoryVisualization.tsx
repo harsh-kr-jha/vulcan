@@ -1,0 +1,384 @@
+"use client";
+
+import { useCallback, useMemo, useState } from "react";
+import type {
+  FactoryLayout,
+  MachineNode,
+  MachineStatus,
+  ConnectionLine,
+} from "@/lib/spatial-types";
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface FactoryVisualizationProps {
+  layout: FactoryLayout;
+  /** Map of machineId -> latest observation values */
+  observations?: Record<string, ObservationData>;
+  onMachineHover?: (machineId: string | null) => void;
+  onMachineClick?: (machineId: string) => void;
+}
+
+export interface ObservationData {
+  values: Record<string, unknown>;
+  submittedAt?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Status-based fill colors for machine rectangles (top-view) */
+const STATUS_FILLS: Record<MachineStatus, string> = {
+  running: "#bbf7d0",  // green-200
+  warning: "#fde68a",  // amber-200
+  down: "#fecaca",     // red-200
+  idle: "#e5e7eb",     // gray-200
+  no_data: "#f3f4f6",  // gray-100
+};
+
+const STATUS_STROKES: Record<MachineStatus, string> = {
+  running: "#16a34a",  // green-600
+  warning: "#d97706",  // amber-600
+  down: "#dc2626",     // red-600
+  idle: "#6b7280",     // gray-500
+  no_data: "#9ca3af",  // gray-400
+};
+
+const STATUS_LABELS: Record<MachineStatus, string> = {
+  running: "Running",
+  warning: "Warning",
+  down: "Down",
+  idle: "Idle",
+  no_data: "No Data",
+};
+
+// Padding around the floor in SVG units
+const PADDING = 1.5;
+
+// ---------------------------------------------------------------------------
+// Helper: compute edge-to-edge connection endpoints
+// ---------------------------------------------------------------------------
+
+function computeEdgePoint(
+  center: { x: number; y: number },
+  halfW: number,
+  halfH: number,
+  targetCenter: { x: number; y: number }
+): { x: number; y: number } {
+  const dx = targetCenter.x - center.x;
+  const dy = targetCenter.y - center.y;
+  if (dx === 0 && dy === 0) return center;
+
+  // Find intersection of ray from center to target with the rectangle edge
+  const absDx = Math.abs(dx);
+  const absDy = Math.abs(dy);
+
+  let t: number;
+  if (absDx * halfH > absDy * halfW) {
+    // Hits left or right edge
+    t = halfW / absDx;
+  } else {
+    // Hits top or bottom edge
+    t = halfH / absDy;
+  }
+
+  return { x: center.x + dx * t, y: center.y + dy * t };
+}
+
+// ---------------------------------------------------------------------------
+// FactoryVisualization – SVG top-view with subtle perspective
+// ---------------------------------------------------------------------------
+
+/**
+ * Renders the factory layout as a near-top-view SVG with a subtle
+ * CSS perspective tilt. Machines are status-colored rectangles with labels.
+ * Hover shows parameter tooltip; click opens the analytics panel.
+ */
+export function FactoryVisualization({
+  layout,
+  observations,
+  onMachineHover,
+  onMachineClick,
+}: FactoryVisualizationProps) {
+  const [hoveredMachineId, setHoveredMachineId] = useState<string | null>(null);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
+
+  const { floor, machines, connections } = layout;
+
+  // SVG viewBox: floor dimensions + padding
+  const viewBoxWidth = floor.width + PADDING * 2;
+  const viewBoxHeight = floor.height + PADDING * 2;
+  const viewBox = `${-PADDING} ${-PADDING} ${viewBoxWidth} ${viewBoxHeight}`;
+
+  // Machine lookup map
+  const machineMap = useMemo(() => {
+    const map = new Map<string, MachineNode>();
+    for (const m of machines) map.set(m.id, m);
+    return map;
+  }, [machines]);
+
+  // Hovered machine data for tooltip
+  const hoveredMachine = hoveredMachineId ? machineMap.get(hoveredMachineId) : null;
+  const hoveredObservation = hoveredMachineId && observations ? observations[hoveredMachineId] : null;
+
+  const handleMachineEnter = useCallback(
+    (machineId: string, event: React.MouseEvent) => {
+      setHoveredMachineId(machineId);
+      setTooltipPos({ x: event.clientX, y: event.clientY });
+      onMachineHover?.(machineId);
+    },
+    [onMachineHover]
+  );
+
+  const handleMachineMove = useCallback((event: React.MouseEvent) => {
+    setTooltipPos({ x: event.clientX, y: event.clientY });
+  }, []);
+
+  const handleMachineLeave = useCallback(() => {
+    setHoveredMachineId(null);
+    setTooltipPos(null);
+    onMachineHover?.(null);
+  }, [onMachineHover]);
+
+  const handleMachineClick = useCallback(
+    (machineId: string) => {
+      onMachineClick?.(machineId);
+    },
+    [onMachineClick]
+  );
+
+  return (
+    <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
+      {/* SVG with subtle perspective tilt */}
+      <div
+        className="w-full h-full flex items-center justify-center"
+        style={{
+          perspective: "2000px",
+          perspectiveOrigin: "50% 40%",
+        }}
+      >
+        <svg
+          className="w-full h-full max-w-full max-h-full"
+          viewBox={viewBox}
+          preserveAspectRatio="xMidYMid meet"
+          style={{
+            transform: "rotateX(8deg)",
+            transformOrigin: "center center",
+          }}
+        >
+          {/* Defs: arrow markers, shadows */}
+          <defs>
+            <marker
+              id="viz-arrow"
+              viewBox="0 0 10 10"
+              refX="10"
+              refY="5"
+              markerWidth="5"
+              markerHeight="5"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 0 L 10 5 L 0 10 Z" fill="#64748b" />
+            </marker>
+            <filter id="machine-shadow" x="-10%" y="-10%" width="120%" height="130%">
+              <feDropShadow dx="0.05" dy="0.08" stdDeviation="0.12" floodOpacity="0.15" />
+            </filter>
+          </defs>
+
+          {/* Floor grid */}
+          <rect
+            x={0}
+            y={0}
+            width={floor.width}
+            height={floor.height}
+            fill="#f8fafc"
+            stroke="#cbd5e1"
+            strokeWidth={0.06}
+            rx={0.15}
+          />
+          {/* Grid lines */}
+          {Array.from({ length: floor.width + 1 }, (_, i) => (
+            <line
+              key={`v-${i}`}
+              x1={i}
+              y1={0}
+              x2={i}
+              y2={floor.height}
+              stroke="#e2e8f0"
+              strokeWidth={0.03}
+            />
+          ))}
+          {Array.from({ length: floor.height + 1 }, (_, i) => (
+            <line
+              key={`h-${i}`}
+              x1={0}
+              y1={i}
+              x2={floor.width}
+              y2={i}
+              stroke="#e2e8f0"
+              strokeWidth={0.03}
+            />
+          ))}
+
+          {/* Connection lines (rendered behind machines) */}
+          {connections.map((conn) => {
+            const src = machineMap.get(conn.sourceId);
+            const tgt = machineMap.get(conn.targetId);
+            if (!src || !tgt) return null;
+
+            const srcW = src.size?.width ?? 1;
+            const srcH = src.size?.height ?? 1;
+            const tgtW = tgt.size?.width ?? 1;
+            const tgtH = tgt.size?.height ?? 1;
+
+            const srcCenter = { x: src.position.x + srcW / 2, y: src.position.y + srcH / 2 };
+            const tgtCenter = { x: tgt.position.x + tgtW / 2, y: tgt.position.y + tgtH / 2 };
+
+            // Edge-to-edge endpoints
+            const from = computeEdgePoint(srcCenter, srcW / 2, srcH / 2, tgtCenter);
+            const to = computeEdgePoint(tgtCenter, tgtW / 2, tgtH / 2, srcCenter);
+
+            // Subtle curve
+            const midX = (from.x + to.x) / 2;
+            const midY = (from.y + to.y) / 2;
+            const dx = to.x - from.x;
+            const dy = to.y - from.y;
+            const ctrlX = midX - dy * 0.1;
+            const ctrlY = midY + dx * 0.1;
+
+            return (
+              <g key={conn.id}>
+                <path
+                  d={`M ${from.x} ${from.y} Q ${ctrlX} ${ctrlY} ${to.x} ${to.y}`}
+                  fill="none"
+                  stroke="#64748b"
+                  strokeWidth={0.06}
+                  strokeDasharray="0.2 0.1"
+                  markerEnd="url(#viz-arrow)"
+                  opacity={0.7}
+                />
+                {conn.name && (
+                  <text
+                    x={ctrlX}
+                    y={ctrlY - 0.2}
+                    textAnchor="middle"
+                    fontSize={0.28}
+                    fill="#475569"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    {conn.name.length > 20 ? conn.name.slice(0, 19) + "\u2026" : conn.name}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+
+          {/* Machine rectangles */}
+          {machines.map((machine) => {
+            const status: MachineStatus = machine.status ?? "no_data";
+            const w = machine.size?.width ?? 1;
+            const h = machine.size?.height ?? 1;
+            const isHovered = hoveredMachineId === machine.id;
+            const fontSize = Math.min(w, h) * 0.3;
+
+            return (
+              <g
+                key={machine.id}
+                className="cursor-pointer"
+                onMouseEnter={(e) => handleMachineEnter(machine.id, e)}
+                onMouseMove={handleMachineMove}
+                onMouseLeave={handleMachineLeave}
+                onClick={() => handleMachineClick(machine.id)}
+                role="button"
+                aria-label={`Machine: ${machine.name}, Status: ${STATUS_LABELS[status]}`}
+              >
+                {/* Machine body */}
+                <rect
+                  x={machine.position.x + 0.05}
+                  y={machine.position.y + 0.05}
+                  width={w - 0.1}
+                  height={h - 0.1}
+                  rx={0.12}
+                  fill={STATUS_FILLS[status]}
+                  stroke={isHovered ? "#2563eb" : STATUS_STROKES[status]}
+                  strokeWidth={isHovered ? 0.1 : 0.06}
+                  filter="url(#machine-shadow)"
+                  style={{ transition: "stroke 0.15s, stroke-width 0.15s" }}
+                />
+                {/* Status indicator dot */}
+                <circle
+                  cx={machine.position.x + w - 0.25}
+                  cy={machine.position.y + 0.25}
+                  r={0.12}
+                  fill={STATUS_STROKES[status]}
+                />
+                {/* Machine name */}
+                <text
+                  x={machine.position.x + w / 2}
+                  y={machine.position.y + h / 2}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={fontSize}
+                  fontWeight={600}
+                  fill="#1e293b"
+                  style={{ pointerEvents: "none", userSelect: "none" }}
+                >
+                  {machine.name.length > 14 ? machine.name.slice(0, 13) + "\u2026" : machine.name}
+                </text>
+                {/* Status label below name */}
+                <text
+                  x={machine.position.x + w / 2}
+                  y={machine.position.y + h / 2 + fontSize * 1.2}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize={fontSize * 0.65}
+                  fill={STATUS_STROKES[status]}
+                  style={{ pointerEvents: "none", userSelect: "none" }}
+                >
+                  {STATUS_LABELS[status]}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Floating hover tooltip with latest parameters */}
+      {hoveredMachine && tooltipPos && (
+        <div
+          className="fixed z-50 pointer-events-none bg-white rounded-lg shadow-lg border border-gray-200 px-3 py-2 max-w-xs"
+          style={{
+            left: tooltipPos.x + 12,
+            top: tooltipPos.y + 12,
+          }}
+        >
+          <p className="text-sm font-semibold text-gray-900 mb-1">{hoveredMachine.name}</p>
+          <p className="text-xs text-gray-500 mb-1.5 capitalize">
+            {STATUS_LABELS[hoveredMachine.status ?? "no_data"]}
+          </p>
+          {hoveredObservation && Object.keys(hoveredObservation.values).length > 0 ? (
+            <div className="space-y-0.5 border-t border-gray-100 pt-1.5">
+              {Object.entries(hoveredObservation.values).slice(0, 6).map(([key, value]) => (
+                <div key={key} className="flex justify-between gap-3 text-xs">
+                  <span className="text-gray-500 truncate">{key}</span>
+                  <span className="text-gray-900 font-medium">{String(value ?? "-")}</span>
+                </div>
+              ))}
+              {Object.keys(hoveredObservation.values).length > 6 && (
+                <p className="text-xs text-gray-400 pt-0.5">
+                  +{Object.keys(hoveredObservation.values).length - 6} more...
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400 italic">No data submitted yet</p>
+          )}
+          <p className="text-xs text-blue-500 mt-1.5">Click for analytics</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default FactoryVisualization;

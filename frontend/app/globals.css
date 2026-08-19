@@ -6411,3 +6411,559 @@ body {
   .formula-card,
   .home-module-section { border-radius: var(--radius-md); }
 }
+
+
+/* Factory Builder Dialog -------------------------------------------------- */
+.builder-dialog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.builder-dialog-field {
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+
+.builder-dialog-label {
+  color: var(--muted);
+  font-size: var(--font-readable-min);
+  font-weight: 630;
+}
+
+.builder-dialog-input {
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  font: inherit;
+  font-size: var(--font-readable-min);
+  height: 39px;
+  outline: 0;
+  padding: 0 11px;
+  width: 100%;
+}
+
+.builder-dialog-input:focus {
+  border-color: var(--green);
+  box-shadow: var(--focus-ring);
+}
+
+.builder-dialog-input-error {
+  border-color: var(--red, #e05a3a);
+}
+
+.builder-dialog-input-error:focus {
+  border-color: var(--red, #e05a3a);
+  box-shadow: 0 0 0 3px rgba(224, 90, 58, 0.12);
+}
+
+.builder-dialog-error {
+  color: var(--red, #e05a3a);
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.builder-unit-toggle {
+  display: flex;
+  gap: 6px;
+}
+
+.builder-unit-option {
+  align-items: center;
+  background: var(--surface-low, #f7faf6);
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  flex: 1;
+  font: inherit;
+  font-size: var(--font-readable-min);
+  font-weight: 520;
+  gap: 6px;
+  height: 39px;
+  justify-content: center;
+  padding: 0 12px;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.builder-unit-option:hover {
+  background: var(--surface);
+  border-color: var(--green);
+}
+
+.builder-unit-active {
+  background: var(--green-soft, #e8f5e0);
+  border-color: var(--green);
+  color: var(--ink);
+  font-weight: 630;
+}
+
+/* Machine Config Panel (slide-over) ---------------------------------------- */
+
+.machine-config-backdrop {
+  background: rgba(11, 19, 15, 0.32);
+  bottom: 0;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 110;
+}
+
+.machine-config-panel {
+  animation: machine-config-slide-in 0.25s ease-out both;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 440px;
+  overflow: hidden;
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 100%;
+}
+
+@keyframes machine-config-slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.machine-config-header {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  padding: 18px 22px;
+}
+
+.machine-config-header h2 {
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.machine-config-close {
+  align-items: center;
+  background: none;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  height: 32px;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  width: 32px;
+}
+
+.machine-config-close:hover {
+  background: var(--surface-low);
+  color: var(--ink);
+}
+
+.machine-config-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.machine-config-footer {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 14px 22px;
+}
+
+.machine-config-required {
+  color: var(--red, #e05a3a);
+}
+
+.machine-config-hint {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.machine-config-io-section {
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.machine-config-io-section legend {
+  margin-bottom: 4px;
+}
+
+.machine-config-io-row {
+  align-items: flex-start;
+  display: flex;
+  gap: 8px;
+}
+
+.machine-config-io-field {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.machine-config-add-btn {
+  align-items: center;
+  background: none;
+  border: 1px dashed var(--line-strong);
+  border-radius: 9px;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: var(--font-readable-min);
+  gap: 6px;
+  height: 36px;
+  justify-content: center;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.machine-config-add-btn:hover {
+  background: var(--surface-low);
+  border-color: var(--green);
+  color: var(--ink);
+}
+
+.machine-config-remove-btn {
+  align-items: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  height: 39px;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  width: 36px;
+}
+
+.machine-config-remove-btn:hover {
+  background: var(--red-soft, #fde8e4);
+  color: var(--red, #e05a3a);
+}
+
+
+/* ---------------------------------------------------------------------------
+   Data Entry Page (QR scan) — mobile-first, Requirements 7.1, 7.2, 7.6
+   --------------------------------------------------------------------------- */
+
+.entry-page {
+  background: var(--canvas);
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px 16px 48px;
+}
+
+.entry-container {
+  max-width: 480px;
+  width: 100%;
+}
+
+.entry-header {
+  margin-bottom: 24px;
+}
+
+.entry-header h1 {
+  font-size: 22px;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.entry-subtitle {
+  color: var(--muted);
+  font-size: var(--font-readable-min);
+  margin: 6px 0 0;
+}
+
+.entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.entry-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.entry-field-label {
+  color: var(--muted);
+  font-size: var(--font-readable-min);
+  font-weight: 630;
+  margin-bottom: 7px;
+}
+
+.entry-required-mark {
+  color: var(--red);
+}
+
+.entry-input {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  height: 44px;
+  outline: none;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.entry-input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px var(--green-soft);
+}
+
+.entry-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7c73' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+}
+
+.entry-toggle-wrapper {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+}
+
+.entry-toggle-input {
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
+.entry-toggle-track {
+  background: #d4d8d5;
+  border-radius: 12px;
+  height: 24px;
+  position: relative;
+  transition: background 150ms ease;
+  width: 44px;
+}
+
+.entry-toggle-input:checked + .entry-toggle-track {
+  background: var(--green);
+}
+
+.entry-toggle-thumb {
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  height: 20px;
+  left: 2px;
+  position: absolute;
+  top: 2px;
+  transition: transform 150ms ease;
+  width: 20px;
+}
+
+.entry-toggle-input:checked + .entry-toggle-track .entry-toggle-thumb {
+  transform: translateX(20px);
+}
+
+.entry-toggle-label {
+  color: var(--muted);
+  font-size: var(--font-readable-min);
+  font-weight: 520;
+}
+
+.entry-toggle-input:focus + .entry-toggle-track {
+  box-shadow: 0 0 0 3px var(--green-soft);
+}
+
+.entry-field-error .entry-input {
+  border-color: var(--red);
+}
+
+.entry-field-error .entry-input:focus {
+  box-shadow: 0 0 0 3px var(--red-soft);
+}
+
+.entry-field-error-text {
+  color: var(--red);
+  font-size: var(--font-readable-min);
+  margin: 5px 0 0;
+}
+
+.entry-submit-button {
+  align-items: center;
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 9px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  font-size: 14px;
+  font-weight: 620;
+  height: 46px;
+  justify-content: center;
+  margin-top: 6px;
+  transition: background 120ms ease;
+  width: 100%;
+}
+
+.entry-submit-button:hover {
+  background: #27342f;
+}
+
+.entry-submit-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.entry-success-banner {
+  background: var(--green-soft);
+  border: 1px solid #c2e0cc;
+  border-radius: 9px;
+  color: #367153;
+  font-size: var(--font-readable-min);
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+}
+
+.entry-error-banner {
+  background: var(--red-soft);
+  border: 1px solid #efc6bd;
+  border-radius: 9px;
+  color: #ad3c2f;
+  font-size: var(--font-readable-min);
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+}
+
+.entry-loading {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+}
+
+.entry-loading p {
+  color: var(--muted);
+  font-size: var(--font-readable-min);
+  margin-top: 14px;
+}
+
+.entry-spinner {
+  animation: ion-spin 0.75s linear infinite;
+  border: 3px solid var(--line);
+  border-radius: 50%;
+  border-top-color: var(--green);
+  height: 28px;
+  width: 28px;
+}
+
+.entry-error-state {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+}
+
+.entry-error-icon {
+  align-items: center;
+  background: var(--red-soft);
+  border-radius: 50%;
+  color: var(--red);
+  display: flex;
+  font-size: 18px;
+  font-weight: 700;
+  height: 40px;
+  justify-content: center;
+  margin-bottom: 14px;
+  width: 40px;
+}
+
+.entry-error-state h2 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.entry-error-state p {
+  color: var(--muted);
+  font-size: var(--font-readable-min);
+  line-height: 1.6;
+  max-width: 320px;
+}
+
+/* Direction / Radio group — used by inventory & dispatch QR entry pages */
+
+.entry-direction-group {
+  display: flex;
+  gap: 8px;
+}
+
+.entry-direction-option {
+  cursor: pointer;
+  flex: 1;
+}
+
+.entry-radio-input {
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
+}
+
+.entry-direction-label {
+  align-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  color: var(--muted);
+  display: flex;
+  font-size: 14px;
+  font-weight: 560;
+  height: 44px;
+  justify-content: center;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+  width: 100%;
+}
+
+.entry-direction-label:hover {
+  border-color: var(--green);
+}
+
+.entry-direction-active {
+  background: var(--green-soft);
+  border-color: var(--green);
+  color: var(--ink);
+}
+
+.entry-radio-input:focus + .entry-direction-label {
+  box-shadow: 0 0 0 3px var(--green-soft);
+}

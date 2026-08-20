@@ -47,7 +47,7 @@ function generateId(): string {
  *
  * Requirements: 11.1, 11.2, 11.3
  */
-export function InventoryPanel() {
+export function InventoryPanel({ readOnly = false }: { readOnly?: boolean }) {
   const { state, configureInventory } = useFactoryBuilder();
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [liveStock, setLiveStock] = useState<Record<string, number> | null>(null);
@@ -148,30 +148,36 @@ export function InventoryPanel() {
           layoutId={state.layout.id}
         />
 
-        <button
-          type="button"
-          onClick={() => setIsConfiguring(true)}
-          className="button button-secondary"
-          style={{ minHeight: 0, padding: "6px 12px", fontSize: "12px" }}
-        >
-          Edit Inventory
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={() => setIsConfiguring(true)}
+            className="button button-secondary"
+            style={{ minHeight: 0, padding: "6px 12px", fontSize: "12px" }}
+          >
+            Edit Inventory
+          </button>
+        )}
       </div>
     );
   }
 
-  // Not configured and not configuring — show "Build Inventory" button
+  // Not configured and not configuring — show "Build Inventory" button (only in edit mode)
   if (!isConfiguring) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6">
         <Package className="h-8 w-8 text-gray-400" />
-        <button
-          type="button"
-          onClick={() => setIsConfiguring(true)}
-          className="button button-primary"
-        >
-          Build Inventory
-        </button>
+        {readOnly ? (
+          <p className="text-xs text-gray-500">No inventory configured</p>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsConfiguring(true)}
+            className="button button-primary"
+          >
+            Build Inventory
+          </button>
+        )}
       </div>
     );
   }

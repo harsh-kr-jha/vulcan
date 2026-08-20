@@ -103,7 +103,7 @@ export function MachineConfigPanel({
     });
 
     onClose();
-  }, [isFormValid, inputs, outputs, name, machineId, configureMachine, onClose]);
+  }, [isFormValid, inputs, outputs, name, parameters, customKpis, machineId, configureMachine, onClose]);
 
   const handleCancel = useCallback(() => {
     if (isNew) {

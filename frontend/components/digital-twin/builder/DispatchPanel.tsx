@@ -45,7 +45,7 @@ function generateId(): string {
  *
  * Requirements: 12.1, 12.2, 12.3
  */
-export function DispatchPanel() {
+export function DispatchPanel({ readOnly = false }: { readOnly?: boolean }) {
   const { state, configureDispatch } = useFactoryBuilder();
   const dispatchConfig = state.layout.dispatch;
 
@@ -194,14 +194,18 @@ export function DispatchPanel() {
         <p className="text-sm text-gray-500 mb-3">
           No dispatch area configured
         </p>
-        <button
-          type="button"
-          className="button button-secondary"
-          onClick={handleBuildDispatch}
-        >
-          <Plus size={14} />
-          Build Dispatch
-        </button>
+        {readOnly ? (
+          <p className="text-xs text-gray-500">No dispatch configured</p>
+        ) : (
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={handleBuildDispatch}
+          >
+            <Plus size={14} />
+            Build Dispatch
+          </button>
+        )}
       </div>
     );
   }
@@ -228,14 +232,16 @@ export function DispatchPanel() {
               <span className="text-xs text-green-600 font-medium">Live</span>
             )}
           </div>
-          <button
-            type="button"
-            className="button button-secondary"
-            style={{ minHeight: 0, padding: "4px 10px", fontSize: "12px" }}
-            onClick={handleBuildDispatch}
-          >
-            Edit
-          </button>
+          {!readOnly && (
+            <button
+              type="button"
+              className="button button-secondary"
+              style={{ minHeight: 0, padding: "4px 10px", fontSize: "12px" }}
+              onClick={handleBuildDispatch}
+            >
+              Edit
+            </button>
+          )}
         </div>
 
         {/* Products table with awaiting quantities */}

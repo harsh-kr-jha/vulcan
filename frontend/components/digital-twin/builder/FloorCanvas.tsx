@@ -669,7 +669,7 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
-          onContextMenu={(e) => { /* Let child handlers (interaction layer, machines) handle right-click */ }}
+          onContextMenu={(e) => e.preventDefault()}
           style={{ cursor: isPanning ? "grabbing" : "grab", touchAction: "none" }}
         >
           {/* Grid layer (virtualized – only renders visible cells) */}

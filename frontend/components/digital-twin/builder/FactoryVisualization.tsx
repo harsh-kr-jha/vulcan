@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   FactoryLayout,
   MachineNode,
   MachineStatus,
-  ConnectionLine,
 } from "@/lib/spatial-types";
 
 // ---------------------------------------------------------------------------
@@ -53,9 +52,6 @@ const STATUS_LABELS: Record<MachineStatus, string> = {
   idle: "Idle",
   no_data: "No Data",
 };
-
-// Padding around the floor in SVG units
-const PADDING = 1.5;
 
 // ---------------------------------------------------------------------------
 // Helper: compute edge-to-edge connection endpoints
@@ -107,10 +103,163 @@ export function FactoryVisualization({
 
   const { floor, machines, connections } = layout;
 
-  // SVG viewBox: floor dimensions + padding
-  const viewBoxWidth = floor.width + PADDING * 2;
-  const viewBoxHeight = floor.height + PADDING * 2;
-  const viewBox = `${-PADDING} ${-PADDING} ${viewBoxWidth} ${viewBoxHeight}`;
+  // SVG viewBox is derived directly from the saved floor dimensions.
+  const viewBoxWidth = floor.width;
+  const viewBoxHeight = floor.height;
+  const minimumViewportSize = viewBoxWidth > 0 && viewBoxHeight > 0
+    ? Math.min(viewBoxWidth, viewBoxHeight) / Math.max(viewBoxWidth, viewBoxHeight)
+    : Number.MIN_VALUE;
+  const [viewBoxState, setViewBoxState] = useState({
+    viewBox: { x: 0, y: 0, width: viewBoxWidth, height: viewBoxHeight },
+    floorWidth: floor.width,
+    floorHeight: floor.height,
+  });
+  const viewBox = useMemo(
+    () => {
+      const candidate = viewBoxState.floorWidth === floor.width && viewBoxState.floorHeight === floor.height
+        ? viewBoxState.viewBox
+        : { x: 0, y: 0, width: viewBoxWidth, height: viewBoxHeight };
+      const width = Math.max(
+        minimumViewportSize,
+        Math.min(Number.isFinite(candidate.width) ? candidate.width : viewBoxWidth, viewBoxWidth)
+      );
+      const height = Math.max(
+        minimumViewportSize,
+        Math.min(Number.isFinite(candidate.height) ? candidate.height : viewBoxHeight, viewBoxHeight)
+      );
+      const x = Number.isFinite(candidate.x) ? candidate.x : 0;
+      const y = Number.isFinite(candidate.y) ? candidate.y : 0;
+      return {
+        x: Math.max(0, Math.min(x, floor.width - width)),
+        y: Math.max(0, Math.min(y, floor.height - height)),
+        width,
+        height,
+      };
+    },
+    [floor.height, floor.width, minimumViewportSize, viewBoxHeight, viewBoxState, viewBoxWidth]
+  );
+  const svgRef = useRef<SVGSVGElement>(null);
+  const viewBoxRef = useRef(viewBox);
+  const panStart = useRef<{ x: number; y: number; vbX: number; vbY: number } | null>(null);
+  const didPanRef = useRef(false);
+  const [isPanning, setIsPanning] = useState(false);
+
+  useEffect(() => {
+    viewBoxRef.current = viewBox;
+  }, [viewBox]);
+
+  const screenToSvg = useCallback((clientX: number, clientY: number) => {
+    const svg = svgRef.current;
+    const transform = svg?.getScreenCTM();
+    if (!transform) return null;
+    const point = new DOMPoint(clientX, clientY).matrixTransform(transform.inverse());
+    return Number.isFinite(point.x) && Number.isFinite(point.y)
+      ? { x: point.x, y: point.y }
+      : null;
+  }, []);
+
+  const clampViewBox = useCallback(
+    (next: typeof viewBox) => {
+      const width = Math.max(
+        minimumViewportSize,
+        Math.min(Number.isFinite(next.width) ? next.width : viewBoxWidth, viewBoxWidth)
+      );
+      const height = Math.max(
+        minimumViewportSize,
+        Math.min(Number.isFinite(next.height) ? next.height : viewBoxHeight, viewBoxHeight)
+      );
+      const x = Number.isFinite(next.x) ? next.x : 0;
+      const y = Number.isFinite(next.y) ? next.y : 0;
+      return {
+        x: Math.max(0, Math.min(x, floor.width - width)),
+        y: Math.max(0, Math.min(y, floor.height - height)),
+        width,
+        height,
+      };
+    },
+    [floor.height, floor.width, minimumViewportSize, viewBoxHeight, viewBoxWidth]
+  );
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const current = viewBoxRef.current;
+      const zoomFactor = event.ctrlKey
+        ? (event.deltaY > 0 ? 1.05 : 0.95)
+        : (event.deltaY > 0 ? 1.1 : 0.9);
+      const cursor = screenToSvg(event.clientX, event.clientY);
+      if (!cursor || !Number.isFinite(event.deltaY)) return;
+
+      setViewBoxState({
+        viewBox: clampViewBox({
+          x: cursor.x - (cursor.x - current.x) * zoomFactor,
+          y: cursor.y - (cursor.y - current.y) * zoomFactor,
+          width: current.width * zoomFactor,
+          height: current.height * zoomFactor,
+        }),
+        floorWidth: floor.width,
+        floorHeight: floor.height,
+      });
+    };
+
+    svg.addEventListener("wheel", handleWheel, { passive: false });
+    return () => svg.removeEventListener("wheel", handleWheel);
+  }, [clampViewBox, floor.height, floor.width, screenToSvg]);
+
+  const handlePointerDown = useCallback((event: React.PointerEvent<SVGSVGElement>) => {
+    if (event.button !== 0 && event.button !== 1) return;
+    event.preventDefault();
+    const current = viewBoxRef.current;
+    panStart.current = { x: event.clientX, y: event.clientY, vbX: current.x, vbY: current.y };
+    didPanRef.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }, []);
+
+  const handlePointerMove = useCallback(
+    (event: React.PointerEvent<SVGSVGElement>) => {
+      if (!panStart.current || !svgRef.current) return;
+      const current = viewBoxRef.current;
+      const clientDeltaX = event.clientX - panStart.current.x;
+      const clientDeltaY = event.clientY - panStart.current.y;
+      if (Math.abs(clientDeltaX) <= 3 && Math.abs(clientDeltaY) <= 3) return;
+
+      didPanRef.current = true;
+      setIsPanning(true);
+      const currentPoint = screenToSvg(event.clientX, event.clientY);
+      const startPoint = screenToSvg(panStart.current.x, panStart.current.y);
+      if (!currentPoint || !startPoint) return;
+      const dx = currentPoint.x - startPoint.x;
+      const dy = currentPoint.y - startPoint.y;
+      setViewBoxState({
+        viewBox: clampViewBox({
+          ...current,
+          x: panStart.current.vbX - dx,
+          y: panStart.current.vbY - dy,
+        }),
+        floorWidth: floor.width,
+        floorHeight: floor.height,
+      });
+    },
+    [clampViewBox, floor.height, floor.width, screenToSvg]
+  );
+
+  const handlePointerUp = useCallback(() => {
+    panStart.current = null;
+    setIsPanning(false);
+  }, []);
+
+  const handleClickCapture = useCallback((event: React.MouseEvent<SVGSVGElement>) => {
+    if (!didPanRef.current) return;
+    event.stopPropagation();
+    didPanRef.current = false;
+  }, []);
+
+  const viewBoxString = `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`;
 
   // Machine lookup map
   const machineMap = useMemo(() => {
@@ -152,9 +301,18 @@ export function FactoryVisualization({
   return (
     <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <svg
-        className="absolute inset-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)]"
-        viewBox={viewBox}
+        ref={svgRef}
+        className="absolute inset-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)] select-none"
+        viewBox={viewBoxString}
         preserveAspectRatio="xMidYMid meet"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        onClickCapture={handleClickCapture}
+        onContextMenu={(event) => event.preventDefault()}
+        style={{ cursor: isPanning ? "grabbing" : "grab", touchAction: "none" }}
       >
           {/* Defs: arrow markers, shadows */}
           <defs>
@@ -290,7 +448,11 @@ export function FactoryVisualization({
                 onMouseEnter={(e) => handleMachineEnter(machine.id, e)}
                 onMouseMove={handleMachineMove}
                 onMouseLeave={handleMachineLeave}
-                onClick={() => handleMachineClick(machine.id)}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  handleMachineClick(machine.id);
+                }}
                 role="button"
                 aria-label={`Machine: ${machine.name}, Status: ${STATUS_LABELS[status]}`}
               >

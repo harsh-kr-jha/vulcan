@@ -182,10 +182,22 @@ export function InventoryPanel({ readOnly = false }: { readOnly?: boolean }) {
     );
   }
 
-  // Configuration form
+  // Configuration form — merge live stock quantities into initial config
+  const configWithLiveStock: InventoryConfig | undefined = state.layout.inventory
+    ? liveStock
+      ? {
+          ...state.layout.inventory,
+          materials: state.layout.inventory.materials.map((m) => ({
+            ...m,
+            quantity: liveStock[m.id] ?? m.quantity,
+          })),
+        }
+      : state.layout.inventory
+    : undefined;
+
   return (
     <InventoryConfigForm
-      initialConfig={state.layout.inventory ?? undefined}
+      initialConfig={configWithLiveStock}
       onSave={(config) => {
         configureInventory(config);
         setIsConfiguring(false);

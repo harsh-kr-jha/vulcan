@@ -1,7 +1,7 @@
 {
   "id": "automotive",
-  "displayName": "Tamaso",
-  "descriptor": "Automotive intelligence",
+  "displayName": "Vulcan",
+  "descriptor": "by Tamaso.ai",
   "industry": "automotive-manufacturing",
   "modules": [
     "dashboard",
@@ -28,7 +28,7 @@
   },
   "navigation": {
     "projects": "Projects",
-    "digital-twin": "Factory twin",
+    "digital-twin": "Lexicon™",
     "settings": "Factory setup"
   },
   "terminology": {

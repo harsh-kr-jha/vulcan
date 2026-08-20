@@ -6,8 +6,8 @@ import type { PlatformConfig } from "@/lib/variant";
 
 const FALLBACK: PlatformConfig = {
   id: "platform-core",
-  displayName: "Tamaso Platform",
-  descriptor: "Platform Core",
+  displayName: "Vulcan",
+  descriptor: "by Tamaso.ai",
   industry: "",
   modules: [],
   datasets: {},

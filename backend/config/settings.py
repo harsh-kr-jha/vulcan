@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     "apps.analytics",
     "apps.alerts",
     "apps.audit",
+    "apps.spatial",
 ]
 
 MIDDLEWARE = [
@@ -216,8 +217,8 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "60/hour",
         "user": "1200/hour",
-        "login_ip": os.getenv("LOGIN_IP_RATE", "10/15m"),
-        "login_account": os.getenv("LOGIN_ACCOUNT_RATE", "5/15m"),
+        "login_ip": os.getenv("LOGIN_IP_RATE", "30/15m"),
+        "login_account": os.getenv("LOGIN_ACCOUNT_RATE", "10/15m"),
     },
     "NUM_PROXIES": num_proxies,
 }

@@ -3,7 +3,7 @@
 import type { EChartsOption } from "echarts";
 import ReactECharts from "echarts-for-react";
 import { Download, Eye, EyeOff, Package, Plus, Printer, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
 import { useFactory } from "@/lib/factory-context";
 import { generateDispatchQrSvg, generateDispatchQrDataUrl, dataUrlToBlob } from "@/lib/qr-generator";
@@ -46,7 +46,7 @@ function generateId(): string {
  * Requirements: 12.1, 12.2, 12.3
  */
 export function DispatchPanel({ readOnly = false }: { readOnly?: boolean }) {
-  const { state, configureDispatch } = useFactoryBuilder();
+  const { state, configureDispatch, saveLayout } = useFactoryBuilder();
   const dispatchConfig = state.layout.dispatch;
 
   const [isConfiguring, setIsConfiguring] = useState(false);
@@ -54,9 +54,20 @@ export function DispatchPanel({ readOnly = false }: { readOnly?: boolean }) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [liveAwaiting, setLiveAwaiting] = useState<Record<string, number> | null>(null);
   const [liveDispatched, setLiveDispatched] = useState<Record<string, number> | null>(null);
+  const pendingSaveRef = useRef(false);
 
   const layoutId = state.layout.id;
   const isViewMode = !!layoutId && !state.isDirty;
+
+  // Auto-save to backend after dispatch config changes (next render when state is updated)
+  useEffect(() => {
+    if (pendingSaveRef.current && state.isDirty && layoutId) {
+      pendingSaveRef.current = false;
+      saveLayout().catch(() => {
+        // Error surfaced via builder context saveError
+      });
+    }
+  });
 
   // Fetch live awaiting quantities in view mode (polls every 10s)
   useEffect(() => {
@@ -92,9 +103,36 @@ export function DispatchPanel({ readOnly = false }: { readOnly?: boolean }) {
     return () => { cancelled = true; clearInterval(interval); };
   }, [isViewMode, layoutId, dispatchConfig]);
 
-  // Start configuration flow
-  const handleBuildDispatch = useCallback(() => {
-    // If already configured, pre-populate from existing config
+  // Start configuration flow — fetch latest from DB before editing
+  const handleBuildDispatch = useCallback(async () => {
+    // If already configured and we have a layoutId, fetch latest product list
+    if (dispatchConfig && layoutId) {
+      try {
+        const response = await fetch(
+          `/api/backend/api/spatial/dispatch/${layoutId}/`,
+          { headers: { Accept: "application/json" }, credentials: "same-origin" }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.products && Array.isArray(data.products)) {
+            setProducts(
+              data.products.map((p: { id: string; name: string; unit: string }) => ({
+                id: p.id,
+                name: p.name,
+                unit: p.unit as ProductUnit,
+              }))
+            );
+            setSaveError(null);
+            setIsConfiguring(true);
+            return;
+          }
+        }
+      } catch {
+        // Fall through to use in-memory state
+      }
+    }
+
+    // Fallback: pre-populate from in-memory config
     if (dispatchConfig) {
       setProducts(
         dispatchConfig.products.map((p) => ({
@@ -108,7 +146,7 @@ export function DispatchPanel({ readOnly = false }: { readOnly?: boolean }) {
     }
     setSaveError(null);
     setIsConfiguring(true);
-  }, [dispatchConfig]);
+  }, [dispatchConfig, layoutId]);
 
   // Add a new product row
   const handleAddProduct = useCallback(() => {
@@ -173,7 +211,11 @@ export function DispatchPanel({ readOnly = false }: { readOnly?: boolean }) {
 
     configureDispatch({ products: dispatchProducts });
     setIsConfiguring(false);
-  }, [products, getProductErrors, configureDispatch]);
+    // Trigger auto-save on next render when state reflects the new config
+    if (layoutId) {
+      pendingSaveRef.current = true;
+    }
+  }, [products, getProductErrors, configureDispatch, layoutId]);
 
   // Cancel configuration
   const handleCancel = useCallback(() => {

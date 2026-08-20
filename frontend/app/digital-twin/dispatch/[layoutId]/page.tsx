@@ -178,8 +178,20 @@ export default function DispatchDataEntryPage() {
 
       if (!validate()) return;
 
-      const selectedProduct = config?.products.find((p) => p.id === productId);
-      if (!selectedProduct) return;
+      // Re-fetch the latest config to pick up any new/removed products
+      let latestConfig: DispatchState | null = config;
+      try {
+        latestConfig = await fetchDispatchConfig(layoutId);
+        setConfig(latestConfig);
+      } catch {
+        // If fetch fails, proceed with existing config
+      }
+
+      const selectedProduct = latestConfig?.products.find((p) => p.id === productId);
+      if (!selectedProduct) {
+        setSubmitError("Selected product no longer exists. Please refresh and try again.");
+        return;
+      }
 
       setSubmitting(true);
       try {

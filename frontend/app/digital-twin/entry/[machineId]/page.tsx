@@ -164,11 +164,28 @@ export default function MachineDataEntryPage() {
       if (!validate()) return;
       if (!schema) return;
 
-      // Coerce values to appropriate types for submission
+      // Re-fetch the latest schema to pick up any new/removed parameters
+      let latestSchema: EntrySchema;
+      try {
+        latestSchema = await fetchEntrySchema(machineId);
+      } catch {
+        // If fetch fails, proceed with the existing schema
+        latestSchema = schema;
+      }
+
+      // Update local schema state if it changed (new fields appear for next entry)
+      const latestFields = [...(latestSchema.parameters || []), ...(latestSchema.io_fields || [])];
+      setSchema(latestSchema);
+
+      // Coerce values to appropriate types for submission — only submit
+      // fields that exist in the latest schema to avoid overriding new fields
       const payload: Record<string, unknown> = {};
-      const allFields = [...(schema.parameters || []), ...(schema.io_fields || [])];
-      for (const field of allFields) {
+      for (const field of latestFields) {
         const raw = values[field.key];
+        if (raw === undefined) {
+          // New field added after page load — skip (use default)
+          continue;
+        }
         if (field.data_type === "number") {
           payload[field.key] = raw === "" ? null : Number(raw);
         } else if (field.data_type === "boolean") {
@@ -208,9 +225,9 @@ export default function MachineDataEntryPage() {
           throw new Error(detail);
         }
 
-        // Success: reset form
+        // Success: reset form with latest schema fields
         setSubmitSuccess(true);
-        const allResetFields = [...(schema.parameters || []), ...(schema.io_fields || [])];
+        const allResetFields = [...(latestSchema.parameters || []), ...(latestSchema.io_fields || [])];
         const initial: Record<string, string | boolean> = {};
         for (const field of allResetFields) {
           initial[field.key] = field.data_type === "boolean" ? false : "";

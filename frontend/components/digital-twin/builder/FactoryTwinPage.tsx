@@ -540,6 +540,20 @@ export function FactoryTwinPage() {
     setConfigMachineIsNew(false);
   }, []);
 
+  // Auto-save when machine config panel closes on an existing (saved) layout
+  const prevConfigMachineIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const wasConfigure = prevConfigMachineIdRef.current !== null;
+    prevConfigMachineIdRef.current = configMachineId;
+
+    // Panel just closed AND layout is dirty AND it's an existing layout AND not already saving
+    if (wasConfigure && configMachineId === null && builderState.isDirty && builderState.layout.id && !saving) {
+      saveLayout().catch(() => {
+        // Error surfaced via builder context saveError
+      });
+    }
+  }, [configMachineId, builderState.isDirty, builderState.layout.id, saving, saveLayout]);
+
   const handleCloseConnectionConfig = useCallback(() => {
     setConfigConnectionId(null);
   }, []);

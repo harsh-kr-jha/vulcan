@@ -513,8 +513,8 @@ class TestInventoryChangeSerializer:
             storage_capacity=10000,
             capacity_unit="kilograms",
             materials=[
-                {"id": "mat-001", "name": "Steel", "unit": "kilograms", "initialQuantity": 500},
-                {"id": "mat-002", "name": "Copper", "unit": "kilograms", "initialQuantity": 200},
+                {"id": "mat-001", "name": "Steel", "unit": "kilograms", "quantity": 500},
+                {"id": "mat-002", "name": "Copper", "unit": "kilograms", "quantity": 200},
             ],
         )
 

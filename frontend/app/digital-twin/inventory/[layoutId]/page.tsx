@@ -186,6 +186,22 @@ export default function InventoryDataEntryPage() {
 
       if (!validate()) return;
 
+      // Re-fetch the latest config to pick up any new/removed materials
+      let latestConfig: InventoryState | null = config;
+      try {
+        latestConfig = await fetchInventoryConfig(layoutId);
+        setConfig(latestConfig);
+      } catch {
+        // If fetch fails, proceed with existing config
+      }
+
+      // Verify the selected material still exists in latest config
+      const materialExists = latestConfig?.materials.some((m) => m.id === materialId);
+      if (!materialExists) {
+        setSubmitError("Selected material no longer exists. Please refresh and try again.");
+        return;
+      }
+
       const directionValue = direction === "addition" ? "inbound" : "outbound";
 
       setSubmitting(true);
@@ -218,7 +234,7 @@ export default function InventoryDataEntryPage() {
         setSubmitting(false);
       }
     },
-    [layoutId, materialId, direction, quantity, validate],
+    [layoutId, materialId, direction, quantity, config, validate],
   );
 
   // Clear field error on change

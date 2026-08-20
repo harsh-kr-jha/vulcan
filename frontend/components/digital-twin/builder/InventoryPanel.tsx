@@ -1,7 +1,7 @@
 "use client";
 
 import { Package, Plus, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
 import {
   validateInventoryCapacity,
@@ -48,13 +48,24 @@ function generateId(): string {
  * Requirements: 11.1, 11.2, 11.3
  */
 export function InventoryPanel({ readOnly = false }: { readOnly?: boolean }) {
-  const { state, configureInventory } = useFactoryBuilder();
+  const { state, configureInventory, saveLayout } = useFactoryBuilder();
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [liveStock, setLiveStock] = useState<Record<string, number> | null>(null);
+  const pendingSaveRef = useRef(false);
 
   const hasInventory = !!state.layout.inventory;
   const layoutId = state.layout.id;
   const isViewMode = !!layoutId && !state.isDirty;
+
+  // Auto-save to backend after inventory config changes (next render when state is updated)
+  useEffect(() => {
+    if (pendingSaveRef.current && state.isDirty && layoutId) {
+      pendingSaveRef.current = false;
+      saveLayout().catch(() => {
+        // Error surfaced via builder context saveError
+      });
+    }
+  });
 
   // Fetch live stock levels when in view mode (polls every 10s)
   useEffect(() => {
@@ -151,7 +162,26 @@ export function InventoryPanel({ readOnly = false }: { readOnly?: boolean }) {
         {!readOnly && (
           <button
             type="button"
-            onClick={() => setIsConfiguring(true)}
+            onClick={async () => {
+              // Fetch latest stock before entering edit mode
+              if (layoutId) {
+                try {
+                  const response = await fetch(
+                    `/api/backend/api/spatial/inventory/${layoutId}/`,
+                    { headers: { Accept: "application/json" }, credentials: "same-origin" }
+                  );
+                  if (response.ok) {
+                    const data = await response.json();
+                    if (data.stock) {
+                      setLiveStock(data.stock);
+                    }
+                  }
+                } catch {
+                  // proceed with whatever stock we have
+                }
+              }
+              setIsConfiguring(true);
+            }}
             className="button button-secondary"
             style={{ minHeight: 0, padding: "6px 12px", fontSize: "12px" }}
           >
@@ -183,24 +213,26 @@ export function InventoryPanel({ readOnly = false }: { readOnly?: boolean }) {
   }
 
   // Configuration form — merge live stock quantities into initial config
-  const configWithLiveStock: InventoryConfig | undefined = state.layout.inventory
-    ? liveStock
-      ? {
-          ...state.layout.inventory,
-          materials: state.layout.inventory.materials.map((m) => ({
-            ...m,
-            quantity: liveStock[m.id] ?? m.quantity,
-          })),
-        }
-      : state.layout.inventory
+  const configForEdit: InventoryConfig | undefined = state.layout.inventory
+    ? {
+        ...state.layout.inventory,
+        materials: state.layout.inventory.materials.map((m) => ({
+          ...m,
+          quantity: liveStock?.[m.id] ?? m.quantity,
+        })),
+      }
     : undefined;
 
   return (
     <InventoryConfigForm
-      initialConfig={configWithLiveStock}
+      initialConfig={configForEdit}
       onSave={(config) => {
         configureInventory(config);
         setIsConfiguring(false);
+        // Trigger auto-save on next render when state reflects the new config
+        if (layoutId) {
+          pendingSaveRef.current = true;
+        }
       }}
       onCancel={() => setIsConfiguring(false)}
     />

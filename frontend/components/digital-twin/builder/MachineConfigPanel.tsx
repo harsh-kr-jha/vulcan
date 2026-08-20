@@ -42,6 +42,7 @@ export function MachineConfigPanel({
 
   // Load existing machine data if editing
   const existingMachine = state.layout.machines.find((m) => m.id === machineId);
+  const layoutId = state.layout.id;
 
   const [name, setName] = useState(existingMachine?.name ?? "");
   const [inputs, setInputs] = useState<IOSpecDraft[]>(

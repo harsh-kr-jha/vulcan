@@ -380,7 +380,14 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
         return layout
 
     def update(self, instance, validated_data):
-        """Update layout with full replacement of nested objects."""
+        """Update layout with merge strategy for nested objects.
+
+        Machines are merged by ID (update existing, add new, remove missing)
+        so that related data like MachineObservations is preserved.
+        Inventory materials are merged by ID (add/edit) while preserving
+        quantities from the live stock computation.
+        Dispatch products are merged by ID (add/edit new, keep existing).
+        """
         machines_data = validated_data.pop("machines", None)
         connections_data = validated_data.pop("connections", None)
         inventory_data = validated_data.pop("inventory_config", None)
@@ -393,35 +400,76 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
 
         tenant = instance.tenant
 
-        # Replace machines if provided (full replacement strategy)
+        # Merge machines if provided (preserves observations)
         if machines_data is not None:
-            # Delete existing machines (cascades to parameters, KPIs, connections)
-            instance.machines.all().delete()
-
+            existing_machines = {
+                str(m.id): m for m in instance.machines.all()
+            }
+            incoming_ids = set()
             machine_id_map = {}
+
             for machine_data in machines_data:
                 parameters_data = machine_data.pop("parameters", [])
                 custom_kpis_data = machine_data.pop("custom_kpis", [])
                 client_id = machine_data.pop("id", None)
 
-                create_kwargs = {"layout": instance, "tenant": tenant, **machine_data}
-                if client_id:
-                    create_kwargs["id"] = client_id
+                if client_id and str(client_id) in existing_machines:
+                    # Update existing machine in place (preserves observations)
+                    machine = existing_machines[str(client_id)]
+                    for attr, value in machine_data.items():
+                        setattr(machine, attr, value)
+                    machine.save()
 
-                machine = SpatialMachine.objects.create(**create_kwargs)
+                    # Merge parameters: remove old, add new definitions
+                    machine.parameters.all().delete()
+                    for param_data in parameters_data:
+                        param_data.pop("id", None)
+                        MachineParameter.objects.create(
+                            machine=machine, **param_data
+                        )
 
-                if client_id:
-                    machine_id_map[client_id] = machine
+                    # Merge custom KPIs: replace definitions
+                    machine.custom_kpis.all().delete()
+                    for kpi_data in custom_kpis_data:
+                        kpi_data.pop("id", None)
+                        MachineCustomKpi.objects.create(
+                            machine=machine, **kpi_data
+                        )
+
+                    incoming_ids.add(str(client_id))
+                    machine_id_map[str(client_id)] = machine
                 else:
-                    machine_id_map[machine.id] = machine
+                    # Create new machine
+                    create_kwargs = {
+                        "layout": instance,
+                        "tenant": tenant,
+                        **machine_data,
+                    }
+                    if client_id:
+                        create_kwargs["id"] = client_id
 
-                for param_data in parameters_data:
-                    param_data.pop("id", None)
-                    MachineParameter.objects.create(machine=machine, **param_data)
+                    machine = SpatialMachine.objects.create(**create_kwargs)
 
-                for kpi_data in custom_kpis_data:
-                    kpi_data.pop("id", None)
-                    MachineCustomKpi.objects.create(machine=machine, **kpi_data)
+                    for param_data in parameters_data:
+                        param_data.pop("id", None)
+                        MachineParameter.objects.create(
+                            machine=machine, **param_data
+                        )
+
+                    for kpi_data in custom_kpis_data:
+                        kpi_data.pop("id", None)
+                        MachineCustomKpi.objects.create(
+                            machine=machine, **kpi_data
+                        )
+
+                    mid = str(client_id) if client_id else str(machine.id)
+                    incoming_ids.add(mid)
+                    machine_id_map[mid] = machine
+
+            # Remove machines that are no longer in the incoming data
+            for old_id, old_machine in existing_machines.items():
+                if old_id not in incoming_ids:
+                    old_machine.delete()
 
             # Replace connections if provided alongside machines
             if connections_data is not None:
@@ -431,8 +479,8 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                     source_id = conn_data.pop("source_id", None)
                     target_id = conn_data.pop("target_id", None)
 
-                    source = machine_id_map.get(source_id)
-                    target = machine_id_map.get(target_id)
+                    source = machine_id_map.get(str(source_id)) if source_id else None
+                    target = machine_id_map.get(str(target_id)) if target_id else None
 
                     if source and target:
                         MachineConnection.objects.create(
@@ -451,7 +499,6 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                 target_id = conn_data.pop("target_id", None)
 
                 if source_id and target_id:
-                    # Verify machines exist in this layout
                     source = instance.machines.filter(id=source_id).first()
                     target = instance.machines.filter(id=target_id).first()
                     if source and target:
@@ -463,41 +510,136 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                             **conn_data,
                         )
 
-        # Update inventory config
+        # Merge inventory config (preserves live stock quantities)
         if inventory_data is not None:
             inventory_data.pop("id", None)
-            if hasattr(instance, "inventory_config"):
-                try:
-                    existing_inv = instance.inventory_config
-                    for attr, value in inventory_data.items():
-                        setattr(existing_inv, attr, value)
-                    existing_inv.save()
-                except InventoryConfiguration.DoesNotExist:
-                    InventoryConfiguration.objects.create(
-                        layout=instance, tenant=tenant, **inventory_data
-                    )
+            new_materials = inventory_data.pop("materials", None)
+
+            try:
+                existing_inv = instance.inventory_config
+            except InventoryConfiguration.DoesNotExist:
+                existing_inv = None
+
+            if existing_inv:
+                # Update scalar fields (capacity, unit)
+                for attr, value in inventory_data.items():
+                    setattr(existing_inv, attr, value)
+
+                # Merge materials: keep existing material quantities as the
+                # base for stock calculation, only update name/unit, add new ones
+                if new_materials is not None:
+                    existing_materials = existing_inv.materials or []
+                    existing_map = {
+                        m["id"]: m
+                        for m in existing_materials
+                        if isinstance(m, dict) and m.get("id")
+                    }
+
+                    merged = []
+                    for mat in new_materials:
+                        mat_id = mat.get("id")
+                        if mat_id and mat_id in existing_map:
+                            # Existing material: update name/unit but preserve
+                            # the original quantity (base for stock calculation)
+                            old = existing_map[mat_id]
+                            merged.append(
+                                {
+                                    "id": mat_id,
+                                    "name": mat.get("name", old.get("name")),
+                                    "unit": mat.get("unit", old.get("unit")),
+                                    "quantity": old.get("quantity", 0),
+                                }
+                            )
+                        else:
+                            # New material: use the provided quantity as initial
+                            merged.append(mat)
+
+                    existing_inv.materials = merged
+
+                existing_inv.save()
             else:
+                # No existing config — create fresh
+                create_data = {**inventory_data}
+                if new_materials is not None:
+                    create_data["materials"] = new_materials
                 InventoryConfiguration.objects.create(
-                    layout=instance, tenant=tenant, **inventory_data
+                    layout=instance, tenant=tenant, **create_data
                 )
 
-        # Update dispatch config
+        # Merge dispatch config (preserves dispatch events)
         if dispatch_data is not None:
             dispatch_data.pop("id", None)
-            if hasattr(instance, "dispatch_config"):
-                try:
-                    existing_disp = instance.dispatch_config
-                    for attr, value in dispatch_data.items():
-                        setattr(existing_disp, attr, value)
-                    existing_disp.save()
-                except DispatchConfiguration.DoesNotExist:
-                    DispatchConfiguration.objects.create(
-                        layout=instance, tenant=tenant, **dispatch_data
-                    )
+            new_products = dispatch_data.pop("products", None)
+
+            try:
+                existing_disp = instance.dispatch_config
+            except DispatchConfiguration.DoesNotExist:
+                existing_disp = None
+
+            if existing_disp:
+                # Update scalar fields if any
+                for attr, value in dispatch_data.items():
+                    setattr(existing_disp, attr, value)
+
+                # Merge products: keep existing product entries, add/update new
+                if new_products is not None:
+                    existing_products = existing_disp.products or []
+                    existing_map = {
+                        p["id"]: p
+                        for p in existing_products
+                        if isinstance(p, dict) and p.get("id")
+                    }
+
+                    merged = []
+                    incoming_ids = set()
+                    for prod in new_products:
+                        prod_id = prod.get("id")
+                        incoming_ids.add(prod_id)
+                        if prod_id and prod_id in existing_map:
+                            # Update name/unit of existing product
+                            merged.append(
+                                {
+                                    "id": prod_id,
+                                    "name": prod.get(
+                                        "name", existing_map[prod_id].get("name")
+                                    ),
+                                    "unit": prod.get(
+                                        "unit", existing_map[prod_id].get("unit")
+                                    ),
+                                }
+                            )
+                        else:
+                            # New product
+                            merged.append(prod)
+
+                    # Keep existing products not in incoming (user didn't remove them)
+                    # — actually, if user removed from form, they intend removal
+                    # So we only keep what's in the incoming list
+                    existing_disp.products = merged
+
+                existing_disp.save()
             else:
+                create_data = {**dispatch_data}
+                if new_products is not None:
+                    create_data["products"] = new_products
                 DispatchConfiguration.objects.create(
-                    layout=instance, tenant=tenant, **dispatch_data
+                    layout=instance, tenant=tenant, **create_data
                 )
+
+        # Re-fetch instance with proper prefetching to ensure response
+        # serialization picks up all newly created nested objects
+        instance = (
+            FactoryLayout.objects.select_related(
+                "inventory_config",
+                "dispatch_config",
+            )
+            .prefetch_related(
+                "machines__parameters",
+                "machines__custom_kpis",
+                "connections",
+            )
+            .get(pk=instance.pk)
+        )
 
         return instance
 
@@ -689,7 +831,7 @@ class InventoryChangeSerializer(serializers.ModelSerializer):
         initial_quantity = Decimal("0")
         for material in materials:
             if isinstance(material, dict) and material.get("id") == material_id:
-                initial_quantity = Decimal(str(material.get("initialQuantity", 0)))
+                initial_quantity = Decimal(str(material.get("quantity", 0)))
                 break
 
         # Compute current stock: initial + sum(inbound) - sum(outbound)

@@ -189,7 +189,7 @@ class InventoryConfiguration(UUIDModel, TenantScopedModel):
     )
     storage_capacity = models.PositiveIntegerField()  # 1–1,000,000
     capacity_unit = models.CharField(max_length=20)  # kg, litres, meters, units
-    materials = models.JSONField(default=list)  # [{id, name, unit, initialQuantity}]
+    materials = models.JSONField(default=list)  # [{id, name, unit, quantity}]
 
     class Meta:
         indexes = [

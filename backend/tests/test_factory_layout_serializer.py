@@ -164,7 +164,7 @@ class TestFactoryLayoutSerializerCreate:
             "storage_capacity": 5000,
             "capacity_unit": "kg",
             "materials": [
-                {"id": "m1", "name": "Steel Rod", "unit": "kg", "initialQuantity": 100}
+                {"id": "m1", "name": "Steel Rod", "unit": "kg", "quantity": 100}
             ],
         }
         serializer = FactoryLayoutSerializer(data=layout_payload)
@@ -569,7 +569,7 @@ class TestFactoryLayoutSerializerUpdate:
                 "storage_capacity": 5000,
                 "capacity_unit": "litres",
                 "materials": [
-                    {"id": "m1", "name": "Water", "unit": "litres", "initialQuantity": 500}
+                    {"id": "m1", "name": "Water", "unit": "litres", "quantity": 500}
                 ],
             }
         }
@@ -594,7 +594,7 @@ class TestFactoryLayoutSerializerUpdate:
                 "storage_capacity": 2000,
                 "capacity_unit": "units",
                 "materials": [
-                    {"id": "m1", "name": "Bolts", "unit": "units", "initialQuantity": 100}
+                    {"id": "m1", "name": "Bolts", "unit": "units", "quantity": 100}
                 ],
             }
         }

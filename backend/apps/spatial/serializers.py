@@ -530,6 +530,15 @@ class MachineObservationSerializer(serializers.ModelSerializer):
         parameters = {p.key: p for p in machine.parameters.all()}
         errors = {}
 
+        # Build set of valid IO field keys from inputs/outputs
+        io_keys = set()
+        for io_item in (machine.inputs or []):
+            if isinstance(io_item, dict) and io_item.get("id"):
+                io_keys.add(f"input_{io_item['id']}")
+        for io_item in (machine.outputs or []):
+            if isinstance(io_item, dict) and io_item.get("id"):
+                io_keys.add(f"output_{io_item['id']}")
+
         # Check for required parameters
         for key, param in parameters.items():
             if param.required and key not in value:
@@ -537,6 +546,9 @@ class MachineObservationSerializer(serializers.ModelSerializer):
 
         # Validate each submitted value against its parameter definition
         for key, submitted_value in value.items():
+            if key in io_keys:
+                # IO fields are always valid (number type, not strictly validated)
+                continue
             if key not in parameters:
                 errors[key] = f"Unknown parameter '{key}'."
                 continue

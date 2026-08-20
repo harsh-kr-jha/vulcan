@@ -97,3 +97,47 @@ export async function generateDispatchQrSvg(layoutId: string): Promise<string> {
   const url = getDispatchEntryUrl(layoutId);
   return QRCode.toString(url, QR_OPTIONS);
 }
+
+// ---------------------------------------------------------------------------
+// QR Data URL generators (for JPG/PNG download and printing)
+// ---------------------------------------------------------------------------
+
+const QR_IMAGE_OPTIONS: QRCode.QRCodeToDataURLOptions = {
+  type: "image/png",
+  errorCorrectionLevel: "M",
+  margin: 1,
+  width: 512,
+};
+
+/** Generates a PNG data URL for a machine QR code. */
+export async function generateMachineQrDataUrl(machineId: string): Promise<string> {
+  const url = getMachineEntryUrl(machineId);
+  return QRCode.toDataURL(url, QR_IMAGE_OPTIONS);
+}
+
+/** Generates a PNG data URL for an inventory QR code. */
+export async function generateInventoryQrDataUrl(layoutId: string): Promise<string> {
+  const url = getInventoryEntryUrl(layoutId);
+  return QRCode.toDataURL(url, QR_IMAGE_OPTIONS);
+}
+
+/** Generates a PNG data URL for a dispatch QR code. */
+export async function generateDispatchQrDataUrl(layoutId: string): Promise<string> {
+  const url = getDispatchEntryUrl(layoutId);
+  return QRCode.toDataURL(url, QR_IMAGE_OPTIONS);
+}
+
+// ---------------------------------------------------------------------------
+// Helper: convert data URL to Blob (avoids fetch on data: URLs)
+// ---------------------------------------------------------------------------
+
+export function dataUrlToBlob(dataUrl: string): Blob {
+  const [header, base64] = dataUrl.split(",");
+  const mime = header.match(/:(.*?);/)?.[1] ?? "image/png";
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mime });
+}

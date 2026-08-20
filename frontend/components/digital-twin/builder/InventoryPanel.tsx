@@ -1,7 +1,7 @@
 "use client";
 
 import { Package, Plus, Trash2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
 import {
   validateInventoryCapacity,
@@ -50,16 +50,63 @@ function generateId(): string {
 export function InventoryPanel() {
   const { state, configureInventory } = useFactoryBuilder();
   const [isConfiguring, setIsConfiguring] = useState(false);
+  const [liveStock, setLiveStock] = useState<Record<string, number> | null>(null);
 
   const hasInventory = !!state.layout.inventory;
+  const layoutId = state.layout.id;
+  const isViewMode = !!layoutId && !state.isDirty;
+
+  // Fetch live stock levels when in view mode (polls every 10s)
+  useEffect(() => {
+    if (!isViewMode || !layoutId || !hasInventory) {
+      setLiveStock(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchStock() {
+      try {
+        const response = await fetch(
+          `/api/backend/api/spatial/inventory/${layoutId}/`,
+          { headers: { Accept: "application/json" }, credentials: "same-origin" }
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled && data.stock) {
+          setLiveStock(data.stock);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    fetchStock();
+    const interval = setInterval(fetchStock, 10_000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [isViewMode, layoutId, hasInventory]);
 
   // If already configured and not in configuration mode, show summary with treemap
   if (hasInventory && !isConfiguring) {
+    // Compute display inventory with live stock if available
+    const displayInventory: InventoryConfig = liveStock
+      ? {
+          ...state.layout.inventory!,
+          materials: state.layout.inventory!.materials.map((m) => ({
+            ...m,
+            quantity: liveStock[m.id] ?? m.quantity,
+          })),
+        }
+      : state.layout.inventory!;
+
     return (
       <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white p-4">
         <div className="flex items-center gap-2">
           <Package className="h-4 w-4 text-green-600" />
           <h3 className="text-sm font-semibold text-gray-900">Inventory</h3>
+          {liveStock && (
+            <span className="text-xs text-green-600 font-medium">Live</span>
+          )}
         </div>
         <p className="text-xs text-gray-600">
           Capacity: {state.layout.inventory!.storageCapacity.toLocaleString()}{" "}
@@ -69,16 +116,43 @@ export function InventoryPanel() {
           Materials: {state.layout.inventory!.materials.length}
         </p>
 
+        {/* Material stock table */}
+        {displayInventory.materials.length > 0 && (
+          <div className="border border-gray-100 rounded-md overflow-hidden">
+            <table className="w-full text-xs">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="text-left px-2 py-1 font-medium text-gray-600">Material</th>
+                  <th className="text-right px-2 py-1 font-medium text-gray-600">Qty</th>
+                  <th className="text-left px-2 py-1 font-medium text-gray-600">Unit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayInventory.materials.map((m) => (
+                  <tr key={m.id} className="border-t border-gray-50">
+                    <td className="px-2 py-1 text-gray-800 truncate max-w-[100px]">{m.name}</td>
+                    <td className="px-2 py-1 text-right font-medium text-gray-900">
+                      {typeof m.quantity === "number" ? m.quantity.toLocaleString(undefined, { maximumFractionDigits: 2 }) : m.quantity}
+                    </td>
+                    <td className="px-2 py-1 text-gray-500">{m.unit}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         {/* Treemap visualization and QR code (Requirements 11.4, 11.5, 11.6) */}
         <InventoryTreeMap
-          inventory={state.layout.inventory!}
+          inventory={displayInventory}
           layoutId={state.layout.id}
         />
 
         <button
           type="button"
           onClick={() => setIsConfiguring(true)}
-          className="mt-1 rounded bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+          className="button button-secondary"
+          style={{ minHeight: 0, padding: "6px 12px", fontSize: "12px" }}
         >
           Edit Inventory
         </button>
@@ -94,7 +168,7 @@ export function InventoryPanel() {
         <button
           type="button"
           onClick={() => setIsConfiguring(true)}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+          className="button button-primary"
         >
           Build Inventory
         </button>
@@ -219,7 +293,7 @@ function InventoryConfigForm({
   }, [isFormValid, capacityNum, capacityUnit, materials, onSave]);
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 max-h-[80vh] overflow-y-auto">
+    <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-900">
@@ -244,13 +318,13 @@ function InventoryConfigForm({
             value={capacity}
             onChange={(e) => setCapacity(e.target.value)}
             placeholder="e.g. 10000"
-            className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="flex-1 rounded-md border border-gray-300 px-2.5 py-1.5 text-sm focus:border-[var(--green)] focus:outline-none focus:ring-1 focus:ring-[var(--green)]"
           />
           <select
             value={capacityUnit}
             onChange={(e) => setCapacityUnit(e.target.value as CapacityUnit)}
             aria-label="Capacity unit"
-            className="rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="rounded-md border border-gray-300 px-2.5 py-1.5 text-sm focus:border-[var(--green)] focus:outline-none focus:ring-1 focus:ring-[var(--green)]"
           >
             {UNIT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -276,7 +350,8 @@ function InventoryConfigForm({
             type="button"
             onClick={addMaterial}
             disabled={materials.length >= 50}
-            className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="button button-accent"
+            style={{ minHeight: 0, padding: "4px 10px", fontSize: "12px" }}
           >
             <Plus className="h-3 w-3" />
             Add
@@ -310,14 +385,14 @@ function InventoryConfigForm({
           type="button"
           onClick={handleSave}
           disabled={!isFormValid}
-          className="flex-1 rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          className="button button-primary flex-1"
         >
           Save
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 rounded border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          className="button button-secondary flex-1"
         >
           Cancel
         </button>
@@ -359,7 +434,7 @@ function MaterialRow({
             placeholder="Material name"
             maxLength={100}
             aria-label={`Material ${index + 1} name`}
-            className="w-full rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded border border-gray-300 px-2 py-1 text-xs focus:border-[var(--green)] focus:outline-none focus:ring-1 focus:ring-[var(--green)]"
           />
           {error && (
             <p className="text-[10px] text-red-600" role="alert">
@@ -372,7 +447,8 @@ function MaterialRow({
           type="button"
           onClick={() => onRemove(index)}
           aria-label={`Remove material ${index + 1}`}
-          className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+          className="icon-button"
+          style={{ height: 28, width: 28 }}
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -384,7 +460,7 @@ function MaterialRow({
           value={material.unit}
           onChange={(e) => onUpdate(index, "unit", e.target.value)}
           aria-label={`Material ${index + 1} unit`}
-          className="rounded border border-gray-300 px-1.5 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="rounded border border-gray-300 px-1.5 py-1 text-xs focus:border-[var(--green)] focus:outline-none focus:ring-1 focus:ring-[var(--green)]"
         >
           {UNIT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -402,7 +478,7 @@ function MaterialRow({
           onChange={(e) => onUpdate(index, "quantity", e.target.value)}
           placeholder="Qty"
           aria-label={`Material ${index + 1} quantity`}
-          className="w-20 rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-20 rounded border border-gray-300 px-2 py-1 text-xs focus:border-[var(--green)] focus:outline-none focus:ring-1 focus:ring-[var(--green)]"
         />
       </div>
     </div>

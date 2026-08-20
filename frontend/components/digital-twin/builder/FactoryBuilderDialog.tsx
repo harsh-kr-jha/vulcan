@@ -66,10 +66,9 @@ export function FactoryBuilderDialog({ factoryId, onClose }: FactoryBuilderDialo
             <p>Define the floor dimensions and unit system for your factory layout.</p>
           </div>
           <button
-            className="button button-secondary"
+            className="icon-button"
             onClick={onClose}
             aria-label="Close dialog"
-            style={{ padding: "6px 8px", minHeight: "unset" }}
           >
             <X size={16} />
           </button>

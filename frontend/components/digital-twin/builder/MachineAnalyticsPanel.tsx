@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { X, Activity, BarChart3, Clock } from "lucide-react";
+import { X, Activity, BarChart3, Clock, Maximize2 } from "lucide-react";
 import type { MachineNode, MachineStatus } from "@/lib/spatial-types";
+import { QrCodePreview } from "./QrCodePreview";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -58,6 +59,7 @@ export function MachineAnalyticsPanel({
   const machine = machines.find((m) => m.id === machineId);
   const [observations, setObservations] = useState<ObservationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showFullHistory, setShowFullHistory] = useState(false);
 
   // Fetch recent observations for this machine
   useEffect(() => {
@@ -123,7 +125,7 @@ export function MachineAnalyticsPanel({
 
   return (
     <div
-      className="absolute right-0 top-0 h-full w-96 bg-white shadow-2xl border-l border-gray-200 z-30 flex flex-col overflow-hidden animate-in slide-in-from-right duration-200"
+      className="absolute right-0 top-0 bottom-0 w-96 max-w-[calc(100%-3rem)] bg-white shadow-2xl border-l border-gray-200 z-30 flex flex-col overflow-hidden animate-in slide-in-from-right duration-200"
       role="dialog"
       aria-label={`Analytics for ${machine.name}`}
       aria-modal="false"
@@ -160,33 +162,127 @@ export function MachineAnalyticsPanel({
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-        {/* Parameters summary */}
+        {/* Parameters with last 3 history entries */}
         {machine.parameters.length > 0 && (
           <section>
-            <div className="flex items-center gap-1.5 mb-2">
-              <BarChart3 size={14} className="text-gray-400" />
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                Parameters ({machine.parameters.length})
-              </h3>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <BarChart3 size={14} className="text-gray-400" />
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Parameters ({machine.parameters.length})
+                </h3>
+              </div>
+              {observations.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowFullHistory(true)}
+                  className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                >
+                  <Maximize2 size={12} />
+                  Full History
+                </button>
+              )}
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {machine.parameters.map((param) => {
-                const latestValue = latestObs?.values[param.key];
-                return (
+
+            {loading ? (
+              <div className="flex items-center justify-center py-4">
+                <span className="text-xs text-gray-400">Loading...</span>
+              </div>
+            ) : observations.length === 0 ? (
+              <div className="grid grid-cols-2 gap-2">
+                {machine.parameters.map((param) => (
                   <div
                     key={param.id}
                     className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2"
                   >
                     <p className="text-xs text-gray-500 truncate">{param.key}</p>
-                    <p className="text-sm font-medium text-gray-900 mt-0.5">
-                      {latestValue !== undefined && latestValue !== null
-                        ? String(latestValue)
-                        : "\u2014"}
-                    </p>
+                    <p className="text-sm font-medium text-gray-900 mt-0.5">{"\u2014"}</p>
                   </div>
-                );
-              })}
+                ))}
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-md border border-gray-200">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="text-left px-2 py-1.5 font-semibold text-gray-600 sticky left-0 bg-gray-50 min-w-[100px]">
+                        Parameter
+                      </th>
+                      {observations.slice(0, 3).map((obs, idx) => (
+                        <th key={idx} className="text-center px-2 py-1.5 font-medium text-gray-400 whitespace-nowrap min-w-[70px]">
+                          {obs.submitted_at
+                            ? new Date(obs.submitted_at).toLocaleString(undefined, {
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })
+                            : `#${idx + 1}`}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {machine.parameters.map((param, pIdx) => (
+                      <tr
+                        key={param.id}
+                        className={pIdx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
+                      >
+                        <td className="px-2 py-1.5 font-medium text-gray-700 truncate max-w-[120px] sticky left-0 bg-inherit border-r border-gray-100">
+                          {param.key}
+                        </td>
+                        {observations.slice(0, 3).map((obs, oIdx) => {
+                          const val = obs.values[param.key];
+                          return (
+                            <td
+                              key={oIdx}
+                              className={`text-center px-2 py-1.5 font-mono ${
+                                oIdx === 0
+                                  ? "text-gray-900 font-semibold"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              {val !== undefined && val !== null
+                                ? String(val)
+                                : "\u2014"}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Full History button when no parameters but inputs/outputs exist */}
+        {machine.parameters.length === 0 && (machine.inputs.length > 0 || machine.outputs.length > 0) && observations.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <Clock size={14} className="text-gray-400" />
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  I/O History
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFullHistory(true)}
+                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
+              >
+                <Maximize2 size={12} />
+                Full History
+              </button>
             </div>
+            <p className="text-xs text-gray-400">
+              {machine.inputs.length} input{machine.inputs.length !== 1 ? "s" : ""}
+              {" \u00b7 "}
+              {machine.outputs.length} output{machine.outputs.length !== 1 ? "s" : ""}
+              {" \u00b7 "}
+              {observations.length} observation{observations.length !== 1 ? "s" : ""} recorded
+            </p>
           </section>
         )}
 
@@ -215,65 +311,177 @@ export function MachineAnalyticsPanel({
           </section>
         )}
 
-        {/* Recent observations */}
+        {/* Machine QR Code – Download & Print */}
         <section>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Clock size={14} className="text-gray-400" />
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Recent Observations
-            </h3>
-          </div>
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Machine QR Code
+          </h3>
+          <QrCodePreview
+            machineId={machine.id}
+            machineName={machine.name}
+          />
+        </section>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-6">
-              <span className="text-xs text-gray-400">Loading...</span>
-            </div>
-          ) : observations.length === 0 ? (
-            <div className="flex flex-col items-center py-6 text-center">
+      </div>
+
+      {/* Full History Sheet (overlay) */}
+      {showFullHistory && (
+        <FullHistorySheet
+          machine={machine}
+          observations={observations}
+          onClose={() => setShowFullHistory(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Full History Sheet – snapshot view with parameters + inputs/outputs
+// ---------------------------------------------------------------------------
+
+interface FullHistorySheetProps {
+  machine: MachineNode;
+  observations: ObservationRow[];
+  onClose: () => void;
+}
+
+function FullHistorySheet({ machine, observations, onClose }: FullHistorySheetProps) {
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose]
+  );
+
+  // Build columns: parameters + inputs + outputs
+  const paramCols = machine.parameters.map((p) => ({ key: p.key, label: p.key, type: "Parameter" as const }));
+  const inputCols = machine.inputs.map((io) => ({ key: `input_${io.id}`, label: `${io.label} (${io.unitType})`, type: "Input" as const }));
+  const outputCols = machine.outputs.map((io) => ({ key: `output_${io.id}`, label: `${io.label} (${io.unitType})`, type: "Output" as const }));
+  const allCols = [...paramCols, ...inputCols, ...outputCols];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+      onKeyDown={handleKeyDown}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Full history for ${machine.name}`}
+    >
+      <div
+        className="relative w-[95vw] max-w-6xl h-[85vh] bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Sheet Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50 shrink-0">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900">
+              {machine.name} — Full History
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {observations.length} snapshot{observations.length !== 1 ? "s" : ""} · {paramCols.length} parameters · {inputCols.length} inputs · {outputCols.length} outputs
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-md hover:bg-gray-200 text-gray-400 hover:text-gray-700 transition-colors"
+            aria-label="Close history sheet"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Sheet Body – spreadsheet table, scrollable both ways */}
+        <div className="flex-1 overflow-auto">
+          {observations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center h-full">
               <p className="text-sm text-gray-400">No observations recorded yet.</p>
-              <p className="text-xs text-gray-300 mt-1">
-                Scan the machine QR code to submit data.
-              </p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {observations.map((obs, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-md border border-gray-100 bg-white px-3 py-2"
-                >
-                  <p className="text-xs text-gray-400 mb-1">
-                    {obs.submitted_at
-                      ? new Date(obs.submitted_at).toLocaleString()
-                      : "Unknown time"}
-                  </p>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
-                    {Object.entries(obs.values).slice(0, 8).map(([key, value]) => (
-                      <div key={key} className="flex justify-between text-xs">
-                        <span className="text-gray-500 truncate">{key}</span>
-                        <span className="text-gray-800 font-medium ml-1">
-                          {String(value ?? "-")}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  {Object.keys(obs.values).length > 8 && (
-                    <p className="text-xs text-gray-300 mt-1">
-                      +{Object.keys(obs.values).length - 8} more fields
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
+            <table className="text-xs border-collapse min-w-full">
+              <thead className="sticky top-0 z-10">
+                {/* Column type row */}
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="sticky left-0 z-20 bg-gray-50 px-3 py-1 border-r border-gray-200" />
+                  <th className="sticky left-[50px] z-20 bg-gray-50 px-3 py-1 border-r border-gray-200" />
+                  {allCols.map((col, cIdx) => (
+                    <th key={cIdx} className="px-3 py-1 text-center">
+                      <span
+                        className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                          col.type === "Parameter"
+                            ? "bg-blue-50 text-blue-700"
+                            : col.type === "Input"
+                            ? "bg-green-50 text-green-700"
+                            : "bg-orange-50 text-orange-700"
+                        }`}
+                      >
+                        {col.type}
+                      </span>
+                    </th>
+                  ))}
+                </tr>
+                {/* Column name row */}
+                <tr className="bg-gray-100 border-b border-gray-200">
+                  <th className="sticky left-0 z-20 bg-gray-100 text-left px-3 py-2 font-semibold text-gray-600 min-w-[50px] border-r border-gray-200">
+                    #
+                  </th>
+                  <th className="sticky left-[50px] z-20 bg-gray-100 text-left px-3 py-2 font-semibold text-gray-600 min-w-[140px] border-r border-gray-200">
+                    Timestamp
+                  </th>
+                  {allCols.map((col, cIdx) => (
+                    <th
+                      key={cIdx}
+                      className="text-center px-3 py-2 font-semibold text-gray-700 whitespace-nowrap min-w-[90px]"
+                    >
+                      {col.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {observations.map((obs, rowIdx) => (
+                  <tr
+                    key={rowIdx}
+                    className={`${rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50/60"} hover:bg-blue-50/30 transition-colors`}
+                  >
+                    <td className="sticky left-0 bg-inherit px-3 py-2 text-center font-bold text-gray-500 border-r border-gray-100">
+                      {rowIdx + 1}
+                    </td>
+                    <td className="sticky left-[50px] bg-inherit px-3 py-2 text-xs text-gray-700 font-medium whitespace-nowrap border-r border-gray-100">
+                      {obs.submitted_at
+                        ? new Date(obs.submitted_at).toLocaleString()
+                        : "—"}
+                    </td>
+                    {allCols.map((col, cIdx) => {
+                      const val = obs.values[col.key];
+                      return (
+                        <td
+                          key={cIdx}
+                          className="text-center px-3 py-2 font-mono text-gray-900"
+                        >
+                          {val !== undefined && val !== null
+                            ? String(val)
+                            : "\u2014"}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
-        </section>
+        </div>
 
-        {/* Placeholder for future analytics (charts, trends) */}
-        <section className="rounded-md border border-dashed border-gray-200 bg-gray-50/50 px-4 py-6 text-center">
-          <p className="text-xs text-gray-400">
-            Charts and trend analysis will appear here.
-          </p>
-        </section>
+        {/* Sheet Footer */}
+        <div className="shrink-0 border-t border-gray-200 bg-gray-50 px-6 py-3 flex items-center justify-end">
+          <button
+            onClick={onClose}
+            className="rounded-md bg-gray-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-gray-800 transition-colors"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -59,7 +59,7 @@ export function MachineSizeDialog({ position, onConfirm, onCancel }: MachineSize
       previewCells.push(
         <div
           key={`${col}-${row}`}
-          className="w-5 h-5 rounded-sm bg-blue-200 border border-blue-400"
+          className="w-5 h-5 rounded-sm bg-[var(--green-soft)] border border-[var(--green)]"
         />
       );
     }
@@ -107,25 +107,7 @@ export function MachineSizeDialog({ position, onConfirm, onCancel }: MachineSize
               max={MAX_SIZE}
               value={width}
               onChange={handleWidthChange}
-              className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
-            />
-          </div>
-          <span className="text-gray-400 font-medium mt-5">&times;</span>
-          <div className="flex-1">
-            <label
-              htmlFor="machine-height"
-              className="block text-xs font-medium text-gray-700 mb-1"
-            >
-              Height (rows)
-            </label>
-            <input
-              id="machine-height"
-              type="number"
-              min={MIN_SIZE}
-              max={MAX_SIZE}
-              value={height}
-              onChange={handleHeightChange}
-              className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+              className="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm focus:border-[var(--green)] focus:ring-1 focus:ring-[var(--green)] outline-none"
             />
           </div>
         </div>
@@ -149,14 +131,14 @@ export function MachineSizeDialog({ position, onConfirm, onCancel }: MachineSize
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+            className="button button-secondary"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+            className="button button-primary"
           >
             Confirm
           </button>

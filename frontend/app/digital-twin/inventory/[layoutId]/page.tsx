@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ApiError } from "@/lib/api-client";
+import { ApiError, getCsrfToken } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -19,6 +19,7 @@ interface InventoryState {
   storage_capacity: number;
   capacity_unit: string;
   materials: InventoryMaterial[];
+  stock?: Record<string, number>;
 }
 
 type Direction = "addition" | "removal";
@@ -59,6 +60,7 @@ async function submitInventoryChange(
   layoutId: string,
   body: { material_id: string; direction: string; quantity: number },
 ): Promise<void> {
+  const csrfToken = await getCsrfToken();
   const response = await fetch(
     `${API_ROOT}/spatial/inventory/${layoutId}/changes/`,
     {
@@ -67,6 +69,7 @@ async function submitInventoryChange(
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
       },
       body: JSON.stringify(body),
     },
@@ -164,8 +167,9 @@ export default function InventoryDataEntryPage() {
     // Check removal against current stock
     if (direction === "removal" && config && materialId && !errors.quantity) {
       const material = config.materials.find((m) => m.id === materialId);
-      if (material && qty > material.quantity) {
-        errors.quantity = `Insufficient stock. Current quantity: ${material.quantity} ${material.unit}`;
+      const currentStock = config.stock?.[materialId] ?? material?.quantity ?? 0;
+      if (qty > currentStock) {
+        errors.quantity = `Insufficient stock. Current quantity: ${currentStock} ${material?.unit ?? config.capacity_unit}`;
       }
     }
 
@@ -323,11 +327,14 @@ export default function InventoryDataEntryPage() {
               aria-describedby={fieldErrors.material ? "material-error" : undefined}
             >
               <option value="">Select a material</option>
-              {config?.materials.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({m.quantity} {m.unit})
-                </option>
-              ))}
+              {config?.materials.map((m) => {
+                const currentQty = config.stock?.[m.id] ?? m.quantity;
+                return (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({currentQty} {m.unit})
+                  </option>
+                );
+              })}
             </select>
             {fieldErrors.material && (
               <p id="material-error" className="entry-field-error-text" role="alert">

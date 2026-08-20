@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Factory, Loader2, Pencil, Save, Trash2, X } from "lucide-react";
+import { Factory, Loader2, Maximize2, Minimize2, Pencil, Save, Trash2, X } from "lucide-react";
 import { useFactory } from "@/lib/factory-context";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
 import { getCsrfToken } from "@/lib/api-client";
@@ -210,6 +210,7 @@ export function FactoryTwinPage() {
   const [pageMode, setPageMode] = useState<PageMode>("loading");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showBuilderDialog, setShowBuilderDialog] = useState(false);
+  const [isImmersive, setIsImmersive] = useState(false);
 
   // Panel state
   const [configMachineId, setConfigMachineId] = useState<string | null>(null);
@@ -220,6 +221,11 @@ export function FactoryTwinPage() {
 
   // Delete confirmation state
   const [deleteStep, setDeleteStep] = useState<"idle" | "confirming" | "deleting">("idle");
+
+  // Live data for view mode (observations per machine)
+  const [machineObservations, setMachineObservations] = useState<
+    Record<string, { values: Record<string, unknown>; submittedAt?: string }>
+  >({});
 
   // Get the active factory ID
   const factoryId =
@@ -356,6 +362,52 @@ export function FactoryTwinPage() {
   ]);
 
   // -------------------------------------------------------------------------
+  // Fetch live observation data when in viewing mode (polls every 10s)
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    if (pageMode !== "viewing") return;
+    if (builderState.layout.machines.length === 0) return;
+
+    let cancelled = false;
+
+    async function fetchObservations() {
+      const obsMap: Record<string, { values: Record<string, unknown>; submittedAt?: string }> = {};
+
+      // Fetch latest observation for each machine in parallel
+      const fetches = builderState.layout.machines.map(async (machine) => {
+        try {
+          const response = await fetch(
+            `${API_SPATIAL}/machines/${machine.id}/observations/?limit=1`,
+            { headers: { Accept: "application/json" }, credentials: "same-origin" }
+          );
+          if (!response.ok) return;
+          const data = await response.json();
+          const results = Array.isArray(data) ? data : data.results ?? [];
+          if (results.length > 0) {
+            obsMap[machine.id] = {
+              values: results[0].values ?? {},
+              submittedAt: results[0].submitted_at,
+            };
+          }
+        } catch {
+          // ignore per-machine fetch errors
+        }
+      });
+
+      await Promise.all(fetches);
+      if (!cancelled) {
+        setMachineObservations(obsMap);
+      }
+    }
+
+    fetchObservations();
+    const interval = setInterval(fetchObservations, 10_000);
+
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [pageMode, builderState.layout.machines]);
+
+  // -------------------------------------------------------------------------
   // Handlers
   // -------------------------------------------------------------------------
 
@@ -440,7 +492,15 @@ export function FactoryTwinPage() {
         size,
         inputs: [],
         outputs: [],
-        parameters: [],
+        parameters: [
+          {
+            id: crypto.randomUUID(),
+            key: "active",
+            dataType: "boolean",
+            required: true,
+            order: 0,
+          },
+        ],
         customKpis: [],
       };
       placeMachine(newMachine);
@@ -482,6 +542,41 @@ export function FactoryTwinPage() {
 
   const handleCloseConnectionConfig = useCallback(() => {
     setConfigConnectionId(null);
+  }, []);
+
+  // Toggle immersive (fullscreen) mode using native Fullscreen API
+  const immersiveRef = useRef<HTMLDivElement>(null);
+
+  const toggleImmersive = useCallback(() => {
+    if (!document.fullscreenElement) {
+      // Enter fullscreen on the container element
+      const el = immersiveRef.current;
+      if (el) {
+        el.requestFullscreen().then(() => setIsImmersive(true)).catch(() => {
+          // Fallback: just do CSS fullscreen if API fails
+          setIsImmersive(true);
+        });
+      } else {
+        document.documentElement.requestFullscreen().then(() => setIsImmersive(true)).catch(() => {
+          setIsImmersive(true);
+        });
+      }
+    } else {
+      document.exitFullscreen().then(() => setIsImmersive(false)).catch(() => {
+        setIsImmersive(false);
+      });
+    }
+  }, []);
+
+  // Sync state when user exits fullscreen via Escape or browser controls
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setIsImmersive(false);
+      }
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   // Listen for new connections completed via builder state
@@ -539,7 +634,7 @@ export function FactoryTwinPage() {
           type="button"
           onClick={handleBuildFactory}
           disabled={!factoryId}
-          className="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          className="button button-primary"
         >
           Build Lexicon™
         </button>
@@ -562,8 +657,8 @@ export function FactoryTwinPage() {
 
   // Visualization mode (Req 9.5, 13.2)
   if (pageMode === "viewing") {
-    return (
-      <div className="flex flex-col h-[calc(100vh-64px)]">
+    const viewContent = (
+      <div className={`flex flex-col ${isImmersive ? "h-screen" : "h-[calc(100vh-64px)]"}`}>
         {/* Toolbar */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
           <h1 className="text-base font-semibold text-gray-900">
@@ -574,10 +669,11 @@ export function FactoryTwinPage() {
               <button
                 type="button"
                 onClick={handleDeleteRequest}
-                className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors"
+                title="Delete Layout"
+                className="icon-button"
+                style={{ color: "var(--red)" }}
               >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete Layout
+                <Trash2 className="h-4 w-4" />
               </button>
             )}
             {deleteStep === "confirming" && (
@@ -586,14 +682,14 @@ export function FactoryTwinPage() {
                 <button
                   type="button"
                   onClick={handleDeleteConfirm}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors"
+                  className="button button-danger"
                 >
                   Yes, Delete
                 </button>
                 <button
                   type="button"
                   onClick={handleDeleteCancel}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1 transition-colors"
+                  className="button button-secondary"
                 >
                   No
                 </button>
@@ -605,18 +701,26 @@ export function FactoryTwinPage() {
             <button
               type="button"
               onClick={handleEditLayout}
-              className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+              title="Edit Layout"
+              className="icon-button"
             >
-              <Pencil className="h-3.5 w-3.5" />
-              Edit Layout
+              <Pencil className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={toggleImmersive}
+              title={isImmersive ? "Exit Immersive Mode" : "Immersive Edit Mode"}
+              className="icon-button"
+            >
+              {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </button>
           </div>
         </div>
 
         {/* Three-column layout: Inventory | Visualization | Dispatch */}
-        <div className="flex flex-1 overflow-hidden min-h-0">
+        <div className="relative flex flex-1 overflow-hidden min-h-0">
           {/* Inventory Panel (left) */}
-          <aside className="w-64 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3">
+          <aside className="w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3">
             <InventoryPanel />
           </aside>
 
@@ -624,31 +728,42 @@ export function FactoryTwinPage() {
           <main className="flex-1 overflow-hidden min-h-0 min-w-0">
             <FactoryVisualization
               layout={builderState.layout}
+              observations={machineObservations}
               onMachineClick={handleVisualizationMachineClick}
             />
           </main>
 
           {/* Dispatch Panel (right) */}
-          <aside className="w-64 shrink-0 border-l border-gray-200 bg-white overflow-y-auto">
+          <aside className="w-72 shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-3">
             <DispatchPanel />
           </aside>
-        </div>
 
-        {/* Machine Analytics Panel (slide-over, view mode) */}
-        {analyticsMachineId && (
-          <MachineAnalyticsPanel
-            machineId={analyticsMachineId}
-            machines={builderState.layout.machines}
-            onClose={handleCloseAnalytics}
-          />
-        )}
+          {/* Machine Analytics Panel (slide-over, view mode) */}
+          {analyticsMachineId && (
+            <MachineAnalyticsPanel
+              machineId={analyticsMachineId}
+              machines={builderState.layout.machines}
+              onClose={handleCloseAnalytics}
+            />
+          )}
+        </div>
       </div>
     );
+
+    if (isImmersive) {
+      return (
+        <div ref={immersiveRef} className="w-full h-full bg-white">
+          {viewContent}
+        </div>
+      );
+    }
+
+    return <div ref={immersiveRef}>{viewContent}</div>;
   }
 
   // Editing mode (new build or edit existing) (Req 13.1, 13.3, 13.7)
-  return (
-    <div className="flex flex-col h-[calc(100vh-64px)]">
+  const editContent = (
+    <div className={`flex flex-col ${isImmersive ? "h-screen" : "h-[calc(100vh-64px)]"}`}>
       {/* Toolbar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
         <h1 className="text-base font-semibold text-gray-900">
@@ -670,7 +785,7 @@ export function FactoryTwinPage() {
             type="button"
             onClick={handleCancel}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+            className="button button-secondary"
           >
             <X className="h-3.5 w-3.5" />
             Cancel
@@ -683,7 +798,7 @@ export function FactoryTwinPage() {
             disabled={
               saving || builderState.layout.machines.length === 0
             }
-            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors"
+            className="button button-primary"
           >
             {saving ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -692,13 +807,23 @@ export function FactoryTwinPage() {
             )}
             {saving ? "Saving..." : "Save Lexicon™"}
           </button>
+
+          {/* Immersive mode toggle */}
+          <button
+            type="button"
+            onClick={toggleImmersive}
+            title={isImmersive ? "Exit Immersive Mode" : "Immersive Edit Mode"}
+            className="icon-button"
+          >
+            {isImmersive ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
         </div>
       </div>
 
       {/* Three-column layout: Inventory | FloorCanvas | Dispatch */}
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Inventory Panel (left) */}
-        <aside className="w-64 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3">
+        <aside className="w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3">
           <InventoryPanel />
         </aside>
 
@@ -713,7 +838,7 @@ export function FactoryTwinPage() {
         </main>
 
         {/* Dispatch Panel (right) */}
-        <aside className="w-64 shrink-0 border-l border-gray-200 bg-white overflow-y-auto">
+        <aside className="w-72 shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-3">
           <DispatchPanel />
         </aside>
       </div>
@@ -744,6 +869,16 @@ export function FactoryTwinPage() {
       )}
     </div>
   );
+
+  if (isImmersive) {
+    return (
+      <div ref={immersiveRef} className="w-full h-full bg-white">
+        {editContent}
+      </div>
+    );
+  }
+
+  return <div ref={immersiveRef}>{editContent}</div>;
 }
 
 export default FactoryTwinPage;

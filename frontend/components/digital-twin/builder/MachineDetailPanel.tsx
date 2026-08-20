@@ -7,6 +7,7 @@ import type {
   KpiFormula,
   MachineStatus,
 } from "@/lib/spatial-types";
+import { QrCodePreview } from "./QrCodePreview";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -149,7 +150,7 @@ export function MachineDetailPanel({
 
   return (
     <div
-      className="absolute right-0 top-0 h-full w-80 bg-white shadow-xl border-l border-gray-200 z-20 flex flex-col overflow-hidden"
+      className="absolute right-0 top-0 bottom-0 w-80 max-w-[calc(100%-3rem)] bg-white shadow-xl border-l border-gray-200 z-20 flex flex-col overflow-hidden"
       role="dialog"
       aria-label={`Details for ${machine.name}`}
       aria-modal="false"
@@ -294,6 +295,17 @@ export function MachineDetailPanel({
             )}
           </>
         )}
+
+        {/* QR Code – Download & Print */}
+        <section>
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Machine QR Code
+          </h3>
+          <QrCodePreview
+            machineId={machine.id}
+            machineName={machine.name}
+          />
+        </section>
       </div>
     </div>
   );

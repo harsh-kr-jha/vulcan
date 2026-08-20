@@ -2,10 +2,11 @@
 
 import type { EChartsOption } from "echarts";
 import ReactECharts from "echarts-for-react";
-import { Download, Eye, EyeOff } from "lucide-react";
+import { Download, Eye, EyeOff, Printer, QrCode } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { generateInventoryQrSvg } from "@/lib/qr-generator";
+import { generateInventoryQrSvg, generateInventoryQrDataUrl, dataUrlToBlob } from "@/lib/qr-generator";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
+import { useFactory } from "@/lib/factory-context";
 import type { InventoryConfig } from "@/lib/spatial-types";
 
 // ---------------------------------------------------------------------------
@@ -113,39 +114,68 @@ function InventoryQrCode({ layoutId }: InventoryQrCodeProps) {
   const [generating, setGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [svgString, setSvgString] = useState<string | null>(null);
-  const { state } = useFactoryBuilder();
+  const { state: factoryState, filters } = useFactory();
+
+  const companyName = "Vulcan";
+  const activeFactory = factoryState.factories.find(
+    (f) => f.id === (filters.factoryId || factoryState.activeFactoryId)
+  );
+  const factoryName = activeFactory?.name || "Factory";
+
+  const ensureGenerated = useCallback(async () => {
+    if (svgString) return;
+    const svg = await generateInventoryQrSvg(layoutId);
+    setSvgString(svg);
+  }, [svgString, layoutId]);
+
+  const renderLabeledQr = useCallback(async (): Promise<Blob> => {
+    const qrDataUrl = await generateInventoryQrDataUrl(layoutId);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d")!;
+    const qrSize = 300, padding = 40, topH = 70, botH = 50;
+    const w = qrSize + padding * 2, h = topH + qrSize + botH + padding * 2;
+    canvas.width = w; canvas.height = h;
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#6b7280"; ctx.font = "500 11px system-ui, sans-serif";
+    ctx.fillText("VULCAN · LEXICON™", w / 2, padding + 14);
+    ctx.fillStyle = "#374151"; ctx.font = "600 14px system-ui, sans-serif";
+    ctx.fillText(factoryName, w / 2, padding + 38);
+    const img = new Image();
+    await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(); img.src = qrDataUrl; });
+    ctx.drawImage(img, padding, padding + topH, qrSize, qrSize);
+    ctx.fillStyle = "#111827"; ctx.font = "700 16px system-ui, sans-serif";
+    ctx.fillText("Inventory", w / 2, padding + topH + qrSize + 30);
+    return new Promise((res) => { canvas.toBlob((b) => res(b!), "image/jpeg", 0.95); });
+  }, [layoutId, factoryName]);
 
   const handleDownload = useCallback(async () => {
     setGenerating(true);
     try {
-      const qrSvg = svgString ?? await generateInventoryQrSvg(layoutId);
-      if (!svgString) setSvgString(qrSvg);
-      const factoryName = state.layout.factoryId || "Factory";
-      const htmlContent = `<!DOCTYPE html><html><head><title>Inventory QR - Vulcan by Tamaso</title><style>*{margin:0;padding:0;box-sizing:border-box}body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:2rem}.brand{font-size:12px;color:#6b7280;margin-bottom:1.5rem;letter-spacing:0.05em;text-transform:uppercase}.qr-svg{width:200px;height:200px}.qr-svg svg{width:100%;height:100%}.label{font-size:16px;font-weight:600;margin-top:1rem;text-align:center}.sublabel{font-size:12px;color:#6b7280;margin-top:0.25rem}</style></head><body><div class="brand">Vulcan by Tamaso</div><div class="qr-svg">${qrSvg}</div><div class="label">Inventory</div><div class="sublabel">${factoryName}</div></body></html>`;
-      const blob = new Blob([htmlContent], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
+      const blob = await renderLabeledQr();
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = "inventory-qr.html";
-      a.click();
-      URL.revokeObjectURL(url);
-    } finally {
-      setGenerating(false);
-    }
-  }, [layoutId, state.layout.factoryId, svgString]);
+      a.href = blobUrl; a.download = "inventory-qr.jpg"; a.click();
+      URL.revokeObjectURL(blobUrl);
+    } finally { setGenerating(false); }
+  }, [renderLabeledQr]);
+
+  const handlePrint = useCallback(async () => {
+    setGenerating(true);
+    try {
+      const blob = await renderLabeledQr();
+      const blobUrl = URL.createObjectURL(blob);
+      const pw = window.open("", "_blank", "width=450,height=550");
+      if (!pw) return;
+      pw.document.write(`<!DOCTYPE html><html><head><title>Inventory QR</title><style>*{margin:0;padding:0;box-sizing:border-box}body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}img{max-width:100%;height:auto}@media print{body{padding:0}img{width:8cm}}</style></head><body><img src="${blobUrl}"/><script>window.onload=function(){setTimeout(function(){window.print()},200);window.onafterprint=function(){window.close()}}</script></body></html>`);
+      pw.document.close();
+    } finally { setGenerating(false); }
+  }, [renderLabeledQr]);
 
   const togglePreview = useCallback(async () => {
-    if (!showPreview && !svgString) {
-      // Generate on first preview open
-      try {
-        const svg = await generateInventoryQrSvg(layoutId);
-        setSvgString(svg);
-      } catch {
-        // ignore — will show nothing
-      }
-    }
+    if (!showPreview) await ensureGenerated();
     setShowPreview((prev) => !prev);
-  }, [showPreview, svgString, layoutId]);
+  }, [showPreview, ensureGenerated]);
 
   if (!layoutId) return null;
 
@@ -156,31 +186,41 @@ function InventoryQrCode({ layoutId }: InventoryQrCodeProps) {
           type="button"
           onClick={handleDownload}
           disabled={generating}
-          className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50"
+          title="Download QR (JPG)"
+          className="icon-button"
+          style={{ height: 28, width: 28 }}
         >
-          <Download size={14} />
-          {generating ? "Generating..." : "Download QR"}
+          <Download size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={handlePrint}
+          disabled={generating}
+          title="Print QR"
+          className="icon-button"
+          style={{ height: 28, width: 28 }}
+        >
+          <Printer size={12} />
         </button>
         <button
           type="button"
           onClick={togglePreview}
-          className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-          aria-label={showPreview ? "Hide QR preview" : "Show QR preview"}
-          aria-pressed={showPreview}
+          title={showPreview ? "Hide Preview" : "Preview QR"}
+          className={`icon-button ${showPreview ? "bg-[var(--green-soft)] border-[var(--green)] text-[var(--green-dark)]" : ""}`}
+          style={{ height: 28, width: 28 }}
         >
-          {showPreview ? <EyeOff size={14} /> : <Eye size={14} />}
-          {showPreview ? "Hide" : "Preview"}
+          {showPreview ? <EyeOff size={12} /> : <Eye size={12} />}
         </button>
       </div>
       {showPreview && svgString && (
-        <div className="mt-2 flex flex-col items-center gap-1">
+        <div className="mt-2 flex flex-col items-center rounded-lg border border-gray-100 bg-gray-50 p-3">
           <div
-            className="h-28 w-28"
+            className="w-20 h-20 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
             dangerouslySetInnerHTML={{ __html: svgString }}
             aria-label="QR code for inventory entry"
             role="img"
           />
-          <p className="text-xs text-gray-500">Inventory</p>
+          <p className="mt-1.5 text-xs text-gray-500 font-medium">Inventory</p>
         </div>
       )}
     </div>

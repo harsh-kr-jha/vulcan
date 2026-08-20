@@ -88,12 +88,12 @@ function computeEdgePoint(
 }
 
 // ---------------------------------------------------------------------------
-// FactoryVisualization – SVG top-view with subtle perspective
+// FactoryVisualization – SVG top-view grid layout
 // ---------------------------------------------------------------------------
 
 /**
- * Renders the factory layout as a near-top-view SVG with a subtle
- * CSS perspective tilt. Machines are status-colored rectangles with labels.
+ * Renders the factory layout as a flat top-view SVG grid.
+ * Machines are status-colored rectangles with labels.
  * Hover shows parameter tooltip; click opens the analytics panel.
  */
 export function FactoryVisualization({
@@ -150,24 +150,12 @@ export function FactoryVisualization({
   );
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100">
-      {/* SVG with subtle perspective tilt */}
-      <div
-        className="w-full h-full flex items-center justify-center"
-        style={{
-          perspective: "2000px",
-          perspectiveOrigin: "50% 40%",
-        }}
+    <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+      <svg
+        className="absolute inset-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)]"
+        viewBox={viewBox}
+        preserveAspectRatio="xMidYMid meet"
       >
-        <svg
-          className="w-full h-full max-w-full max-h-full"
-          viewBox={viewBox}
-          preserveAspectRatio="xMidYMid meet"
-          style={{
-            transform: "rotateX(8deg)",
-            transformOrigin: "center center",
-          }}
-        >
           {/* Defs: arrow markers, shadows */}
           <defs>
             <marker
@@ -276,7 +264,20 @@ export function FactoryVisualization({
 
           {/* Machine rectangles */}
           {machines.map((machine) => {
-            const status: MachineStatus = machine.status ?? "no_data";
+            const obsData = observations?.[machine.id];
+            const hasData = !!obsData;
+            // Derive status from the 'active' boolean parameter in observations
+            let status: MachineStatus = machine.status ?? "no_data";
+            if (hasData) {
+              const activeValue = obsData.values["active"];
+              if (activeValue === true || activeValue === "true") {
+                status = "running";
+              } else if (activeValue === false || activeValue === "false") {
+                status = "down";
+              } else if (!machine.status || machine.status === "no_data") {
+                status = "running";
+              }
+            }
             const w = machine.size?.width ?? 1;
             const h = machine.size?.height ?? 1;
             const isHovered = hoveredMachineId === machine.id;
@@ -293,6 +294,17 @@ export function FactoryVisualization({
                 role="button"
                 aria-label={`Machine: ${machine.name}, Status: ${STATUS_LABELS[status]}`}
               >
+                {/* Clip path to prevent text overflow */}
+                <defs>
+                  <clipPath id={`viz-clip-${machine.id}`}>
+                    <rect
+                      x={machine.position.x + 0.05}
+                      y={machine.position.y + 0.05}
+                      width={w - 0.1}
+                      height={h - 0.1}
+                    />
+                  </clipPath>
+                </defs>
                 {/* Machine body */}
                 <rect
                   x={machine.position.x + 0.05}
@@ -313,7 +325,18 @@ export function FactoryVisualization({
                   r={0.12}
                   fill={STATUS_STROKES[status]}
                 />
-                {/* Machine name */}
+                {/* Data indicator (bottom-left corner) */}
+                {hasData && (
+                  <g style={{ pointerEvents: "none" }}>
+                    <circle
+                      cx={machine.position.x + 0.25}
+                      cy={machine.position.y + h - 0.25}
+                      r={0.12}
+                      fill="#2563eb"
+                    />
+                  </g>
+                )}
+                {/* Machine name – clipped to box bounds */}
                 <text
                   x={machine.position.x + w / 2}
                   y={machine.position.y + h / 2}
@@ -322,11 +345,19 @@ export function FactoryVisualization({
                   fontSize={fontSize}
                   fontWeight={600}
                   fill="#1e293b"
+                  clipPath={`url(#viz-clip-${machine.id})`}
                   style={{ pointerEvents: "none", userSelect: "none" }}
                 >
-                  {machine.name.length > 14 ? machine.name.slice(0, 13) + "\u2026" : machine.name}
+                  {(() => {
+                    const availW = (w - 0.1) * 0.85;
+                    const avgCharW = fontSize * 0.6;
+                    const maxC = Math.max(2, Math.floor(availW / avgCharW));
+                    return machine.name.length > maxC
+                      ? machine.name.slice(0, maxC - 1) + "\u2026"
+                      : machine.name;
+                  })()}
                 </text>
-                {/* Status label below name */}
+                {/* Status label below name – also clipped */}
                 <text
                   x={machine.position.x + w / 2}
                   y={machine.position.y + h / 2 + fontSize * 1.2}
@@ -334,6 +365,7 @@ export function FactoryVisualization({
                   dominantBaseline="middle"
                   fontSize={fontSize * 0.65}
                   fill={STATUS_STROKES[status]}
+                  clipPath={`url(#viz-clip-${machine.id})`}
                   style={{ pointerEvents: "none", userSelect: "none" }}
                 >
                   {STATUS_LABELS[status]}
@@ -342,7 +374,6 @@ export function FactoryVisualization({
             );
           })}
         </svg>
-      </div>
 
       {/* Floating hover tooltip with latest parameters */}
       {hoveredMachine && tooltipPos && (
@@ -354,22 +385,50 @@ export function FactoryVisualization({
           }}
         >
           <p className="text-sm font-semibold text-gray-900 mb-1">{hoveredMachine.name}</p>
-          <p className="text-xs text-gray-500 mb-1.5 capitalize">
-            {STATUS_LABELS[hoveredMachine.status ?? "no_data"]}
+          <p className="text-xs text-gray-500 mb-1.5">
+            {hoveredObservation
+              ? (hoveredMachine.status && hoveredMachine.status !== "no_data"
+                  ? STATUS_LABELS[hoveredMachine.status]
+                  : "Active")
+              : STATUS_LABELS[hoveredMachine.status ?? "no_data"]}
           </p>
           {hoveredObservation && Object.keys(hoveredObservation.values).length > 0 ? (
             <div className="space-y-0.5 border-t border-gray-100 pt-1.5">
-              {Object.entries(hoveredObservation.values).slice(0, 6).map(([key, value]) => (
-                <div key={key} className="flex justify-between gap-3 text-xs">
-                  <span className="text-gray-500 truncate">{key}</span>
-                  <span className="text-gray-900 font-medium">{String(value ?? "-")}</span>
-                </div>
-              ))}
-              {Object.keys(hoveredObservation.values).length > 6 && (
-                <p className="text-xs text-gray-400 pt-0.5">
-                  +{Object.keys(hoveredObservation.values).length - 6} more...
+              {hoveredObservation.submittedAt && (
+                <p className="text-xs text-gray-400 mb-1">
+                  Last: {new Date(hoveredObservation.submittedAt).toLocaleString()}
                 </p>
               )}
+              {(() => {
+                // Build a key→label map for human-readable display
+                const keyLabelMap: Record<string, string> = {};
+                for (const p of hoveredMachine.parameters) {
+                  keyLabelMap[p.key] = p.key;
+                }
+                for (const io of hoveredMachine.inputs) {
+                  keyLabelMap[`input_${io.id}`] = `${io.label} (in)`;
+                }
+                for (const io of hoveredMachine.outputs) {
+                  keyLabelMap[`output_${io.id}`] = `${io.label} (out)`;
+                }
+
+                const entries = Object.entries(hoveredObservation.values);
+                return (
+                  <>
+                    {entries.slice(0, 6).map(([key, value]) => (
+                      <div key={key} className="flex justify-between gap-3 text-xs">
+                        <span className="text-gray-500 truncate">{keyLabelMap[key] ?? key}</span>
+                        <span className="text-gray-900 font-medium">{String(value ?? "-")}</span>
+                      </div>
+                    ))}
+                    {entries.length > 6 && (
+                      <p className="text-xs text-gray-400 pt-0.5">
+                        +{entries.length - 6} more...
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           ) : (
             <p className="text-xs text-gray-400 italic">No data submitted yet</p>

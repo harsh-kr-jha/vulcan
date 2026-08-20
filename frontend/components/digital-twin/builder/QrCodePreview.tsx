@@ -1,8 +1,9 @@
 "use client";
 
-import { Download, Eye, EyeOff } from "lucide-react";
+import { Download, Eye, EyeOff, Printer, QrCode } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { generateMachineQrSvg } from "@/lib/qr-generator";
+import { generateMachineQrSvg, generateMachineQrDataUrl, dataUrlToBlob } from "@/lib/qr-generator";
+import { useFactory } from "@/lib/factory-context";
 
 export interface QrCodePreviewProps {
   machineId: string;
@@ -11,124 +12,209 @@ export interface QrCodePreviewProps {
 }
 
 /**
- * QR code section for a machine with download + eye-preview toggle.
- *
- * - Download button: generates and downloads an HTML file with the QR code.
- * - Eye toggle: shows/hides an inline preview of the QR code.
- *
- * Requirements: 6.4, 6.5
+ * Renders a labeled QR JPG (company + factory + machine name) via canvas,
+ * with download, print, and preview as small icon sphere buttons.
  */
 export function QrCodePreview({ machineId, machineName, machineCode }: QrCodePreviewProps) {
+  const { state, filters } = useFactory();
   const [svgString, setSvgString] = useState<string | null>(null);
+  const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Generate QR SVG when preview is toggled on (lazy generation)
+  const companyName = "Vulcan";
+  const activeFactory = state.factories.find(
+    (f) => f.id === (filters.factoryId || state.activeFactoryId)
+  );
+  const factoryName = activeFactory?.name || "Factory";
+
+  const displayLabel = machineCode
+    ? `${machineName} (${machineCode})`
+    : machineName;
+
+  // Generate QR data URL
+  const ensureGenerated = useCallback(async () => {
+    if (dataUrl) return dataUrl;
+    setGenerating(true);
+    try {
+      const [svg, url] = await Promise.all([
+        svgString ? Promise.resolve(svgString) : generateMachineQrSvg(machineId),
+        generateMachineQrDataUrl(machineId),
+      ]);
+      setSvgString(svg);
+      setDataUrl(url);
+      return url;
+    } finally {
+      setGenerating(false);
+    }
+  }, [dataUrl, svgString, machineId]);
+
+  // Generate SVG for inline preview
   useEffect(() => {
-    if (!showPreview && !svgString) return; // Don't generate until needed
-    if (svgString) return; // Already generated
-
+    if (!showPreview || svgString) return;
     let cancelled = false;
-
-    async function generate() {
+    (async () => {
       try {
-        setError(null);
         const svg = await generateMachineQrSvg(machineId);
         if (!cancelled) setSvgString(svg);
-      } catch {
-        if (!cancelled) setError("Failed to generate QR code.");
-      }
-    }
-
-    if (showPreview) generate();
-
+      } catch { /* ignore */ }
+    })();
     return () => { cancelled = true; };
   }, [showPreview, svgString, machineId]);
 
-  const truncatedName =
-    machineName.length > 50
-      ? `${machineName.slice(0, 50)}\u2026`
-      : machineName;
+  /**
+   * Renders labeled QR image on a canvas and returns a Blob.
+   * Layout: Company Name / Factory Name / [QR image] / Machine Name
+   */
+  const renderLabeledQr = useCallback(async (): Promise<Blob> => {
+    const qrDataUrl = await ensureGenerated();
+    if (!qrDataUrl) throw new Error("Failed to generate QR");
 
-  const displayLabel = machineCode
-    ? `${truncatedName} (${machineCode})`
-    : truncatedName;
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d")!;
+
+    const qrSize = 300;
+    const padding = 40;
+    const topTextHeight = 70;
+    const bottomTextHeight = 50;
+    const width = qrSize + padding * 2;
+    const height = topTextHeight + qrSize + bottomTextHeight + padding * 2;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    // White background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+
+    // Brand: Vulcan (top)
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "500 11px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("VULCAN · LEXICON™", width / 2, padding + 14);
+
+    // Factory name (below brand)
+    ctx.fillStyle = "#374151";
+    ctx.font = "600 14px system-ui, sans-serif";
+    ctx.fillText(factoryName, width / 2, padding + 38);
+
+    // QR code image
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("QR image failed"));
+      img.src = qrDataUrl;
+    });
+    ctx.drawImage(img, padding, padding + topTextHeight, qrSize, qrSize);
+
+    // Machine name (below QR)
+    ctx.fillStyle = "#111827";
+    ctx.font = "700 16px system-ui, sans-serif";
+    ctx.fillText(
+      machineName.length > 30 ? machineName.slice(0, 29) + "\u2026" : machineName,
+      width / 2,
+      padding + topTextHeight + qrSize + 28
+    );
+
+    // Machine code (if present)
+    if (machineCode) {
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "400 12px system-ui, sans-serif";
+      ctx.fillText(machineCode, width / 2, padding + topTextHeight + qrSize + 46);
+    }
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.95);
+    });
+  }, [ensureGenerated, factoryName, machineName, machineCode]);
 
   const handleDownload = useCallback(async () => {
     setGenerating(true);
     try {
-      const svg = svgString ?? await generateMachineQrSvg(machineId);
-      if (!svgString) setSvgString(svg);
-      const htmlContent = `<!DOCTYPE html><html><head><title>QR - ${displayLabel} - Vulcan by Tamaso</title><style>*{margin:0;padding:0;box-sizing:border-box}body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:2rem}.brand{font-size:12px;color:#6b7280;margin-bottom:1.5rem;letter-spacing:0.05em;text-transform:uppercase}.qr-svg{width:200px;height:200px}.qr-svg svg{width:100%;height:100%}.label{font-size:16px;font-weight:600;margin-top:1rem;text-align:center}.sublabel{font-size:12px;color:#6b7280;margin-top:0.25rem}</style></head><body><div class="brand">Vulcan by Tamaso</div><div class="qr-svg">${svg}</div><div class="label">${machineName}</div>${machineCode ? `<div class="sublabel">${machineCode}</div>` : ""}</body></html>`;
-      const blob = new Blob([htmlContent], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
+      const blob = await renderLabeledQr();
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = `qr-${machineName.replace(/[^a-zA-Z0-9]/g, "-")}.html`;
+      a.href = blobUrl;
+      a.download = `qr-${machineName.replace(/[^a-zA-Z0-9]/g, "-")}.jpg`;
       a.click();
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(blobUrl);
     } finally {
       setGenerating(false);
     }
-  }, [svgString, machineId, machineName, machineCode, displayLabel]);
+  }, [renderLabeledQr, machineName]);
+
+  const handlePrint = useCallback(async () => {
+    setGenerating(true);
+    try {
+      const blob = await renderLabeledQr();
+      const blobUrl = URL.createObjectURL(blob);
+      const printWindow = window.open("", "_blank", "width=450,height=550");
+      if (!printWindow) return;
+      printWindow.document.write(`<!DOCTYPE html><html><head><title>QR - ${displayLabel}</title><style>*{margin:0;padding:0;box-sizing:border-box}body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}img{max-width:100%;height:auto}@media print{body{padding:0}img{width:8cm}}</style></head><body><img src="${blobUrl}" alt="QR Code"/><script>window.onload=function(){setTimeout(function(){window.print()},200);window.onafterprint=function(){window.close()}}</script></body></html>`);
+      printWindow.document.close();
+    } finally {
+      setGenerating(false);
+    }
+  }, [renderLabeledQr, displayLabel]);
 
   const togglePreview = useCallback(() => {
     setShowPreview((prev) => !prev);
   }, []);
 
   return (
-    <div className="mt-4 rounded-md border border-gray-200 bg-white p-3">
-      {/* Action buttons row */}
+    <div className="mt-3">
+      {/* Icon sphere buttons */}
       <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={handleDownload}
           disabled={generating}
-          className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-          aria-label="Download QR code"
+          title="Download QR (JPG)"
+          className="flex items-center justify-center h-8 w-8 rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50 hover:text-blue-600 hover:border-blue-200 disabled:opacity-50 transition-colors"
         >
           <Download size={14} />
-          {generating ? "Generating..." : "Download QR"}
         </button>
-
+        <button
+          type="button"
+          onClick={handlePrint}
+          disabled={generating}
+          title="Print QR"
+          className="flex items-center justify-center h-8 w-8 rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50 hover:text-blue-600 hover:border-blue-200 disabled:opacity-50 transition-colors"
+        >
+          <Printer size={14} />
+        </button>
         <button
           type="button"
           onClick={togglePreview}
-          className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-          aria-label={showPreview ? "Hide QR preview" : "Show QR preview"}
-          aria-pressed={showPreview}
+          title={showPreview ? "Hide Preview" : "Preview QR"}
+          className={`flex items-center justify-center h-8 w-8 rounded-full border shadow-sm transition-colors ${
+            showPreview
+              ? "border-blue-300 bg-blue-50 text-blue-600"
+              : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-200"
+          }`}
         >
           {showPreview ? <EyeOff size={14} /> : <Eye size={14} />}
-          {showPreview ? "Hide" : "Preview"}
         </button>
       </div>
 
-      {/* Inline QR preview (toggled) */}
+      {/* QR Preview */}
       {showPreview && (
-        <div className="mt-3 flex flex-col items-center gap-2">
-          {error && (
-            <p className="text-xs text-red-600">{error}</p>
+        <div className="mt-3 flex flex-col items-center rounded-lg border border-gray-100 bg-gray-50 p-4">
+          {!svgString ? (
+            <div className="flex items-center justify-center h-24 w-24">
+              <QrCode size={20} className="text-gray-300 animate-pulse" />
+            </div>
+          ) : (
+            <div
+              className="w-24 h-24 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
+              dangerouslySetInnerHTML={{ __html: svgString }}
+              aria-label={`QR code for ${machineName}`}
+              role="img"
+            />
           )}
-          {!svgString && !error && (
-            <span className="text-xs text-gray-500">Generating QR...</span>
-          )}
-          {svgString && (
-            <>
-              <div
-                className="h-32 w-32"
-                dangerouslySetInnerHTML={{ __html: svgString }}
-                aria-label={`QR code for machine ${truncatedName}`}
-                role="img"
-              />
-              <p
-                className="max-w-[10rem] truncate text-center text-xs font-medium text-gray-700"
-                title={machineName}
-              >
-                {displayLabel}
-              </p>
-            </>
-          )}
+          <p className="mt-2 text-xs font-medium text-gray-700 text-center truncate max-w-[160px]" title={machineName}>
+            {displayLabel}
+          </p>
         </div>
       )}
     </div>

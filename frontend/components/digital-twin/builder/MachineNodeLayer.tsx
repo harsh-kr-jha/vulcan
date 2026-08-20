@@ -77,12 +77,19 @@ function SingleMachineNode({
   const fill = isSelected ? MACHINE_FILL_SELECTED : MACHINE_FILL;
   const stroke = isSelected ? MACHINE_STROKE_SELECTED : MACHINE_STROKE;
 
-  // Truncate name to fit inside the box
-  const displayName =
-    machine.name.length > 12 ? machine.name.slice(0, 11) + "…" : machine.name;
-
   // Font size scales with machine size
   const fontSize = Math.min(machineWidth, machineHeight) * 0.4;
+
+  // Truncate name based on available width (with padding)
+  const availableWidth = machineWidth * 0.85; // 85% of box width for text
+  const avgCharWidth = fontSize * 0.6; // approximate average character width
+  const maxChars = Math.max(2, Math.floor(availableWidth / avgCharWidth));
+  const displayName =
+    machine.name.length > maxChars
+      ? machine.name.slice(0, maxChars - 1) + "…"
+      : machine.name;
+
+  const clipId = `machine-clip-${machine.id}`;
 
   return (
     <g
@@ -95,6 +102,13 @@ function SingleMachineNode({
       role="button"
       aria-label={`Machine: ${machine.name}`}
     >
+      {/* Clip path to prevent text from ever spilling outside the box */}
+      <defs>
+        <clipPath id={clipId}>
+          <rect x={x} y={y} width={machineWidth} height={machineHeight} />
+        </clipPath>
+      </defs>
+
       {/* Machine body – uses machine.size for dimensions, positioned at (x, y) */}
       <rect
         x={x}
@@ -112,7 +126,7 @@ function SingleMachineNode({
         }}
       />
 
-      {/* Machine name label – centered inside the rect */}
+      {/* Machine name label – centered inside the rect, clipped to bounds */}
       <text
         x={x + machineWidth / 2}
         y={y + machineHeight / 2}
@@ -121,6 +135,7 @@ function SingleMachineNode({
         fontSize={fontSize}
         fontWeight={500}
         fill={TEXT_COLOR}
+        clipPath={`url(#${clipId})`}
         style={{ pointerEvents: "none", userSelect: "none" }}
       >
         {displayName}

@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ApiError } from "@/lib/api-client";
+import { ApiError, getCsrfToken } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -15,12 +15,16 @@ interface EntryField {
   options?: string[];
   required: boolean;
   order: number;
+  label?: string;
+  unit_type?: string;
+  io_type?: "input" | "output";
 }
 
 interface EntrySchema {
   machine_name: string;
   machine_id: string;
   parameters: EntryField[];
+  io_fields?: EntryField[];
 }
 
 // ---------------------------------------------------------------------------
@@ -85,10 +89,15 @@ export default function MachineDataEntryPage() {
         const data = await fetchEntrySchema(machineId);
         if (!cancelled) {
           setSchema(data);
-          // Initialize values
+          // Initialize values for all fields (parameters + io_fields)
+          const allFields = [...(data.parameters || []), ...(data.io_fields || [])];
           const initial: Record<string, string | boolean> = {};
-          for (const field of data.parameters) {
+          for (const field of allFields) {
             initial[field.key] = field.data_type === "boolean" ? false : "";
+          }
+          // Always ensure 'active' is initialized for the status toggle
+          if (!("active" in initial)) {
+            initial["active"] = false;
           }
           setValues(initial);
         }
@@ -132,7 +141,8 @@ export default function MachineDataEntryPage() {
   const validate = useCallback((): boolean => {
     if (!schema) return false;
     const errors: Record<string, string> = {};
-    for (const field of schema.parameters) {
+    const allFields = [...(schema.parameters || []), ...(schema.io_fields || [])];
+    for (const field of allFields) {
       if (!field.required) continue;
       const val = values[field.key];
       if (field.data_type === "boolean") continue; // boolean is always valid (false is a valid value)
@@ -156,7 +166,8 @@ export default function MachineDataEntryPage() {
 
       // Coerce values to appropriate types for submission
       const payload: Record<string, unknown> = {};
-      for (const field of schema.parameters) {
+      const allFields = [...(schema.parameters || []), ...(schema.io_fields || [])];
+      for (const field of allFields) {
         const raw = values[field.key];
         if (field.data_type === "number") {
           payload[field.key] = raw === "" ? null : Number(raw);
@@ -166,9 +177,14 @@ export default function MachineDataEntryPage() {
           payload[field.key] = raw === "" ? null : raw;
         }
       }
+      // Always include the 'active' status in the payload
+      if (!("active" in payload)) {
+        payload["active"] = values["active"] ?? false;
+      }
 
       setSubmitting(true);
       try {
+        const csrfToken = await getCsrfToken();
         const response = await fetch(
           `${API_ROOT}/spatial/machines/${machineId}/observations/`,
           {
@@ -177,6 +193,7 @@ export default function MachineDataEntryPage() {
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
+              "X-CSRFToken": csrfToken,
             },
             body: JSON.stringify({ values: payload }),
           },
@@ -193,9 +210,13 @@ export default function MachineDataEntryPage() {
 
         // Success: reset form
         setSubmitSuccess(true);
+        const allResetFields = [...(schema.parameters || []), ...(schema.io_fields || [])];
         const initial: Record<string, string | boolean> = {};
-        for (const field of schema.parameters) {
+        for (const field of allResetFields) {
           initial[field.key] = field.data_type === "boolean" ? false : "";
+        }
+        if (!("active" in initial)) {
+          initial["active"] = false;
         }
         setValues(initial);
         setFieldErrors({});
@@ -287,19 +308,76 @@ export default function MachineDataEntryPage() {
         )}
 
         <form onSubmit={handleSubmit} noValidate className="entry-form">
-          {schema?.parameters.map((field) => (
-            <EntryFieldInput
-              key={field.id}
-              field={field}
-              value={values[field.key]}
-              error={fieldErrors[field.key]}
-              onChange={(val) => updateValue(field.key, val)}
-            />
-          ))}
+          {/* No fields configured message */}
+          {schema && (schema.parameters.length === 0 && (!schema.io_fields || schema.io_fields.length === 0)) && (
+            <div className="entry-error-banner">
+              No parameters configured for this machine. Add parameters in the Lexicon™ builder.
+            </div>
+          )}
+
+          {/* Active/Inactive toggle - always shown */}
+          {schema && (
+            <div className="entry-section">
+              <div className="entry-field" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0" }}>
+                <span className="entry-field-label" style={{ margin: 0, fontWeight: 600, fontSize: "1rem" }}>
+                  Machine Status
+                </span>
+                <label className="entry-toggle-wrapper" htmlFor="field-active" style={{ margin: 0 }}>
+                  <input
+                    id="field-active"
+                    type="checkbox"
+                    className="entry-toggle-input"
+                    checked={values["active"] as boolean}
+                    onChange={(e) => updateValue("active", e.target.checked)}
+                  />
+                  <span className="entry-toggle-track">
+                    <span className="entry-toggle-thumb" />
+                  </span>
+                  <span className="entry-toggle-label" style={{ fontWeight: 600 }}>
+                    {values["active"] ? "Active" : "Inactive"}
+                  </span>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Parameters section (excluding 'active' which is shown above) */}
+          {schema && schema.parameters.filter((f) => f.key !== "active").length > 0 && (
+            <div className="entry-section">
+              <h3 className="entry-section-title">Parameters</h3>
+              {schema.parameters
+                .filter((field) => field.key !== "active")
+                .map((field) => (
+                <EntryFieldInput
+                  key={field.id}
+                  field={field}
+                  value={values[field.key]}
+                  error={fieldErrors[field.key]}
+                  onChange={(val) => updateValue(field.key, val)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* IO fields section */}
+          {schema && schema.io_fields && schema.io_fields.length > 0 && (
+            <div className="entry-section">
+              <h3 className="entry-section-title">Inputs / Outputs</h3>
+              {schema.io_fields.map((field) => (
+                <EntryFieldInput
+                  key={field.id}
+                  field={field}
+                  value={values[field.key]}
+                  error={fieldErrors[field.key]}
+                  onChange={(val) => updateValue(field.key, val)}
+                />
+              ))}
+            </div>
+          )}
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || (schema?.parameters.length === 0 && (!schema?.io_fields || schema.io_fields.length === 0))}
             className="entry-submit-button"
           >
             {submitting ? "Submitting..." : "Submit Observation"}
@@ -309,6 +387,100 @@ export default function MachineDataEntryPage() {
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Unit type options (same extensive list as MachineConfigPanel)
+// ---------------------------------------------------------------------------
+
+const UNIT_TYPE_OPTIONS = [
+  // Mass / Weight
+  { value: "kilograms", label: "Kilograms (kg)", group: "Mass" },
+  { value: "grams", label: "Grams (g)", group: "Mass" },
+  { value: "milligrams", label: "Milligrams (mg)", group: "Mass" },
+  { value: "tonnes", label: "Tonnes (t)", group: "Mass" },
+  { value: "pounds", label: "Pounds (lb)", group: "Mass" },
+  { value: "ounces", label: "Ounces (oz)", group: "Mass" },
+  // Volume
+  { value: "litres", label: "Litres (L)", group: "Volume" },
+  { value: "millilitres", label: "Millilitres (mL)", group: "Volume" },
+  { value: "cubic_meters", label: "Cubic meters (m³)", group: "Volume" },
+  { value: "gallons", label: "Gallons (gal)", group: "Volume" },
+  { value: "barrels", label: "Barrels (bbl)", group: "Volume" },
+  // Length / Distance
+  { value: "meters", label: "Meters (m)", group: "Length" },
+  { value: "centimeters", label: "Centimeters (cm)", group: "Length" },
+  { value: "millimeters", label: "Millimeters (mm)", group: "Length" },
+  { value: "kilometers", label: "Kilometers (km)", group: "Length" },
+  { value: "inches", label: "Inches (in)", group: "Length" },
+  { value: "feet", label: "Feet (ft)", group: "Length" },
+  { value: "yards", label: "Yards (yd)", group: "Length" },
+  // Area
+  { value: "square_meters", label: "Square meters (m²)", group: "Area" },
+  { value: "square_feet", label: "Square feet (ft²)", group: "Area" },
+  { value: "square_centimeters", label: "Square centimeters (cm²)", group: "Area" },
+  // Count / Quantity
+  { value: "units", label: "Units", group: "Count" },
+  { value: "pieces", label: "Pieces (pcs)", group: "Count" },
+  { value: "dozen", label: "Dozen", group: "Count" },
+  { value: "pairs", label: "Pairs", group: "Count" },
+  { value: "batches", label: "Batches", group: "Count" },
+  // Packaging
+  { value: "bags", label: "Bags", group: "Packaging" },
+  { value: "boxes", label: "Boxes", group: "Packaging" },
+  { value: "cartons", label: "Cartons", group: "Packaging" },
+  { value: "crates", label: "Crates", group: "Packaging" },
+  { value: "pallets", label: "Pallets", group: "Packaging" },
+  { value: "rolls", label: "Rolls", group: "Packaging" },
+  { value: "sheets", label: "Sheets", group: "Packaging" },
+  { value: "bottles", label: "Bottles", group: "Packaging" },
+  { value: "cans", label: "Cans", group: "Packaging" },
+  { value: "packets", label: "Packets", group: "Packaging" },
+  { value: "drums", label: "Drums", group: "Packaging" },
+  { value: "containers", label: "Containers", group: "Packaging" },
+  { value: "bundles", label: "Bundles", group: "Packaging" },
+  { value: "sacks", label: "Sacks", group: "Packaging" },
+  // Time
+  { value: "seconds", label: "Seconds (s)", group: "Time" },
+  { value: "minutes", label: "Minutes (min)", group: "Time" },
+  { value: "hours", label: "Hours (hr)", group: "Time" },
+  { value: "days", label: "Days", group: "Time" },
+  // Temperature
+  { value: "celsius", label: "Celsius (°C)", group: "Temperature" },
+  { value: "fahrenheit", label: "Fahrenheit (°F)", group: "Temperature" },
+  { value: "kelvin", label: "Kelvin (K)", group: "Temperature" },
+  // Pressure
+  { value: "pascal", label: "Pascal (Pa)", group: "Pressure" },
+  { value: "bar", label: "Bar", group: "Pressure" },
+  { value: "psi", label: "PSI", group: "Pressure" },
+  // Energy / Power
+  { value: "joules", label: "Joules (J)", group: "Energy" },
+  { value: "kilowatt_hours", label: "Kilowatt-hours (kWh)", group: "Energy" },
+  { value: "watts", label: "Watts (W)", group: "Energy" },
+  { value: "kilowatts", label: "Kilowatts (kW)", group: "Energy" },
+  // Speed / Flow
+  { value: "meters_per_second", label: "Meters/sec (m/s)", group: "Speed" },
+  { value: "litres_per_minute", label: "Litres/min (L/min)", group: "Speed" },
+  { value: "cubic_meters_per_hour", label: "m³/hour", group: "Speed" },
+  { value: "rpm", label: "RPM", group: "Speed" },
+  // Electrical
+  { value: "volts", label: "Volts (V)", group: "Electrical" },
+  { value: "amperes", label: "Amperes (A)", group: "Electrical" },
+  { value: "ohms", label: "Ohms (Ω)", group: "Electrical" },
+  // Concentration
+  { value: "percent", label: "Percent (%)", group: "Concentration" },
+  { value: "ppm", label: "Parts per million (ppm)", group: "Concentration" },
+  { value: "ph", label: "pH", group: "Concentration" },
+] as const;
+
+/** Group unit options by category for <optgroup> rendering */
+const UNIT_TYPE_GROUPS = UNIT_TYPE_OPTIONS.reduce<Record<string, typeof UNIT_TYPE_OPTIONS[number][]>>(
+  (acc, opt) => {
+    if (!acc[opt.group]) acc[opt.group] = [];
+    acc[opt.group].push(opt);
+    return acc;
+  },
+  {},
+);
 
 // ---------------------------------------------------------------------------
 // Field Components
@@ -325,25 +497,36 @@ function EntryFieldInput({ field, value, error, onChange }: EntryFieldInputProps
   const id = `field-${field.key}`;
   const hasError = Boolean(error);
 
+  // Find label for unit_type if it matches one of our options
+  const unitLabel = field.unit_type
+    ? UNIT_TYPE_OPTIONS.find((u) => u.value === field.unit_type)?.label ?? field.unit_type
+    : null;
+
   return (
     <div className={`entry-field ${hasError ? "entry-field-error" : ""}`}>
       <label htmlFor={id} className="entry-field-label">
-        {field.key}
+        {field.label || field.key}
         {field.required && <span className="entry-required-mark"> *</span>}
       </label>
 
       {field.data_type === "number" && (
-        <input
-          id={id}
-          type="text"
-          inputMode="decimal"
-          className="entry-input"
-          value={value as string}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Enter number"
-          aria-invalid={hasError}
-          aria-describedby={hasError ? `${id}-error` : undefined}
-        />
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <input
+            id={id}
+            type="text"
+            inputMode="decimal"
+            className="entry-input"
+            style={{ flex: 1 }}
+            value={value as string}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="Enter number"
+            aria-invalid={hasError}
+            aria-describedby={hasError ? `${id}-error` : undefined}
+          />
+          {unitLabel && (
+            <span className="entry-field-unit-badge">{unitLabel}</span>
+          )}
+        </div>
       )}
 
       {field.data_type === "text" && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
 import type { ConnectionLine, GridPosition, MachineNode } from "@/lib/spatial-types";
 
@@ -124,24 +124,44 @@ function ConnectionPath({
   isEditMode,
   onSelect,
 }: ConnectionPathProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const source = getMachineCenter(sourceMachine.position, sourceMachine.size);
   const target = getMachineCenter(targetMachine.position, targetMachine.size);
 
   // Offset the endpoint slightly so the arrowhead appears before the target center
   const arrowEnd = computeArrowEnd(source, target, 0.35);
 
-  const strokeColor = isSelected ? CONNECTION_SELECTED_COLOR : CONNECTION_COLOR;
-  const strokeWidth = isSelected ? CONNECTION_SELECTED_STROKE_WIDTH : CONNECTION_STROKE_WIDTH;
+  const strokeColor = isSelected
+    ? CONNECTION_SELECTED_COLOR
+    : isHovered
+      ? CONNECTION_SELECTED_COLOR
+      : CONNECTION_COLOR;
+  const strokeWidth = isSelected || isHovered
+    ? CONNECTION_SELECTED_STROKE_WIDTH
+    : CONNECTION_STROKE_WIDTH;
   const markerId = isSelected ? ARROW_MARKER_SELECTED_ID : ARROW_MARKER_ID;
+
+  // Midpoint for the edit icon
+  const midX = (source.cx + arrowEnd.x) / 2;
+  const midY = (source.cy + arrowEnd.y) / 2;
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       if (!isEditMode) return;
+      e.preventDefault();
       e.stopPropagation();
       onSelect(connection.id);
     },
     [isEditMode, onSelect, connection.id]
   );
+
+  const handleMouseEnter = useCallback(() => {
+    if (isEditMode) setIsHovered(true);
+  }, [isEditMode]);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+  }, []);
 
   // Build tooltip text
   const tooltipText = connection.name
@@ -149,7 +169,12 @@ function ConnectionPath({
     : connection.materialType || "Connection";
 
   return (
-    <g className="connection-path" data-connection-id={connection.id}>
+    <g
+      className="connection-path"
+      data-connection-id={connection.id}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* Invisible wider path for easier click/hover targeting */}
       {isEditMode && (
         <line
@@ -158,9 +183,9 @@ function ConnectionPath({
           x2={arrowEnd.x}
           y2={arrowEnd.y}
           stroke="transparent"
-          strokeWidth={strokeWidth * 5}
+          strokeWidth={strokeWidth * 8}
           style={{ cursor: "pointer", pointerEvents: "stroke" }}
-          onClick={handleClick}
+          onContextMenu={handleClick}
         />
       )}
       {/* Visible connection line */}
@@ -178,15 +203,38 @@ function ConnectionPath({
           pointerEvents: isEditMode ? "stroke" : "none",
           transition: "stroke 0.15s ease, stroke-width 0.15s ease",
         }}
-        onClick={handleClick}
+        onContextMenu={handleClick}
       >
         <title>{tooltipText}</title>
       </line>
+      {/* Edit icon on hover (pencil icon at midpoint) — left-click opens config */}
+      {isEditMode && (isHovered || isSelected) && (
+        <g
+          transform={`translate(${midX - 0.25}, ${midY - 0.25})`}
+          style={{ cursor: "pointer", pointerEvents: "all" }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onSelect(connection.id); }}
+          onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onSelect(connection.id); }}
+        >
+          <circle
+            cx={0.25}
+            cy={0.25}
+            r={0.32}
+            fill="white"
+            stroke={CONNECTION_SELECTED_COLOR}
+            strokeWidth={0.04}
+          />
+          {/* Pencil icon path scaled to fit 0.5x0.5 viewBox */}
+          <path
+            d="M0.12 0.35 L0.32 0.15 L0.38 0.21 L0.18 0.41 L0.1 0.43 Z M0.33 0.14 L0.37 0.1 L0.43 0.16 L0.39 0.2 Z"
+            fill={CONNECTION_SELECTED_COLOR}
+          />
+        </g>
+      )}
       {/* Selection highlight ring around midpoint */}
-      {isSelected && (
+      {isSelected && !isHovered && (
         <circle
-          cx={(source.cx + arrowEnd.x) / 2}
-          cy={(source.cy + arrowEnd.y) / 2}
+          cx={midX}
+          cy={midY}
           r={0.2}
           fill="none"
           stroke={CONNECTION_SELECTED_COLOR}

@@ -1,7 +1,7 @@
 {
   "id": "automotive",
-  "displayName": "Tamaso",
-  "descriptor": "Automotive intelligence",
+  "displayName": "Vulcan",
+  "descriptor": "by Tamaso.ai",
   "industry": "automotive-manufacturing",
   "modules": [
     "dashboard",

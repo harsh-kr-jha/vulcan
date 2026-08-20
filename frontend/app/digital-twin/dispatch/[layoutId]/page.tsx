@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ApiError } from "@/lib/api-client";
+import { ApiError, getCsrfToken } from "@/lib/api-client";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,6 +61,7 @@ async function submitDispatchEvent(
     unit: string;
   },
 ): Promise<void> {
+  const csrfToken = await getCsrfToken();
   const response = await fetch(
     `${API_ROOT}/spatial/dispatch/${layoutId}/events/`,
     {
@@ -69,6 +70,7 @@ async function submitDispatchEvent(
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken,
       },
       body: JSON.stringify(body),
     },

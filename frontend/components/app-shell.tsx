@@ -80,13 +80,14 @@ function Sidebar({ open, closed, onClose, onNavigate }: { open: boolean; closed:
       <div className="sidebar-footer">
         <Link className="nav-item" href="/help" onClick={onNavigate}><CircleHelp size={18} /><span>Setup help</span></Link>
         <div className="data-health-mini"><div className="data-health-mini-top"><span>Data health</span><strong>{intelligence.dataQuality.toFixed(1)}%</strong></div><div className="mini-progress"><span style={{ width: `${intelligence.dataQuality}%` }} /></div><small>{state.uploads.length} preserved source dataset{state.uploads.length === 1 ? "" : "s"}</small></div>
+        <div className="sidebar-byline"><small>by Tamaso.ai</small></div>
       </div>
     </aside>
   </>;
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const [sidebarMode, setSidebarMode] = useState<"default" | "open" | "closed">("default");
+  const [sidebarMode, setSidebarMode] = useState<"default" | "open" | "closed">("closed");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);

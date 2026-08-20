@@ -259,7 +259,7 @@ export function MachineConfigPanel({
             <div className="flex items-center">
               {deleteStep === "idle" && (
                 <button
-                  className="inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                  className="button button-danger"
                   onClick={() => setDeleteStep("confirming")}
                   type="button"
                 >
@@ -271,14 +271,14 @@ export function MachineConfigPanel({
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-red-600 font-medium">Sure?</span>
                   <button
-                    className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 transition-colors"
+                    className="button button-danger"
                     onClick={() => { removeMachine(machineId); onClose(); }}
                     type="button"
                   >
                     Yes, Delete
                   </button>
                   <button
-                    className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="button button-secondary"
                     onClick={() => setDeleteStep("idle")}
                     type="button"
                   >
@@ -323,6 +323,96 @@ export function MachineConfigPanel({
 // IOSpecRow sub-component
 // ---------------------------------------------------------------------------
 
+const UNIT_TYPE_OPTIONS = [
+  // Mass / Weight
+  { value: "kilograms", label: "Kilograms (kg)", group: "Mass" },
+  { value: "grams", label: "Grams (g)", group: "Mass" },
+  { value: "milligrams", label: "Milligrams (mg)", group: "Mass" },
+  { value: "tonnes", label: "Tonnes (t)", group: "Mass" },
+  { value: "pounds", label: "Pounds (lb)", group: "Mass" },
+  { value: "ounces", label: "Ounces (oz)", group: "Mass" },
+  // Volume
+  { value: "litres", label: "Litres (L)", group: "Volume" },
+  { value: "millilitres", label: "Millilitres (mL)", group: "Volume" },
+  { value: "cubic_meters", label: "Cubic meters (m³)", group: "Volume" },
+  { value: "gallons", label: "Gallons (gal)", group: "Volume" },
+  { value: "barrels", label: "Barrels (bbl)", group: "Volume" },
+  // Length / Distance
+  { value: "meters", label: "Meters (m)", group: "Length" },
+  { value: "centimeters", label: "Centimeters (cm)", group: "Length" },
+  { value: "millimeters", label: "Millimeters (mm)", group: "Length" },
+  { value: "kilometers", label: "Kilometers (km)", group: "Length" },
+  { value: "inches", label: "Inches (in)", group: "Length" },
+  { value: "feet", label: "Feet (ft)", group: "Length" },
+  { value: "yards", label: "Yards (yd)", group: "Length" },
+  // Area
+  { value: "square_meters", label: "Square meters (m²)", group: "Area" },
+  { value: "square_feet", label: "Square feet (ft²)", group: "Area" },
+  { value: "square_centimeters", label: "Square centimeters (cm²)", group: "Area" },
+  // Count / Quantity
+  { value: "units", label: "Units", group: "Count" },
+  { value: "pieces", label: "Pieces (pcs)", group: "Count" },
+  { value: "dozen", label: "Dozen", group: "Count" },
+  { value: "pairs", label: "Pairs", group: "Count" },
+  { value: "batches", label: "Batches", group: "Count" },
+  // Packaging
+  { value: "bags", label: "Bags", group: "Packaging" },
+  { value: "boxes", label: "Boxes", group: "Packaging" },
+  { value: "cartons", label: "Cartons", group: "Packaging" },
+  { value: "crates", label: "Crates", group: "Packaging" },
+  { value: "pallets", label: "Pallets", group: "Packaging" },
+  { value: "rolls", label: "Rolls", group: "Packaging" },
+  { value: "sheets", label: "Sheets", group: "Packaging" },
+  { value: "bottles", label: "Bottles", group: "Packaging" },
+  { value: "cans", label: "Cans", group: "Packaging" },
+  { value: "packets", label: "Packets", group: "Packaging" },
+  { value: "drums", label: "Drums", group: "Packaging" },
+  { value: "containers", label: "Containers", group: "Packaging" },
+  { value: "bundles", label: "Bundles", group: "Packaging" },
+  { value: "sacks", label: "Sacks", group: "Packaging" },
+  // Time
+  { value: "seconds", label: "Seconds (s)", group: "Time" },
+  { value: "minutes", label: "Minutes (min)", group: "Time" },
+  { value: "hours", label: "Hours (hr)", group: "Time" },
+  { value: "days", label: "Days", group: "Time" },
+  // Temperature
+  { value: "celsius", label: "Celsius (°C)", group: "Temperature" },
+  { value: "fahrenheit", label: "Fahrenheit (°F)", group: "Temperature" },
+  { value: "kelvin", label: "Kelvin (K)", group: "Temperature" },
+  // Pressure
+  { value: "pascal", label: "Pascal (Pa)", group: "Pressure" },
+  { value: "bar", label: "Bar", group: "Pressure" },
+  { value: "psi", label: "PSI", group: "Pressure" },
+  // Energy / Power
+  { value: "joules", label: "Joules (J)", group: "Energy" },
+  { value: "kilowatt_hours", label: "Kilowatt-hours (kWh)", group: "Energy" },
+  { value: "watts", label: "Watts (W)", group: "Energy" },
+  { value: "kilowatts", label: "Kilowatts (kW)", group: "Energy" },
+  // Speed / Flow
+  { value: "meters_per_second", label: "Meters/sec (m/s)", group: "Speed" },
+  { value: "litres_per_minute", label: "Litres/min (L/min)", group: "Speed" },
+  { value: "cubic_meters_per_hour", label: "m³/hour", group: "Speed" },
+  { value: "rpm", label: "RPM", group: "Speed" },
+  // Electrical
+  { value: "volts", label: "Volts (V)", group: "Electrical" },
+  { value: "amperes", label: "Amperes (A)", group: "Electrical" },
+  { value: "ohms", label: "Ohms (Ω)", group: "Electrical" },
+  // Concentration
+  { value: "percent", label: "Percent (%)", group: "Concentration" },
+  { value: "ppm", label: "Parts per million (ppm)", group: "Concentration" },
+  { value: "ph", label: "pH", group: "Concentration" },
+] as const;
+
+/** Group unit options by category for the <optgroup> rendering */
+const UNIT_TYPE_GROUPS = UNIT_TYPE_OPTIONS.reduce<Record<string, typeof UNIT_TYPE_OPTIONS[number][]>>(
+  (acc, opt) => {
+    if (!acc[opt.group]) acc[opt.group] = [];
+    acc[opt.group].push(opt);
+    return acc;
+  },
+  {}
+);
+
 interface IOSpecRowProps {
   spec: IOSpecDraft;
   onUpdate: (field: "label" | "unitType", value: string) => void;
@@ -337,10 +427,13 @@ function IOSpecRow({ spec, onUpdate, onRemove }: IOSpecRowProps) {
   return (
     <div className="machine-config-io-row">
       <div className="machine-config-io-field">
+        <label className="builder-dialog-label text-xs text-gray-500 mb-1 block">
+          Label <span className="text-red-400">*</span>
+        </label>
         <input
           type="text"
           className={`builder-dialog-input ${labelError ? "builder-dialog-input-error" : ""}`}
-          placeholder="Label (1–30 chars)"
+          placeholder="e.g. Raw material feed"
           value={spec.label}
           onChange={(e) => onUpdate("label", e.target.value)}
           maxLength={30}
@@ -353,14 +446,26 @@ function IOSpecRow({ spec, onUpdate, onRemove }: IOSpecRowProps) {
         )}
       </div>
       <div className="machine-config-io-field">
-        <input
-          type="text"
+        <label className="builder-dialog-label text-xs text-gray-500 mb-1 block">
+          Unit Type <span className="text-red-400">*</span>
+        </label>
+        <select
           className="builder-dialog-input"
-          placeholder="Unit type"
           value={spec.unitType}
           onChange={(e) => onUpdate("unitType", e.target.value)}
           aria-label="Unit type"
-        />
+        >
+          <option value="" disabled>Select unit type</option>
+          {Object.entries(UNIT_TYPE_GROUPS).map(([group, options]) => (
+            <optgroup key={group} label={group}>
+              {options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
       </div>
       <button
         type="button"

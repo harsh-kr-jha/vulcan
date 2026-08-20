@@ -2,10 +2,11 @@
 
 import type { EChartsOption } from "echarts";
 import ReactECharts from "echarts-for-react";
-import { Download, Eye, EyeOff, Package, Plus, Trash2 } from "lucide-react";
+import { Download, Eye, EyeOff, Package, Plus, Printer, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
-import { generateDispatchQrSvg } from "@/lib/qr-generator";
+import { useFactory } from "@/lib/factory-context";
+import { generateDispatchQrSvg, generateDispatchQrDataUrl, dataUrlToBlob } from "@/lib/qr-generator";
 import { validateDispatchProductName } from "@/lib/spatial-validators";
 import type { DispatchProduct } from "@/lib/spatial-types";
 
@@ -51,6 +52,45 @@ export function DispatchPanel() {
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [products, setProducts] = useState<ProductDraft[]>([]);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [liveAwaiting, setLiveAwaiting] = useState<Record<string, number> | null>(null);
+  const [liveDispatched, setLiveDispatched] = useState<Record<string, number> | null>(null);
+
+  const layoutId = state.layout.id;
+  const isViewMode = !!layoutId && !state.isDirty;
+
+  // Fetch live awaiting quantities in view mode (polls every 10s)
+  useEffect(() => {
+    if (!isViewMode || !layoutId || !dispatchConfig) {
+      setLiveAwaiting(null);
+      setLiveDispatched(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function fetchDispatchData() {
+      try {
+        const response = await fetch(
+          `/api/backend/api/spatial/dispatch/${layoutId}/`,
+          { headers: { Accept: "application/json" }, credentials: "same-origin" }
+        );
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled && data.awaiting) {
+          setLiveAwaiting(data.awaiting);
+        }
+        if (!cancelled && data.dispatched) {
+          setLiveDispatched(data.dispatched);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    fetchDispatchData();
+    const interval = setInterval(fetchDispatchData, 10_000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [isViewMode, layoutId, dispatchConfig]);
 
   // Start configuration flow
   const handleBuildDispatch = useCallback(() => {
@@ -156,7 +196,7 @@ export function DispatchPanel() {
         </p>
         <button
           type="button"
-          className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+          className="button button-secondary"
           onClick={handleBuildDispatch}
         >
           <Plus size={14} />
@@ -171,21 +211,94 @@ export function DispatchPanel() {
   // ---------------------------------------------------------------------------
 
   if (!isConfiguring && dispatchConfig) {
+    // Apply live awaiting quantities if available
+    const displayProducts = liveAwaiting
+      ? dispatchConfig.products.map((p) => ({
+          ...p,
+          awaitingQuantity: liveAwaiting[p.id] ?? p.awaitingQuantity,
+        }))
+      : dispatchConfig.products;
+
     return (
       <div className="flex flex-col h-full p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-800">Dispatch</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-gray-800">Dispatch</h3>
+            {liveAwaiting && (
+              <span className="text-xs text-green-600 font-medium">Live</span>
+            )}
+          </div>
           <button
             type="button"
-            className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            className="button button-secondary"
+            style={{ minHeight: 0, padding: "4px 10px", fontSize: "12px" }}
             onClick={handleBuildDispatch}
           >
             Edit
           </button>
         </div>
 
-        {/* Treemap or placeholder */}
-        <DispatchTreemap products={dispatchConfig.products} />
+        {/* Products table with awaiting quantities */}
+        {displayProducts.length > 0 && (
+          <div className="border border-gray-100 rounded-md overflow-hidden mb-3">
+            <table className="w-full text-xs">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="text-left px-2 py-1 font-medium text-gray-600">Product</th>
+                  <th className="text-right px-2 py-1 font-medium text-gray-600">Awaiting</th>
+                  <th className="text-left px-2 py-1 font-medium text-gray-600">Unit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayProducts.map((p) => (
+                  <tr key={p.id} className="border-t border-gray-50">
+                    <td className="px-2 py-1 text-gray-800 truncate max-w-[100px]">{p.name}</td>
+                    <td className="px-2 py-1 text-right font-medium text-gray-900">
+                      {typeof p.awaitingQuantity === "number" && p.awaitingQuantity > 0
+                        ? p.awaitingQuantity.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                        : "0"}
+                    </td>
+                    <td className="px-2 py-1 text-gray-500">{p.unit}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Products table with dispatched quantities */}
+        {displayProducts.length > 0 && liveDispatched && (
+          <div className="border border-gray-100 rounded-md overflow-hidden mb-3">
+            <table className="w-full text-xs">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="text-left px-2 py-1 font-medium text-gray-600">Product</th>
+                  <th className="text-right px-2 py-1 font-medium text-gray-600">Dispatched</th>
+                  <th className="text-left px-2 py-1 font-medium text-gray-600">Unit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayProducts.map((p) => {
+                  const qty = liveDispatched[p.id] ?? 0;
+                  return (
+                    <tr key={p.id} className="border-t border-gray-50">
+                      <td className="px-2 py-1 text-gray-800 truncate max-w-[100px]">{p.name}</td>
+                      <td className="px-2 py-1 text-right font-medium text-gray-900">
+                        {qty > 0
+                          ? qty.toLocaleString(undefined, { maximumFractionDigits: 2 })
+                          : "0"}
+                      </td>
+                      <td className="px-2 py-1 text-gray-500">{p.unit}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Treemap */}
+        <DispatchTreemap products={displayProducts} />
 
         {/* QR Code */}
         <DispatchQrCode layoutId={state.layout.id} />
@@ -220,7 +333,8 @@ export function DispatchPanel() {
                 </span>
                 <button
                   type="button"
-                  className="text-gray-400 hover:text-red-500 p-0.5"
+                  className="icon-button"
+                  style={{ height: 28, width: 28 }}
                   onClick={() => handleRemoveProduct(product.id)}
                   aria-label={`Remove product ${index + 1}`}
                 >
@@ -239,7 +353,7 @@ export function DispatchPanel() {
                 <input
                   id={`product-name-${product.id}`}
                   type="text"
-                  className={`w-full rounded-md border px-2.5 py-1.5 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full rounded-md border px-2.5 py-1.5 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--green)] focus:border-[var(--green)] ${
                     nameError
                       ? "border-red-300 bg-red-50"
                       : "border-gray-300 bg-white"
@@ -266,7 +380,7 @@ export function DispatchPanel() {
                 </label>
                 <select
                   id={`product-unit-${product.id}`}
-                  className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full rounded-md border border-gray-300 bg-white px-2.5 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[var(--green)] focus:border-[var(--green)]"
                   value={product.unit}
                   onChange={(e) =>
                     handleUnitChange(product.id, e.target.value as ProductUnit)
@@ -288,7 +402,8 @@ export function DispatchPanel() {
       {products.length < 50 && (
         <button
           type="button"
-          className="mt-3 inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700 font-medium"
+          className="button button-accent"
+          style={{ minHeight: 0, padding: "4px 10px", fontSize: "12px" }}
           onClick={handleAddProduct}
         >
           <Plus size={14} />
@@ -310,14 +425,14 @@ export function DispatchPanel() {
       <div className="mt-4 flex items-center gap-2 border-t border-gray-200 pt-3">
         <button
           type="button"
-          className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+          className="button button-secondary flex-1"
           onClick={handleCancel}
         >
           Cancel
         </button>
         <button
           type="button"
-          className="flex-1 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="button button-primary flex-1"
           onClick={handleSave}
           disabled={products.length === 0 || productErrors.size > 0}
         >
@@ -408,38 +523,85 @@ function DispatchQrCode({ layoutId }: DispatchQrCodeProps) {
   const [generating, setGenerating] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [svgString, setSvgString] = useState<string | null>(null);
-  const { state } = useFactoryBuilder();
+  const { state: factoryState, filters } = useFactory();
+
+  const companyName = "Vulcan";
+  const activeFactory = factoryState.factories.find(
+    (f) => f.id === (filters.factoryId || factoryState.activeFactoryId)
+  );
+  const factoryName = activeFactory?.name || "Factory";
+
+  const ensureGenerated = useCallback(async () => {
+    if (svgString) return;
+    const svg = await generateDispatchQrSvg(layoutId);
+    setSvgString(svg);
+  }, [svgString, layoutId]);
 
   const handleDownload = useCallback(async () => {
     setGenerating(true);
     try {
-      const qrSvg = svgString ?? await generateDispatchQrSvg(layoutId);
-      if (!svgString) setSvgString(qrSvg);
-      const factoryName = state.layout.factoryId || "Factory";
-      const htmlContent = `<!DOCTYPE html><html><head><title>Dispatch QR - Vulcan by Tamaso</title><style>*{margin:0;padding:0;box-sizing:border-box}body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:2rem}.brand{font-size:12px;color:#6b7280;margin-bottom:1.5rem;letter-spacing:0.05em;text-transform:uppercase}.qr-svg{width:200px;height:200px}.qr-svg svg{width:100%;height:100%}.label{font-size:16px;font-weight:600;margin-top:1rem;text-align:center}.sublabel{font-size:12px;color:#6b7280;margin-top:0.25rem}</style></head><body><div class="brand">Vulcan by Tamaso</div><div class="qr-svg">${qrSvg}</div><div class="label">Dispatch</div><div class="sublabel">${factoryName}</div></body></html>`;
-      const blob = new Blob([htmlContent], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
+      const qrDataUrl = await generateDispatchQrDataUrl(layoutId);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d")!;
+      const qrSize = 300, padding = 40, topH = 70, botH = 50;
+      const w = qrSize + padding * 2, h = topH + qrSize + botH + padding * 2;
+      canvas.width = w; canvas.height = h;
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#6b7280"; ctx.font = "500 11px system-ui, sans-serif";
+      ctx.fillText("VULCAN · LEXICON™", w / 2, padding + 14);
+      ctx.fillStyle = "#374151"; ctx.font = "600 14px system-ui, sans-serif";
+      ctx.fillText(factoryName, w / 2, padding + 38);
+      const img = new Image();
+      await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(); img.src = qrDataUrl; });
+      ctx.drawImage(img, padding, padding + topH, qrSize, qrSize);
+      ctx.fillStyle = "#111827"; ctx.font = "700 16px system-ui, sans-serif";
+      ctx.fillText("Dispatch", w / 2, padding + topH + qrSize + 30);
+      const blob = await new Promise<Blob>((res) => { canvas.toBlob((b) => res(b!), "image/jpeg", 0.95); });
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
-      a.download = "dispatch-qr.html";
-      a.click();
-      URL.revokeObjectURL(url);
+      a.href = blobUrl; a.download = "dispatch-qr.jpg"; a.click();
+      URL.revokeObjectURL(blobUrl);
     } finally {
       setGenerating(false);
     }
-  }, [layoutId, state.layout.factoryId, svgString]);
+  }, [layoutId, factoryName]);
+
+  const handlePrint = useCallback(async () => {
+    setGenerating(true);
+    try {
+      const qrDataUrl = await generateDispatchQrDataUrl(layoutId);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d")!;
+      const qrSize = 300, padding = 40, topH = 70, botH = 50;
+      const w = qrSize + padding * 2, h = topH + qrSize + botH + padding * 2;
+      canvas.width = w; canvas.height = h;
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#6b7280"; ctx.font = "500 11px system-ui, sans-serif";
+      ctx.fillText("VULCAN · LEXICON™", w / 2, padding + 14);
+      ctx.fillStyle = "#374151"; ctx.font = "600 14px system-ui, sans-serif";
+      ctx.fillText(factoryName, w / 2, padding + 38);
+      const img = new Image();
+      await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = () => rej(); img.src = qrDataUrl; });
+      ctx.drawImage(img, padding, padding + topH, qrSize, qrSize);
+      ctx.fillStyle = "#111827"; ctx.font = "700 16px system-ui, sans-serif";
+      ctx.fillText("Dispatch", w / 2, padding + topH + qrSize + 30);
+      const blob = await new Promise<Blob>((res) => { canvas.toBlob((b) => res(b!), "image/jpeg", 0.95); });
+      const blobUrl = URL.createObjectURL(blob);
+      const pw = window.open("", "_blank", "width=450,height=550");
+      if (!pw) return;
+      pw.document.write(`<!DOCTYPE html><html><head><title>Dispatch QR</title><style>*{margin:0;padding:0;box-sizing:border-box}body{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem}img{max-width:100%;height:auto}@media print{body{padding:0}img{width:8cm}}</style></head><body><img src="${blobUrl}"/><script>window.onload=function(){setTimeout(function(){window.print()},200);window.onafterprint=function(){window.close()}}</script></body></html>`);
+      pw.document.close();
+    } finally {
+      setGenerating(false);
+    }
+  }, [layoutId, factoryName]);
 
   const togglePreview = useCallback(async () => {
-    if (!showPreview && !svgString) {
-      try {
-        const svg = await generateDispatchQrSvg(layoutId);
-        setSvgString(svg);
-      } catch {
-        // ignore
-      }
-    }
+    if (!showPreview) await ensureGenerated();
     setShowPreview((prev) => !prev);
-  }, [showPreview, svgString, layoutId]);
+  }, [showPreview, ensureGenerated]);
 
   if (!layoutId) return null;
 
@@ -450,31 +612,41 @@ function DispatchQrCode({ layoutId }: DispatchQrCodeProps) {
           type="button"
           onClick={handleDownload}
           disabled={generating}
-          className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:opacity-50"
+          title="Download QR (JPG)"
+          className="icon-button"
+          style={{ height: 28, width: 28 }}
         >
-          <Download size={14} />
-          {generating ? "Generating..." : "Download QR"}
+          <Download size={12} />
+        </button>
+        <button
+          type="button"
+          onClick={handlePrint}
+          disabled={generating}
+          title="Print QR"
+          className="icon-button"
+          style={{ height: 28, width: 28 }}
+        >
+          <Printer size={12} />
         </button>
         <button
           type="button"
           onClick={togglePreview}
-          className="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-          aria-label={showPreview ? "Hide QR preview" : "Show QR preview"}
-          aria-pressed={showPreview}
+          title={showPreview ? "Hide Preview" : "Preview QR"}
+          className={`icon-button ${showPreview ? "bg-[var(--green-soft)] border-[var(--green)] text-[var(--green-dark)]" : ""}`}
+          style={{ height: 28, width: 28 }}
         >
-          {showPreview ? <EyeOff size={14} /> : <Eye size={14} />}
-          {showPreview ? "Hide" : "Preview"}
+          {showPreview ? <EyeOff size={12} /> : <Eye size={12} />}
         </button>
       </div>
       {showPreview && svgString && (
-        <div className="mt-2 flex flex-col items-center gap-1">
+        <div className="mt-2 flex flex-col items-center rounded-lg border border-gray-100 bg-gray-50 p-3">
           <div
-            className="h-28 w-28"
+            className="w-20 h-20 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
             dangerouslySetInnerHTML={{ __html: svgString }}
             aria-label="QR code for dispatch entry"
             role="img"
           />
-          <p className="text-xs text-gray-500">Dispatch</p>
+          <p className="mt-1.5 text-xs text-gray-500 font-medium">Dispatch</p>
         </div>
       )}
     </div>

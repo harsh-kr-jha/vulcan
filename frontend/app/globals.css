@@ -444,8 +444,48 @@ a {
   font-size: var(--font-readable-min);
 }
 
+.sidebar-byline {
+  padding: 10px 12px 4px;
+  text-align: center;
+}
+
+.sidebar-byline small {
+  color: #66766e;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
 .mobile-brand {
   display: none;
+}
+
+.sidebar-is-closed .mobile-brand-row,
+.sidebar-is-closed .mobile-brand {
+  align-items: center;
+  display: flex;
+}
+
+.sidebar-is-closed .mobile-brand-row {
+  gap: 10px;
+  margin-left: 42px;
+}
+
+.sidebar-is-closed .mobile-brand {
+  font-size: var(--font-readable-min);
+  gap: 6px;
+  letter-spacing: 0.1em;
+}
+
+.sidebar-is-closed .mobile-brand .brand-mark {
+  align-items: center;
+  background: var(--lime);
+  border-radius: 6px;
+  color: var(--sidebar);
+  display: inline-flex;
+  height: 25px;
+  justify-content: center;
+  transform: skew(-4deg);
+  width: 25px;
 }
 
 .app-main {
@@ -467,7 +507,7 @@ a {
   display: flex;
   height: 32px;
   justify-content: center;
-  left: 227px;
+  left: 12px;
   position: fixed;
   top: 16px;
   transition: left 180ms ease, background 180ms ease, color 180ms ease;
@@ -480,6 +520,13 @@ a {
 .sidebar-is-closed .sidebar-toggle { left: 12px; }
 .sidebar-is-closed .sidebar-close-icon { display: none; }
 .sidebar-is-closed .sidebar-open-icon { display: block; }
+
+.sidebar-is-open .sidebar-toggle {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  left: calc(var(--sidebar-width) - 44px);
+}
 
 .topbar {
   align-items: center;
@@ -6143,6 +6190,11 @@ body {
   padding: var(--space-md) var(--page-margin-desktop) var(--space-lg);
 }
 
+.page-content:has(> .page-full-bleed) {
+  max-width: none;
+  padding: 0;
+}
+
 .page-header { margin-bottom: var(--space-md); }
 
 .page-header h1 {
@@ -6522,7 +6574,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
-  max-width: 440px;
+  max-width: 520px;
   overflow: hidden;
   position: absolute;
   right: 0;
@@ -6966,4 +7018,40 @@ body {
 
 .entry-radio-input:focus + .entry-direction-label {
   box-shadow: 0 0 0 3px var(--green-soft);
+}
+
+/* Entry page sections */
+.entry-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.entry-section-title {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.entry-field-unit {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.entry-field-unit-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--foreground-secondary, #374151);
+  background: var(--surface-alt, #f3f4f6);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 6px;
+  white-space: nowrap;
 }

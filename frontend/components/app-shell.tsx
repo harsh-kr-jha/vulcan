@@ -2,6 +2,7 @@
 
 import {
   Bell,
+  BookOpenText,
   Building2,
   CheckCircle2,
   ChevronDown,
@@ -51,6 +52,7 @@ function Sidebar({ open, closed, onClose, onNavigate }: { open: boolean; closed:
       { href: "/uploads", label: "Data upload", icon: UploadCloud, module: "uploads" },
       { href: "/performance", label: "Performance", icon: Gauge, module: "performance" },
       { href: "/alerts", label: "Alerts", icon: ShieldAlert, module: "alerts" },
+      { href: "/library", label: variant.navigation["digital-library"], icon: BookOpenText, module: "digital-library" },
     ].filter((item) => variant.modules.includes(item.module)) },
     { label: "Manage", items: [
       { href: "/settings", label: variant.navigation.settings, icon: Building2, module: "settings" },

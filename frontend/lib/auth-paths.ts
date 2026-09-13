@@ -5,6 +5,7 @@ const PROTECTED_PREFIXES = [
   "/uploads",
   "/performance",
   "/alerts",
+  "/library",
   "/settings",
   "/rules",
   "/methodology",

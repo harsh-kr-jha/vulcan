@@ -68,3 +68,22 @@ npm run dev
 - [Branching Strategy](docs/branching-strategy.md) — Naming, merge direction, versioning
 - [Deployment](docs/deployment.md) — Customer GCE and Tamaso demo models
 - [Client Onboarding](docs/client-onboarding.md) — Step-by-step new customer procedure
+
+## Regina Technical Library
+
+Regina is the authenticated technical reference module at `/library`. It ships
+with the seeded ASME B16.5-2017 reference data and provides four focused views:
+
+- **Overview** — browse the standard sections and appendices.
+- **Pressure ratings** — select material, pressure class, temperature, and units
+    to retrieve a maximum allowable pressure with source notes.
+- **Dimensions** — select component, class, NPS, facing, and units to inspect
+    dimension fields and the interactive schematic. Copy individual values with
+    the copy button.
+- **Materials** — review the seeded material groups, product forms, rating
+    tables, and restrictions.
+
+Use the search field for terms such as `F316L`, `Class 600`, `Welding Neck`, or
+`NPS 12`. Search results open the relevant explorer with the matching values
+preselected. Seed or refresh the reference data with
+`.venv/bin/python backend/manage.py seed_technical_library`.

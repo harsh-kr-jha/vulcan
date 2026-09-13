@@ -12,7 +12,8 @@
     "alerts",
     "settings",
     "rules",
-    "methodology"
+    "methodology",
+    "digital-library"
   ],
   "datasets": {
     "process": "Process runs",
@@ -29,6 +30,7 @@
   "navigation": {
     "projects": "Projects",
     "digital-twin": "Factory twin",
+    "digital-library": "Regina",
     "settings": "Factory setup"
   },
   "terminology": {

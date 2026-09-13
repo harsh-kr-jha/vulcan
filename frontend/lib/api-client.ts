@@ -1,4 +1,5 @@
 import type { DashboardFilters, FactoryMasterImportInspection, ImportInspection, ImportPreview, ImportValidation, WorkspacePayload } from "./factory-domain";
+import type { DimensionOptions, DimensionResult, LibraryCatalog, LibrarySearchResult, LibraryStandardSummary, RatingOptions, RatingResult } from "./digital-library-domain";
 
 const API_ROOT = "/api/backend/api";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -184,4 +185,11 @@ export const api = {
   createAction: (factory: string, alertId: string, title: string, owner?: string) => request("/workspace/actions/", { method: "POST", body: JSON.stringify({ factory, alertId, title, owner }) }),
   toggleAction: (factory: string, id: string) => request(`/workspace/actions/${id}/`, { method: "PATCH", body: JSON.stringify({ factory }) }),
   ask: (factory: string, filters: DashboardFilters, question: string) => request<{ answer: string; reasoning: string; evidence: string[] }>("/workspace/ask/", { method: "POST", body: JSON.stringify({ factory, filters, question }) }),
+  library: {
+    home: () => request<{ standards: LibraryStandardSummary[] }>("/library/"),
+    catalog: (code: string) => request<LibraryCatalog>(`/library/standards/${code}/`),
+    search: (code: string, query: string) => request<{ results: LibrarySearchResult[] }>(`/library/standards/${code}/search/?${new URLSearchParams({ q: query })}`),
+    ratings: (code: string, params: Record<string, string>) => request<{ options: RatingOptions; result: RatingResult | null }>(`/library/standards/${code}/ratings/?${new URLSearchParams(params)}`),
+    dimensions: (code: string, params: Record<string, string>) => request<{ options: DimensionOptions; result: DimensionResult | null }>(`/library/standards/${code}/dimensions/?${new URLSearchParams(params)}`),
+  },
 };

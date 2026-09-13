@@ -62,7 +62,10 @@ superuser: ## Create a new admin superuser
 	.venv/bin/python backend/manage.py createsuperuser
 
 seed: ## Load branch-specific demo data
-	@if [ -f backend/apps/tenancy/management/commands/seed_mypol.py ]; then \
+	@if [ -f backend/apps/tenancy/management/commands/seed_infinexxgen.py ]; then \
+		echo "Seeding INFINEXXGEN automotive data..."; \
+		.venv/bin/python backend/manage.py seed_infinexxgen; \
+	elif [ -f backend/apps/tenancy/management/commands/seed_mypol.py ]; then \
 		echo "Seeding MyPol automotive data..."; \
 		.venv/bin/python backend/manage.py seed_mypol --confirm-production-showcase; \
 	elif [ -f backend/apps/tenancy/management/commands/seed_mushroom.py ]; then \

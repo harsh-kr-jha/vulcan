@@ -41,10 +41,7 @@ def inspection_payload(upload):
 
 
 def validate_mapping(upload, mapping):
-    fields = {
-        item.key: item
-        for item in TEMPLATES[upload.dataset_type]
-    }
+    fields = {item.key: item for item in TEMPLATES[upload.dataset_type]}
     selected = [target for target in mapping.values() if target]
     contextual = set(import_context_values(upload))
     issues = []
@@ -87,9 +84,7 @@ def validate_mapping(upload, mapping):
             if str(values.get("project_number", "")).strip()
         }
         for index, row in enumerate(mapped_rows, start=2):
-            for record_issue in validate_record(
-                row, field_rules(upload.dataset_type)
-            ):
+            for record_issue in validate_record(row, field_rules(upload.dataset_type)):
                 issues.append(
                     issue(
                         index,
@@ -302,10 +297,7 @@ def validate_import_context(upload, row, row_number):
 
 
 def normalize_values(values, dataset_type):
-    definitions = {
-        item.key: item
-        for item in TEMPLATES[dataset_type]
-    }
+    definitions = {item.key: item for item in TEMPLATES[dataset_type]}
     normalized = {}
     for key, value in values.items():
         if value is None:
@@ -558,9 +550,7 @@ def validate_project_duplicates(upload, rows):
         project_number = str(row.get("project_number", "") or "").strip().casefold()
         stage_code = str(row.get("stage_code", "") or "").strip().casefold()
         key = (
-            (project_number,)
-            if upload.dataset_type == "projects"
-            else (project_number, stage_code)
+            (project_number,) if upload.dataset_type == "projects" else (project_number, stage_code)
         )
         if not all(key) or key not in seen:
             seen.add(key)

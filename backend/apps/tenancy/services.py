@@ -40,7 +40,9 @@ def workspace_identity_for_request(request, factory: Factory | None = None) -> W
     return WorkspaceIdentity(
         tenant=membership.tenant,
         company=company,
-        user=request.user,
+        user=membership.user
+        if hasattr(membership, "user") and membership.user
+        else getattr(request, "user", None),
         membership=membership,
     )
 

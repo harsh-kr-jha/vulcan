@@ -11,7 +11,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -20,6 +20,7 @@ from apps.common.permissions import (
     CanApproveUploads,
     CanOperateUploads,
     factories_for_request,
+    membership_for_request,
     tenant_for_request,
 )
 from apps.operations.imports import (
@@ -38,7 +39,7 @@ TEMPLATE_EXAMPLES: dict[str, list] = {}
 
 
 class ImportTemplateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, dataset_type):
         fields = TEMPLATES.get(dataset_type)
@@ -64,9 +65,7 @@ class ImportTemplateView(APIView):
             content.getvalue(),
             content_type=("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
         )
-        response["Content-Disposition"] = (
-            f'attachment; filename="{dataset_type}_template.xlsx"'
-        )
+        response["Content-Disposition"] = f'attachment; filename="{dataset_type}_template.xlsx"'
         return response
 
 
@@ -130,6 +129,7 @@ class ImportInspectView(APIView):
                 "processName": process.name,
             }
 
+        uploader = membership_for_request(request).user
         upload = Upload.objects.create(
             tenant=tenant,
             factory=factory,
@@ -137,7 +137,7 @@ class ImportInspectView(APIView):
             checksum=checksum(content),
             file_size=len(content),
             file_type=extension.removeprefix("."),
-            uploaded_by=request.user,
+            uploaded_by=uploader,
             template_code=dataset_type,
             template_version="1",
             dataset_type=dataset_type,
@@ -165,7 +165,7 @@ class ImportValidationView(APIView):
 
 
 class ImportPreviewView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, upload_id):
         upload = get_upload(request, upload_id)
@@ -184,7 +184,7 @@ class ImportPreviewView(APIView):
 class ImportEditView(APIView):
     """Return the stored source and mapping so it can be revalidated in place."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, upload_id):
         return Response(inspection_payload(get_upload(request, upload_id)))
@@ -224,8 +224,9 @@ class ImportCommitView(APIView):
 
     def post(self, request, upload_id):
         upload = get_upload(request, upload_id)
+        uploader = membership_for_request(request).user
         try:
-            result = import_valid_rows(upload, request.user)
+            result = import_valid_rows(upload, uploader)
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=400)
         invalidate_workspace(upload.factory_id)

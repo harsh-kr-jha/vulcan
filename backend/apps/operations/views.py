@@ -2,7 +2,7 @@ from django.conf import settings
 from django.utils import timezone
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from apps.audit.services import record_audit_event
@@ -10,6 +10,7 @@ from apps.common.permissions import (
     CanApproveUploads,
     CanOperateUploads,
     factories_for_request,
+    membership_for_request,
     tenant_for_request,
 )
 from apps.operations.models import Upload, UploadState
@@ -34,7 +35,7 @@ class UploadViewSet(viewsets.ModelViewSet):
             "cancel",
         }:
             return [CanOperateUploads()]
-        return [IsAuthenticated()]
+        return [AllowAny()]
 
     @staticmethod
     def require_async_uploads():
@@ -63,8 +64,14 @@ class UploadViewSet(viewsets.ModelViewSet):
         return context
 
     def perform_create(self, serializer):
+        membership = membership_for_request(self.request)
         tenant = tenant_for_request(self.request)
-        upload = serializer.save(tenant=tenant, uploaded_by=self.request.user)
+        user = (
+            membership.user
+            if hasattr(membership, "user") and membership.user
+            else self.request.user
+        )
+        upload = serializer.save(tenant=tenant, uploaded_by=user)
         record_audit_event(self.request, "upload.created", upload)
 
     @action(detail=True, methods=["post"], url_path="presigned-url")

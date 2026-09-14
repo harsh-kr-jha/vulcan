@@ -337,39 +337,49 @@ export function FactoryVisualization({
                   </g>
                 )}
                 {/* Machine name – clipped to box bounds */}
-                <text
-                  x={machine.position.x + w / 2}
-                  y={machine.position.y + h / 2}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize={fontSize}
-                  fontWeight={600}
-                  fill="#1e293b"
-                  clipPath={`url(#viz-clip-${machine.id})`}
-                  style={{ pointerEvents: "none", userSelect: "none" }}
-                >
-                  {(() => {
-                    const availW = (w - 0.1) * 0.85;
-                    const avgCharW = fontSize * 0.6;
-                    const maxC = Math.max(2, Math.floor(availW / avgCharW));
-                    return machine.name.length > maxC
-                      ? machine.name.slice(0, maxC - 1) + "\u2026"
-                      : machine.name;
-                  })()}
-                </text>
-                {/* Status label below name – also clipped */}
-                <text
-                  x={machine.position.x + w / 2}
-                  y={machine.position.y + h / 2 + fontSize * 1.2}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize={fontSize * 0.65}
-                  fill={STATUS_STROKES[status]}
-                  clipPath={`url(#viz-clip-${machine.id})`}
-                  style={{ pointerEvents: "none", userSelect: "none" }}
-                >
-                  {STATUS_LABELS[status]}
-                </text>
+                {(() => {
+                  const nameLen = Math.max(machine.name.length, 1);
+                  const maxFontSize = Math.min(w, h) * 0.28;
+                  const fitFontSize = Math.min(maxFontSize, ((w - 0.2) * 0.95) / (nameLen * 0.58));
+                  const dynamicFontSize = Math.max(fitFontSize, 0.22);
+                  const availW = (w - 0.1) * 0.95;
+                  const avgCharW = dynamicFontSize * 0.55;
+                  const maxC = Math.max(2, Math.floor(availW / avgCharW));
+                  const displayName = machine.name.length > maxC
+                    ? machine.name.slice(0, maxC - 1) + "\u2026"
+                    : machine.name;
+                  return (
+                    <>
+                      <text
+                        x={machine.position.x + w / 2}
+                        y={machine.position.y + h / 2}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize={dynamicFontSize}
+                        fontWeight={600}
+                        fill="#1e293b"
+                        clipPath={`url(#viz-clip-${machine.id})`}
+                        style={{ pointerEvents: "none", userSelect: "none", fontFamily: "var(--font-family), system-ui, sans-serif" }}
+                      >
+                        {displayName}
+                      </text>
+                      {/* Status label below name – also clipped */}
+                      <text
+                        x={machine.position.x + w / 2}
+                        y={machine.position.y + h / 2 + dynamicFontSize * 1.25}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize={Math.max(dynamicFontSize * 0.7, 0.18)}
+                        fontWeight={500}
+                        fill={STATUS_STROKES[status]}
+                        clipPath={`url(#viz-clip-${machine.id})`}
+                        style={{ pointerEvents: "none", userSelect: "none", fontFamily: "var(--font-family), system-ui, sans-serif" }}
+                      >
+                        {STATUS_LABELS[status]}
+                      </text>
+                    </>
+                  );
+                })()}
               </g>
             );
           })}

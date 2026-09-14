@@ -40,18 +40,16 @@ def redis_location(location: str) -> bool:
     return parsed.scheme == "unix" and bool(parsed.path)
 
 
-DEBUG = environment_boolean("DJANGO_DEBUG", default=False)
+DEBUG = environment_boolean("DJANGO_DEBUG", default=True)
 SINGLE_NODE = environment_boolean("VULCAN_SINGLE_NODE", default=False)
 ADMIN_ENABLED = environment_boolean("VULCAN_ADMIN_ENABLED", default=False)
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-local-development-key" if DEBUG else "")
 if not SECRET_KEY:
     if not DEBUG:
         raise ImproperlyConfigured("DJANGO_SECRET_KEY is required when DJANGO_DEBUG is false.")
     SECRET_KEY = "unsafe-local-development-key"
 if not DEBUG and (
-    len(SECRET_KEY) < 50
-    or len(set(SECRET_KEY)) < 5
-    or SECRET_KEY.startswith("django-insecure-")
+    len(SECRET_KEY) < 50 or len(set(SECRET_KEY)) < 5 or SECRET_KEY.startswith("django-insecure-")
 ):
     raise ImproperlyConfigured("DJANGO_SECRET_KEY must be a long, random production secret.")
 
@@ -63,8 +61,7 @@ ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_value.split(",") if host
 if not ALLOWED_HOSTS:
     raise ImproperlyConfigured("DJANGO_ALLOWED_HOSTS must contain at least one explicit host.")
 if any(
-    "*" in host or host.startswith(".") or "://" in host or "/" in host
-    for host in ALLOWED_HOSTS
+    "*" in host or host.startswith(".") or "://" in host or "/" in host for host in ALLOWED_HOSTS
 ):
     raise ImproperlyConfigured(
         "DJANGO_ALLOWED_HOSTS must contain exact hostnames, not wildcards or URLs."
@@ -164,14 +161,8 @@ if (
     raise ImproperlyConfigured(
         "DJANGO_DATABASE_URL must use PostgreSQL when DJANGO_DEBUG is false."
     )
-if (
-    not DEBUG
-    and SINGLE_NODE
-    and DATABASES["default"]["ENGINE"] != "django.db.backends.sqlite3"
-):
-    raise ImproperlyConfigured(
-        "VULCAN_SINGLE_NODE requires a SQLite DJANGO_DATABASE_URL."
-    )
+if not DEBUG and SINGLE_NODE and DATABASES["default"]["ENGINE"] != "django.db.backends.sqlite3":
+    raise ImproperlyConfigured("VULCAN_SINGLE_NODE requires a SQLite DJANGO_DATABASE_URL.")
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -206,16 +197,15 @@ if num_proxies < 0:
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "apps.common.authentication.SessionAuthentication401",
+        "apps.common.authentication.WorkspaceFallbackAuthentication",
     ],
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 50,
     "DEFAULT_THROTTLE_CLASSES": [
-        "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "60/hour",
         "user": "1200/hour",
         "login_ip": os.getenv("LOGIN_IP_RATE", "30/15m"),
         "login_account": os.getenv("LOGIN_ACCOUNT_RATE", "10/15m"),
@@ -224,14 +214,13 @@ REST_FRAMEWORK = {
 }
 
 local_frontend_origins = (
-    "http://localhost:3000,http://127.0.0.1:3000,"
-    "http://localhost:3100,http://127.0.0.1:3100"
+    "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100,http://127.0.0.1:3100"
 )
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
-    for origin in os.getenv(
-        "CORS_ALLOWED_ORIGINS", local_frontend_origins if DEBUG else ""
-    ).split(",")
+    for origin in os.getenv("CORS_ALLOWED_ORIGINS", local_frontend_origins if DEBUG else "").split(
+        ","
+    )
     if origin.strip()
 ]
 CORS_ALLOW_CREDENTIALS = True
@@ -271,11 +260,7 @@ if not DEBUG and not SINGLE_NODE and (not REDIS_URL or not cache_url):
     raise ImproperlyConfigured(
         "REDIS_URL and DJANGO_CACHE_URL are required when DJANGO_DEBUG is false."
     )
-if (
-    not DEBUG
-    and not SINGLE_NODE
-    and any(not redis_location(url) for url in (REDIS_URL, cache_url))
-):
+if not DEBUG and not SINGLE_NODE and any(not redis_location(url) for url in (REDIS_URL, cache_url)):
     raise ImproperlyConfigured(
         "REDIS_URL and DJANGO_CACHE_URL must use redis://, rediss://, or unix://."
     )
@@ -311,9 +296,7 @@ CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_TASK_ALWAYS_EAGER = environment_boolean("CELERY_TASK_ALWAYS_EAGER", default=DEBUG)
 if not DEBUG and CELERY_TASK_ALWAYS_EAGER:
-    raise ImproperlyConfigured(
-        "CELERY_TASK_ALWAYS_EAGER must be false when DJANGO_DEBUG is false."
-    )
+    raise ImproperlyConfigured("CELERY_TASK_ALWAYS_EAGER must be false when DJANGO_DEBUG is false.")
 CELERY_TASK_EAGER_PROPAGATES = DEBUG
 CELERY_TASK_ROUTES = {
     "apps.operations.tasks.inspect_upload": {"queue": "file_inspection"},

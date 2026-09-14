@@ -57,9 +57,10 @@ class Command(BaseCommand):
             validate_email(email)
         except ValidationError as exc:
             raise CommandError("Enter a valid administrator email address.") from exc
-        if EmailIdentity.objects.filter(email=email).exists() or user_model.objects.filter(
-            email__iexact=email
-        ).exists():
+        if (
+            EmailIdentity.objects.filter(email=email).exists()
+            or user_model.objects.filter(email__iexact=email).exists()
+        ):
             raise CommandError("An account already uses that email address.")
         if user_model.objects.filter(username=username).exists():
             raise CommandError("An account already uses that internal username.")

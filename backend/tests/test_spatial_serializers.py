@@ -1,4 +1,7 @@
-"""Unit tests for spatial app serializers: MachineParameter, MachineCustomKpi, MachineObservation."""
+"""Unit tests for spatial app serializers.
+
+Covers: MachineParameter, MachineCustomKpi, MachineObservation.
+"""
 
 import pytest
 from apps.spatial.models import (
@@ -12,8 +15,7 @@ from apps.spatial.serializers import (
     MachineObservationSerializer,
     MachineParameterSerializer,
 )
-from apps.tenancy.models import Company, Factory, Membership, Role, Tenant
-from django.contrib.auth import get_user_model
+from apps.tenancy.models import Company, Factory, Tenant
 
 pytestmark = pytest.mark.django_db
 
@@ -164,9 +166,7 @@ class TestMachineCustomKpiSerializer:
         assert serializer.is_valid(), serializer.errors
 
     def test_formula_with_more_than_10_operations_rejected(self, machine):
-        operations = [
-            {"operator": "add", "parameterKey": f"param_{i}"} for i in range(11)
-        ]
+        operations = [{"operator": "add", "parameterKey": f"param_{i}"} for i in range(11)]
         data = {
             "name": "BigFormula",
             "display_unit": "units",
@@ -177,9 +177,7 @@ class TestMachineCustomKpiSerializer:
         assert "formula" in serializer.errors
 
     def test_formula_with_exactly_10_operations_accepted(self, machine):
-        operations = [
-            {"operator": "add", "parameterKey": f"param_{i}"} for i in range(10)
-        ]
+        operations = [{"operator": "add", "parameterKey": f"param_{i}"} for i in range(10)]
         data = {
             "name": "MaxFormula",
             "display_unit": "units",
@@ -192,9 +190,7 @@ class TestMachineCustomKpiSerializer:
         data = {
             "name": "BadOp",
             "display_unit": "kg",
-            "formula": {
-                "operations": [{"operator": "modulo", "parameterKey": "pressure"}]
-            },
+            "formula": {"operations": [{"operator": "modulo", "parameterKey": "pressure"}]},
         }
         serializer = MachineCustomKpiSerializer(data=data, context={"machine": machine})
         assert not serializer.is_valid()
@@ -520,30 +516,23 @@ class TestInventoryChangeSerializer:
 
     def test_valid_inbound_change_accepted(self, inventory_config):
         from apps.spatial.serializers import InventoryChangeSerializer
-        from decimal import Decimal
 
         data = {"material_id": "mat-001", "direction": "inbound", "quantity": "100.00"}
-        serializer = InventoryChangeSerializer(
-            data=data, context={"inventory": inventory_config}
-        )
+        serializer = InventoryChangeSerializer(data=data, context={"inventory": inventory_config})
         assert serializer.is_valid(), serializer.errors
 
     def test_valid_outbound_within_stock_accepted(self, inventory_config):
         from apps.spatial.serializers import InventoryChangeSerializer
 
         data = {"material_id": "mat-001", "direction": "outbound", "quantity": "100.00"}
-        serializer = InventoryChangeSerializer(
-            data=data, context={"inventory": inventory_config}
-        )
+        serializer = InventoryChangeSerializer(data=data, context={"inventory": inventory_config})
         assert serializer.is_valid(), serializer.errors
 
     def test_outbound_exceeding_stock_rejected(self, inventory_config):
         from apps.spatial.serializers import InventoryChangeSerializer
 
         data = {"material_id": "mat-001", "direction": "outbound", "quantity": "600.00"}
-        serializer = InventoryChangeSerializer(
-            data=data, context={"inventory": inventory_config}
-        )
+        serializer = InventoryChangeSerializer(data=data, context={"inventory": inventory_config})
         assert not serializer.is_valid()
         assert "quantity" in serializer.errors
 
@@ -551,9 +540,7 @@ class TestInventoryChangeSerializer:
         from apps.spatial.serializers import InventoryChangeSerializer
 
         data = {"material_id": "mat-001", "direction": "outbound", "quantity": "500.00"}
-        serializer = InventoryChangeSerializer(
-            data=data, context={"inventory": inventory_config}
-        )
+        serializer = InventoryChangeSerializer(data=data, context={"inventory": inventory_config})
         assert serializer.is_valid(), serializer.errors
 
     def test_outbound_considers_previous_changes(self, tenant, inventory_config):
@@ -571,9 +558,7 @@ class TestInventoryChangeSerializer:
         # Current stock for mat-002: 200 (initial) + 100 (inbound) = 300
         # Removing 300 should be valid
         data = {"material_id": "mat-002", "direction": "outbound", "quantity": "300.00"}
-        serializer = InventoryChangeSerializer(
-            data=data, context={"inventory": inventory_config}
-        )
+        serializer = InventoryChangeSerializer(data=data, context={"inventory": inventory_config})
         assert serializer.is_valid(), serializer.errors
 
     def test_outbound_considers_previous_outbound(self, tenant, inventory_config):
@@ -591,9 +576,7 @@ class TestInventoryChangeSerializer:
         # Current stock for mat-001: 500 (initial) - 400 (outbound) = 100
         # Removing 150 should fail
         data = {"material_id": "mat-001", "direction": "outbound", "quantity": "150.00"}
-        serializer = InventoryChangeSerializer(
-            data=data, context={"inventory": inventory_config}
-        )
+        serializer = InventoryChangeSerializer(data=data, context={"inventory": inventory_config})
         assert not serializer.is_valid()
         assert "quantity" in serializer.errors
 
@@ -601,9 +584,7 @@ class TestInventoryChangeSerializer:
         from apps.spatial.serializers import InventoryChangeSerializer
 
         data = {"material_id": "nonexistent", "direction": "inbound", "quantity": "50.00"}
-        serializer = InventoryChangeSerializer(
-            data=data, context={"inventory": inventory_config}
-        )
+        serializer = InventoryChangeSerializer(data=data, context={"inventory": inventory_config})
         assert not serializer.is_valid()
         assert "material_id" in serializer.errors
 
@@ -611,9 +592,7 @@ class TestInventoryChangeSerializer:
         from apps.spatial.serializers import InventoryChangeSerializer
 
         data = {"material_id": "mat-001", "direction": "sideways", "quantity": "50.00"}
-        serializer = InventoryChangeSerializer(
-            data=data, context={"inventory": inventory_config}
-        )
+        serializer = InventoryChangeSerializer(data=data, context={"inventory": inventory_config})
         assert not serializer.is_valid()
         assert "direction" in serializer.errors
 
@@ -621,9 +600,7 @@ class TestInventoryChangeSerializer:
         from apps.spatial.serializers import InventoryChangeSerializer
 
         data = {"material_id": "mat-001", "direction": "inbound", "quantity": "0.00"}
-        serializer = InventoryChangeSerializer(
-            data=data, context={"inventory": inventory_config}
-        )
+        serializer = InventoryChangeSerializer(data=data, context={"inventory": inventory_config})
         assert not serializer.is_valid()
         assert "quantity" in serializer.errors
 
@@ -631,9 +608,7 @@ class TestInventoryChangeSerializer:
         from apps.spatial.serializers import InventoryChangeSerializer
 
         data = {"material_id": "mat-001", "direction": "inbound", "quantity": "1000000000.00"}
-        serializer = InventoryChangeSerializer(
-            data=data, context={"inventory": inventory_config}
-        )
+        serializer = InventoryChangeSerializer(data=data, context={"inventory": inventory_config})
         assert not serializer.is_valid()
         assert "quantity" in serializer.errors
 
@@ -666,9 +641,7 @@ class TestDispatchEventSerializer:
             "quantity": "100.00",
             "unit": "units",
         }
-        serializer = DispatchEventSerializer(
-            data=data, context={"dispatch": dispatch_config}
-        )
+        serializer = DispatchEventSerializer(data=data, context={"dispatch": dispatch_config})
         assert serializer.is_valid(), serializer.errors
 
     def test_valid_dispatched_event_accepted(self, dispatch_config):
@@ -680,9 +653,7 @@ class TestDispatchEventSerializer:
             "quantity": "50.50",
             "unit": "kilograms",
         }
-        serializer = DispatchEventSerializer(
-            data=data, context={"dispatch": dispatch_config}
-        )
+        serializer = DispatchEventSerializer(data=data, context={"dispatch": dispatch_config})
         assert serializer.is_valid(), serializer.errors
 
     def test_invalid_product_id_rejected(self, dispatch_config):
@@ -694,9 +665,7 @@ class TestDispatchEventSerializer:
             "quantity": "100.00",
             "unit": "units",
         }
-        serializer = DispatchEventSerializer(
-            data=data, context={"dispatch": dispatch_config}
-        )
+        serializer = DispatchEventSerializer(data=data, context={"dispatch": dispatch_config})
         assert not serializer.is_valid()
         assert "product_id" in serializer.errors
 
@@ -709,9 +678,7 @@ class TestDispatchEventSerializer:
             "quantity": "100.00",
             "unit": "units",
         }
-        serializer = DispatchEventSerializer(
-            data=data, context={"dispatch": dispatch_config}
-        )
+        serializer = DispatchEventSerializer(data=data, context={"dispatch": dispatch_config})
         assert not serializer.is_valid()
         assert "event_type" in serializer.errors
 
@@ -724,9 +691,7 @@ class TestDispatchEventSerializer:
             "quantity": "0.001",
             "unit": "units",
         }
-        serializer = DispatchEventSerializer(
-            data=data, context={"dispatch": dispatch_config}
-        )
+        serializer = DispatchEventSerializer(data=data, context={"dispatch": dispatch_config})
         assert not serializer.is_valid()
         assert "quantity" in serializer.errors
 
@@ -739,9 +704,7 @@ class TestDispatchEventSerializer:
             "quantity": "0.00",
             "unit": "units",
         }
-        serializer = DispatchEventSerializer(
-            data=data, context={"dispatch": dispatch_config}
-        )
+        serializer = DispatchEventSerializer(data=data, context={"dispatch": dispatch_config})
         assert not serializer.is_valid()
         assert "quantity" in serializer.errors
 
@@ -754,9 +717,7 @@ class TestDispatchEventSerializer:
             "quantity": "1000000000.00",
             "unit": "units",
         }
-        serializer = DispatchEventSerializer(
-            data=data, context={"dispatch": dispatch_config}
-        )
+        serializer = DispatchEventSerializer(data=data, context={"dispatch": dispatch_config})
         assert not serializer.is_valid()
         assert "quantity" in serializer.errors
 
@@ -769,9 +730,7 @@ class TestDispatchEventSerializer:
             "quantity": "0.01",
             "unit": "units",
         }
-        serializer = DispatchEventSerializer(
-            data=data, context={"dispatch": dispatch_config}
-        )
+        serializer = DispatchEventSerializer(data=data, context={"dispatch": dispatch_config})
         assert serializer.is_valid(), serializer.errors
 
     def test_quantity_at_maximum_accepted(self, dispatch_config):
@@ -783,9 +742,7 @@ class TestDispatchEventSerializer:
             "quantity": "999999999.99",
             "unit": "units",
         }
-        serializer = DispatchEventSerializer(
-            data=data, context={"dispatch": dispatch_config}
-        )
+        serializer = DispatchEventSerializer(data=data, context={"dispatch": dispatch_config})
         assert serializer.is_valid(), serializer.errors
 
     def test_unit_mismatch_rejected(self, dispatch_config):
@@ -797,9 +754,7 @@ class TestDispatchEventSerializer:
             "quantity": "100.00",
             "unit": "kilograms",  # doesn't match configured "units"
         }
-        serializer = DispatchEventSerializer(
-            data=data, context={"dispatch": dispatch_config}
-        )
+        serializer = DispatchEventSerializer(data=data, context={"dispatch": dispatch_config})
         assert not serializer.is_valid()
         assert "unit" in serializer.errors
 
@@ -812,7 +767,5 @@ class TestDispatchEventSerializer:
             "quantity": "75.00",
             "unit": "kilograms",
         }
-        serializer = DispatchEventSerializer(
-            data=data, context={"dispatch": dispatch_config}
-        )
+        serializer = DispatchEventSerializer(data=data, context={"dispatch": dispatch_config})
         assert serializer.is_valid(), serializer.errors

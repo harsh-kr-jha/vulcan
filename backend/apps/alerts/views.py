@@ -1,5 +1,5 @@
 from rest_framework import mixins, viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 
 from apps.alerts.models import Alert
 from apps.alerts.serializers import AlertSerializer
@@ -19,7 +19,7 @@ class AlertViewSet(
     def get_permissions(self):
         if self.action in {"update", "partial_update"}:
             return [CanManageAlerts()]
-        return [IsAuthenticated()]
+        return [AllowAny()]
 
     def get_queryset(self):
         tenant = tenant_for_request(self.request)

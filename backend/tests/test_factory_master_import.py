@@ -7,12 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 pytestmark = pytest.mark.django_db
 
-REFERENCE = (
-    Path(__file__).resolve().parents[2]
-    / "test-data"
-    / "infinexxgen-chakan"
-    / "factory_master_reference.csv"
-)
+REFERENCE = Path(__file__).resolve().parent / "fixtures" / "factory_master_reference.csv"
 INSPECT_URL = "/api/factory-masters/import/inspect/"
 APPLY_URL = "/api/factory-masters/import/apply/"
 

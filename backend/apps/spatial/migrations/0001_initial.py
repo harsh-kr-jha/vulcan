@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('tenancy', '0004_emailidentity'),
+        ('tenancy', '0003_alter_factorymaster_kind'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

@@ -28,7 +28,6 @@ import { Fragment, useState } from "react";
 import type { DigitalTwinPayload, FactoryDetails, TwinLine, TwinProcess, TwinStatus } from "@/lib/factory-domain";
 import { useFactory } from "@/lib/factory-context";
 import { formatDuration } from "@/lib/formatters";
-import { usePlatform } from "@/lib/variant";
 
 const emptyTwin: DigitalTwinPayload = {
   factory: { id: "", name: "", code: "", location: "", details: {} },
@@ -76,20 +75,18 @@ function Metric({ icon, label, value, note }: { icon: React.ReactNode; label: st
 }
 
 function ProcessDetail({ process }: { process: TwinProcess }) {
-  const variant = usePlatform();
-  const mushroom = variant.features.mushroomAnalytics;
   const metrics = process.metrics;
   const processUpload = `/uploads?add=process&process=${encodeURIComponent(process.id)}`;
   return <section className="panel twin-detail" aria-live="polite">
     <header className="twin-detail-header">
       <div className="twin-detail-title">
         <span className="twin-sequence">{String(process.sequence).padStart(2, "0")}</span>
-        <div><p>{process.processType} {mushroom ? "cultivation" : "production"} stage</p><h2>{process.name}</h2><small>{process.code} · {process.description}</small></div>
+        <div><p>{process.processType} cultivation stage</p><h2>{process.name}</h2><small>{process.code} · {process.description}</small></div>
       </div>
       <div className="twin-reported"><StatusPill status={process.status} /><small><CalendarClock size={12} /> Latest reported: {reportedDate(process.latestDate)}</small></div>
     </header>
 
-    {!process.hasData && <div className="twin-data-callout"><Info size={17} /><div><strong>This {mushroom ? "crop" : "production"} stage is configured, but has no reported state.</strong><p>Add its {mushroom ? "room-observation" : "process-run"} sheet to see movement, yield, conditions and losses.</p></div><Link className="button button-primary" href={processUpload}><UploadCloud size={13} /> Add observations</Link></div>}
+    {!process.hasData && <div className="twin-data-callout"><Info size={17} /><div><strong>This crop stage is configured, but has no reported state.</strong><p>Add its room-observation sheet to see movement, yield, climate and losses.</p></div><Link className="button button-primary" href={processUpload}><UploadCloud size={13} /> Add observations</Link></div>}
     {process.hasData && process.dataStatus === "stale" && <div className="twin-data-callout twin-data-stale"><CalendarClock size={17} /><div><strong>This is an older reported state.</strong><p>The newest sheet for this process is {process.dataAgeDays} days old. Add current data before using it for an operating decision.</p></div><Link className="button button-secondary" href={processUpload}><UploadCloud size={13} /> Add latest sheet</Link></div>}
 
     <div className="twin-detail-body">
@@ -117,7 +114,7 @@ function ProcessDetail({ process }: { process: TwinProcess }) {
       </div>
 
       <aside className="twin-machines">
-        <div className="twin-section-heading"><div><p>{mushroom ? "Connected rooms & assets" : "Connected machines & assets"}</p><h3>{process.machines.length} item{process.machines.length === 1 ? "" : "s"}</h3></div><Wrench size={17} /></div>
+        <div className="twin-section-heading"><div><p>Connected rooms & assets</p><h3>{process.machines.length} item{process.machines.length === 1 ? "" : "s"}</h3></div><Wrench size={17} /></div>
         <div className="twin-machine-list">
           {process.machines.map((machine) => <article key={machine.id}>
             <div><span className={`twin-machine-state twin-status-${machine.status}`}><i /></span><div><strong>{machine.name}</strong><small>{[machine.manufacturer, machine.model].filter(Boolean).join(" · ") || machine.code}</small></div></div>
@@ -126,7 +123,7 @@ function ProcessDetail({ process }: { process: TwinProcess }) {
               {machine.powerKw > 0 && <div><dt>Power</dt><dd>{number(machine.powerKw, 1)} kW</dd></div>}
             </dl>
           </article>)}
-          {!process.machines.length && <div className="twin-machine-empty"><Wrench size={17} /><span>No {mushroom ? "room or farm" : "machine or factory"} asset is assigned to this stage.</span></div>}
+          {!process.machines.length && <div className="twin-machine-empty"><Wrench size={17} /><span>No room or farm asset is assigned to this stage.</span></div>}
         </div>
         <div className="twin-detail-actions"><Link className="button button-secondary" href="/settings?tab=processes"><Settings2 size={13} /> Edit process</Link><Link className="button button-primary" href={processUpload}><Plus size={13} /> Add latest data</Link></div>
       </aside>
@@ -135,8 +132,6 @@ function ProcessDetail({ process }: { process: TwinProcess }) {
 }
 
 export function DigitalTwin() {
-  const variant = usePlatform();
-  const mushroom = variant.features.mushroomAnalytics;
   const { intelligence, filters, loading, refresh } = useFactory();
   const twin = intelligence.digitalTwin ?? emptyTwin;
   const [selectedLineId, setSelectedLineId] = useState("");
@@ -151,26 +146,26 @@ export function DigitalTwin() {
   }
 
   if (!twin.lines.length) return <>
-    <header className="page-header twin-page-header"><div><p className="eyebrow">{variant.navigation["digital-twin"]} · {mushroom ? "crop" : "production"} flow</p><h1>{twin.factory.name || variant.displayName} <span>{mushroom ? "cultivation" : "production"} flow.</span></h1><p className="page-subtitle">A stage-by-stage view of the {variant.terminology.siteSingular} and its latest reported state.</p></div></header>
-    <section className="panel twin-empty"><Factory size={31} /><h2>Build this {variant.terminology.siteSingular}&apos;s {mushroom ? "cultivation" : "production"} flow</h2><p>Add a {mushroom ? "farm wing" : "production line"}, define its {mushroom ? "crop" : "process"} stages in order, then connect {mushroom ? "rooms" : "machines"} and assets.</p><div><Link className="button button-primary" href="/settings?tab=processes"><Settings2 size={14} /> Set up {mushroom ? "crop" : "production"} flow</Link><Link className="button button-secondary" href="/uploads?add=process"><UploadCloud size={14} /> Add {mushroom ? "room observations" : "process runs"}</Link></div></section>
+    <header className="page-header twin-page-header"><div><p className="eyebrow">Mushroom factory twin · crop flow</p><h1>{twin.factory.name || "Musroom"} <span>cultivation flow.</span></h1><p className="page-subtitle">A stage-by-stage view of the mushroom factory and its latest reported room state.</p></div></header>
+    <section className="panel twin-empty"><Factory size={31} /><h2>Build this mushroom factory&apos;s cultivation flow</h2><p>Add a farm wing, define its crop stages in order, then connect rooms and assets.</p><div><Link className="button button-primary" href="/settings?tab=processes"><Settings2 size={14} /> Set up crop flow</Link><Link className="button button-secondary" href="/uploads?add=process"><UploadCloud size={14} /> Add room observations</Link></div></section>
   </>;
 
   return <>
     <header className="page-header twin-page-header">
-      <div><p className="eyebrow">{variant.navigation["digital-twin"]} · {mushroom ? "crop" : "production"} flow</p><h1>{twin.factory.name} <span>{mushroom ? "cultivation" : "production"} flow.</span></h1><p className="page-subtitle">Latest stage and {mushroom ? "room" : "machine"} conditions across the selected {variant.terminology.siteSingular}.</p></div>
+      <div><p className="eyebrow">Mushroom factory twin · crop flow</p><h1>{twin.factory.name} <span>cultivation flow.</span></h1><p className="page-subtitle">Latest stage and room conditions across the selected mushroom factory.</p></div>
       <button className="button button-secondary" onClick={() => void refresh()} disabled={loading}><RefreshCw className={loading ? "spin" : ""} size={14} /> {loading ? "Refreshing" : "Refresh state"}</button>
     </header>
 
-    <section className="twin-summary" aria-label={`${variant.navigation["digital-twin"]} summary`}>
-      <article><span><Layers3 size={16} /></span><div><small>Configured {mushroom ? "crop" : "production"} flow</small><strong>{twin.summary.lines} {mushroom ? "wing" : "line"}{twin.summary.lines === 1 ? "" : "s"} · {twin.summary.processes} stages</strong></div></article>
-      <article><span><Wrench size={16} /></span><div><small>Connected {mushroom ? "rooms" : "machines"} & assets</small><strong>{twin.summary.machines} items</strong></div></article>
+    <section className="twin-summary" aria-label="Mushroom factory twin summary">
+      <article><span><Layers3 size={16} /></span><div><small>Configured crop flow</small><strong>{twin.summary.lines} wing{twin.summary.lines === 1 ? "" : "s"} · {twin.summary.processes} stages</strong></div></article>
+      <article><span><Wrench size={16} /></span><div><small>Connected rooms & assets</small><strong>{twin.summary.machines} items</strong></div></article>
       <article className="healthy"><span><CheckCircle2 size={16} /></span><div><small>Latest state</small><strong>{twin.summary.running} running</strong></div></article>
       <article className={twin.summary.attention ? "attention" : ""}><span><AlertTriangle size={16} /></span><div><small>Action needed</small><strong>{twin.summary.attention} process{twin.summary.attention === 1 ? "" : "es"}</strong></div></article>
     </section>
 
     <section className="panel twin-map">
       <header className="twin-map-header">
-        <div><p>{mushroom ? "Farm" : "Factory"} model</p><h2>{mushroom ? "Crop" : "Production"}-stage flow</h2></div>
+        <div><p>Farm model</p><h2>Crop-stage flow</h2></div>
         <div className="twin-factory-facts">
           {fact(details, "factoryType") && <span><Factory size={12} /> {String(fact(details, "factoryType"))}</span>}
           {fact(details, "facilityAreaM2") && <span>{number(Number(fact(details, "facilityAreaM2")))} m²</span>}
@@ -203,7 +198,7 @@ export function DigitalTwin() {
           <span className="twin-flow-terminal twin-output-terminal"><i />Output</span>
         </div>
       </div>
-      <footer className="twin-map-key"><span><i className="twin-status-running" />On course</span><span><i className="twin-status-warning" />Needs attention</span><span><i className="twin-status-down" />Stopped</span><span><i className="twin-status-idle" />Idle</span><span><i className="twin-status-no_data" />No reported data</span><small>State reflects the newest approved {mushroom ? "room observation" : "process run"} on or before the selected end date, not a live sensor feed.</small></footer>
+      <footer className="twin-map-key"><span><i className="twin-status-running" />On course</span><span><i className="twin-status-warning" />Needs attention</span><span><i className="twin-status-down" />Stopped</span><span><i className="twin-status-idle" />Idle</span><span><i className="twin-status-no_data" />No reported data</span><small>State reflects the newest approved room observation on or before the selected end date, not a live sensor feed.</small></footer>
     </section>
 
     {selectedProcess ? <ProcessDetail process={selectedProcess} /> : <section className="panel twin-empty twin-empty-compact"><Factory size={24} /><h2>No process is configured on this line</h2><Link className="button button-primary" href="/settings?tab=processes"><Plus size={13} /> Add process</Link></section>}

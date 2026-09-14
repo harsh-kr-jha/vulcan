@@ -26,7 +26,7 @@ export function QrCodePreview({ machineId, machineName, machineCode }: QrCodePre
   const activeFactory = state.factories.find(
     (f) => f.id === (filters.factoryId || state.activeFactoryId)
   );
-  const factoryName = activeFactory?.name || "Factory";
+  const factoryName = activeFactory?.name || "Mushroom Factory";
 
   const displayLabel = machineCode
     ? `${machineName} (${machineCode})`

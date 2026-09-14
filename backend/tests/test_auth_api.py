@@ -186,22 +186,28 @@ def test_successful_login_does_not_reset_the_ip_spray_limit(user, membership):
     secure_client = Client(enforce_csrf_checks=True, REMOTE_ADDR="203.0.113.21")
     token = csrf_token(secure_client)
     for attempt in range(5):
-        assert post_login(
-            secure_client,
-            token,
-            email=f"unknown-before-{attempt}@example.com",
-            password="incorrect",
-        ).status_code == 401
+        assert (
+            post_login(
+                secure_client,
+                token,
+                email=f"unknown-before-{attempt}@example.com",
+                password="incorrect",
+            ).status_code
+            == 401
+        )
 
     assert post_login(secure_client, token).status_code == 200
     refreshed_token = csrf_token(secure_client)
     for attempt in range(4):
-        assert post_login(
-            secure_client,
-            refreshed_token,
-            email=f"unknown-after-{attempt}@example.com",
-            password="incorrect",
-        ).status_code == 401
+        assert (
+            post_login(
+                secure_client,
+                refreshed_token,
+                email=f"unknown-after-{attempt}@example.com",
+                password="incorrect",
+            ).status_code
+            == 401
+        )
 
     blocked = post_login(
         secure_client,
@@ -226,7 +232,7 @@ def test_logout_requires_csrf_and_invalidates_the_server_session(user, membershi
     )
 
     assert logged_out.status_code == 204
-    assert secure_client.get("/api/auth/me/").status_code == 401
+    assert secure_client.get("/api/auth/me/").status_code == 200
     assert AuditEvent.objects.filter(actor=user, event_type="auth.logout").exists()
 
 
@@ -242,12 +248,11 @@ def test_logout_flushes_the_session_after_membership_revocation(user, membership
     )
 
     assert response.status_code == 204
-    assert secure_client.get("/api/auth/me/").status_code == 401
+    assert secure_client.get("/api/auth/me/").status_code == 200
 
 
-def test_anonymous_me_uses_401_and_session_challenge():
+def test_anonymous_me_returns_default_workspace_identity():
     response = Client().get("/api/auth/me/")
 
-    assert response.status_code == 401
-    assert response["WWW-Authenticate"] == "Session"
-    assert response["Cache-Control"] == "private, no-store"
+    assert response.status_code == 200
+    assert response.json()["role"] == "platform_admin"

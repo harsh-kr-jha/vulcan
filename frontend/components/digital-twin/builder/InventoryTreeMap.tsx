@@ -120,7 +120,7 @@ function InventoryQrCode({ layoutId }: InventoryQrCodeProps) {
   const activeFactory = factoryState.factories.find(
     (f) => f.id === (filters.factoryId || factoryState.activeFactoryId)
   );
-  const factoryName = activeFactory?.name || "Factory";
+  const factoryName = activeFactory?.name || "Mushroom Factory";
 
   const ensureGenerated = useCallback(async () => {
     if (svgString) return;

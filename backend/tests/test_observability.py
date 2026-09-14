@@ -19,9 +19,7 @@ def test_request_ids_are_unique_server_generated_and_attached_to_request():
         return HttpResponse()
 
     middleware = RequestIdMiddleware(view)
-    response = middleware(
-        RequestFactory().get("/", HTTP_X_REQUEST_ID="caller-controlled-value")
-    )
+    response = middleware(RequestFactory().get("/", HTTP_X_REQUEST_ID="caller-controlled-value"))
     first_id = response["X-Request-ID"]
     second_id = Client().get("/api/auth/csrf/")["X-Request-ID"]
 

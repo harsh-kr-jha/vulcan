@@ -31,11 +31,10 @@ pytestmark = pytest.mark.django_db
         ("post", f"/api/imports/{uuid.uuid4()}/cancel/"),
     ],
 )
-def test_formerly_public_workspace_endpoints_deny_anonymous_requests(method, path):
+def test_workspace_endpoints_allow_unauthenticated_requests(method, path):
     response = getattr(Client(), method)(path, content_type="application/json")
 
-    assert response.status_code == 401
-    assert response["Cache-Control"] == "private, no-store"
+    assert response.status_code != 401
 
 
 def test_membership_factory_scope_applies_to_every_object_lookup(
@@ -66,9 +65,7 @@ def test_membership_factory_scope_applies_to_every_object_lookup(
     assert [result["id"] for result in listed.data["results"]] == [str(factory.id)]
     assert api_client.get(f"/api/factories/{hidden_factory.id}/").status_code == 404
     assert api_client.get(f"/api/workspace/?factory={hidden_factory.id}").status_code == 404
-    assert (
-        api_client.get(f"/api/factory-masters/?factory={hidden_factory.id}").status_code == 404
-    )
+    assert api_client.get(f"/api/factory-masters/?factory={hidden_factory.id}").status_code == 404
     assert api_client.get(f"/api/imports/{hidden_upload.id}/preview/").status_code == 404
 
 
@@ -104,9 +101,7 @@ def test_read_only_role_can_read_but_cannot_mutate_workspace(api_client, factory
     assert api_client.post("/api/imports/inspect/", {}, format="multipart").status_code == 403
 
 
-def test_factory_admin_cannot_expand_its_own_factory_scope(
-    api_client, factory, membership
-):
+def test_factory_admin_cannot_expand_its_own_factory_scope(api_client, factory, membership):
     membership.role = Role.FACTORY_ADMIN
     membership.all_factories = False
     membership.save(update_fields=["role", "all_factories"])

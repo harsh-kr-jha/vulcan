@@ -1,8 +1,8 @@
 from datetime import date, timedelta
 
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import NotFound, PermissionDenied
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -26,7 +26,7 @@ from apps.tenancy.services import workspace_identity_for_request
 
 
 class WorkspaceView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         factory = resolve_factory(request)
@@ -120,7 +120,7 @@ class WorkspaceActionView(APIView):
 
 
 class WorkspaceQuestionView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         factory = resolve_factory(request)
@@ -142,7 +142,9 @@ def resolve_factory(request):
         return get_object_or_404(factories_for_request(request), id=factory_id)
     factory = factories_for_request(request).first()
     if factory is None:
-        raise NotFound("No factory is available to this membership.")
+        from apps.tenancy.services import get_or_create_default_factory, get_workspace_identity
+
+        factory = get_or_create_default_factory(get_workspace_identity())
     return factory
 
 

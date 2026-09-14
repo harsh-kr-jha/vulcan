@@ -1,11 +1,10 @@
 {
-  "id": "automotive",
-  "displayName": "Vulcan",
+  "id": "mushroom",
+  "displayName": "Mushroom Factory Intelligence",
   "descriptor": "by Tamaso.ai",
-  "industry": "automotive-manufacturing",
+  "industry": "mushroom-cultivation",
   "modules": [
     "dashboard",
-    "projects",
     "digital-twin",
     "uploads",
     "performance",
@@ -22,22 +21,18 @@
     "inventory": "Inventory",
     "supplier": "Supplier deliveries",
     "orders": "Customer orders",
-    "projects": "Project master",
-    "project_stages": "Project stages",
     "utilities": "Steam & boiler utilities"
   },
   "navigation": {
-    "projects": "Projects",
     "digital-twin": "Lexicon™",
-    "settings": "Factory setup"
+    "settings": "Mushroom factory setup"
   },
   "terminology": {
-    "siteSingular": "factory",
-    "sitePlural": "factories",
-    "projectSingular": "project",
-    "projectPlural": "projects"
+    "siteSingular": "mushroom factory",
+    "sitePlural": "mushroom factories"
   },
   "features": {
-    "asyncUploads": false
+    "asyncUploads": false,
+    "mushroomAnalytics": true
   }
 }

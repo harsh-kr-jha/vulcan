@@ -28,9 +28,7 @@ class ParamDataType(models.TextChoices):
 class FactoryLayout(UUIDModel, TenantScopedModel):
     """Root entity representing a spatial factory layout."""
 
-    factory = models.OneToOneField(
-        Factory, on_delete=models.CASCADE, related_name="spatial_layout"
-    )
+    factory = models.OneToOneField(Factory, on_delete=models.CASCADE, related_name="spatial_layout")
     floor_width = models.DecimalField(max_digits=7, decimal_places=1)
     floor_height = models.DecimalField(max_digits=7, decimal_places=1)
     unit_system = models.CharField(
@@ -44,15 +42,15 @@ class FactoryLayout(UUIDModel, TenantScopedModel):
         ]
 
     def __str__(self) -> str:
-        return f"Layout for {self.factory} ({self.floor_width}x{self.floor_height} {self.unit_system})"
+        return (
+            f"Layout for {self.factory} ({self.floor_width}x{self.floor_height} {self.unit_system})"
+        )
 
 
 class SpatialMachine(UUIDModel, TenantScopedModel):
     """A machine placed on the factory floor grid."""
 
-    layout = models.ForeignKey(
-        FactoryLayout, on_delete=models.CASCADE, related_name="machines"
-    )
+    layout = models.ForeignKey(FactoryLayout, on_delete=models.CASCADE, related_name="machines")
     name = models.CharField(max_length=50)
     position_x = models.PositiveIntegerField()  # grid column
     position_y = models.PositiveIntegerField()  # grid row
@@ -85,9 +83,7 @@ class SpatialMachine(UUIDModel, TenantScopedModel):
 class MachineParameter(UUIDModel):
     """Custom parameter definition for a spatial machine."""
 
-    machine = models.ForeignKey(
-        SpatialMachine, on_delete=models.CASCADE, related_name="parameters"
-    )
+    machine = models.ForeignKey(SpatialMachine, on_delete=models.CASCADE, related_name="parameters")
     key = models.CharField(max_length=64)  # alphanumeric + underscore
     data_type = models.CharField(max_length=12, choices=ParamDataType.choices)
     options = models.JSONField(default=list, blank=True)  # for selection type
@@ -132,9 +128,7 @@ class MachineCustomKpi(UUIDModel):
 class MachineConnection(UUIDModel, TenantScopedModel):
     """Directional material-flow connection between two machines."""
 
-    layout = models.ForeignKey(
-        FactoryLayout, on_delete=models.CASCADE, related_name="connections"
-    )
+    layout = models.ForeignKey(FactoryLayout, on_delete=models.CASCADE, related_name="connections")
     source = models.ForeignKey(
         SpatialMachine, on_delete=models.CASCADE, related_name="outgoing_connections"
     )
@@ -144,9 +138,7 @@ class MachineConnection(UUIDModel, TenantScopedModel):
     name = models.CharField(max_length=50, blank=True)
     description = models.CharField(max_length=200, blank=True)
     material_type = models.CharField(max_length=100, blank=True)
-    quantity_per_cycle = models.DecimalField(
-        max_digits=12, decimal_places=2, null=True, blank=True
-    )
+    quantity_per_cycle = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     input_spec = models.CharField(max_length=200, blank=True)
     output_spec = models.CharField(max_length=200, blank=True)
 
@@ -167,9 +159,7 @@ class MachineObservation(UUIDModel, TenantScopedModel):
     )
     values = models.JSONField()  # {parameter_key: value, ...}
     submitted_at = models.DateTimeField(auto_now_add=True)
-    submitted_by = models.ForeignKey(
-        "auth.User", on_delete=models.PROTECT, null=True, blank=True
-    )
+    submitted_by = models.ForeignKey("auth.User", on_delete=models.PROTECT, null=True, blank=True)
 
     class Meta:
         ordering = ["-submitted_at"]
@@ -210,9 +200,7 @@ class InventoryChange(UUIDModel, TenantScopedModel):
     direction = models.CharField(max_length=10)  # "inbound" or "outbound"
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
     submitted_at = models.DateTimeField(auto_now_add=True)
-    submitted_by = models.ForeignKey(
-        "auth.User", on_delete=models.PROTECT, null=True, blank=True
-    )
+    submitted_by = models.ForeignKey("auth.User", on_delete=models.PROTECT, null=True, blank=True)
 
     class Meta:
         ordering = ["-submitted_at"]
@@ -252,9 +240,7 @@ class DispatchEvent(UUIDModel, TenantScopedModel):
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
     unit = models.CharField(max_length=20)
     submitted_at = models.DateTimeField(auto_now_add=True)
-    submitted_by = models.ForeignKey(
-        "auth.User", on_delete=models.PROTECT, null=True, blank=True
-    )
+    submitted_by = models.ForeignKey("auth.User", on_delete=models.PROTECT, null=True, blank=True)
 
     class Meta:
         ordering = ["-submitted_at"]

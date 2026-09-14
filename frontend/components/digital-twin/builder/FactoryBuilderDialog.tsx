@@ -61,9 +61,9 @@ export function FactoryBuilderDialog({ factoryId, onClose }: FactoryBuilderDialo
         {/* Header */}
         <div className="modal-header">
           <div>
-            <span className="modal-step">Factory Setup</span>
-            <h2 id="builder-dialog-title">Build Factory</h2>
-            <p>Define the floor dimensions and unit system for your factory layout.</p>
+            <span className="modal-step">Mushroom Factory Setup</span>
+            <h2 id="builder-dialog-title">Build Mushroom Factory</h2>
+            <p>Define the floor dimensions and unit system for your mushroom factory layout.</p>
           </div>
           <button
             className="icon-button"

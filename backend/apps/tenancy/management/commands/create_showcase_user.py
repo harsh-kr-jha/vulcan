@@ -95,9 +95,10 @@ class Command(BaseCommand):
         except ValidationError as exc:
             raise CommandError(" ".join(exc.messages)) from exc
 
-        if EmailIdentity.objects.filter(email=email).exists() or user_model.objects.filter(
-            email__iexact=email
-        ).exists():
+        if (
+            EmailIdentity.objects.filter(email=email).exists()
+            or user_model.objects.filter(email__iexact=email).exists()
+        ):
             raise CommandError("An account already uses that email address.")
 
         first_name, _, last_name = name.partition(" ")

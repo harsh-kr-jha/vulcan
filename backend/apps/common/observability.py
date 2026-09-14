@@ -12,9 +12,7 @@ _sensitive_key = re.compile(
     r"(?:password|passwd|pwd|token|secret|authorization|cookie|session|credential|api[_-]?key)",
     re.IGNORECASE,
 )
-_header_value = re.compile(
-    r"(?im)(?P<key>(?:proxy-)?authorization|(?:set-)?cookie)\s*:\s*[^\r\n]*"
-)
+_header_value = re.compile(r"(?im)(?P<key>(?:proxy-)?authorization|(?:set-)?cookie)\s*:\s*[^\r\n]*")
 _assigned_value = re.compile(
     r"""
     (?P<prefix>

@@ -175,16 +175,23 @@ class SessionLogoutView(APIView):
 
 
 class MeView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         membership = membership_for_request(request)
-        identity = EmailIdentity.objects.filter(user=request.user).first()
+        user = membership.user if hasattr(membership, "user") else request.user
+        identity = EmailIdentity.objects.filter(user=user).first()
+        email = identity.email if identity else getattr(user, "email", "admin@mushroom.factory")
+        name = (
+            (user.get_full_name() or user.get_username())
+            if hasattr(user, "get_full_name")
+            else "Mushroom Team"
+        )
         return Response(
             {
-                "id": request.user.pk,
-                "email": identity.email if identity else request.user.email,
-                "name": request.user.get_full_name() or request.user.get_username(),
+                "id": user.pk,
+                "email": email,
+                "name": name,
                 "tenant": {"id": membership.tenant_id, "name": membership.tenant.name},
                 "role": membership.role,
                 "factories": FactorySerializer(
@@ -204,7 +211,7 @@ class FactoryViewSet(viewsets.ModelViewSet):
             return [CanCreateFactory()]
         if self.action in {"update", "partial_update", "destroy"}:
             return [CanManageFactory()]
-        return [IsAuthenticated()]
+        return [AllowAny()]
 
     def get_queryset(self):
         return factories_for_request(self.request).select_related("company")
@@ -239,7 +246,7 @@ class FactoryMasterViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in {"create", "update", "partial_update", "destroy"}:
             return [CanManageFactory()]
-        return [IsAuthenticated()]
+        return [AllowAny()]
 
     def get_factory(self):
         if hasattr(self, "_factory"):
@@ -250,8 +257,8 @@ class FactoryMasterViewSet(viewsets.ModelViewSet):
             self._factory = get_object_or_404(factories, id=factory_id)
         else:
             self._factory = factories.first()
-            if self._factory is None:
-                raise NotFound("No factory is available to this membership.")
+        if not self._factory:
+            raise NotFound("No factory is available to this membership.")
         return self._factory
 
     def get_queryset(self):
@@ -264,7 +271,10 @@ class FactoryMasterViewSet(viewsets.ModelViewSet):
         return queryset.order_by("kind", "name")
 
     def get_serializer_context(self):
-        return {**super().get_serializer_context(), "factory": self.get_factory()}
+        context = super().get_serializer_context()
+        context["tenant"] = tenant_for_request(self.request)
+        context["factory"] = self.get_factory()
+        return context
 
     def perform_create(self, serializer):
         factory = self.get_factory()

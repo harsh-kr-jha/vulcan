@@ -17,7 +17,9 @@ from apps.operations.imports import serialize_upload
 from apps.operations.models import StandardRecord, Upload
 from apps.tenancy.serializers import FactoryMasterSerializer, WorkspaceFactorySerializer
 from processing.kpis import (
+    MushroomKPIInputs,
     SteamRecoveryInputs,
+    calculate_mushroom_kpis,
     calculate_steam_recovery,
 )
 
@@ -195,9 +197,7 @@ def build_workspace_snapshot(identity, factory, filters, targets=None):
                 "name": identity.company.name,
                 "industry": factory.configuration.get("industry", ""),
             },
-            "factories": WorkspaceFactorySerializer(
-                identity.factories(), many=True
-            ).data,
+            "factories": WorkspaceFactorySerializer(identity.factories(), many=True).data,
             "activeFactoryId": str(factory.id),
             "masters": masters,
             "uploads": uploads,
@@ -268,10 +268,7 @@ def build_intelligence(factory, targets, filters):
         if (
             operational_date
             and (not to_date or operational_date <= to_date)
-            and (
-                dataset_type not in latest_dates
-                or operational_date > latest_dates[dataset_type]
-            )
+            and (dataset_type not in latest_dates or operational_date > latest_dates[dataset_type])
         ):
             latest_dates[dataset_type] = operational_date
         if dataset_type == "projects":
@@ -358,8 +355,46 @@ def build_intelligence(factory, targets, filters):
         else quality_rate
     )
 
-    # Industry-specific KPIs are empty at the platform level — template branches populate these.
-    mushroom_kpis = {}
+    batch_ids = {
+        str(row.get("batch_id", "")).strip()
+        for row in production
+        if str(row.get("batch_id", "")).strip()
+    }
+    dry_substrate_kg = unique_total(production, "substrate_dry_kg", "batch_id")
+    growing_area_m2 = unique_total(production, "growing_area_m2", "batch_id")
+    water_litres = total(process_runs, "water_litres") or total(production, "water_litres")
+    compliant_readings, environment_readings = environment_compliance_counts(process_runs)
+    crop_age_days_total, crop_age_batches = unique_sum_and_count(
+        production, "crop_age_days", "batch_id"
+    )
+    mushroom_kpis = calculate_mushroom_kpis(
+        MushroomKPIInputs(
+            planned_harvest_kg=Decimal(str(planned)),
+            total_harvest_kg=Decimal(str(actual)),
+            saleable_harvest_kg=Decimal(str(good)),
+            contaminated_harvest_kg=Decimal(str(quality_rejected if inspected else rejected)),
+            dry_substrate_kg=Decimal(str(dry_substrate_kg)),
+            growing_area_m2=Decimal(str(growing_area_m2)),
+            water_litres=Decimal(str(water_litres)),
+            compliant_environment_readings=Decimal(str(compliant_readings)),
+            total_environment_readings=Decimal(str(environment_readings)),
+            crop_age_days_total=Decimal(str(crop_age_days_total)),
+            crop_batches=Decimal(str(crop_age_batches)),
+        )
+    ).as_dict()
+    mushroom_kpis.update(
+        {
+            "plannedHarvestKg": planned,
+            "totalHarvestKg": actual,
+            "saleableHarvestKg": good,
+            "contaminatedHarvestKg": quality_rejected if inspected else rejected,
+            "drySubstrateKg": dry_substrate_kg,
+            "growingAreaM2": growing_area_m2,
+            "waterLitres": water_litres,
+            "activeBatches": len(batch_ids),
+            "environmentReadings": environment_readings,
+        }
+    )
 
     steam_recovery = build_steam_recovery(utilities, production)
     trend, daily_oee = production_trends(production)
@@ -463,7 +498,7 @@ def build_intelligence(factory, targets, filters):
         "supplierScores": supplier_scores,
         "supplierScore": supplier_score,
         "mushroom": mushroom_kpis,
-        "roomConditions": [],
+        "roomConditions": build_room_conditions(process_runs),
         "steamRecovery": steam_recovery,
         "customKpiVariables": custom_variables,
         "customKpis": custom_kpis,
@@ -610,12 +645,8 @@ def build_steam_recovery(utility_rows, production_rows):
                 str(weighted("feedwater_tank_temperature_c", "feedwater_kg"))
             ),
             steam_generated_kg=Decimal(str(steam_generated_kg)),
-            recovered_condensate_kg=Decimal(
-                str(total(utility_rows, "recovered_condensate_kg"))
-            ),
-            flash_steam_recovered_kg=Decimal(
-                str(total(utility_rows, "flash_steam_recovered_kg"))
-            ),
+            recovered_condensate_kg=Decimal(str(total(utility_rows, "recovered_condensate_kg"))),
+            flash_steam_recovered_kg=Decimal(str(total(utility_rows, "flash_steam_recovered_kg"))),
             briquette_used_kg=Decimal(str(briquette_used_kg)),
             briquette_gcv_kcal_per_kg=Decimal(
                 str(weighted("briquette_gcv_kcal_per_kg", "briquette_used_kg"))
@@ -633,12 +664,8 @@ def build_steam_recovery(utility_rows, production_rows):
             "recoveredCondensateKg": total(utility_rows, "recovered_condensate_kg"),
             "flashSteamRecoveredKg": total(utility_rows, "flash_steam_recovered_kg"),
             "briquetteUsedKg": briquette_used_kg,
-            "boilerEfficiencyPercent": weighted(
-                "boiler_efficiency_percent", "briquette_used_kg"
-            ),
-            "briquetteGcvKcalPerKg": weighted(
-                "briquette_gcv_kcal_per_kg", "briquette_used_kg"
-            ),
+            "boilerEfficiencyPercent": weighted("boiler_efficiency_percent", "briquette_used_kg"),
+            "briquetteGcvKcalPerKg": weighted("briquette_gcv_kcal_per_kg", "briquette_used_kg"),
         }
     )
 
@@ -1248,12 +1275,8 @@ def default_project_stages(project_number, start_value, commitment_value, progre
     stage_position = progress / 100 * len(workflow)
     stages = []
     for index, name in enumerate(workflow):
-        stage_start = start + timedelta(
-            days=int(total_days * index / len(workflow))
-        )
-        next_start = start + timedelta(
-            days=int(total_days * (index + 1) / len(workflow))
-        )
+        stage_start = start + timedelta(days=int(total_days * index / len(workflow)))
+        next_start = start + timedelta(days=int(total_days * (index + 1) / len(workflow)))
         completed = index < int(stage_position)
         active = index == int(stage_position) and 0 < progress < 100
         stage_status = "Completed" if completed else "In Progress" if active else "Not Started"
@@ -1863,8 +1886,7 @@ def answer_question(intelligence, question):
             )
     totals = intelligence["totals"]
     return response(
-        f"Production is {totals['actual']:g} units against a plan of "
-        f"{totals['planned']:g} units.",
+        f"Production is {totals['actual']:g} units against a plan of {totals['planned']:g} units.",
         "This answer uses only validated records in the selected factory and date range.",
         [f"Plan {totals['planned']:g}", f"Actual {totals['actual']:g}"],
     )
@@ -1921,3 +1943,55 @@ def parse_date(value):
         return date.fromisoformat(str(value)) if value else None
     except ValueError:
         return None
+
+
+def environment_compliance_counts(rows):
+    results = [result for row in rows if (result := row_environment_compliance(row)) is not None]
+    return sum(results), len(results)
+
+
+def row_environment_compliance(row):
+    checks = []
+    ranges = [
+        ("temperature_c", "temperature_min_c", "temperature_max_c"),
+        ("humidity_pct", "humidity_min_pct", "humidity_max_pct"),
+    ]
+    for value_key, minimum_key, maximum_key in ranges:
+        if row.get(value_key) in {None, ""}:
+            continue
+        if row.get(minimum_key) in {None, ""} or row.get(maximum_key) in {None, ""}:
+            continue
+        val = number(row.get(value_key))
+        checks.append(number(row.get(minimum_key)) <= val <= number(row.get(maximum_key)))
+    if row.get("co2_ppm") not in {None, ""} and row.get("co2_max_ppm") not in {None, ""}:
+        checks.append(number(row.get("co2_ppm")) <= number(row.get("co2_max_ppm")))
+    return all(checks) if checks else None
+
+
+def build_room_conditions(rows):
+    latest = {}
+    for row in rows:
+        room = str(row.get("machine", "")).strip()
+        if not room:
+            continue
+        current = latest.get(room)
+        if current and str(current.get("date", "")) > str(row.get("date", "")):
+            continue
+        latest[room] = row
+    return [
+        {
+            "room": room,
+            "line": row.get("line", ""),
+            "process": row.get("process", ""),
+            "batchId": row.get("batch_id", ""),
+            "date": row.get("date", ""),
+            "status": row.get("status", ""),
+            "temperatureC": optional_number(row.get("temperature_c")),
+            "humidityPct": optional_number(row.get("humidity_pct")),
+            "co2Ppm": optional_number(row.get("co2_ppm")),
+            "substrateMoisturePct": optional_number(row.get("substrate_moisture_pct")),
+            "waterLitres": optional_number(row.get("water_litres")),
+            "compliant": row_environment_compliance(row),
+        }
+        for room, row in sorted(latest.items())
+    ]

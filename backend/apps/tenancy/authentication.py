@@ -18,9 +18,7 @@ class EmailIdentityBackend:
     def authenticate(self, request, email=None, password=None, username=None, **kwargs):
         normalized_email = normalize_login_email(email or username)
         identity = (
-            EmailIdentity.objects.select_related("user")
-            .filter(email=normalized_email)
-            .first()
+            EmailIdentity.objects.select_related("user").filter(email=normalized_email).first()
             if normalized_email
             else None
         )

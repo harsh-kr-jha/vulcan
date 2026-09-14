@@ -77,12 +77,15 @@ function SingleMachineNode({
   const fill = isSelected ? MACHINE_FILL_SELECTED : MACHINE_FILL;
   const stroke = isSelected ? MACHINE_STROKE_SELECTED : MACHINE_STROKE;
 
-  // Font size scales with machine size
-  const fontSize = Math.min(machineWidth, machineHeight) * 0.4;
+  // Font size dynamically fits machine name
+  const nameLen = Math.max(machine.name.length, 1);
+  const maxFontSize = Math.min(machineWidth, machineHeight) * 0.35;
+  const fitFontSize = Math.min(maxFontSize, ((machineWidth - 0.2) * 0.95) / (nameLen * 0.58));
+  const fontSize = Math.max(fitFontSize, 0.22);
 
   // Truncate name based on available width (with padding)
-  const availableWidth = machineWidth * 0.85; // 85% of box width for text
-  const avgCharWidth = fontSize * 0.6; // approximate average character width
+  const availableWidth = (machineWidth - 0.1) * 0.95;
+  const avgCharWidth = fontSize * 0.55;
   const maxChars = Math.max(2, Math.floor(availableWidth / avgCharWidth));
   const displayName =
     machine.name.length > maxChars

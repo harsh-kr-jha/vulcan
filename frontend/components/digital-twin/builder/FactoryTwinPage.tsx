@@ -616,7 +616,7 @@ export function FactoryTwinPage() {
             No Lexicon™ Layout
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            Build your Lexicon™ factory map to start placing machines and tracking
+            Build your Lexicon™ mushroom factory map to start placing machines and tracking
             operations.
           </p>
         </div>
@@ -641,7 +641,7 @@ export function FactoryTwinPage() {
 
         {!factoryId && (
           <p className="text-xs text-amber-600">
-            Select a factory to get started.
+            Select a mushroom factory to get started.
           </p>
         )}
 

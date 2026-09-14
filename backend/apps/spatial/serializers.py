@@ -29,9 +29,7 @@ class MachineParameterSerializer(serializers.ModelSerializer):
     def validate_key(self, value):
         """Validate key matches alphanumeric/underscore pattern and length."""
         if not value or len(value) > 64:
-            raise serializers.ValidationError(
-                "Key must be between 1 and 64 characters."
-            )
+            raise serializers.ValidationError("Key must be between 1 and 64 characters.")
         if not PARAM_KEY_REGEX.match(value):
             raise serializers.ValidationError(
                 "Key must contain only alphanumeric characters and underscores."
@@ -44,9 +42,9 @@ class MachineParameterSerializer(serializers.ModelSerializer):
         machine = self.context.get("machine")
 
         if machine and key:
-            existing_keys = MachineParameter.objects.filter(
-                machine=machine
-            ).values_list("key", flat=True)
+            existing_keys = MachineParameter.objects.filter(machine=machine).values_list(
+                "key", flat=True
+            )
 
             # Exclude current instance on update
             if self.instance:
@@ -55,7 +53,12 @@ class MachineParameterSerializer(serializers.ModelSerializer):
             for existing_key in existing_keys:
                 if existing_key.lower() == key.lower():
                     raise serializers.ValidationError(
-                        {"key": f"Parameter key '{key}' already exists (case-insensitive match with '{existing_key}')."}
+                        {
+                            "key": (
+                                f"Parameter key '{key}' already exists "
+                                f"(case-insensitive match with '{existing_key}')."
+                            )
+                        }
                     )
 
         return attrs
@@ -70,17 +73,13 @@ class MachineCustomKpiSerializer(serializers.ModelSerializer):
     def validate_name(self, value):
         """Validate name length."""
         if not value or len(value) > 50:
-            raise serializers.ValidationError(
-                "Name must be between 1 and 50 characters."
-            )
+            raise serializers.ValidationError("Name must be between 1 and 50 characters.")
         return value
 
     def validate_display_unit(self, value):
         """Validate display unit length."""
         if not value or len(value) > 20:
-            raise serializers.ValidationError(
-                "Display unit must be between 1 and 20 characters."
-            )
+            raise serializers.ValidationError("Display unit must be between 1 and 20 characters.")
         return value
 
     def validate_formula(self, value):
@@ -93,16 +92,12 @@ class MachineCustomKpiSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Formula 'operations' must be a list.")
 
         if len(operations) > 10:
-            raise serializers.ValidationError(
-                "Formula cannot have more than 10 operations."
-            )
+            raise serializers.ValidationError("Formula cannot have more than 10 operations.")
 
         valid_operators = {"add", "subtract", "multiply", "divide"}
         for i, op in enumerate(operations):
             if not isinstance(op, dict):
-                raise serializers.ValidationError(
-                    f"Operation at index {i} must be an object."
-                )
+                raise serializers.ValidationError(f"Operation at index {i} must be an object.")
             operator = op.get("operator")
             param_key = op.get("parameterKey")
             if operator not in valid_operators:
@@ -123,9 +118,9 @@ class MachineCustomKpiSerializer(serializers.ModelSerializer):
         machine = self.context.get("machine")
 
         if machine and name:
-            existing_names = MachineCustomKpi.objects.filter(
-                machine=machine
-            ).values_list("name", flat=True)
+            existing_names = MachineCustomKpi.objects.filter(machine=machine).values_list(
+                "name", flat=True
+            )
 
             # Exclude current instance on update
             if self.instance:
@@ -222,12 +217,8 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         """Validate machine positions within floor bounds and connection references."""
-        floor_width = attrs.get(
-            "floor_width", getattr(self.instance, "floor_width", None)
-        )
-        floor_height = attrs.get(
-            "floor_height", getattr(self.instance, "floor_height", None)
-        )
+        floor_width = attrs.get("floor_width", getattr(self.instance, "floor_width", None))
+        floor_height = attrs.get("floor_height", getattr(self.instance, "floor_height", None))
         machines_data = attrs.get("machines", [])
         connections_data = attrs.get("connections", [])
 
@@ -268,9 +259,7 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
             # If updating an existing layout and machines not being replaced,
             # include existing machine IDs
             if self.instance and not machines_data:
-                existing_ids = set(
-                    self.instance.machines.values_list("id", flat=True)
-                )
+                existing_ids = set(self.instance.machines.values_list("id", flat=True))
                 valid_machine_ids.update(existing_ids)
 
             # Include IDs from machines being submitted in the same request
@@ -366,16 +355,12 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
         # Create inventory configuration if provided
         if inventory_data:
             inventory_data.pop("id", None)
-            InventoryConfiguration.objects.create(
-                layout=layout, tenant=tenant, **inventory_data
-            )
+            InventoryConfiguration.objects.create(layout=layout, tenant=tenant, **inventory_data)
 
         # Create dispatch configuration if provided
         if dispatch_data:
             dispatch_data.pop("id", None)
-            DispatchConfiguration.objects.create(
-                layout=layout, tenant=tenant, **dispatch_data
-            )
+            DispatchConfiguration.objects.create(layout=layout, tenant=tenant, **dispatch_data)
 
         return layout
 
@@ -524,18 +509,18 @@ class MachineObservationSerializer(serializers.ModelSerializer):
 
         try:
             machine = SpatialMachine.objects.get(pk=machine_id)
-        except SpatialMachine.DoesNotExist:
-            raise serializers.ValidationError("Referenced machine does not exist.")
+        except SpatialMachine.DoesNotExist as err:
+            raise serializers.ValidationError("Referenced machine does not exist.") from err
 
         parameters = {p.key: p for p in machine.parameters.all()}
         errors = {}
 
         # Build set of valid IO field keys from inputs/outputs
         io_keys = set()
-        for io_item in (machine.inputs or []):
+        for io_item in machine.inputs or []:
             if isinstance(io_item, dict) and io_item.get("id"):
                 io_keys.add(f"input_{io_item['id']}")
-        for io_item in (machine.outputs or []):
+        for io_item in machine.outputs or []:
             if isinstance(io_item, dict) and io_item.get("id"):
                 io_keys.add(f"output_{io_item['id']}")
 
@@ -554,9 +539,7 @@ class MachineObservationSerializer(serializers.ModelSerializer):
                 continue
 
             param = parameters[key]
-            validation_error = self._validate_value_type(
-                key, submitted_value, param
-            )
+            validation_error = self._validate_value_type(key, submitted_value, param)
             if validation_error:
                 errors[key] = validation_error
 
@@ -592,7 +575,10 @@ class MachineObservationSerializer(serializers.ModelSerializer):
 
         elif data_type == ParamDataType.DATE:
             if not isinstance(value, str):
-                return f"Parameter '{key}' expects a date string (YYYY-MM-DD), got {type(value).__name__}."
+                return (
+                    f"Parameter '{key}' expects a date string (YYYY-MM-DD), "
+                    f"got {type(value).__name__}."
+                )
             try:
                 date.fromisoformat(value)
             except (ValueError, TypeError):
@@ -639,9 +625,7 @@ class InventoryChangeSerializer(serializers.ModelSerializer):
 
     def validate_direction(self, value):
         if value not in ("inbound", "outbound"):
-            raise serializers.ValidationError(
-                "Direction must be 'inbound' or 'outbound'."
-            )
+            raise serializers.ValidationError("Direction must be 'inbound' or 'outbound'.")
         return value
 
     def validate_quantity(self, value):
@@ -693,17 +677,13 @@ class InventoryChangeSerializer(serializers.ModelSerializer):
                 break
 
         # Compute current stock: initial + sum(inbound) - sum(outbound)
-        changes = InventoryChange.objects.filter(
-            inventory=inventory, material_id=material_id
-        )
-        inbound_total = (
-            changes.filter(direction="inbound").aggregate(total=Sum("quantity"))["total"]
-            or Decimal("0")
-        )
-        outbound_total = (
-            changes.filter(direction="outbound").aggregate(total=Sum("quantity"))["total"]
-            or Decimal("0")
-        )
+        changes = InventoryChange.objects.filter(inventory=inventory, material_id=material_id)
+        inbound_total = changes.filter(direction="inbound").aggregate(total=Sum("quantity"))[
+            "total"
+        ] or Decimal("0")
+        outbound_total = changes.filter(direction="outbound").aggregate(total=Sum("quantity"))[
+            "total"
+        ] or Decimal("0")
         current_stock = initial_quantity + inbound_total - outbound_total
 
         if removal_quantity > current_stock:
@@ -733,9 +713,7 @@ class DispatchEventSerializer(serializers.ModelSerializer):
 
     def validate_event_type(self, value):
         if value not in ("arrival", "dispatched"):
-            raise serializers.ValidationError(
-                "Event type must be 'arrival' or 'dispatched'."
-            )
+            raise serializers.ValidationError("Event type must be 'arrival' or 'dispatched'.")
         return value
 
     def validate_quantity(self, value):
@@ -744,9 +722,7 @@ class DispatchEventSerializer(serializers.ModelSerializer):
         min_val = Decimal("0.01")
         max_val = Decimal("999999999.99")
         if value < min_val or value > max_val:
-            raise serializers.ValidationError(
-                "Quantity must be between 0.01 and 999999999.99."
-            )
+            raise serializers.ValidationError("Quantity must be between 0.01 and 999999999.99.")
         return value
 
     def validate_product_id(self, value):
@@ -764,9 +740,7 @@ class DispatchEventSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         dispatch = self.context.get("dispatch")
         if dispatch and attrs.get("product_id") and attrs.get("unit"):
-            self._validate_unit_matches_product(
-                dispatch, attrs["product_id"], attrs["unit"]
-            )
+            self._validate_unit_matches_product(dispatch, attrs["product_id"], attrs["unit"])
         return attrs
 
     def _validate_unit_matches_product(self, dispatch, product_id, unit):

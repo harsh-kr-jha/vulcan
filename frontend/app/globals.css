@@ -1,6 +1,66 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css";
 
+:root {
+  --canvas: #fff8ef;
+  --surface: #ffffff;
+  --surface-warm: #f4ebc3;
+  --surface-low: #f9f3e8;
+  --surface-container: #f4ede3;
+  --surface-high: #eee7dd;
+  --surface-highest: #e8e2d7;
+  --ink: #1e1b15;
+  --ink-variant: #3d4a42;
+  --muted: #3d4a42;
+  --muted-2: #6d7a71;
+  --line: #d8d2c8;
+  --line-strong: #bccabf;
+  --sidebar: #333029;
+  --sidebar-2: #454139;
+  --sidebar-ink: #f6f0e5;
+  --sidebar-muted: #cfc7bd;
+  --lime: #7efabe;
+  --green: #00a06c;
+  --green-dark: #006a46;
+  --green-hover: #008559;
+  --green-soft: #adedcd;
+  --on-green-soft: #0c5139;
+  --blue: #2b6950;
+  --blue-soft: #dcece2;
+  --amber: #8a6514;
+  --amber-soft: #fff4d4;
+  --red: #ba1a1a;
+  --red-dark: #93000a;
+  --red-soft: #ffdad6;
+  --shadow: 0 12px 32px rgba(0, 160, 108, 0.05);
+  --shadow-floating: 0 18px 48px rgba(0, 106, 70, 0.12);
+  --focus-ring: 0 0 0 4px rgba(0, 160, 108, 0.10);
+  --radius-sm: 8px;
+  --radius-control: 16px;
+  --radius-md: 24px;
+  --radius: 32px;
+  --radius-hero: 48px;
+  --radius-pill: 9999px;
+  --font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
+  --sidebar-width: 260px;
+  --content-max-width: 1600px;
+  --page-margin-desktop: 40px;
+  --page-margin-mobile: 16px;
+  --space-unit: 8px;
+  --space-xs: 4px;
+  --space-sm: 12px;
+  --space-md: 24px;
+  --space-lg: 48px;
+  --font-readable-min: 11px;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-family);
+  margin: 0;
+}
+
 .ion-display {
   font-family: var(--font-family);
 }
@@ -6089,10 +6149,43 @@ i.twin-status-no_data,
 }
 
 @media (max-width: 780px) {
+  html, body {
+    overflow-x: hidden;
+  }
+
+  .sidebar {
+    transform: translateX(-105%);
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    background: rgba(0, 0, 0, 0.45);
+    border: 0;
+    bottom: 0;
+    display: block;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 29;
+  }
+
   .app-main {
+    margin-left: 0 !important;
     min-width: 0;
     overflow-x: hidden;
     width: 100%;
+  }
+
+  .topbar {
+    padding: 0 16px 0 52px;
+  }
+
+  .page-content {
+    padding: 16px;
   }
 
   .home-module-section > header { align-items: flex-start; }

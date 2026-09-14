@@ -5,7 +5,7 @@ import { designSystemStyle } from "@/lib/design-system";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Mushroom · Mushroom Factory Intelligence",
+  title: "Vulcan · Mushroom Factory Intelligence",
   description: "Crop, climate, harvest and supply intelligence for mushroom factories",
 };
 

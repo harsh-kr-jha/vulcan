@@ -41,7 +41,7 @@ export function FactoryProvider({ children }: { children: React.ReactNode }) {
   const toggleAction = useCallback((id: string) => mutate(() => api.toggleAction(activeFactoryId, id)), [mutate, activeFactoryId]);
   const askQuestion = useCallback((question: string) => api.ask(activeFactoryId, filters, question), [activeFactoryId, filters]);
   const value = useMemo(() => ({ state, intelligence, filters, hydrated, loading, error, setFilters, setActiveFactory, refresh, updateCompany, createFactory, updateFactory, upsertMaster, removeMaster, updateAlertStatus, createAction, toggleAction, updateTargets, updateCustomKpis, askQuestion }), [state, intelligence, filters, hydrated, loading, error, refresh, updateCompany, createFactory, updateFactory, upsertMaster, removeMaster, updateAlertStatus, createAction, toggleAction, updateTargets, updateCustomKpis, askQuestion, setActiveFactory]);
-  if (!hydrated) return <div className="application-loading" role="status"><span /><strong>Connecting to Musroom farm intelligence…</strong></div>;
+  if (!hydrated) return <div className="application-loading" role="status"><span /><strong>Connecting to Vulcan farm intelligence…</strong></div>;
   return <FactoryContext.Provider value={value}>{error && <div className="api-error-banner" role="alert">{error}</div>}{children}</FactoryContext.Provider>;
 }
 

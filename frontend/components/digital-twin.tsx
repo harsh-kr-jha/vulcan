@@ -146,7 +146,7 @@ export function DigitalTwin() {
   }
 
   if (!twin.lines.length) return <>
-    <header className="page-header twin-page-header"><div><p className="eyebrow">Mushroom factory twin · crop flow</p><h1>{twin.factory.name || "Musroom"} <span>cultivation flow.</span></h1><p className="page-subtitle">A stage-by-stage view of the mushroom factory and its latest reported room state.</p></div></header>
+    <header className="page-header twin-page-header"><div><p className="eyebrow">Mushroom factory twin · crop flow</p><h1>{twin.factory.name || "Vulcan"} <span>cultivation flow.</span></h1><p className="page-subtitle">A stage-by-stage view of the mushroom factory and its latest reported room state.</p></div></header>
     <section className="panel twin-empty"><Factory size={31} /><h2>Build this mushroom factory&apos;s cultivation flow</h2><p>Add a farm wing, define its crop stages in order, then connect rooms and assets.</p><div><Link className="button button-primary" href="/settings?tab=processes"><Settings2 size={14} /> Set up crop flow</Link><Link className="button button-secondary" href="/uploads?add=process"><UploadCloud size={14} /> Add room observations</Link></div></section>
   </>;
 

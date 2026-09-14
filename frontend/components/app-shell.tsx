@@ -41,7 +41,7 @@ const navGroups = [
 ];
 
 function Brand() {
-  return <Link className="brand" href="/" aria-label="Musroom home"><span className="brand-mark"><Sprout size={18} strokeWidth={2.8} /></span><span><strong>MUSROOM</strong><small>Cultivation intelligence</small></span></Link>;
+  return <Link className="brand" href="/" aria-label="Vulcan home"><span className="brand-mark"><Sprout size={18} strokeWidth={2.8} /></span><span><strong>VULCAN</strong><small>Cultivation intelligence</small></span></Link>;
 }
 
 function Sidebar({ open, closed, onClose, onNavigate }: { open: boolean; closed: boolean; onClose: () => void; onNavigate: () => void }) {
@@ -103,7 +103,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <button className="sidebar-toggle" onClick={toggleSidebar} aria-label="Open or close sidebar"><PanelLeftClose className="sidebar-close-icon" size={17} /><PanelLeftOpen className="sidebar-open-icon" size={17} /></button>
     <div className="app-main">
       <header className="topbar">
-        <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark"><Sprout size={16} /></span><strong>MUSROOM</strong></div></div>
+        <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark"><Sprout size={16} /></span><strong>VULCAN</strong></div></div>
         <div className="topbar-context"><span className="shift-label">{filters.shift === "all" ? "All shifts" : filters.shift} · {filters.from} to {filters.to}</span></div>
         <div className="topbar-actions">
           <button className="icon-button action-menu-button" aria-label={`${openActions.length} open action items`} onClick={() => { setActionsOpen((value) => !value); setNotificationsOpen(false); setProfileOpen(false); }}><ClipboardList size={19} />{openActions.length > 0 && <span className="action-counter">{openActions.length > 99 ? "99+" : openActions.length}</span>}</button>

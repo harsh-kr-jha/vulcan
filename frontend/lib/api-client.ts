@@ -83,4 +83,7 @@ export const api = {
   createAction: (factory: string, alertId: string, title: string, owner?: string) => request("/workspace/actions/", { method: "POST", body: JSON.stringify({ factory, alertId, title, owner }) }),
   toggleAction: (factory: string, id: string) => request(`/workspace/actions/${id}/`, { method: "PATCH", body: JSON.stringify({ factory }) }),
   ask: (factory: string, filters: DashboardFilters, question: string) => request<{ answer: string; reasoning: string; evidence: string[] }>("/workspace/ask/", { method: "POST", body: JSON.stringify({ factory, filters, question }) }),
+  twinFeed: (factoryId: string) => request<import("./factory-domain").TwinFeedPayload>(`/spatial/feed/?factory=${factoryId}`),
+  getInventoryChanges: (layoutId: string) => request<import("./factory-domain").TwinFeedInventory["changes"]>(`/spatial/inventory/${layoutId}/changes/`),
+  getDispatchEvents: (layoutId: string) => request<import("./factory-domain").TwinFeedDispatch["events"]>(`/spatial/dispatch/${layoutId}/events/`),
 };

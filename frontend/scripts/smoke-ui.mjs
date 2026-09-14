@@ -352,11 +352,13 @@ try {
   }
   await pause(500);
 
-  await navigate("/alerts");
+  await navigate("/data");
   await selectFarm("Musroom");
-  await waitFor(`document.body.innerText.includes("Recommended response")`, "alert detail render");
-  await clickText("button", "Create action");
-  await waitFor(`document.body.innerText.includes("Action created for the factory team")`, "alert action creation");
+  await waitFor(`document.body.innerText.includes("Live QR & Twin Data Stream") || document.body.innerText.includes("Mushroom Factory Twin")`, "data stream render");
+
+  await clickSelector('button[aria-label="Open alert notifications"]', "the alert notifications button");
+  await waitFor(`document.body.innerText.includes("Alert Center")`, "top-right alert center popover");
+  await clickSelector('button[aria-label="Close alert center"]', "close alert center");
 
   await navigate("/settings?create=factory");
   await waitFor(`document.body.innerText.includes("Create a farm")`, "factory dialog");

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BookOpen, ChevronDown, FileQuestion, Search, Settings2, UploadCloud } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronDown, Database, FileQuestion, Search, Settings2, UploadCloud } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -23,24 +23,24 @@ const guides = [
     title: "Build the Farm Twin",
     summary: "Connect the crop-stage flow to the latest room observations.",
     steps: [
-      "Open Cultivation Flow and confirm every crop stage has a unique sequence.",
-      "Associate each room and farm asset with the stage it supports.",
-      "From Farm Twin, choose a stage and add its CSV or XLSX room-observation sheet.",
-      "Select a stage to review its latest crop state, climate and connected rooms.",
+      "Configure farm wings, cultivation stages, and spatial machine assets.",
+      "Open Mushroom Factory Twin to lay out rooms, machinery, and sensor zones.",
+      "Scan QR codes attached to machines to record telemetry and environmental readings.",
+      "Review stage yield, cycle time, downtime, and live climate status.",
     ],
-    action: { href: "/digital-twin", label: "Open Farm Twin" },
+    action: { href: "/digital-twin", label: "Open Mushroom Factory Twin" },
   },
   {
-    id: "imports",
-    title: "Import operational sheets",
-    summary: "Inspect, map, validate and approve data without storing it in the browser.",
+    id: "import",
+    title: "Live QR and data stream",
+    summary: "Record machine observations, stock movements, and dispatch via QR codes.",
     steps: [
-      "Choose the sheet type and download its standard template if needed.",
-      "Upload CSV or XLSX. Django stores the source and suggests column mappings.",
-      "Map required columns; set unwanted optional columns to Do not import.",
-      "Review mismatch directions, then import only valid rows.",
+      "Access the machine or asset via its attached QR code.",
+      "Submit telemetry readings, batch stage transitions, and downtime events.",
+      "Track materials inventory issues, receipts, and returns.",
+      "Log dispatch shipments and track product fulfilment.",
     ],
-    action: { href: "/uploads", label: "Open data upload" },
+    action: { href: "/data", label: "Open Live Data" },
   },
   {
     id: "rules",
@@ -98,7 +98,7 @@ export function SetupHelp() {
       <label className="help-search panel"><Search size={18} /><span className="sr-only">Search help</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search mapping, stale data, suppliers, rules…" />{query && <button type="button" onClick={() => setQuery("")}>Clear</button>}</label>
       <section className="help-quick-grid">
         <Link className="panel" href="/settings"><Settings2 size={18} /><span><strong>Configure farm</strong><small>Stages, rooms, rounds and reasons</small></span><ArrowRight size={14} /></Link>
-        <Link className="panel" href="/uploads"><UploadCloud size={18} /><span><strong>Add farm data</strong><small>Inspect and validate a sheet</small></span><ArrowRight size={14} /></Link>
+        <Link className="panel" href="/data"><Database size={18} /><span><strong>Live Data Stream</strong><small>QR entries, stock, and dispatch</small></span><ArrowRight size={14} /></Link>
         <Link className="panel" href="/methodology"><BookOpen size={18} /><span><strong>Review calculations</strong><small>Inputs, formulae and results</small></span><ArrowRight size={14} /></Link>
       </section>
       {!normalized && <section className="help-docs-layout">

@@ -7,20 +7,26 @@ import {
   Check,
   ChevronRight,
   ClipboardCheck,
+  ExternalLink,
   Factory,
   Gauge,
+  Layers,
   MapPin,
   Package,
   Plus,
+  QrCode,
   Trash2,
+  Truck,
   Workflow,
   Wrench,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { QrCodePreview } from "@/components/digital-twin/builder/QrCodePreview";
 import { useFactory } from "@/lib/factory-context";
-import type { FactoryConfig, FactoryDetails, MasterItem } from "@/lib/factory-domain";
+import type { FactoryConfig, FactoryDetails, MasterItem, TwinFeedMachine } from "@/lib/factory-domain";
 
 const sections = [
   { id: "profile", label: "Company & farm", icon: Building2 },
@@ -864,8 +870,243 @@ function ProfileSection() {
   );
 }
 
+function TwinAssetsSynchronizer() {
+  const { twinFeed } = useFactory();
+  const [selectedQrMachine, setSelectedQrMachine] = useState<TwinFeedMachine | null>(null);
+
+  return (
+    <section className="panel" style={{ border: "1px solid var(--color-primary, #416f57)", background: "rgba(65, 111, 87, 0.03)", marginBottom: "20px", padding: "18px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px", flexWrap: "wrap", gap: "12px" }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "50%", background: "var(--color-primary, #416f57)", color: "#fff" }}>
+              <Layers size={13} />
+            </span>
+            <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 700 }}>Mushroom Factory Twin (Live Source of Truth)</h2>
+          </div>
+          <p style={{ margin: "4px 0 0 32px", fontSize: "12px", color: "var(--color-text-muted)" }}>
+            Physical rooms, growing tunnels, and assets registered on the spatial twin floor plan. Each asset generates a unique QR code for farm-floor scanning.
+          </p>
+        </div>
+        <Link href="/digital-twin" className="button button-accent" style={{ fontSize: "12px" }}>
+          Open Twin 2D/3D Builder <ExternalLink size={12} />
+        </Link>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px", marginBottom: "14px" }}>
+        <div style={{ padding: "10px 12px", background: "var(--color-card-bg, #fff)", borderRadius: "6px", border: "1px solid var(--color-border, #e2e8f0)" }}>
+          <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>Configured Assets</span>
+          <p style={{ fontSize: "18px", fontWeight: 700, margin: "2px 0 0 0" }}>{twinFeed.machines.length}</p>
+        </div>
+        <div style={{ padding: "10px 12px", background: "var(--color-card-bg, #fff)", borderRadius: "6px", border: "1px solid var(--color-border, #e2e8f0)" }}>
+          <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>Reporting Telemetry</span>
+          <p style={{ fontSize: "18px", fontWeight: 700, margin: "2px 0 0 0", color: "#2b6cb0" }}>
+            {twinFeed.machines.filter((m) => m.status === "reporting").length}
+          </p>
+        </div>
+        <div style={{ padding: "10px 12px", background: "var(--color-card-bg, #fff)", borderRadius: "6px", border: "1px solid var(--color-border, #e2e8f0)" }}>
+          <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>Data Ingestion</span>
+          <p style={{ fontSize: "12px", fontWeight: 600, margin: "5px 0 0 0", display: "flex", alignItems: "center", gap: "4px" }}>
+            <QrCode size={13} /> Attached QR Codes
+          </p>
+        </div>
+      </div>
+
+      {twinFeed.machines.length > 0 ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: "6px", maxHeight: "260px", overflowY: "auto" }}>
+          {twinFeed.machines.map((machine) => (
+            <div
+              key={machine.id}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "8px 12px",
+                background: "var(--color-card-bg, #fff)",
+                border: "1px solid var(--color-border, #e2e8f0)",
+                borderRadius: "6px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <strong style={{ fontSize: "12px" }}>{machine.name}</strong>
+                <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>
+                  {machine.observation_count} scans · {machine.parameters.length} parameters
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    padding: "2px 7px",
+                    borderRadius: "10px",
+                    background: machine.status === "reporting" ? "#e6fffa" : "#edf2f7",
+                    color: machine.status === "reporting" ? "#234e52" : "#718096",
+                  }}
+                >
+                  {machine.status}
+                </span>
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  style={{ fontSize: "11px", padding: "3px 8px" }}
+                  onClick={() => setSelectedQrMachine(machine)}
+                >
+                  <QrCode size={12} /> View QR
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ padding: "14px", textAlign: "center", fontSize: "12px", color: "var(--color-text-muted)" }}>
+          No assets registered yet in Mushroom Factory Twin. Click &quot;Open Twin 2D/3D Builder&quot; to lay out your rooms and equipment.
+        </div>
+      )}
+
+      {selectedQrMachine && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "16px",
+          }}
+          onClick={() => setSelectedQrMachine(null)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              padding: "24px",
+              borderRadius: "12px",
+              maxWidth: "400px",
+              width: "100%",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+              <h3 style={{ margin: 0, fontSize: "15px" }}>Asset QR Sticker</h3>
+              <button
+                type="button"
+                onClick={() => setSelectedQrMachine(null)}
+                style={{ border: "none", background: "none", cursor: "pointer" }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <QrCodePreview
+              machineId={selectedQrMachine.id}
+              machineName={selectedQrMachine.name}
+            />
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TwinMaterialsSynchronizer() {
+  const { twinFeed } = useFactory();
+  const materials = twinFeed.inventory?.materials ?? [];
+  const stock = twinFeed.inventory?.stock ?? {};
+  const products = twinFeed.dispatch?.products ?? [];
+  const awaiting = twinFeed.dispatch?.awaiting ?? {};
+
+  return (
+    <section className="panel" style={{ border: "1px solid var(--color-primary, #416f57)", background: "rgba(65, 111, 87, 0.03)", marginBottom: "20px", padding: "18px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px", flexWrap: "wrap", gap: "12px" }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "50%", background: "var(--color-primary, #416f57)", color: "#fff" }}>
+              <Boxes size={13} />
+            </span>
+            <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 700 }}>Mushroom Factory Twin Materials &amp; Dispatch</h2>
+          </div>
+          <p style={{ margin: "4px 0 0 32px", fontSize: "12px", color: "var(--color-text-muted)" }}>
+            Inventory items and dispatch products registered directly with the Factory Twin. Updated via farm floor QR scans.
+          </p>
+        </div>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Link href="/data" className="button button-secondary" style={{ fontSize: "12px" }}>
+            Open Live Data Stream
+          </Link>
+          <Link href="/digital-twin" className="button button-accent" style={{ fontSize: "12px" }}>
+            Twin Builder <ExternalLink size={12} />
+          </Link>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+        {/* Tracked Materials */}
+        <div style={{ background: "var(--color-card-bg, #fff)", border: "1px solid var(--color-border, #e2e8f0)", borderRadius: "8px", padding: "12px" }}>
+          <h3 style={{ margin: "0 0 8px 0", fontSize: "13px", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px" }}>
+            <Boxes size={14} style={{ color: "#c05621" }} />
+            Twin Tracked Materials ({materials.length})
+          </h3>
+          {materials.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              {materials.map((mat) => {
+                const currentStock = stock[mat.id] !== undefined ? stock[mat.id] : mat.quantity;
+                return (
+                  <div key={mat.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", padding: "5px 0", borderBottom: "1px solid #edf2f7" }}>
+                    <div>
+                      <strong>{mat.name}</strong>
+                    </div>
+                    <span>
+                      <b>{currentStock.toLocaleString("en-IN")}</b> {mat.unit}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p style={{ fontSize: "11px", color: "var(--color-text-muted)", margin: 0 }}>
+              No inventory configured on the twin layout yet.
+            </p>
+          )}
+        </div>
+
+        {/* Dispatch Products */}
+        <div style={{ background: "var(--color-card-bg, #fff)", border: "1px solid var(--color-border, #e2e8f0)", borderRadius: "8px", padding: "12px" }}>
+          <h3 style={{ margin: "0 0 8px 0", fontSize: "13px", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px" }}>
+            <Truck size={14} style={{ color: "#2b6cb0" }} />
+            Twin Dispatch Products ({products.length})
+          </h3>
+          {products.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              {products.map((prod) => {
+                const awaitingQty = awaiting[prod.id] ?? 0;
+                return (
+                  <div key={prod.id} style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", padding: "5px 0", borderBottom: "1px solid #edf2f7" }}>
+                    <div>
+                      <strong>{prod.name}</strong>
+                    </div>
+                    <span>
+                      <b>{awaitingQty.toLocaleString("en-IN")}</b> {prod.unit} awaiting
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p style={{ fontSize: "11px", color: "var(--color-text-muted)", margin: 0 }}>
+              No dispatch products configured on the twin layout yet.
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function FactorySettings() {
-  const { state } = useFactory();
+  const { state, twinFeed } = useFactory();
   const [section, setSection] = useState<Section>("profile");
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -902,9 +1143,9 @@ export function FactorySettings() {
     Boolean(activeFactory?.name && activeFactory.code && activeFactory.location),
     Boolean(activeFactory?.details?.factoryType && activeFactory.details.productionUnit),
     Boolean(activeFactory?.details?.ratedCapacityPerDay && activeFactory.details.operatingHoursPerDay),
-    activeCount.lines > 0,
-    activeCount.processes > 0,
-    activeCount.machines > 0 && activeMachines.every((machine) => metadataText(machine, "processCode")),
+    activeCount.lines > 0 || twinFeed.machines.length > 0,
+    activeCount.processes > 0 || twinFeed.machines.length > 0,
+    activeCount.machines > 0 || twinFeed.machines.length > 0,
   ];
   const setupHealth = Math.round(
     (setupChecks.filter(Boolean).length / setupChecks.length) * 100,
@@ -916,17 +1157,17 @@ export function FactorySettings() {
         <div>
           <p className="eyebrow">Mushroom farm configuration</p>
           <h1>Define <span>how the crop flows.</span></h1>
-          <p className="page-subtitle">Farm context, cultivation stages, rooms, assets and harvest units—stored in Django for the selected farm.</p>
+          <p className="page-subtitle">Farm context, cultivation stages, rooms, assets and harvest units—synchronized with Mushroom Factory Twin.</p>
         </div>
         <button className="button button-accent" onClick={() => setCreateOpen(true)}>
           <Plus size={13} /> Create farm
         </button>
       </header>
       <div className="setup-stat-grid">
-        <article className="panel"><span><Factory size={16} /></span><div><strong>{activeCount.lines}</strong><small>Farm wings</small></div></article>
-        <article className="panel"><span><Workflow size={16} /></span><div><strong>{activeCount.processes}</strong><small>Ordered processes</small></div></article>
-        <article className="panel"><span><Wrench size={16} /></span><div><strong>{activeCount.machines}</strong><small>Rooms & assets</small></div></article>
-        <article className="panel"><span><Gauge size={16} /></span><div><strong>{activeCount.skus}</strong><small>Active SKUs</small></div></article>
+        <article className="panel"><span><Factory size={16} /></span><div><strong>{activeCount.lines || 1}</strong><small>Farm wings</small></div></article>
+        <article className="panel"><span><Workflow size={16} /></span><div><strong>{twinFeed.machines.length || activeCount.processes}</strong><small>Twin assets / stages</small></div></article>
+        <article className="panel"><span><Wrench size={16} /></span><div><strong>{twinFeed.machines.filter((m) => m.status === "reporting").length}</strong><small>Active QR sensors</small></div></article>
+        <article className="panel"><span><Gauge size={16} /></span><div><strong>{(twinFeed.dispatch?.products.length ?? 0) || activeCount.skus}</strong><small>Twin SKUs</small></div></article>
       </div>
       <div className="settings-layout">
         <aside className="panel settings-nav">
@@ -950,6 +1191,7 @@ export function FactorySettings() {
           {section === "profile" && <ProfileSection key={state.activeFactoryId} />}
           {section === "assets" && (
             <>
+              <TwinAssetsSynchronizer />
               <MasterManager collection="lines" title="Farm wings" subtitle="Independent cultivation flows and KPI groupings" />
               <ProcessManager />
               <MachineManager />
@@ -957,6 +1199,7 @@ export function FactorySettings() {
           )}
           {section === "catalogue" && (
             <>
+              <TwinMaterialsSynchronizer />
               <MasterManager collection="skus" title="Mushroom grades and SKUs" subtitle="Fresh grades and packed mushroom products" />
               <MasterManager collection="materials" title="Materials" subtitle="Consumed inventory and safety stock" />
               <MasterManager collection="suppliers" title="Suppliers" subtitle="Approved material sources" />

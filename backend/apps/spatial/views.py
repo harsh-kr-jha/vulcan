@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.spatial.models import (
     DispatchConfiguration,
@@ -25,6 +26,13 @@ def get_tenant(request):
         memberships = getattr(request.user, "memberships", None)
         if memberships and memberships.exists():
             return memberships.first().tenant
+    factory_id = getattr(request, "query_params", {}).get("factory")
+    if factory_id:
+        from apps.tenancy.models import Factory
+
+        f = Factory.objects.filter(id=factory_id).first()
+        if f:
+            return f.tenant
     try:
         from apps.tenancy.services import get_workspace_identity
 
@@ -184,11 +192,17 @@ class MachineObservationListCreateView(generics.ListCreateAPIView):
         )
 
 
-class InventoryChangeCreateView(generics.CreateAPIView):
-    """Submit an inventory change (addition or removal)."""
+class InventoryChangeListCreateView(generics.ListCreateAPIView):
+    """List or submit inventory changes (additions or removals)."""
 
     serializer_class = InventoryChangeSerializer
     permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        layout_id = self.kwargs["layout_id"]
+        return InventoryChange.objects.filter(
+            inventory__layout_id=layout_id
+        ).order_by("-submitted_at")
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -262,11 +276,17 @@ class InventoryDetailView(generics.RetrieveAPIView):
         return Response(data)
 
 
-class DispatchEventCreateView(generics.CreateAPIView):
-    """Submit a dispatch event."""
+class DispatchEventListCreateView(generics.ListCreateAPIView):
+    """List or submit dispatch events."""
 
     serializer_class = DispatchEventSerializer
     permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        layout_id = self.kwargs["layout_id"]
+        return DispatchEvent.objects.filter(
+            dispatch__layout_id=layout_id
+        ).order_by("-submitted_at")
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -340,3 +360,352 @@ class DispatchDetailView(generics.RetrieveAPIView):
         data["awaiting"] = awaiting
         data["dispatched"] = dispatched_totals
         return Response(data)
+
+
+class SpatialFactoryFeedView(APIView):
+    """Consolidated live telemetry, freshness status, and QR event feed for a factory."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        from decimal import Decimal
+        from django.db.models import Sum
+        from django.utils import timezone
+
+        tenant = get_tenant(request)
+        factory_id = request.query_params.get("factory")
+        layout_id = request.query_params.get("layout")
+
+        layout = None
+        if layout_id:
+            layout = (
+                FactoryLayout.objects.filter(tenant=tenant, id=layout_id)
+                .prefetch_related(
+                    "machines__parameters",
+                    "machines__observations",
+                    "inventory_config__changes",
+                    "dispatch_config__events",
+                )
+                .first()
+            )
+        elif factory_id:
+            layout = (
+                FactoryLayout.objects.filter(tenant=tenant, factory_id=factory_id)
+                .prefetch_related(
+                    "machines__parameters",
+                    "machines__observations",
+                    "inventory_config__changes",
+                    "dispatch_config__events",
+                )
+                .first()
+            )
+        else:
+            layout = (
+                FactoryLayout.objects.filter(tenant=tenant)
+                .prefetch_related(
+                    "machines__parameters",
+                    "machines__observations",
+                    "inventory_config__changes",
+                    "dispatch_config__events",
+                )
+                .first()
+            )
+
+        if not layout:
+            return Response(
+                {
+                    "layout_id": None,
+                    "freshness": {
+                        "machines": {
+                            "status": "no_data",
+                            "last_updated": None,
+                            "reporting_count": 0,
+                            "total_count": 0,
+                        },
+                        "inventory": {"status": "no_data", "last_updated": None},
+                        "dispatch": {"status": "no_data", "last_updated": None},
+                    },
+                    "machines": [],
+                    "inventory": None,
+                    "dispatch": None,
+                    "recent_events": [],
+                }
+            )
+
+        now = timezone.now()
+
+        def freshness_status(timestamp):
+            if not timestamp:
+                return "no_data"
+            age = (now - timestamp).total_seconds()
+            if age < 3600:
+                return "fresh"
+            if age < 86400:
+                return "moderate"
+            return "stale"
+
+        # 1. Machines & observations
+        machines_data = []
+        latest_machine_time = None
+        reporting_machines = 0
+
+        for machine in layout.machines.all().order_by("display_order", "name"):
+            last_obs = machine.observations.first()
+            obs_count = machine.observations.count()
+            if last_obs:
+                reporting_machines += 1
+                if latest_machine_time is None or last_obs.submitted_at > latest_machine_time:
+                    latest_machine_time = last_obs.submitted_at
+
+            history = [
+                {
+                    "id": str(o.id),
+                    "values": o.values,
+                    "submitted_at": o.submitted_at.isoformat(),
+                    "submitted_by": o.submitted_by.username if o.submitted_by else None,
+                }
+                for o in machine.observations.all()[:10]
+            ]
+
+            machines_data.append(
+                {
+                    "id": str(machine.id),
+                    "name": machine.name,
+                    "status": machine.status,
+                    "position": {"x": machine.position_x, "y": machine.position_y},
+                    "size": {"width": machine.size_width, "height": machine.size_height},
+                    "inputs": machine.inputs,
+                    "outputs": machine.outputs,
+                    "parameters": [
+                        {
+                            "id": str(p.id),
+                            "key": p.key,
+                            "data_type": p.data_type,
+                            "required": p.required,
+                            "order": p.order,
+                        }
+                        for p in machine.parameters.all()
+                    ],
+                    "latest_observation": (
+                        {
+                            "id": str(last_obs.id),
+                            "values": last_obs.values,
+                            "submitted_at": last_obs.submitted_at.isoformat(),
+                        }
+                        if last_obs
+                        else None
+                    ),
+                    "observation_count": obs_count,
+                    "history": history,
+                }
+            )
+
+        # 2. Inventory
+        inventory_data = None
+        latest_inv_time = None
+        inv_changes_list = []
+        try:
+            inv = layout.inventory_config
+            changes = inv.changes.all()
+            last_change = changes.first()
+            if last_change:
+                latest_inv_time = last_change.submitted_at
+
+            stock = {}
+            for mat in inv.materials or []:
+                if isinstance(mat, dict) and mat.get("id"):
+                    mat_id = mat["id"]
+                    initial = Decimal(str(mat.get("quantity", 0)))
+                    inbound = changes.filter(material_id=mat_id, direction="inbound").aggregate(
+                        total=Sum("quantity")
+                    )["total"] or Decimal("0")
+                    outbound = changes.filter(material_id=mat_id, direction="outbound").aggregate(
+                        total=Sum("quantity")
+                    )["total"] or Decimal("0")
+                    stock[mat_id] = float(initial + inbound - outbound)
+
+            inv_changes_list = [
+                {
+                    "id": str(c.id),
+                    "material_id": c.material_id,
+                    "direction": c.direction,
+                    "quantity": float(c.quantity),
+                    "submitted_at": c.submitted_at.isoformat(),
+                }
+                for c in changes[:20]
+            ]
+
+            inventory_data = {
+                "id": str(inv.id),
+                "storage_capacity": inv.storage_capacity,
+                "capacity_unit": inv.capacity_unit,
+                "materials": inv.materials,
+                "stock": stock,
+                "latest_change": (
+                    {
+                        "material_id": last_change.material_id,
+                        "direction": last_change.direction,
+                        "quantity": float(last_change.quantity),
+                        "submitted_at": last_change.submitted_at.isoformat(),
+                    }
+                    if last_change
+                    else None
+                ),
+                "changes": inv_changes_list,
+            }
+        except InventoryConfiguration.DoesNotExist:
+            pass
+
+        # 3. Dispatch
+        dispatch_data = None
+        latest_disp_time = None
+        disp_events_list = []
+        try:
+            disp = layout.dispatch_config
+            events = disp.events.all()
+            last_event = events.first()
+            if last_event:
+                latest_disp_time = last_event.submitted_at
+
+            awaiting = {}
+            dispatched = {}
+            for prod in disp.products or []:
+                if isinstance(prod, dict) and prod.get("id"):
+                    prod_id = prod["id"]
+                    arrivals = events.filter(product_id=prod_id, event_type="arrival").aggregate(
+                        total=Sum("quantity")
+                    )["total"] or Decimal("0")
+                    disp_qty = events.filter(product_id=prod_id, event_type="dispatched").aggregate(
+                        total=Sum("quantity")
+                    )["total"] or Decimal("0")
+                    awaiting[prod_id] = float(arrivals - disp_qty)
+                    dispatched[prod_id] = float(disp_qty)
+
+            disp_events_list = [
+                {
+                    "id": str(e.id),
+                    "product_id": e.product_id,
+                    "event_type": e.event_type,
+                    "quantity": float(e.quantity),
+                    "unit": e.unit,
+                    "submitted_at": e.submitted_at.isoformat(),
+                }
+                for e in events[:20]
+            ]
+
+            dispatch_data = {
+                "id": str(disp.id),
+                "products": disp.products,
+                "awaiting": awaiting,
+                "dispatched": dispatched,
+                "latest_event": (
+                    {
+                        "product_id": last_event.product_id,
+                        "event_type": last_event.event_type,
+                        "quantity": float(last_event.quantity),
+                        "unit": last_event.unit,
+                        "submitted_at": last_event.submitted_at.isoformat(),
+                    }
+                    if last_event
+                    else None
+                ),
+                "events": disp_events_list,
+            }
+        except DispatchConfiguration.DoesNotExist:
+            pass
+
+        # 4. Recent combined events feed
+        recent_events = []
+        for m in layout.machines.all():
+            for o in m.observations.all()[:10]:
+                recent_events.append(
+                    {
+                        "id": str(o.id),
+                        "source": "machine",
+                        "title": f"QR observation: {m.name}",
+                        "details": o.values,
+                        "submitted_at": o.submitted_at.isoformat(),
+                        "machine_id": str(m.id),
+                        "machine_name": m.name,
+                    }
+                )
+
+        if inventory_data and hasattr(layout, "inventory_config"):
+            mat_name_map = {
+                m["id"]: m.get("name", m["id"])
+                for m in (layout.inventory_config.materials or [])
+                if isinstance(m, dict) and "id" in m
+            }
+            for c in inv_changes_list[:15]:
+                m_name = mat_name_map.get(c["material_id"], c["material_id"])
+                recent_events.append(
+                    {
+                        "id": c["id"],
+                        "source": "inventory",
+                        "title": f"Inventory {c['direction']}: {m_name}",
+                        "details": {
+                            "material": m_name,
+                            "quantity": c["quantity"],
+                            "direction": c["direction"],
+                        },
+                        "submitted_at": c["submitted_at"],
+                    }
+                )
+
+        if dispatch_data and hasattr(layout, "dispatch_config"):
+            prod_name_map = {
+                p["id"]: p.get("name", p["id"])
+                for p in (layout.dispatch_config.products or [])
+                if isinstance(p, dict) and "id" in p
+            }
+            for e in disp_events_list[:15]:
+                p_name = prod_name_map.get(e["product_id"], e["product_id"])
+                recent_events.append(
+                    {
+                        "id": e["id"],
+                        "source": "dispatch",
+                        "title": f"Dispatch {e['event_type']}: {p_name}",
+                        "details": {
+                            "product": p_name,
+                            "quantity": e["quantity"],
+                            "unit": e["unit"],
+                            "type": e["event_type"],
+                        },
+                        "submitted_at": e["submitted_at"],
+                    }
+                )
+
+        recent_events.sort(key=lambda x: x["submitted_at"], reverse=True)
+
+        return Response(
+            {
+                "layout_id": str(layout.id),
+                "floor": {
+                    "width": float(layout.floor_width),
+                    "height": float(layout.floor_height),
+                    "unit": layout.unit_system,
+                },
+                "freshness": {
+                    "machines": {
+                        "status": freshness_status(latest_machine_time),
+                        "last_updated": (
+                            latest_machine_time.isoformat() if latest_machine_time else None
+                        ),
+                        "reporting_count": reporting_machines,
+                        "total_count": layout.machines.count(),
+                    },
+                    "inventory": {
+                        "status": freshness_status(latest_inv_time),
+                        "last_updated": latest_inv_time.isoformat() if latest_inv_time else None,
+                    },
+                    "dispatch": {
+                        "status": freshness_status(latest_disp_time),
+                        "last_updated": latest_disp_time.isoformat() if latest_disp_time else None,
+                    },
+                },
+                "machines": machines_data,
+                "inventory": inventory_data,
+                "dispatch": dispatch_data,
+                "recent_events": recent_events[:50],
+            }
+        )

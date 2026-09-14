@@ -2,18 +2,24 @@ from django.urls import path
 
 from apps.spatial.views import (
     DispatchDetailView,
-    DispatchEventCreateView,
+    DispatchEventListCreateView,
     FactoryLayoutDetailView,
     FactoryLayoutListCreateView,
-    InventoryChangeCreateView,
+    InventoryChangeListCreateView,
     InventoryDetailView,
     MachineEntrySchemaView,
     MachineObservationListCreateView,
+    SpatialFactoryFeedView,
 )
 
 app_name = "spatial"
 
 urlpatterns = [
+    path(
+        "feed/",
+        SpatialFactoryFeedView.as_view(),
+        name="spatial-feed",
+    ),
     path(
         "layouts/",
         FactoryLayoutListCreateView.as_view(),
@@ -36,7 +42,7 @@ urlpatterns = [
     ),
     path(
         "inventory/<uuid:layout_id>/changes/",
-        InventoryChangeCreateView.as_view(),
+        InventoryChangeListCreateView.as_view(),
         name="inventory-changes",
     ),
     path(
@@ -46,7 +52,7 @@ urlpatterns = [
     ),
     path(
         "dispatch/<uuid:layout_id>/events/",
-        DispatchEventCreateView.as_view(),
+        DispatchEventListCreateView.as_view(),
         name="dispatch-events",
     ),
     path(

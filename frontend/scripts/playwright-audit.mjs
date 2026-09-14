@@ -37,9 +37,8 @@ async function runAudit() {
     { path: "/", name: "root" },
     { path: "/dashboard", name: "dashboard" },
     { path: "/digital-twin", name: "digital_twin" },
-    { path: "/uploads", name: "uploads" },
+    { path: "/data", name: "data" },
     { path: "/settings", name: "settings" },
-    { path: "/alerts", name: "alerts" },
     { path: "/performance", name: "performance" },
     { path: "/rules", name: "rules" },
     { path: "/methodology", name: "methodology" },
@@ -284,8 +283,8 @@ async function runAudit() {
       await shellPage.screenshot({ path: join(SCREENSHOTS_DIR, `shell_profile_popover.png`) });
     }
 
-    // Test Upload modal trigger
-    await shellPage.goto(`${BASE_URL}/uploads`, { waitUntil: "networkidle", timeout: 15000 });
+    // Test Data view
+    await shellPage.goto(`${BASE_URL}/data`, { waitUntil: "networkidle", timeout: 15000 });
     await shellPage.waitForTimeout(600);
     const connectDataBtn = await shellPage.$("button:has-text('Connect'), button:has-text('Upload'), button.button-accent");
     if (connectDataBtn) {

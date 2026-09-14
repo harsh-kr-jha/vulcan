@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   CircleGauge,
   Cloud,
+  Database,
   Droplets,
   Factory,
   Gauge,
@@ -76,7 +77,7 @@ function Metric({ icon, label, value, note }: { icon: React.ReactNode; label: st
 
 function ProcessDetail({ process }: { process: TwinProcess }) {
   const metrics = process.metrics;
-  const processUpload = `/uploads?add=process&process=${encodeURIComponent(process.id)}`;
+  const processDataUrl = `/data?category=machines`;
   return <section className="panel twin-detail" aria-live="polite">
     <header className="twin-detail-header">
       <div className="twin-detail-title">
@@ -86,8 +87,8 @@ function ProcessDetail({ process }: { process: TwinProcess }) {
       <div className="twin-reported"><StatusPill status={process.status} /><small><CalendarClock size={12} /> Latest reported: {reportedDate(process.latestDate)}</small></div>
     </header>
 
-    {!process.hasData && <div className="twin-data-callout"><Info size={17} /><div><strong>This crop stage is configured, but has no reported state.</strong><p>Add its room-observation sheet to see movement, yield, climate and losses.</p></div><Link className="button button-primary" href={processUpload}><UploadCloud size={13} /> Add observations</Link></div>}
-    {process.hasData && process.dataStatus === "stale" && <div className="twin-data-callout twin-data-stale"><CalendarClock size={17} /><div><strong>This is an older reported state.</strong><p>The newest sheet for this process is {process.dataAgeDays} days old. Add current data before using it for an operating decision.</p></div><Link className="button button-secondary" href={processUpload}><UploadCloud size={13} /> Add latest sheet</Link></div>}
+    {!process.hasData && <div className="twin-data-callout"><Info size={17} /><div><strong>This crop stage is configured, but has no reported state.</strong><p>Scan machine QR codes or record observations to see movement, yield, climate and losses.</p></div><Link className="button button-primary" href={processDataUrl}><Database size={13} /> View Live Data</Link></div>}
+    {process.hasData && process.dataStatus === "stale" && <div className="twin-data-callout twin-data-stale"><CalendarClock size={17} /><div><strong>This is an older reported state.</strong><p>The newest reading for this process is {process.dataAgeDays} days old. Add current QR scan data before using it for an operating decision.</p></div><Link className="button button-secondary" href={processDataUrl}><Database size={13} /> View Data Stream</Link></div>}
 
     <div className="twin-detail-body">
       <div className="twin-kpi-area">
@@ -125,7 +126,7 @@ function ProcessDetail({ process }: { process: TwinProcess }) {
           </article>)}
           {!process.machines.length && <div className="twin-machine-empty"><Wrench size={17} /><span>No room or farm asset is assigned to this stage.</span></div>}
         </div>
-        <div className="twin-detail-actions"><Link className="button button-secondary" href="/settings?tab=processes"><Settings2 size={13} /> Edit process</Link><Link className="button button-primary" href={processUpload}><Plus size={13} /> Add latest data</Link></div>
+        <div className="twin-detail-actions"><Link className="button button-secondary" href="/settings?tab=processes"><Settings2 size={13} /> Edit process</Link><Link className="button button-primary" href={processDataUrl}><Database size={13} /> View Live Data</Link></div>
       </aside>
     </div>
   </section>;
@@ -147,7 +148,7 @@ export function DigitalTwin() {
 
   if (!twin.lines.length) return <>
     <header className="page-header twin-page-header"><div><p className="eyebrow">Mushroom factory twin · crop flow</p><h1>{twin.factory.name || "Vulcan"} <span>cultivation flow.</span></h1><p className="page-subtitle">A stage-by-stage view of the mushroom factory and its latest reported room state.</p></div></header>
-    <section className="panel twin-empty"><Factory size={31} /><h2>Build this mushroom factory&apos;s cultivation flow</h2><p>Add a farm wing, define its crop stages in order, then connect rooms and assets.</p><div><Link className="button button-primary" href="/settings?tab=processes"><Settings2 size={14} /> Set up crop flow</Link><Link className="button button-secondary" href="/uploads?add=process"><UploadCloud size={14} /> Add room observations</Link></div></section>
+    <section className="panel twin-empty"><Factory size={31} /><h2>Build this mushroom factory&apos;s cultivation flow</h2><p>Add a farm wing, define its crop stages in order, then connect rooms and assets.</p><div><Link className="button button-primary" href="/settings?tab=processes"><Settings2 size={14} /> Set up crop flow</Link><Link className="button button-secondary" href="/data"><Database size={14} /> View Live Data Stream</Link></div></section>
   </>;
 
   return <>

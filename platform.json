@@ -6,9 +6,8 @@
   "modules": [
     "dashboard",
     "digital-twin",
-    "uploads",
+    "data",
     "performance",
-    "alerts",
     "settings",
     "rules",
     "methodology"
@@ -24,7 +23,8 @@
     "utilities": "Steam & boiler utilities"
   },
   "navigation": {
-    "digital-twin": "Lexicon™",
+    "digital-twin": "Mushroom Factory Twin",
+    "data": "Data",
     "settings": "Mushroom factory setup"
   },
   "terminology": {

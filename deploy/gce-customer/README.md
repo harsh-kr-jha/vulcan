@@ -1,20 +1,19 @@
-# GCE single-node variant showcase
+# GCE customer deployment with Cloud SQL PostgreSQL
 
-This profile deploys one selected Vulcan variant to one small Compute Engine VM. It is an MVP
-topology: inexpensive and straightforward, but not highly available and not suitable for multiple
-application replicas. Run simultaneous variants on separate targets; do not place two complete
-stacks on a 1 GB `e2-micro` VM.
+This profile deploys one selected Vulcan variant to Compute Engine while keeping durable relational
+state in Cloud SQL PostgreSQL. The VM runs the web containers and independent ingestion,
+observation, and model-training processes.
 
 ## Persistence contract
 
-- The live SQLite database is `/var/lib/vulcan/<variant>/data/vulcan.sqlite3` on the VM persistent
-  disk.
-- Container replacement, image pulls, and VM restarts do not replace that path.
+- Cloud SQL PostgreSQL is the only live application database.
+- Enable regional high availability, automated backups and point-in-time recovery on Cloud SQL.
 - `deploy.sh` refuses to migrate or replace containers until `backup.sh` has made a consistent
-  SQLite backup and uploaded it to the private GCS bucket.
+  PostgreSQL custom-format dump and uploaded it to the private GCS bucket.
 - A systemd timer performs an additional daily backup. Local backup files older than seven days are
   removed; GCS retention is controlled by the bucket lifecycle and soft-delete settings.
-- This is durable enough for an MVP, but it is not zero-downtime or multi-zone disaster recovery.
+- Redis is local and disposable: it carries queued work, while PostgreSQL remains the source of
+  truth and safely allows a missed job to be scheduled again.
 
 ## Deployment identity and variant isolation
 
@@ -30,7 +29,7 @@ Use one environment and VM per simultaneous live variant, for example
 
 ## One-time bootstrap
 
-Create `/opt/vulcan/.env` directly on the VM with mode `0600`. It must contain:
+Create `/opt/tamaso/.env` directly on the VM with mode `0600`. It must contain:
 
 ```dotenv
 GCP_PROJECT_ID=gentle-broker-505219-d0
@@ -38,6 +37,9 @@ GCP_REGION=us-central1
 AR_REPOSITORY=vulcan
 IMAGE_TAG=<first-deployed-git-sha>
 GCS_BACKUP_BUCKET=gentle-broker-505219-d0-vulcan-data
+DJANGO_DATABASE_URL=postgresql://<user>:<password>@<cloud-sql-private-ip>:5432/<database>
+REDIS_URL=redis://redis:6379/0
+DJANGO_CACHE_URL=redis://redis:6379/1
 APP_HOST=<reserved-ip>.sslip.io
 ACME_EMAIL=<certificate-contact-email>
 DJANGO_DEBUG=false
@@ -47,8 +49,8 @@ DJANGO_CSRF_TRUSTED_ORIGINS=https://<reserved-ip>.sslip.io
 DJANGO_TRUST_PROXY_HEADERS=true
 DJANGO_NUM_PROXIES=1
 VULCAN_VARIANT=<automotive-or-mushroom>
-VULCAN_SINGLE_NODE=true
 VULCAN_ADMIN_ENABLED=true
+CELERY_TASK_ALWAYS_EAGER=false
 MYPOL_DEMO_EMAIL=<showcase-login-email>
 MYPOL_DEMO_PASSWORD=<strong-showcase-password>
 ```
@@ -56,12 +58,12 @@ MYPOL_DEMO_PASSWORD=<strong-showcase-password>
 After the first healthy deployment, load the checksum-verified synthetic automotive dataset once:
 
 ```bash
-cd /opt/vulcan
+cd /opt/tamaso
 docker compose --env-file .env run --rm backend \
   python backend/manage.py seed_mypol --confirm-production-showcase
 ```
 
-The seed command is deliberately gated to this automotive single-node profile. Do not rerun it
+The seed command is deliberately gated to this automotive showcase profile. Do not rerun it
 after users have begun changing the demonstration data unless resetting the synthetic dataset is
 intentional.
 
@@ -75,7 +77,7 @@ docker compose --env-file .env run --rm backend \
 Create additional login IDs without rerunning the seed:
 
 ```bash
-cd /opt/vulcan
+cd /opt/tamaso
 docker compose --env-file .env run --rm backend \
   python backend/manage.py create_showcase_user --role executive
 ```
@@ -93,11 +95,10 @@ variant database. Keep the superuser password separate from member passwords.
 
 Every deployment uses this order:
 
-1. Create a consistent online SQLite backup and upload it under `sqlite/<variant>/` in GCS.
+1. Create a consistent PostgreSQL dump and upload it under `postgres/<customer>/` in GCS.
 2. Pull immutable images for the selected variant and Git SHA.
 3. Print the Django migration plan from the new backend image.
-4. Stop the old frontend/backend for a short maintenance window, then apply `migrate --noinput`
-   to the existing variant database without concurrent writers.
+4. Stop all application writers for a short maintenance window, then apply `migrate --noinput`.
 5. Collect admin static files, start the containers, wait for health, and record the deployed SHA.
 
 A failed migration stops the deployment and leaves the pre-deploy backup intact. Code rollback is
@@ -106,6 +107,6 @@ or apply an explicit reverse migration.
 
 ## Restore
 
-Stop the backend before replacing the live database. Keep the current database as a timestamped
-file, download the selected GCS backup, set ownership to `10001:10001`, and then start the stack.
-Never copy a live SQLite database file directly while it is being written; use `backup.sh`.
+Stop all application writers. Download the selected GCS dump and restore it to a new Cloud SQL
+database with `pg_restore`; verify it before changing `DJANGO_DATABASE_URL`. Keep the previous
+database available until the restored application passes health and smoke-training checks.

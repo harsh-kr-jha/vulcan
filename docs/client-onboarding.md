@@ -48,6 +48,7 @@ Create `config/config.json`:
 Using the customer's GCP project, provision:
 - VPC and subnet
 - GCE VM (e2-small or larger)
+- Cloud SQL for PostgreSQL with private IP, automated backups and point-in-time recovery
 - Cloud Storage bucket for backups
 - Service account for the VM
 
@@ -69,6 +70,7 @@ tamaso-runtime@<customer-project>.iam.gserviceaccount.com
 Grant it:
 - `roles/artifactregistry.reader` on the Tamaso AR repository
 - `roles/storage.objectAdmin` on the customer backup bucket
+- `roles/cloudsql.client` on the customer project
 
 ## 7. Grant Artifact Registry Access
 

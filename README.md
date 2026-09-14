@@ -42,15 +42,15 @@ On an operating template branch (not `main`):
 ```bash
 npm ci
 uv sync --frozen
-export DJANGO_DEBUG=true
-.venv/bin/python backend/manage.py migrate
-.venv/bin/python backend/manage.py runserver
+make postgres-setup
+make dev
 ```
 
-In a second terminal:
+Local development uses one PostgreSQL database per Git branch. SQLite is reserved for isolated
+tests. To copy an existing branch SQLite database into PostgreSQL once:
+
 ```bash
-cp frontend/.env.example frontend/.env.local
-npm run dev
+make migrate-sqlite
 ```
 
 ## CI/CD Pipelines
@@ -70,3 +70,4 @@ npm run dev
 - [Client Onboarding](docs/client-onboarding.md) — Step-by-step new customer procedure
 - [Data Input Streams](docs/data-input-streams.md) — Pull-gateway contract and operator workflow
 - [Machine ML Observation](docs/machine-learning-observation.md) — Production profiles, range health, training, and model operations
+- [GCP ML Architecture](docs/gcp-ml-architecture.md) — PostgreSQL, workers, model artifacts, and continuous training

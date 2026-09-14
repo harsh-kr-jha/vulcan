@@ -1,9 +1,9 @@
 [Unit]
-Description=Back up the Vulcan automotive SQLite database to GCS
+Description=Back up the Vulcan PostgreSQL database to GCS
 Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/flock -n /run/vulcan-deploy.lock /opt/vulcan/backup.sh
+ExecStart=/usr/bin/flock -n /run/tamaso-deploy.lock /opt/tamaso/backup.sh

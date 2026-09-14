@@ -127,13 +127,12 @@ database_url = os.getenv("DJANGO_DATABASE_URL", "")
 if not database_url and not DEBUG:
     raise ImproperlyConfigured("DJANGO_DATABASE_URL is required when DJANGO_DEBUG is false.")
 
-# In development, isolate databases per git branch so switching branches
-# doesn't corrupt or mix data. Each branch gets its own .sqlite3 file in .data/
+# In development, isolate PostgreSQL databases per git branch. SQLite remains
+# available only through settings_test.py; concurrent app workers require PostgreSQL.
 if not database_url and DEBUG:
+    import re
     import subprocess
 
-    _data_dir = BASE_DIR.parent / ".data"
-    _data_dir.mkdir(exist_ok=True)
     try:
         _branch = (
             subprocess.check_output(
@@ -146,10 +145,8 @@ if not database_url and DEBUG:
         )
     except (subprocess.CalledProcessError, FileNotFoundError):
         _branch = "default"
-    # Sanitize branch name for filesystem:
-    # client/MFG.DA.AUTO.ALL/MYPOL -> client-MFG.DA.AUTO.ALL-MYPOL
-    _db_name = _branch.replace("/", "-").replace(" ", "-") or "default"
-    database_url = f"sqlite:///{_data_dir / f'{_db_name}.sqlite3'}"
+    _db_name = re.sub(r"[^a-z0-9]+", "_", _branch.lower()).strip("_") or "default"
+    database_url = f"postgresql:///vulcan_{_db_name}"
 
 DATABASES = {
     "default": dj_database_url.config(
@@ -163,21 +160,9 @@ if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
     # for the development database. Wait for the writer instead of immediately
     # surfacing a transient "database is locked" observation error.
     DATABASES["default"].setdefault("OPTIONS", {})["timeout"] = 20
-if (
-    not DEBUG
-    and not SINGLE_NODE
-    and DATABASES["default"]["ENGINE"] != "django.db.backends.postgresql"
-):
+if not DEBUG and DATABASES["default"]["ENGINE"] != "django.db.backends.postgresql":
     raise ImproperlyConfigured(
-        "DJANGO_DATABASE_URL must use PostgreSQL when DJANGO_DEBUG is false."
-    )
-if (
-    not DEBUG
-    and SINGLE_NODE
-    and DATABASES["default"]["ENGINE"] != "django.db.backends.sqlite3"
-):
-    raise ImproperlyConfigured(
-        "VULCAN_SINGLE_NODE requires a SQLite DJANGO_DATABASE_URL."
+        "DJANGO_DATABASE_URL must use PostgreSQL outside isolated tests."
     )
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -319,9 +304,9 @@ CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_TASK_ALWAYS_EAGER = environment_boolean(
     "CELERY_TASK_ALWAYS_EAGER", default=DEBUG or SINGLE_NODE
 )
-if not DEBUG and not SINGLE_NODE and CELERY_TASK_ALWAYS_EAGER:
+if not DEBUG and CELERY_TASK_ALWAYS_EAGER:
     raise ImproperlyConfigured(
-        "CELERY_TASK_ALWAYS_EAGER must be false outside debug or single-node mode."
+        "CELERY_TASK_ALWAYS_EAGER must be false outside debug mode."
     )
 CELERY_TASK_EAGER_PROPAGATES = DEBUG
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True

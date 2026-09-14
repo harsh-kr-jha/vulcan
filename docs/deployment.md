@@ -16,7 +16,7 @@ Tamaso GitHub Actions
     ↓ (Workload Identity + IAP tunnel)
 Customer GCE VM (/opt/tamaso/)
     ├── deploy.sh      — orchestrates deployment
-    ├── backup.sh      — pre-deploy SQLite/PG backup
+    ├── backup.sh      — pre-deploy PostgreSQL backup
     ├── compose.yaml   — service definitions
     ├── Caddyfile      — reverse proxy + TLS
     └── deployments.json — audit log
@@ -119,7 +119,7 @@ Demo services are NOT publicly accessible. Access is restricted to members liste
 |--------|-------------|-------------|
 | Infrastructure owner | Customer | Tamaso |
 | Compute | Single VM + Docker Compose | Cloud Run (serverless) |
-| Database | SQLite or PostgreSQL on VM | Cloud SQL (managed) |
+| Database | Cloud SQL PostgreSQL | Cloud SQL PostgreSQL |
 | Scaling | Single instance | Auto-scaling (0-5) |
 | Access | Public via Caddy + ACME TLS | IAM-restricted |
 | Deploy method | SSH via IAP + script | gcloud CLI / Terraform |

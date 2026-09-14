@@ -9,6 +9,7 @@ Each operating template gets an independent:
 - Cloud Run service (frontend + backend sidecar)
 - Service account
 - Cloud SQL database
+- Cloud SQL Unix-socket mount and least-privilege Cloud SQL Client access
 - Cloud Storage bucket
 - Serverless NEG + backend service for load balancer routing
 
@@ -23,6 +24,10 @@ terraform init
 terraform plan
 terraform apply
 ```
+
+Set `cloud_sql_connection_name` to `project:region:instance`. Provide each backend's
+`DJANGO_DATABASE_URL` through Secret Manager using a Unix-socket URL whose host is
+`/cloudsql/project:region:instance`; do not put the database password in Terraform variables.
 
 ## Adding a new operating template
 

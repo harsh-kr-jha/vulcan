@@ -11,6 +11,14 @@ resource "google_service_account" "demo" {
   display_name = "Tamaso demo ${each.key} runtime"
 }
 
+resource "google_project_iam_member" "demo_cloud_sql_client" {
+  for_each = var.templates
+
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.demo[each.key].email}"
+}
+
 resource "google_sql_database" "demo" {
   for_each = var.templates
 
@@ -55,6 +63,13 @@ resource "google_cloud_run_v2_service" "demo" {
       egress = "PRIVATE_RANGES_ONLY"
     }
 
+    volumes {
+      name = "cloudsql"
+      cloud_sql_instance {
+        instances = [var.cloud_sql_connection_name]
+      }
+    }
+
     containers {
       name       = "frontend"
       image      = each.value.frontend_image
@@ -91,6 +106,11 @@ resource "google_cloud_run_v2_service" "demo" {
     containers {
       name  = "backend"
       image = each.value.backend_image
+
+      volume_mounts {
+        name       = "cloudsql"
+        mount_path = "/cloudsql"
+      }
 
       dynamic "env" {
         for_each = merge(
@@ -149,7 +169,16 @@ resource "google_cloud_run_v2_service" "demo" {
 
   depends_on = [
     google_sql_database.demo,
+    google_project_iam_member.demo_cloud_sql_client,
   ]
+}
+
+resource "google_storage_bucket_iam_member" "demo_model_artifacts" {
+  for_each = var.templates
+
+  bucket = google_storage_bucket.demo[each.key].name
+  role   = "roles/storage.objectUser"
+  member = "serviceAccount:${google_service_account.demo[each.key].email}"
 }
 
 # IAM: restrict access to authorized Tamaso team members only

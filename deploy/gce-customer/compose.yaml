@@ -1,4 +1,4 @@
-# Tamaso customer GCE deployment — single-node Docker Compose.
+# Tamaso customer GCE deployment — Docker Compose with Cloud SQL PostgreSQL.
 #
 # Images are referenced by full digest-pinned paths set in .env:
 #   BACKEND_IMAGE=us-central1-docker.pkg.dev/project/repo/mfg-da-auto-all-backend@sha256:...
@@ -7,6 +7,26 @@
 name: tamaso-${CUSTOMER_ID}
 
 services:
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-tools:
+    image: postgres:17-alpine
+    profiles: ["tools"]
+    user: root
+    env_file: ${TAMASO_ENV_FILE:-.env}
+    volumes:
+      - /var/lib/tamaso/${CUSTOMER_ID}/backups:/backups
+
   data-init:
     image: busybox:1.37.0
     command:
@@ -27,10 +47,11 @@ services:
     restart: unless-stopped
     env_file: ${TAMASO_ENV_FILE:-.env}
     environment:
-      DJANGO_DATABASE_URL: sqlite:////data/tamaso.sqlite3
+      DJANGO_DATABASE_URL: ${DJANGO_DATABASE_URL:?Cloud SQL PostgreSQL URL is required}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      DJANGO_CACHE_URL: ${DJANGO_CACHE_URL:-redis://redis:6379/1}
       DJANGO_STATIC_ROOT: /static
-      TAMASO_ADMIN_ENABLED: "true"
-      TAMASO_SINGLE_NODE: "true"
+      VULCAN_ADMIN_ENABLED: "true"
       WORKSPACE_CACHE_TTL_SECONDS: "300"
     command:
       - gunicorn
@@ -52,6 +73,8 @@ services:
     depends_on:
       data-init:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     expose:
       - "8000"
     volumes:
@@ -96,8 +119,8 @@ services:
     restart: unless-stopped
     env_file: ${TAMASO_ENV_FILE:-.env}
     environment:
-      DJANGO_DATABASE_URL: sqlite:////data/tamaso.sqlite3
-      TAMASO_SINGLE_NODE: "true"
+      DJANGO_DATABASE_URL: ${DJANGO_DATABASE_URL:?Cloud SQL PostgreSQL URL is required}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     command: ["python", "backend/manage.py", "poll_data_streams"]
     depends_on:
       backend:
@@ -107,21 +130,37 @@ services:
     mem_limit: 192m
     mem_reservation: 64m
 
+  ml-observer:
+    image: ${BACKEND_IMAGE}
+    restart: unless-stopped
+    env_file: ${TAMASO_ENV_FILE:-.env}
+    environment:
+      DJANGO_DATABASE_URL: ${DJANGO_DATABASE_URL:?Cloud SQL PostgreSQL URL is required}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_TASK_ALWAYS_EAGER: "false"
+    command: ["python", "backend/manage.py", "observe_machines"]
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    mem_limit: 384m
+
   ml-trainer:
     image: ${BACKEND_IMAGE}
     restart: unless-stopped
     env_file: ${TAMASO_ENV_FILE:-.env}
     environment:
-      DJANGO_DATABASE_URL: sqlite:////data/tamaso.sqlite3
-      VULCAN_SINGLE_NODE: "true"
-      CELERY_TASK_ALWAYS_EAGER: "true"
+      DJANGO_DATABASE_URL: ${DJANGO_DATABASE_URL:?Cloud SQL PostgreSQL URL is required}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_TASK_ALWAYS_EAGER: "false"
       OMP_NUM_THREADS: "1"
-    command: ["python", "backend/manage.py", "observe_machines"]
+    command: ["celery", "-A", "config", "worker", "-l", "INFO", "-Q", "machine_learning", "--concurrency=1"]
     depends_on:
       backend:
         condition: service_healthy
-    volumes:
-      - /var/lib/tamaso/${CUSTOMER_ID}/data:/data
+      redis:
+        condition: service_healthy
     mem_limit: 1g
 
   caddy:
@@ -145,3 +184,4 @@ services:
 volumes:
   caddy-data:
   caddy-config:
+  redis-data:

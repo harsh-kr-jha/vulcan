@@ -12,8 +12,9 @@ hold up incoming machine data.
 
 ## Running locally
 
-Install dependencies with `uv sync --group dev` and apply `python backend/manage.py migrate`.
-Run the stream worker and independent ML observation worker (with the virtual environment activated):
+Install dependencies with `uv sync --group dev`, start PostgreSQL, and run `make postgres-setup`.
+SQLite is used only by isolated tests. Run the stream worker and independent ML observation worker
+(with the virtual environment activated):
 
 ```sh
 python backend/manage.py poll_data_streams
@@ -25,11 +26,11 @@ In a separate terminal, run:
 OMP_NUM_THREADS=1 DJANGO_DEBUG=true python backend/manage.py observe_machines
 ```
 
-Debug and single-node installations execute database-queued training inside that dedicated process
-and do not require Redis. Multi-service installations publish jobs to the dedicated Celery trainer.
+Debug installations execute database-queued training inside that dedicated process and do not
+require Redis. Deployed installations publish jobs to the dedicated Celery trainer.
 The trainer requires private S3/MinIO storage configured using `AWS_S3_BUCKET`,
-`AWS_S3_ENDPOINT_URL`, `AWS_REGION` and AWS credentials in production. Debug and single-node
-installations fall back to private local files under `.data/ml-models`. Compose starts both
+`AWS_S3_ENDPOINT_URL`, `AWS_REGION` and AWS credentials in production. Debug installations fall
+back to private local files under `.data/ml-models`. Compose starts both
 observation and trainer services. No model is automatically promoted.
 Only server-generated model artifacts are loaded, with checksum verification.
 

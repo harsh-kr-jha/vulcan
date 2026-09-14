@@ -1,5 +1,5 @@
 [Unit]
-Description=Run the Vulcan automotive SQLite backup every night
+Description=Run the Vulcan PostgreSQL backup every night
 
 [Timer]
 OnCalendar=*-*-* 02:30:00 UTC

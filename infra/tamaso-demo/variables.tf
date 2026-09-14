@@ -24,6 +24,11 @@ variable "cloud_sql_instance_name" {
   type        = string
 }
 
+variable "cloud_sql_connection_name" {
+  description = "Cloud SQL connection name in project:region:instance form."
+  type        = string
+}
+
 variable "deletion_protection" {
   description = "Protect Cloud Run services and jobs from accidental deletion."
   type        = bool

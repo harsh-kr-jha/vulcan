@@ -730,7 +730,6 @@ export function DashboardOverview() {
         <div className="page-actions" style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
           <Link href="/data" className="button button-accent">Open Live Data <ArrowRight size={14} /></Link>
           <Link href="/data?view=sheet" className="button button-secondary"><FileSpreadsheet size={14} /> Sheet Format</Link>
-          <Link href="/data?preview=sheet" className="button button-secondary"><FileSpreadsheet size={14} /> Preview Sheet</Link>
           <button className="button button-secondary" onClick={exportSnapshot}><Download size={14} /> Export snapshot</button>
         </div>
       </header>

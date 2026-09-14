@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowRight,
   Boxes,
   Check,
   CheckCircle2,
@@ -10,7 +9,6 @@ import {
   Database,
   Download,
   ExternalLink,
-  FileSpreadsheet,
   Layers,
   QrCode,
   RefreshCw,
@@ -32,10 +30,14 @@ function SpreadsheetTable({
   headers,
   rows,
   searchQuery = "",
+  onCopy,
+  copied,
 }: {
   headers: string[];
   rows: (string | number | boolean | null | undefined)[][];
   searchQuery?: string;
+  onCopy?: () => void;
+  copied?: boolean;
 }) {
   const filteredRows = useMemo(() => {
     if (!searchQuery.trim()) return rows;
@@ -56,8 +58,24 @@ function SpreadsheetTable({
   };
 
   return (
-    <div style={{ border: "1px solid #d4d4d4", borderRadius: "6px", overflow: "hidden", background: "#ffffff" }}>
-      <div style={{ overflowX: "auto", maxHeight: "550px" }}>
+    <div style={{ border: "1px solid #d4d4d4", borderRadius: "6px", overflow: "hidden", background: "#ffffff", marginTop: "12px" }}>
+      {onCopy && (
+        <div style={{ padding: "8px 12px", background: "#f8faf9", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>
+            Spreadsheet view · {filteredRows.length} rows · {headers.length} columns
+          </span>
+          <button
+            className="button button-secondary"
+            onClick={onCopy}
+            style={{ fontSize: "11px", padding: "3px 8px", display: "flex", alignItems: "center", gap: "4px" }}
+            title="Copy rows and columns as TSV for direct paste into Excel (Ctrl+V)"
+          >
+            {copied ? <Check size={12} style={{ color: "#276749" }} /> : <Copy size={12} />}
+            {copied ? "Copied to Clipboard!" : "Copy Table (TSV)"}
+          </button>
+        </div>
+      )}
+      <div style={{ overflowX: "auto", maxHeight: "600px" }}>
         <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "12px", fontFamily: "Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif" }}>
           <thead>
             {/* Excel Column Letters Row */}
@@ -107,7 +125,7 @@ function SpreadsheetTable({
         </table>
       </div>
       <div style={{ padding: "8px 14px", background: "#f8faf9", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#718096" }}>
-        <span>Showing {filteredRows.length} of {rows.length} rows · {headers.length} columns</span>
+        <span>Showing {filteredRows.length} of {rows.length} rows</span>
         <span>Microsoft Excel Compatible · Single Source of Truth</span>
       </div>
     </div>
@@ -123,11 +141,6 @@ export function FactoryDataView() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<TwinFeedMachine | null>(null);
   const [qrModalItem, setQrModalItem] = useState<{ id: string; name: string; type: "machine" | "inventory" | "dispatch" } | null>(null);
-
-  // Sheet Preview Modal State
-  const [isSheetPreviewOpen, setIsSheetPreviewOpen] = useState(false);
-  const [activeSheetTab, setActiveSheetTab] = useState<"machines" | "inventory" | "dispatch" | "stream">("machines");
-  const [sheetSearchQuery, setSheetSearchQuery] = useState("");
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
 
   useEffect(() => {
@@ -141,9 +154,6 @@ export function FactoryDataView() {
     }
     if (params.get("view") === "sheet") {
       setViewMode("sheet");
-    }
-    if (params.get("preview") === "sheet" || params.get("preview") === "true") {
-      setIsSheetPreviewOpen(true);
     }
   }, []);
 
@@ -333,19 +343,6 @@ export function FactoryDataView() {
     }
   }, [activeTab, machinesWorksheet, inventoryWorksheet, dispatchWorksheet, eventsWorksheet]);
 
-  const previewActiveWorksheet = useMemo(() => {
-    switch (activeSheetTab) {
-      case "machines":
-        return machinesWorksheet;
-      case "inventory":
-        return inventoryWorksheet;
-      case "dispatch":
-        return dispatchWorksheet;
-      default:
-        return eventsWorksheet;
-    }
-  }, [activeSheetTab, machinesWorksheet, inventoryWorksheet, dispatchWorksheet, eventsWorksheet]);
-
   /* ---------------- Export Handlers ---------------- */
 
   const handleExportWorkbookExcel = () => {
@@ -359,7 +356,7 @@ export function FactoryDataView() {
     exportToCsv(filename, ws.headers, ws.rows);
   };
 
-  const handleCopyToClipboard = (ws = previewActiveWorksheet) => {
+  const handleCopyToClipboard = (ws = currentWorksheet) => {
     const tsv = [
       ws.headers.join("\t"),
       ...ws.rows.map((row) =>
@@ -372,23 +369,6 @@ export function FactoryDataView() {
     navigator.clipboard.writeText(tsv);
     setCopiedToClipboard(true);
     setTimeout(() => setCopiedToClipboard(false), 2000);
-  };
-
-  const exportDataJson = () => {
-    const payload = {
-      exportedAt: new Date().toISOString(),
-      factory: activeFactory?.name,
-      freshness: twinFeed.freshness,
-      machines: twinFeed.machines,
-      inventory: twinFeed.inventory,
-      dispatch: twinFeed.dispatch,
-      recent_events: twinFeed.recent_events,
-    };
-    downloadBlob(
-      JSON.stringify(payload, null, 2),
-      `vulcan-live-data-${activeFactory?.code || "farm"}-${new Date().toISOString().slice(0, 10)}.json`,
-      "application/json"
-    );
   };
 
   const getFreshnessBadge = (status: "fresh" | "moderate" | "stale" | "no_data") => {
@@ -409,10 +389,7 @@ export function FactoryDataView() {
           </p>
         </div>
         <div className="page-actions" style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-          <button className="button button-accent" onClick={() => setIsSheetPreviewOpen(true)}>
-            <FileSpreadsheet size={14} /> Preview Sheets Data
-          </button>
-          <button className="button button-secondary" onClick={handleExportWorkbookExcel} title="Export all twin data to a multi-sheet Excel file">
+          <button className="button button-accent" onClick={handleExportWorkbookExcel} title="Export all twin data to a multi-sheet Excel file">
             <Download size={14} /> Export to Excel (.xls)
           </button>
           <button className="button button-secondary" onClick={() => handleExportCurrentSheetCsv(currentWorksheet)}>
@@ -514,30 +491,21 @@ export function FactoryDataView() {
         </div>
 
         {/* View Switcher: Card View vs Sheet View */}
-        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-          <button
-            className="button button-secondary"
-            onClick={() => setViewMode(viewMode === "cards" ? "sheet" : "cards")}
-            style={{ fontSize: "12px", display: "flex", alignItems: "center", gap: "6px" }}
-          >
-            {viewMode === "cards" ? (
-              <>
-                <Table size={13} /> View in Sheet Format
-              </>
-            ) : (
-              <>
-                <Layers size={13} /> View in Card Format
-              </>
-            )}
-          </button>
-          <button
-            className="button button-secondary"
-            onClick={() => setIsSheetPreviewOpen(true)}
-            style={{ fontSize: "12px", display: "flex", alignItems: "center", gap: "6px" }}
-          >
-            <FileSpreadsheet size={13} /> Preview Sheet
-          </button>
-        </div>
+        <button
+          className="button button-secondary"
+          onClick={() => setViewMode(viewMode === "cards" ? "sheet" : "cards")}
+          style={{ fontSize: "12px", display: "flex", alignItems: "center", gap: "6px" }}
+        >
+          {viewMode === "cards" ? (
+            <>
+              <Table size={13} /> View in Sheet Format
+            </>
+          ) : (
+            <>
+              <Layers size={13} /> View in Card Format
+            </>
+          )}
+        </button>
       </div>
 
       {/* Tab 1: Live Event Stream */}
@@ -596,6 +564,8 @@ export function FactoryDataView() {
               headers={eventsWorksheet.headers}
               rows={eventsWorksheet.rows}
               searchQuery={query}
+              onCopy={() => handleCopyToClipboard(eventsWorksheet)}
+              copied={copiedToClipboard}
             />
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -708,6 +678,8 @@ export function FactoryDataView() {
               headers={machinesWorksheet.headers}
               rows={machinesWorksheet.rows}
               searchQuery={query}
+              onCopy={() => handleCopyToClipboard(machinesWorksheet)}
+              copied={copiedToClipboard}
             />
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
@@ -861,6 +833,8 @@ export function FactoryDataView() {
               headers={inventoryWorksheet.headers}
               rows={inventoryWorksheet.rows}
               searchQuery={query}
+              onCopy={() => handleCopyToClipboard(inventoryWorksheet)}
+              copied={copiedToClipboard}
             />
           ) : (
             <>
@@ -967,6 +941,8 @@ export function FactoryDataView() {
               headers={dispatchWorksheet.headers}
               rows={dispatchWorksheet.rows}
               searchQuery={query}
+              onCopy={() => handleCopyToClipboard(dispatchWorksheet)}
+              copied={copiedToClipboard}
             />
           ) : (
             <>
@@ -1030,133 +1006,6 @@ export function FactoryDataView() {
             </>
           )}
         </section>
-      )}
-
-      {/* ---------------- EXCEL SHEET PREVIEW MODAL ---------------- */}
-      {isSheetPreviewOpen && (
-        <div className="builder-dialog-overlay" onClick={() => setIsSheetPreviewOpen(false)} style={{ zIndex: 1100 }}>
-          <div
-            className="builder-dialog"
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "1150px", width: "95%", height: "85vh", display: "flex", flexDirection: "column", padding: "0", borderRadius: "10px", overflow: "hidden" }}
-          >
-            {/* Ribbon / Top Bar */}
-            <div style={{ background: "#107c41", color: "#ffffff", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <FileSpreadsheet size={22} />
-                <div>
-                  <h2 style={{ margin: 0, fontSize: "16px", color: "#ffffff", fontWeight: 700 }}>
-                    Mushroom Factory Twin · Excel Sheet Viewer
-                  </h2>
-                  <small style={{ color: "rgba(255,255,255,0.85)", fontSize: "11px" }}>
-                    Live snapshot formatted for Microsoft Excel, Google Sheets, and tabular audit
-                  </small>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsSheetPreviewOpen(false)}
-                style={{ background: "rgba(255,255,255,0.2)", border: "none", color: "#ffffff", borderRadius: "4px", width: "28px", height: "28px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Excel Sheet Tabs Header */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#f3f3f3", borderBottom: "1px solid #d4d4d4", padding: "8px 16px", flexWrap: "wrap", gap: "8px" }}>
-              <div style={{ display: "flex", gap: "4px" }}>
-                {[
-                  { id: "machines", label: "Sheet 1: Machines & Telemetry", count: machinesWorksheet.rows.length },
-                  { id: "inventory", label: "Sheet 2: Materials Inventory", count: inventoryWorksheet.rows.length },
-                  { id: "dispatch", label: "Sheet 3: Product Dispatch", count: dispatchWorksheet.rows.length },
-                  { id: "stream", label: "Sheet 4: QR Event Stream", count: eventsWorksheet.rows.length },
-                ].map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setActiveSheetTab(s.id as typeof activeSheetTab)}
-                    style={{
-                      padding: "6px 14px",
-                      fontSize: "12px",
-                      fontWeight: activeSheetTab === s.id ? 600 : 400,
-                      borderRadius: "4px 4px 0 0",
-                      border: "1px solid",
-                      borderColor: activeSheetTab === s.id ? "#d4d4d4 #d4d4d4 transparent #d4d4d4" : "transparent",
-                      background: activeSheetTab === s.id ? "#ffffff" : "transparent",
-                      color: activeSheetTab === s.id ? "#107c41" : "#4a5568",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <Table size={12} />
-                    {s.label} ({s.count})
-                  </button>
-                ))}
-              </div>
-
-              {/* Action Toolbar */}
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <input
-                  value={sheetSearchQuery}
-                  onChange={(e) => setSheetSearchQuery(e.target.value)}
-                  placeholder="Filter cells in sheet…"
-                  style={{
-                    padding: "4px 10px",
-                    fontSize: "11px",
-                    borderRadius: "4px",
-                    border: "1px solid #d4d4d4",
-                    width: "180px",
-                    outline: "none",
-                  }}
-                />
-                <button
-                  className="button button-secondary"
-                  onClick={() => handleCopyToClipboard(previewActiveWorksheet)}
-                  style={{ fontSize: "11px", padding: "4px 10px", display: "flex", alignItems: "center", gap: "4px" }}
-                  title="Copy rows and columns as TSV for direct paste into Excel (Ctrl+V)"
-                >
-                  {copiedToClipboard ? <Check size={12} style={{ color: "#276749" }} /> : <Copy size={12} />}
-                  {copiedToClipboard ? "Copied!" : "Copy Table (TSV)"}
-                </button>
-                <button
-                  className="button button-secondary"
-                  onClick={() => handleExportCurrentSheetCsv(previewActiveWorksheet)}
-                  style={{ fontSize: "11px", padding: "4px 10px", display: "flex", alignItems: "center", gap: "4px" }}
-                  title="Download active sheet as CSV"
-                >
-                  <Download size={12} /> Download Sheet (.csv)
-                </button>
-                <button
-                  className="button button-accent"
-                  onClick={handleExportWorkbookExcel}
-                  style={{ fontSize: "11px", padding: "4px 10px", display: "flex", alignItems: "center", gap: "4px" }}
-                  title="Download all 4 sheets in one Microsoft Excel workbook"
-                >
-                  <Download size={12} /> Export All (.xls)
-                </button>
-              </div>
-            </div>
-
-            {/* Sheet Table Body */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "16px", background: "#f9f9f9" }}>
-              <SpreadsheetTable
-                headers={previewActiveWorksheet.headers}
-                rows={previewActiveWorksheet.rows}
-                searchQuery={sheetSearchQuery}
-              />
-            </div>
-
-            {/* Bottom Status Bar */}
-            <div style={{ background: "#f3f3f3", borderTop: "1px solid #d4d4d4", padding: "6px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "#666" }}>
-              <span>
-                Active: <b>{previewActiveWorksheet.name}</b> · {previewActiveWorksheet.rows.length} total rows
-              </span>
-              <span>
-                Paste directly into Microsoft Excel or Google Sheets · Single source of truth: Mushroom Factory Twin
-              </span>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Machine Observation Logs Modal */}

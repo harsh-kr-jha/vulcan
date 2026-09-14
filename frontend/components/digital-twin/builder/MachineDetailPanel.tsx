@@ -190,12 +190,12 @@ export function MachineDetailPanel({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-        {/* Empty state - Requirement 10.6 */}
-        {!observation ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
+        {/* Notice when no telemetry data submitted yet */}
+        {!observation && (
+          <div className="flex flex-col items-center justify-center py-3 text-center bg-gray-50 rounded-lg p-3 border border-dashed border-gray-200">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-10 w-10 text-gray-300 mb-3"
+              className="h-6 w-6 text-gray-300 mb-1.5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -207,96 +207,205 @@ export function MachineDetailPanel({
                 d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            <p className="text-sm text-gray-500">
-              No data has been received yet.
+            <p className="text-xs font-medium text-gray-500">
+              No telemetry received yet
             </p>
-            <p className="text-xs text-gray-400 mt-1">
-              Scan the machine QR code to submit observations.
+            <p className="text-[11px] text-gray-400 mt-0.5">
+              Showing configured specifications. Scan QR to submit.
             </p>
           </div>
-        ) : (
-          <>
-            {/* Latest Data Values */}
-            <section>
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                Latest Data
-              </h3>
-              {observation.submittedAt && (
-                <p className="text-xs text-gray-400 mb-2">
-                  Submitted:{" "}
-                  {new Date(observation.submittedAt).toLocaleString()}
-                </p>
-              )}
-              <div className="space-y-1.5">
-                {Object.entries(observation.values).map(([key, value]) => (
-                  <div
-                    key={key}
-                    className="flex items-center justify-between py-1.5 px-2 rounded bg-gray-50"
-                  >
-                    <span className="text-xs font-medium text-gray-600 truncate max-w-[140px]">
-                      {key}
-                    </span>
-                    <span className="text-xs text-gray-900 font-mono">
-                      {value === null || value === undefined
-                        ? "—"
-                        : String(value)}
-                    </span>
-                  </div>
-                ))}
-                {Object.keys(observation.values).length === 0 && (
-                  <p className="text-xs text-gray-400 italic">
-                    No values recorded.
-                  </p>
-                )}
+        )}
+
+        {/* Inputs & Outputs */}
+        <section>
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Inputs & Outputs
+          </h3>
+          <div className="space-y-2">
+            {/* Inputs */}
+            <div>
+              <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 mb-1">
+                <span>Inputs ({machine.inputs.length})</span>
               </div>
-            </section>
-
-            {/* Custom KPIs - Requirements 5.5, 5.6, 5.7 */}
-            {machine.customKpis.length > 0 && (
-              <section>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                  Custom KPIs
-                </h3>
-                <div className="space-y-1.5">
-                  {machine.customKpis.map((kpi) => {
-                    const computed = evaluateKpiFormula(
-                      kpi.formula,
-                      observation.values
-                    );
-                    const isUnavailable = computed === "Unavailable";
-
+              {machine.inputs.length === 0 ? (
+                <p className="text-xs text-gray-400 italic">No input streams configured</p>
+              ) : (
+                <div className="space-y-1">
+                  {machine.inputs.map((io) => {
+                    const val = observation?.values[`input_${io.id}`] ?? observation?.values[io.label];
                     return (
                       <div
-                        key={kpi.id}
-                        className="flex items-center justify-between py-1.5 px-2 rounded bg-gray-50"
+                        key={io.id}
+                        className="flex items-center justify-between py-1.5 px-2 rounded bg-gray-50 text-xs border border-gray-100"
                       >
-                        <span className="text-xs font-medium text-gray-600 truncate max-w-[140px]">
-                          {kpi.name}
-                        </span>
-                        <span
-                          className={`text-xs font-mono ${
-                            isUnavailable
-                              ? "text-amber-600 italic"
-                              : "text-gray-900"
-                          }`}
-                        >
-                          {computed}
-                          {!isUnavailable && (
-                            <span className="text-gray-400 ml-1">
-                              {kpi.displayUnit}
-                            </span>
-                          )}
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                          <span className="font-medium text-gray-700 truncate">{io.label}</span>
+                          <span className="text-[10px] text-gray-400 font-mono">({io.unitType || "units"})</span>
+                        </div>
+                        <span className="font-mono text-gray-900 font-medium ml-2 shrink-0">
+                          {val !== undefined && val !== null ? `${val} ${io.unitType}` : "—"}
                         </span>
                       </div>
                     );
                   })}
                 </div>
-              </section>
-            )}
-          </>
+              )}
+            </div>
+
+            {/* Outputs */}
+            <div>
+              <div className="flex items-center gap-1.5 text-xs font-medium text-blue-700 mb-1">
+                <span>Outputs ({machine.outputs.length})</span>
+              </div>
+              {machine.outputs.length === 0 ? (
+                <p className="text-xs text-gray-400 italic">No output streams configured</p>
+              ) : (
+                <div className="space-y-1">
+                  {machine.outputs.map((io) => {
+                    const val = observation?.values[`output_${io.id}`] ?? observation?.values[io.label];
+                    return (
+                      <div
+                        key={io.id}
+                        className="flex items-center justify-between py-1.5 px-2 rounded bg-gray-50 text-xs border border-gray-100"
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
+                          <span className="font-medium text-gray-700 truncate">{io.label}</span>
+                          <span className="text-[10px] text-gray-400 font-mono">({io.unitType || "units"})</span>
+                        </div>
+                        <span className="font-mono text-gray-900 font-medium ml-2 shrink-0">
+                          {val !== undefined && val !== null ? `${val} ${io.unitType}` : "—"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Machine Parameters */}
+        <section>
+          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Parameters ({machine.parameters.length})
+          </h3>
+          {machine.parameters.length === 0 ? (
+            <p className="text-xs text-gray-400 italic">No parameters configured</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-1.5">
+              {machine.parameters.map((param) => {
+                const val = observation?.values[param.key];
+                return (
+                  <div
+                    key={param.id}
+                    className="flex items-center justify-between py-1.5 px-2 rounded bg-gray-50 text-xs border border-gray-100"
+                  >
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-medium text-gray-700 truncate max-w-[120px]" title={param.key}>
+                        {param.key}
+                      </span>
+                      <span className="text-[9px] px-1 py-0.2 rounded bg-gray-200 text-gray-600 uppercase font-mono">
+                        {param.dataType}
+                      </span>
+                      {param.required && (
+                        <span className="text-[9px] text-amber-600 font-medium" title="Required">*</span>
+                      )}
+                    </div>
+                    <span className="font-mono text-gray-900 font-semibold">
+                      {val !== undefined && val !== null ? String(val) : "—"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Additional Raw Telemetry Values if present */}
+        {observation && Object.keys(observation.values).length > 0 && (() => {
+          const handledKeys = new Set([
+            ...machine.parameters.map((p) => p.key),
+            ...machine.inputs.map((io) => `input_${io.id}`),
+            ...machine.inputs.map((io) => io.label),
+            ...machine.outputs.map((io) => `output_${io.id}`),
+            ...machine.outputs.map((io) => io.label),
+          ]);
+          const extraEntries = Object.entries(observation.values).filter(
+            ([k]) => !handledKeys.has(k)
+          );
+
+          if (extraEntries.length === 0) return null;
+
+          return (
+            <section>
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Additional Telemetry
+              </h3>
+              {observation.submittedAt && (
+                <p className="text-xs text-gray-400 mb-1.5">
+                  Submitted: {new Date(observation.submittedAt).toLocaleString()}
+                </p>
+              )}
+              <div className="space-y-1.5">
+                {extraEntries.map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between py-1.5 px-2 rounded bg-gray-50 text-xs"
+                  >
+                    <span className="font-medium text-gray-600 truncate max-w-[140px]">
+                      {key}
+                    </span>
+                    <span className="text-gray-900 font-mono">
+                      {value === null || value === undefined ? "—" : String(value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
+
+        {/* Custom KPIs */}
+        {machine.customKpis.length > 0 && (
+          <section>
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              Custom KPIs
+            </h3>
+            <div className="space-y-1.5">
+              {machine.customKpis.map((kpi) => {
+                const computed = observation
+                  ? evaluateKpiFormula(kpi.formula, observation.values)
+                  : "Unavailable";
+                const isUnavailable = computed === "Unavailable";
+
+                return (
+                  <div
+                    key={kpi.id}
+                    className="flex items-center justify-between py-1.5 px-2 rounded bg-gray-50 text-xs"
+                  >
+                    <span className="font-medium text-gray-600 truncate max-w-[140px]">
+                      {kpi.name}
+                    </span>
+                    <span
+                      className={`font-mono ${
+                        isUnavailable ? "text-amber-600 italic" : "text-gray-900"
+                      }`}
+                    >
+                      {computed}
+                      {!isUnavailable && (
+                        <span className="text-gray-400 ml-1">{kpi.displayUnit}</span>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         )}
 
-        {/* QR Code – Download & Print */}
+        {/* Machine QR Code */}
         <section>
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
             Machine QR Code

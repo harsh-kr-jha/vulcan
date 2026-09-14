@@ -608,7 +608,10 @@ class Command(BaseCommand):
         from apps.spatial.models import (
             FactoryLayout,
             MachineConnection,
+            MachineObservation,
             MachineOperationalStatus,
+            MachineParameter,
+            ParamDataType,
             SpatialMachine,
             UnitSystem,
         )
@@ -622,6 +625,92 @@ class Command(BaseCommand):
             unit_system=UnitSystem.METERS,
             is_active=True,
         )
+
+        machine_params_map = {
+            "Compost Yard": [
+                ("moisture_pct", ParamDataType.NUMBER, True, 1),
+                ("temperature_c", ParamDataType.NUMBER, True, 2),
+                ("turning_cycle", ParamDataType.NUMBER, False, 3),
+                ("nitrogen_pct", ParamDataType.NUMBER, False, 4),
+            ],
+            "Pasteurisation Tunnel 1": [
+                ("peak_temp_c", ParamDataType.NUMBER, True, 1),
+                ("holding_hours", ParamDataType.NUMBER, True, 2),
+                ("airflow_cfm", ParamDataType.NUMBER, False, 3),
+                ("ammonia_ppm", ParamDataType.NUMBER, True, 4),
+            ],
+            "Spawning & Filling Line": [
+                ("spawn_rate_pct", ParamDataType.NUMBER, True, 1),
+                ("fill_density_kg_m2", ParamDataType.NUMBER, True, 2),
+                ("line_speed_m_min", ParamDataType.NUMBER, False, 3),
+                ("casing_depth_cm", ParamDataType.NUMBER, False, 4),
+            ],
+            "Spawn Run Room": [
+                ("bed_temp_c", ParamDataType.NUMBER, True, 1),
+                ("air_temp_c", ParamDataType.NUMBER, True, 2),
+                ("rh_pct", ParamDataType.NUMBER, True, 3),
+                ("co2_ppm", ParamDataType.NUMBER, True, 4),
+            ],
+            "Casing Room": [
+                ("casing_moisture_pct", ParamDataType.NUMBER, True, 1),
+                ("temp_c", ParamDataType.NUMBER, True, 2),
+                ("rh_pct", ParamDataType.NUMBER, True, 3),
+                ("ph_level", ParamDataType.NUMBER, False, 4),
+            ],
+            "Pinning Room": [
+                ("temp_c", ParamDataType.NUMBER, True, 1),
+                ("rh_pct", ParamDataType.NUMBER, True, 2),
+                ("co2_ppm", ParamDataType.NUMBER, True, 3),
+                ("fresh_air_pct", ParamDataType.NUMBER, False, 4),
+            ],
+            "Growing Room 1": [
+                ("temperature_c", ParamDataType.NUMBER, True, 1),
+                ("humidity_pct", ParamDataType.NUMBER, True, 2),
+                ("co2_ppm", ParamDataType.NUMBER, True, 3),
+                ("cap_size_mm", ParamDataType.NUMBER, False, 4),
+            ],
+            "Packing & Cold Room": [
+                ("cold_storage_temp_c", ParamDataType.NUMBER, True, 1),
+                ("rh_pct", ParamDataType.NUMBER, True, 2),
+                ("pack_weight_g", ParamDataType.NUMBER, True, 3),
+                ("seal_integrity", ParamDataType.TEXT, False, 4),
+            ],
+        }
+
+        machine_obs_map = {
+            "Compost Yard": [
+                {"moisture_pct": 68.5, "temperature_c": 63.1, "turning_cycle": 3, "nitrogen_pct": 2.1, "input_in-1": 10100, "output_out-1": 9400},
+                {"moisture_pct": 67.8, "temperature_c": 62.4, "turning_cycle": 2, "nitrogen_pct": 2.0, "input_in-1": 9900, "output_out-1": 9250},
+            ],
+            "Pasteurisation Tunnel 1": [
+                {"peak_temp_c": 58.5, "holding_hours": 8.0, "airflow_cfm": 2400, "ammonia_ppm": 12, "input_in-2": 9400, "output_out-2": 9150},
+                {"peak_temp_c": 59.0, "holding_hours": 8.2, "airflow_cfm": 2350, "ammonia_ppm": 14, "input_in-2": 9250, "output_out-2": 9000},
+            ],
+            "Spawning & Filling Line": [
+                {"spawn_rate_pct": 0.85, "fill_density_kg_m2": 85, "line_speed_m_min": 14.5, "casing_depth_cm": 4.5, "input_in-3": 9150, "output_out-3": 9050},
+                {"spawn_rate_pct": 0.82, "fill_density_kg_m2": 84, "line_speed_m_min": 14.2, "casing_depth_cm": 4.4, "input_in-3": 9000, "output_out-3": 8920},
+            ],
+            "Spawn Run Room": [
+                {"bed_temp_c": 24.2, "air_temp_c": 22.8, "rh_pct": 92.5, "co2_ppm": 2450, "input_in-4": 9050, "output_out-4": 8980},
+                {"bed_temp_c": 24.0, "air_temp_c": 22.5, "rh_pct": 92.0, "co2_ppm": 2400, "input_in-4": 8920, "output_out-4": 8850},
+            ],
+            "Casing Room": [
+                {"casing_moisture_pct": 72.0, "temp_c": 22.1, "rh_pct": 93.0, "ph_level": 7.4, "input_in-5": 8980, "output_out-5": 8920},
+                {"casing_moisture_pct": 71.5, "temp_c": 22.0, "rh_pct": 92.8, "ph_level": 7.5, "input_in-5": 8850, "output_out-5": 8800},
+            ],
+            "Pinning Room": [
+                {"temp_c": 17.5, "rh_pct": 89.5, "co2_ppm": 1150, "fresh_air_pct": 35, "input_in-6": 8920, "output_out-6": 8880},
+                {"temp_c": 17.3, "rh_pct": 89.2, "co2_ppm": 1180, "fresh_air_pct": 33, "input_in-6": 8800, "output_out-6": 8750},
+            ],
+            "Growing Room 1": [
+                {"temperature_c": 17.1, "humidity_pct": 88.5, "co2_ppm": 888, "cap_size_mm": 42.5, "input_in-7": 8880, "output_out-7": 8862},
+                {"temperature_c": 17.0, "humidity_pct": 88.2, "co2_ppm": 910, "cap_size_mm": 41.8, "input_in-7": 8750, "output_out-7": 8720},
+            ],
+            "Packing & Cold Room": [
+                {"cold_storage_temp_c": 3.8, "rh_pct": 85.0, "pack_weight_g": 250, "seal_integrity": "Passed", "input_in-8": 8862, "output_out-8": 8238},
+                {"cold_storage_temp_c": 4.0, "rh_pct": 84.5, "pack_weight_g": 250, "seal_integrity": "Passed", "input_in-8": 8720, "output_out-8": 8110},
+            ],
+        }
 
         machine_configs = [
             (
@@ -730,6 +819,26 @@ class Command(BaseCommand):
                 display_order=order,
             )
             created_machines.append(m)
+
+            # Seed parameters for each mushroom machine
+            params_list = machine_params_map.get(name, [])
+            for key, dt, req, p_ord in params_list:
+                MachineParameter.objects.create(
+                    machine=m,
+                    key=key,
+                    data_type=dt,
+                    required=req,
+                    order=p_ord,
+                )
+
+            # Seed sample observation snapshots
+            obs_list = machine_obs_map.get(name, [])
+            for obs_data in obs_list:
+                MachineObservation.objects.create(
+                    tenant=identity.tenant,
+                    machine=m,
+                    values=obs_data,
+                )
 
         for idx in range(len(created_machines) - 1):
             MachineConnection.objects.create(

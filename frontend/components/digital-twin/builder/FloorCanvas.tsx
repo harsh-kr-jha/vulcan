@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
 import { ConnectionDrawer } from "./ConnectionDrawer";
 import type { FloorDimensions, GridPosition, UnitSystem } from "@/lib/spatial-types";
@@ -485,22 +485,26 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
     vbY: 0,
   });
 
-  // Clamp viewBox to floor boundaries (with axis padding allowance)
+  // Clamp viewBox to floor boundaries (with axis padding allowance and zoom-out margin)
   const clampViewBox = useCallback(
     (vb: ViewBox): ViewBox => {
-      const maxWidth = floor.width + AXIS_PADDING * 2;
-      const maxHeight = floor.height + AXIS_PADDING * 2;
+      const baseWidth = floor.width + AXIS_PADDING * 2;
+      const baseHeight = floor.height + AXIS_PADDING * 2;
+      const maxWidth = baseWidth * 2.5;
+      const maxHeight = baseHeight * 2.5;
 
       const width = Math.max(MIN_VIEWPORT_CELLS, Math.min(vb.width, maxWidth));
       const height = Math.max(MIN_VIEWPORT_CELLS, Math.min(vb.height, maxHeight));
 
-      const minX = -AXIS_PADDING;
-      const minY = -AXIS_PADDING;
-      const maxX = floor.width + AXIS_PADDING - width;
-      const maxY = floor.height + AXIS_PADDING - height;
+      const marginX = floor.width * 0.5;
+      const marginY = floor.height * 0.5;
+      const minX = -AXIS_PADDING - marginX;
+      const minY = -AXIS_PADDING - marginY;
+      const maxX = floor.width + AXIS_PADDING + marginX - width;
+      const maxY = floor.height + AXIS_PADDING + marginY - height;
 
-      const x = Math.max(minX, Math.min(vb.x, maxX));
-      const y = Math.max(minY, Math.min(vb.y, maxY));
+      const x = Math.max(Math.min(minX, maxX), Math.min(Math.max(minX, maxX), vb.x));
+      const y = Math.max(Math.min(minY, maxY), Math.min(Math.max(minY, maxY), vb.y));
 
       return { x, y, width, height };
     },
@@ -621,6 +625,53 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
+  // Zoom controls for on-screen toolbar
+  const handleZoomIn = useCallback(() => {
+    const vb = viewBoxRef.current;
+    const factor = 0.8;
+    const centerX = vb.x + vb.width / 2;
+    const centerY = vb.y + vb.height / 2;
+    const newWidth = vb.width * factor;
+    const newHeight = vb.height * factor;
+    setViewBox(
+      clampViewBoxRef.current({
+        x: centerX - newWidth / 2,
+        y: centerY - newHeight / 2,
+        width: newWidth,
+        height: newHeight,
+      })
+    );
+  }, [setViewBox]);
+
+  const handleZoomOut = useCallback(() => {
+    const vb = viewBoxRef.current;
+    const factor = 1.25;
+    const centerX = vb.x + vb.width / 2;
+    const centerY = vb.y + vb.height / 2;
+    const newWidth = vb.width * factor;
+    const newHeight = vb.height * factor;
+    setViewBox(
+      clampViewBoxRef.current({
+        x: centerX - newWidth / 2,
+        y: centerY - newHeight / 2,
+        width: newWidth,
+        height: newHeight,
+      })
+    );
+  }, [setViewBox]);
+
+  const handleResetZoom = useCallback(() => {
+    setViewBox({
+      x: -AXIS_PADDING,
+      y: -AXIS_PADDING,
+      width: floor.width + AXIS_PADDING * 2,
+      height: floor.height + AXIS_PADDING * 2,
+    });
+  }, [floor.width, floor.height, setViewBox]);
+
+  const baseFloorWidth = floor.width + AXIS_PADDING * 2;
+  const zoomPercentage = Math.round((baseFloorWidth / viewBox.width) * 100);
+
   // Computed values
   const viewBoxString = `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`;
   const unitLabel = unitAbbreviation(floor.unit);
@@ -690,6 +741,51 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
           {/* Child layers: machine nodes, connections, etc. */}
           {children}
         </svg>
+
+        {/* Floating Zoom Controls */}
+        <div className="absolute bottom-4 right-4 flex items-center bg-white/95 backdrop-blur-md shadow-md border border-gray-200 rounded-lg p-1 gap-1 z-20 text-gray-700">
+          <button
+            type="button"
+            onClick={handleZoomOut}
+            className="p-1.5 hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+            title="Zoom Out (or scroll down)"
+            aria-label="Zoom Out"
+          >
+            <ZoomOut size={16} />
+          </button>
+          <button
+            type="button"
+            onClick={handleResetZoom}
+            className="px-2 py-1 text-xs font-semibold tabular-nums hover:bg-gray-100 rounded text-gray-700 min-w-[3.2rem] text-center cursor-pointer"
+            title="Reset Zoom to 100%"
+          >
+            {zoomPercentage}%
+          </button>
+          <button
+            type="button"
+            onClick={handleZoomIn}
+            className="p-1.5 hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+            title="Zoom In (or scroll up)"
+            aria-label="Zoom In"
+          >
+            <ZoomIn size={16} />
+          </button>
+          <div className="h-4 w-px bg-gray-200 mx-0.5" />
+          <button
+            type="button"
+            onClick={handleResetZoom}
+            className="p-1.5 hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+            title="Fit to Screen"
+            aria-label="Fit to Screen"
+          >
+            <RotateCcw size={15} />
+          </button>
+        </div>
+
+        {/* Mini Navigation Hint */}
+        <div className="absolute bottom-4 left-4 pointer-events-none text-[11px] text-gray-400 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded border border-gray-100 shadow-xs select-none">
+          Scroll to zoom • Drag to pan • Right-click drag to place machine
+        </div>
       </div>
     </div>
   );

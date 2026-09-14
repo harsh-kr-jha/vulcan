@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
 import type {
   FactoryLayout,
   MachineNode,
@@ -11,6 +12,13 @@ import type {
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+interface ViewBox {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
 
 interface FactoryVisualizationProps {
   layout: FactoryLayout;
@@ -107,10 +115,164 @@ export function FactoryVisualization({
 
   const { floor, machines, connections } = layout;
 
-  // SVG viewBox: floor dimensions + padding
-  const viewBoxWidth = floor.width + PADDING * 2;
-  const viewBoxHeight = floor.height + PADDING * 2;
-  const viewBox = `${-PADDING} ${-PADDING} ${viewBoxWidth} ${viewBoxHeight}`;
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // SVG base viewBox: floor dimensions + padding
+  const baseViewBox = useMemo<ViewBox>(() => {
+    return {
+      x: -PADDING,
+      y: -PADDING,
+      width: floor.width + PADDING * 2,
+      height: floor.height + PADDING * 2,
+    };
+  }, [floor.width, floor.height]);
+
+  const [viewBox, setViewBox] = useState<ViewBox>(baseViewBox);
+  const viewBoxRef = useRef(viewBox);
+  viewBoxRef.current = viewBox;
+
+  // Sync viewBox when floor dimensions change
+  useEffect(() => {
+    setViewBox(baseViewBox);
+  }, [baseViewBox]);
+
+  // Zoom bounds
+  const minViewBoxWidth = Math.max(1.5, Math.min(floor.width, floor.height) * 0.08);
+  const maxViewBoxWidth = Math.max(floor.width, floor.height) * 3 + PADDING * 2;
+
+  const clampViewBox = useCallback(
+    (vb: ViewBox): ViewBox => {
+      const aspectRatio = baseViewBox.height / baseViewBox.width;
+      const width = Math.max(minViewBoxWidth, Math.min(vb.width, maxViewBoxWidth));
+      const height = width * aspectRatio;
+
+      const marginX = floor.width * 0.5;
+      const marginY = floor.height * 0.5;
+      const minX = -PADDING - marginX;
+      const maxX = floor.width + PADDING + marginX - width;
+      const minY = -PADDING - marginY;
+      const maxY = floor.height + PADDING + marginY - height;
+
+      const x = Math.max(Math.min(minX, maxX), Math.min(Math.max(minX, maxX), vb.x));
+      const y = Math.max(Math.min(minY, maxY), Math.min(Math.max(minY, maxY), vb.y));
+      return { x, y, width, height };
+    },
+    [baseViewBox.width, baseViewBox.height, floor.width, floor.height, minViewBoxWidth, maxViewBoxWidth]
+  );
+
+  const clampViewBoxRef = useRef(clampViewBox);
+  clampViewBoxRef.current = clampViewBox;
+
+  // Zoom to point (focal point = cursor if provided, otherwise center of viewBox)
+  const zoomAtPoint = useCallback(
+    (factor: number, clientX?: number, clientY?: number) => {
+      const svg = svgRef.current;
+      if (!svg) return;
+      const vb = viewBoxRef.current;
+      const rect = svg.getBoundingClientRect();
+
+      let cursorX: number;
+      let cursorY: number;
+      if (clientX !== undefined && clientY !== undefined) {
+        cursorX = ((clientX - rect.left) / rect.width) * vb.width + vb.x;
+        cursorY = ((clientY - rect.top) / rect.height) * vb.height + vb.y;
+      } else {
+        cursorX = vb.x + vb.width / 2;
+        cursorY = vb.y + vb.height / 2;
+      }
+
+      const newWidth = Math.min(maxViewBoxWidth, Math.max(minViewBoxWidth, vb.width * factor));
+      const actualFactor = newWidth / vb.width;
+      const newHeight = vb.height * actualFactor;
+
+      const newX = cursorX - (cursorX - vb.x) * actualFactor;
+      const newY = cursorY - (cursorY - vb.y) * actualFactor;
+
+      setViewBox(clampViewBoxRef.current({ x: newX, y: newY, width: newWidth, height: newHeight }));
+    },
+    [minViewBoxWidth, maxViewBoxWidth]
+  );
+
+  // Wheel zoom listener (non-passive to prevent page scroll)
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const isPinch = e.ctrlKey;
+      const factor = isPinch
+        ? (e.deltaY > 0 ? 1.05 : 0.95)
+        : (e.deltaY > 0 ? 1.15 : 0.87);
+
+      zoomAtPoint(factor, e.clientX, e.clientY);
+    };
+
+    svg.addEventListener("wheel", handleWheel, { passive: false });
+    return () => svg.removeEventListener("wheel", handleWheel);
+  }, [zoomAtPoint]);
+
+  // Pointer drag to pan
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef({ x: 0, y: 0, vbX: 0, vbY: 0 });
+  const hasDraggedRef = useRef(false);
+
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      if (e.button === 0 || e.button === 1) {
+        setIsPanning(true);
+        hasDraggedRef.current = false;
+        panStartRef.current = { x: e.clientX, y: e.clientY, vbX: viewBox.x, vbY: viewBox.y };
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }
+    },
+    [viewBox.x, viewBox.y]
+  );
+
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      if (!isPanning) return;
+      const svg = svgRef.current;
+      if (!svg) return;
+
+      const dxPixels = e.clientX - panStartRef.current.x;
+      const dyPixels = e.clientY - panStartRef.current.y;
+      if (Math.hypot(dxPixels, dyPixels) > 4) {
+        hasDraggedRef.current = true;
+      }
+
+      const rect = svg.getBoundingClientRect();
+      const dx = (dxPixels / rect.width) * viewBox.width;
+      const dy = (dyPixels / rect.height) * viewBox.height;
+
+      setViewBox(
+        clampViewBox({
+          ...viewBox,
+          x: panStartRef.current.vbX - dx,
+          y: panStartRef.current.vbY - dy,
+        })
+      );
+    },
+    [isPanning, viewBox, clampViewBox]
+  );
+
+  const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
+    setIsPanning(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleZoomIn = useCallback(() => zoomAtPoint(0.8), [zoomAtPoint]);
+  const handleZoomOut = useCallback(() => zoomAtPoint(1.25), [zoomAtPoint]);
+  const handleResetZoom = useCallback(() => setViewBox(baseViewBox), [baseViewBox]);
+
+  const zoomPercentage = Math.round((baseViewBox.width / viewBox.width) * 100);
+  const viewBoxString = `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`;
 
   // Machine lookup map
   const machineMap = useMemo(() => {
@@ -144,6 +306,7 @@ export function FactoryVisualization({
 
   const handleMachineClick = useCallback(
     (machineId: string) => {
+      if (hasDraggedRef.current) return;
       onMachineClick?.(machineId);
     },
     [onMachineClick]
@@ -152,9 +315,15 @@ export function FactoryVisualization({
   return (
     <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <svg
-        className="absolute inset-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)]"
-        viewBox={viewBox}
+        ref={svgRef}
+        className="absolute inset-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)] select-none"
+        viewBox={viewBoxString}
         preserveAspectRatio="xMidYMid meet"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        style={{ cursor: isPanning ? "grabbing" : "grab", touchAction: "none" }}
       >
           {/* Defs: arrow markers, shadows */}
           <defs>
@@ -446,6 +615,51 @@ export function FactoryVisualization({
           <p className="text-xs text-blue-500 mt-1.5">Click for analytics</p>
         </div>
       )}
+
+      {/* Floating Zoom Controls */}
+      <div className="absolute bottom-4 right-4 flex items-center bg-white/95 backdrop-blur-md shadow-md border border-gray-200 rounded-lg p-1 gap-1 z-20 text-gray-700">
+        <button
+          type="button"
+          onClick={handleZoomOut}
+          className="p-1.5 hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+          title="Zoom Out (or scroll down)"
+          aria-label="Zoom Out"
+        >
+          <ZoomOut size={16} />
+        </button>
+        <button
+          type="button"
+          onClick={handleResetZoom}
+          className="px-2 py-1 text-xs font-semibold tabular-nums hover:bg-gray-100 rounded text-gray-700 min-w-[3.2rem] text-center cursor-pointer"
+          title="Reset Zoom to 100%"
+        >
+          {zoomPercentage}%
+        </button>
+        <button
+          type="button"
+          onClick={handleZoomIn}
+          className="p-1.5 hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+          title="Zoom In (or scroll up)"
+          aria-label="Zoom In"
+        >
+          <ZoomIn size={16} />
+        </button>
+        <div className="h-4 w-px bg-gray-200 mx-0.5" />
+        <button
+          type="button"
+          onClick={handleResetZoom}
+          className="p-1.5 hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+          title="Fit to Screen"
+          aria-label="Fit to Screen"
+        >
+          <RotateCcw size={15} />
+        </button>
+      </div>
+
+      {/* Mini Navigation Hint */}
+      <div className="absolute bottom-4 left-4 pointer-events-none text-[11px] text-gray-400 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded border border-gray-100 shadow-xs select-none">
+        Scroll to zoom • Drag to pan
+      </div>
     </div>
   );
 }

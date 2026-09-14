@@ -45,7 +45,11 @@ function generateId(): string {
  *
  * Requirements: 12.1, 12.2, 12.3
  */
-export function DispatchPanel() {
+interface DispatchPanelProps {
+  isEditMode?: boolean;
+}
+
+export function DispatchPanel({ isEditMode: isEditModeProp }: DispatchPanelProps = {}) {
   const { state, configureDispatch } = useFactoryBuilder();
   const dispatchConfig = state.layout.dispatch;
 
@@ -56,7 +60,8 @@ export function DispatchPanel() {
   const [liveDispatched, setLiveDispatched] = useState<Record<string, number> | null>(null);
 
   const layoutId = state.layout.id;
-  const isViewMode = !!layoutId && !state.isDirty;
+  const isEditMode = isEditModeProp ?? (state.isDirty || !layoutId);
+  const isViewMode = !isEditMode && !!layoutId;
 
   // Fetch live awaiting quantities in view mode (polls every 10s)
   useEffect(() => {
@@ -194,14 +199,16 @@ export function DispatchPanel() {
         <p className="text-sm text-gray-500 mb-3">
           No dispatch area configured
         </p>
-        <button
-          type="button"
-          className="button button-secondary"
-          onClick={handleBuildDispatch}
-        >
-          <Plus size={14} />
-          Build Dispatch
-        </button>
+        {isEditMode && (
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={handleBuildDispatch}
+          >
+            <Plus size={14} />
+            Build Dispatch
+          </button>
+        )}
       </div>
     );
   }
@@ -228,14 +235,16 @@ export function DispatchPanel() {
               <span className="text-xs text-green-600 font-medium">Live</span>
             )}
           </div>
-          <button
-            type="button"
-            className="button button-secondary"
-            style={{ minHeight: 0, padding: "4px 10px", fontSize: "12px" }}
-            onClick={handleBuildDispatch}
-          >
-            Edit
-          </button>
+          {isEditMode && (
+            <button
+              type="button"
+              className="button button-secondary"
+              style={{ minHeight: 0, padding: "4px 10px", fontSize: "12px" }}
+              onClick={handleBuildDispatch}
+            >
+              Edit
+            </button>
+          )}
         </div>
 
         {/* Products table with awaiting quantities */}

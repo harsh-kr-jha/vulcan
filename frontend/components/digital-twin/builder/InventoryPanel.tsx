@@ -47,14 +47,19 @@ function generateId(): string {
  *
  * Requirements: 11.1, 11.2, 11.3
  */
-export function InventoryPanel() {
+interface InventoryPanelProps {
+  isEditMode?: boolean;
+}
+
+export function InventoryPanel({ isEditMode: isEditModeProp }: InventoryPanelProps = {}) {
   const { state, configureInventory } = useFactoryBuilder();
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [liveStock, setLiveStock] = useState<Record<string, number> | null>(null);
 
   const hasInventory = !!state.layout.inventory;
   const layoutId = state.layout.id;
-  const isViewMode = !!layoutId && !state.isDirty;
+  const isEditMode = isEditModeProp ?? (state.isDirty || !layoutId);
+  const isViewMode = !isEditMode && !!layoutId;
 
   // Fetch live stock levels when in view mode (polls every 10s)
   useEffect(() => {
@@ -148,30 +153,35 @@ export function InventoryPanel() {
           layoutId={state.layout.id}
         />
 
-        <button
-          type="button"
-          onClick={() => setIsConfiguring(true)}
-          className="button button-secondary"
-          style={{ minHeight: 0, padding: "6px 12px", fontSize: "12px" }}
-        >
-          Edit Inventory
-        </button>
+        {isEditMode && (
+          <button
+            type="button"
+            onClick={() => setIsConfiguring(true)}
+            className="button button-secondary"
+            style={{ minHeight: 0, padding: "6px 12px", fontSize: "12px" }}
+          >
+            Edit Inventory
+          </button>
+        )}
       </div>
     );
   }
 
-  // Not configured and not configuring — show "Build Inventory" button
+  // Not configured and not configuring — show "Build Inventory" button in edit mode, or placeholder in view mode
   if (!isConfiguring) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6">
+      <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
         <Package className="h-8 w-8 text-gray-400" />
-        <button
-          type="button"
-          onClick={() => setIsConfiguring(true)}
-          className="button button-primary"
-        >
-          Build Inventory
-        </button>
+        <p className="text-sm text-gray-500">No inventory configured</p>
+        {isEditMode && (
+          <button
+            type="button"
+            onClick={() => setIsConfiguring(true)}
+            className="button button-primary"
+          >
+            Build Inventory
+          </button>
+        )}
       </div>
     );
   }

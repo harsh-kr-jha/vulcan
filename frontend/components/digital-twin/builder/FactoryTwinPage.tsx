@@ -721,7 +721,7 @@ export function FactoryTwinPage() {
         <div className="relative flex flex-1 overflow-hidden min-h-0">
           {/* Inventory Panel (left) */}
           <aside className="w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3">
-            <InventoryPanel />
+            <InventoryPanel isEditMode={false} />
           </aside>
 
           {/* Main visualization area */}
@@ -735,7 +735,7 @@ export function FactoryTwinPage() {
 
           {/* Dispatch Panel (right) */}
           <aside className="w-72 shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-3">
-            <DispatchPanel />
+            <DispatchPanel isEditMode={false} />
           </aside>
 
           {/* Machine Analytics Panel (slide-over, view mode) */}
@@ -824,7 +824,7 @@ export function FactoryTwinPage() {
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Inventory Panel (left) */}
         <aside className="w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3">
-          <InventoryPanel />
+          <InventoryPanel isEditMode={true} />
         </aside>
 
         {/* Main canvas area */}
@@ -839,7 +839,7 @@ export function FactoryTwinPage() {
 
         {/* Dispatch Panel (right) */}
         <aside className="w-72 shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-3">
-          <DispatchPanel />
+          <DispatchPanel isEditMode={true} />
         </aside>
       </div>
 

@@ -69,3 +69,4 @@ npm run dev
 - [Deployment](docs/deployment.md) — Customer GCE and Tamaso demo models
 - [Client Onboarding](docs/client-onboarding.md) — Step-by-step new customer procedure
 - [Data Input Streams](docs/data-input-streams.md) — Pull-gateway contract and operator workflow
+- [Machine ML Observation](docs/machine-learning-observation.md) — Production profiles, range health, training, and model operations

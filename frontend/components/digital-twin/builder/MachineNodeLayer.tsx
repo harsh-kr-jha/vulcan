@@ -46,10 +46,10 @@ function SingleMachineNode({
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
-      // Left click does nothing on machines (left is for pan)
       e.stopPropagation();
+      onSelect(machine.id);
     },
-    []
+    [machine.id, onSelect]
   );
 
   const handleRightClick = useCallback(
@@ -99,6 +99,13 @@ function SingleMachineNode({
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
       data-machine-id={machine.id}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onSelect(machine.id);
+        }
+      }}
+      tabIndex={0}
       role="button"
       aria-label={`Machine: ${machine.name}`}
     >

@@ -261,17 +261,52 @@ class MachineCycleHistoryView(APIView):
             samples_by_cycle[(sample.run_id, sample.cycle_id)].append(sample)
 
         results = []
+        from apps.ml.models import MachineCycle
+        from apps.ml.views import cycle_data, prediction_data
+
+        ml_cycles = (
+            {
+                (c.run_id, c.cycle_id): c
+                for c in MachineCycle.objects.filter(machine=machine)
+                .filter(pair_filter)
+                .select_related("profile__sku")
+                .prefetch_related("snapshots")
+            }
+            if pairs
+            else {}
+        )
         for summary in page:
             pair = (summary["run_id"], summary["cycle_id"])
+            ml_cycle = ml_cycles.get(pair)
+            observation = cycle_data(ml_cycle)
+            sample_ml = {str(s.event_id): s for s in ml_cycle.snapshots.all()} if ml_cycle else {}
+            sample_rows = MachineTelemetrySerializer(
+                samples_by_cycle[pair], many=True, context={"outcomes": {}}
+            ).data
+            for row in sample_rows:
+                snapshot = sample_ml.get(str(row["event_id"]))
+                row["ml"] = (
+                    {
+                        "violations": snapshot.violations,
+                        "prediction": prediction_data(snapshot) if snapshot.model_id else None,
+                    }
+                    if snapshot
+                    else None
+                )
+            actual = outcomes.get(pair)
+            if observation:
+                prediction = observation["checkpoint_prediction"]
+                observation["correct"] = (
+                    prediction["label"] == actual.effective_label if prediction and actual else None
+                )
             results.append(
                 {
                     **summary,
                     "outcome": MachineCycleOutcomeSerializer(outcomes[pair]).data
                     if pair in outcomes
                     else None,
-                    "samples": MachineTelemetrySerializer(
-                        samples_by_cycle[pair], many=True, context={"outcomes": {}}
-                    ).data,
+                    "samples": sample_rows,
+                    "ml": observation,
                 }
             )
         return Response(

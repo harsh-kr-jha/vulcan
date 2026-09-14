@@ -17,6 +17,8 @@ dependencies = [
   "openpyxl>=3.1,<4",
   "psycopg[binary]>=3.2,<4",
   "redis>=6.2,<7",
+  "scikit-learn>=1.6,<2",
+  "joblib>=1.4,<2",
 ]
 
 [dependency-groups]

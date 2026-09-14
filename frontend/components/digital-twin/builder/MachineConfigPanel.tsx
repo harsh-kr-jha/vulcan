@@ -208,6 +208,7 @@ export function MachineConfigPanel({
 
         {/* Body */}
         <div className="machine-config-body">
+          {!isNew && <a className="button button-secondary" href={`/digital-twin/ml/${machineId}`}>ML Observation</a>}
           {/* Machine Name */}
           <div className="builder-dialog-field">
             <label className="builder-dialog-label" htmlFor="machine-name">

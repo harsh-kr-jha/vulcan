@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "apps.operations",
     "apps.analytics",
+    "apps.ml",
     "apps.alerts",
     "apps.audit",
     "apps.spatial",
@@ -157,6 +158,11 @@ DATABASES = {
         conn_max_age=60,
     )
 }
+if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
+    # The stream poller, observation worker and web process can briefly contend
+    # for the development database. Wait for the writer instead of immediately
+    # surfacing a transient "database is locked" observation error.
+    DATABASES["default"].setdefault("OPTIONS", {})["timeout"] = 20
 if (
     not DEBUG
     and not SINGLE_NODE
@@ -310,17 +316,26 @@ else:
 WORKSPACE_CACHE_TTL = int(os.getenv("WORKSPACE_CACHE_TTL_SECONDS", "300"))
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
-CELERY_TASK_ALWAYS_EAGER = environment_boolean("CELERY_TASK_ALWAYS_EAGER", default=DEBUG)
-if not DEBUG and CELERY_TASK_ALWAYS_EAGER:
+CELERY_TASK_ALWAYS_EAGER = environment_boolean(
+    "CELERY_TASK_ALWAYS_EAGER", default=DEBUG or SINGLE_NODE
+)
+if not DEBUG and not SINGLE_NODE and CELERY_TASK_ALWAYS_EAGER:
     raise ImproperlyConfigured(
-        "CELERY_TASK_ALWAYS_EAGER must be false when DJANGO_DEBUG is false."
+        "CELERY_TASK_ALWAYS_EAGER must be false outside debug or single-node mode."
     )
 CELERY_TASK_EAGER_PROPAGATES = DEBUG
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "max_retries": 1,
+    "socket_connect_timeout": 2,
+    "socket_timeout": 5,
+}
 CELERY_TASK_ROUTES = {
     "apps.operations.tasks.inspect_upload": {"queue": "file_inspection"},
     "apps.operations.tasks.validate_upload": {"queue": "validation"},
     "apps.operations.tasks.standardise_upload": {"queue": "standardisation"},
     "apps.analytics.tasks.refresh_upload_analytics": {"queue": "analytics"},
+    "apps.ml.tasks.train_model": {"queue": "machine_learning"},
 }
 
 DATA_STREAM_CREDENTIAL_KEY = os.getenv("DATA_STREAM_CREDENTIAL_KEY", SECRET_KEY)
@@ -331,6 +346,11 @@ AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")
 AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "")
 AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
 AWS_S3_PUBLIC_ENDPOINT_URL = os.getenv("AWS_S3_PUBLIC_ENDPOINT_URL", AWS_S3_ENDPOINT_URL)
+ML_ARTIFACT_DIR = (
+    os.getenv("ML_ARTIFACT_DIR", str(REPOSITORY_ROOT / ".data" / "ml-models"))
+    if DEBUG or SINGLE_NODE
+    else ""
+)
 UPLOAD_URL_TTL_SECONDS = int(os.getenv("UPLOAD_URL_TTL_SECONDS", "900"))
 MAX_EXCEL_UPLOAD_BYTES = int(os.getenv("MAX_EXCEL_UPLOAD_BYTES", str(50 * 1024 * 1024)))
 MAX_CSV_UPLOAD_BYTES = int(os.getenv("MAX_CSV_UPLOAD_BYTES", str(500 * 1024 * 1024)))

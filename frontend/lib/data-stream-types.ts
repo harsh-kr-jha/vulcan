@@ -69,6 +69,7 @@ export interface MachineCycleOutcome {
 }
 
 export interface MachineTelemetrySample {
+  ml?: { violations: Record<string, boolean>; prediction: { failure_probability: number; label: string } | null } | null;
   id: string;
   observed_at: string;
   received_at: string;
@@ -82,6 +83,7 @@ export interface MachineTelemetrySample {
 }
 
 export interface MachineCycleHistory {
+  ml?: { profile: { sku_name: string; version: number } | null; health: number | null; correct: boolean | null; checkpoint_prediction: { label: string; failure_probability: number } | null } | null;
   run_id: string;
   cycle_id: string;
   cycle_number?: number | null;

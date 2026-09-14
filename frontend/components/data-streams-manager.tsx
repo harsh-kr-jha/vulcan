@@ -5,6 +5,7 @@ import {
   Cable,
   CircleAlert,
   KeyRound,
+  LoaderCircle,
   Pause,
   Play,
   Plus,
@@ -35,6 +36,14 @@ function relativeTime(value?: string | null) {
   return `${Math.floor(seconds / 60)}m ago`;
 }
 
+function friendlyStreamError(message: string) {
+  const lower = message.toLowerCase();
+  if (lower.includes("out-of-order")) return "A repeated or older reading was received. No data was skipped; the source needs to resume from the saved position.";
+  if (lower.includes("timed out") || lower.includes("urlopen") || lower.includes("connection refused")) return "The source cannot be reached right now. Vulcan will keep trying automatically.";
+  if (lower.includes("unauthorized") || lower.includes("401") || lower.includes("403")) return "The source rejected its API key. Add a new key to reconnect.";
+  return message;
+}
+
 export function DataStreamsManager() {
   const { state } = useFactory();
   const factoryId = state.activeFactoryId;
@@ -47,7 +56,7 @@ export function DataStreamsManager() {
   const [rotatedKey, setRotatedKey] = useState("");
   const [seed, setSeed] = useState("42");
   const [speed, setSpeed] = useState("1");
-  const [faultProbability, setFaultProbability] = useState("0.02");
+  const [faultProbability, setFaultProbability] = useState("0.15");
   const [coldStart, setColdStart] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -361,7 +370,7 @@ export function DataStreamsManager() {
                 </div>
               )}
 
-              {stream.last_error && <p className="mt-2 text-xs text-red-600">{stream.last_error}</p>}
+              {stream.last_error && <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800"><strong>Source needs attention:</strong> {friendlyStreamError(stream.last_error)}</p>}
 
               <div className="mt-3 grid gap-2">
                 {stream.channels.map((channel) => (
@@ -379,7 +388,7 @@ export function DataStreamsManager() {
                           : " · available"}
                       </small>
                       {channel.binding_error && (
-                        <small className="block text-red-600">{channel.binding_error}</small>
+                        <small className="mt-1 block max-w-2xl text-amber-700">{friendlyStreamError(channel.binding_error)}</small>
                       )}
                       {channel.schema_review?.changes.map((change) => (
                         <small key={change.key} className="block text-amber-700">
@@ -419,14 +428,15 @@ export function DataStreamsManager() {
                         </label>
                         {supportsFaultProbability && (
                           <label className="text-[11px] text-gray-500">
-                            Fault/cycle
-                            <input
+                            Fault trigger
+                          <input
                               className="block w-20 rounded border px-2 py-1"
                               type="number"
                               min="0"
                               max="1"
                               step="0.01"
                               value={faultProbability}
+                              title="Chance of scheduling a multi-cycle fault after the healthy cooldown"
                               onChange={(event) => setFaultProbability(event.target.value)}
                             />
                           </label>
@@ -442,20 +452,29 @@ export function DataStreamsManager() {
                         {controls.map((item) => {
                           const Icon = CONTROL_ICONS[item.id] ?? Activity;
                           const key = `${item.id}-${stream.id}-${channel.external_id}`;
+                          const working = busy === key;
                           return (
                             <button
                               key={item.id}
                               className="button button-secondary"
-                              disabled={busy === key}
+                              disabled={working}
                               onClick={() => void control(stream, item.id, channel.external_id)}
                             >
-                              <Icon size={12} />
-                              {item.label ?? item.id}
+                              {working ? <LoaderCircle className="animate-spin" size={12} /> : <Icon size={12} />}
+                              {working ? "Working…" : item.label ?? item.id}
                             </button>
                           );
                         })}
                       </div>
                     )}
+                    <div className="basis-full rounded-lg border border-gray-200 bg-white px-3 py-2">
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Live data journey</p>
+                      <div className="grid gap-2 text-xs sm:grid-cols-3">
+                        <div className={`flex items-center gap-2 rounded-md px-2 py-2 ${stream.status === "connected" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}><span className={`h-2 w-2 rounded-full ${stream.status === "connected" ? "bg-emerald-500" : "bg-amber-500"}`} /><span><strong className="block">1. Source</strong>{stream.status === "connected" ? "Gateway is reachable" : "Waiting to reconnect"}</span></div>
+                        <div className={`flex items-center gap-2 rounded-md px-2 py-2 ${channel.binding_status === "active" ? "bg-blue-50 text-blue-800" : "bg-gray-100 text-gray-600"}`}><span className={`h-2 w-2 rounded-full ${channel.binding_status === "active" ? "animate-pulse bg-blue-500" : "bg-gray-400"}`} /><span><strong className="block">2. Pulling readings</strong>{channel.binding_status === "active" ? `Last sample ${relativeTime(channel.binding_last_received_at)}` : channel.binding_status === "schema_review" ? "Waiting for schema approval" : "Not currently pulling"}</span></div>
+                        <div className={`flex items-center gap-2 rounded-md px-2 py-2 ${channel.assigned_machine_name ? "bg-violet-50 text-violet-800" : "bg-gray-100 text-gray-600"}`}><span className={`h-2 w-2 rounded-full ${channel.assigned_machine_name ? "bg-violet-500" : "bg-gray-400"}`} /><span><strong className="block">3. Machine</strong>{channel.assigned_machine_name ? `Sending to ${channel.assigned_machine_name}` : "Ready to assign in Lexicon"}</span></div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>

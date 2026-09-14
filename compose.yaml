@@ -99,6 +99,35 @@ services:
     command: python manage.py poll_data_streams
     working_dir: /app/backend
 
+  ml-observer:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: backend/.env
+    environment:
+      DJANGO_DATABASE_URL: postgresql://vulcan:vulcan@postgres:5432/vulcan
+    depends_on:
+      backend:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    command: python manage.py observe_machines
+    working_dir: /app/backend
+
+  ml-trainer:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: backend/.env
+    environment:
+      DJANGO_DATABASE_URL: postgresql://vulcan:vulcan@postgres:5432/vulcan
+      OMP_NUM_THREADS: "1"
+    depends_on:
+      redis:
+        condition: service_healthy
+    working_dir: /app/backend
+    command: celery -A config worker -l INFO -Q machine_learning --concurrency=1
+
   frontend:
     build:
       context: .

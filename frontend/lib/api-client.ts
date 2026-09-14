@@ -147,6 +147,8 @@ function filterQuery(filters: DashboardFilters) {
 }
 
 export const api = {
+  mlStatus: <T>(machineId: string) => request<T>(`/ml/machines/${machineId}/`),
+  mlAction: (machineId: string, action: string, data: object) => request(`/ml/machines/${machineId}/${action}/`, { method: "POST", body: JSON.stringify(data) }),
   auth: {
     csrf: () => getCsrfToken(),
     login: async (email: string, password: string) => {

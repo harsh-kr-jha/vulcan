@@ -107,6 +107,23 @@ services:
     mem_limit: 192m
     mem_reservation: 64m
 
+  ml-trainer:
+    image: ${BACKEND_IMAGE}
+    restart: unless-stopped
+    env_file: ${TAMASO_ENV_FILE:-.env}
+    environment:
+      DJANGO_DATABASE_URL: sqlite:////data/tamaso.sqlite3
+      VULCAN_SINGLE_NODE: "true"
+      CELERY_TASK_ALWAYS_EAGER: "true"
+      OMP_NUM_THREADS: "1"
+    command: ["python", "backend/manage.py", "observe_machines"]
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - /var/lib/tamaso/${CUSTOMER_ID}/data:/data
+    mem_limit: 1g
+
   caddy:
     image: caddy:2.10.2-alpine
     restart: unless-stopped

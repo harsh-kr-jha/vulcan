@@ -223,6 +223,12 @@ def _incompatible_field_keys(old_schema: dict, new_schema: dict) -> list[str]:
 
 @transaction.atomic
 def bind_machine(machine, channel: DataStreamChannel | None, *, refresh_source=False):
+    from apps.ml.models import OutcomeBinding
+
+    if channel is not None:
+        DataStreamChannel.objects.select_for_update().get(pk=channel.pk)
+    if channel is not None and OutcomeBinding.objects.filter(channel=channel).exists():
+        raise StreamClientError("This channel is assigned as a quality outcome source.")
     existing = MachineStreamBinding.objects.select_for_update().filter(machine=machine).first()
     if channel is None:
         if existing:
@@ -385,11 +391,18 @@ def poll_binding(binding: MachineStreamBinding):
         event_id, observed_at, sequence_no, values = _validate_reading(reading, fields)
         run_id = str(reading.get("run_id", ""))
         previous_sequence = batch_sequences.get(run_id)
-        if previous_sequence is not None and sequence_no <= previous_sequence:
+        if previous_sequence is not None and sequence_no < previous_sequence:
             raise StreamClientError("The stream returned readings out of sequence.")
+        if previous_sequence is not None and sequence_no == previous_sequence:
+            # Some gateways can replay the final sample while recovering from a
+            # crash. Keep the first event for that sequence and advance the
+            # opaque cursor so one bad replay cannot permanently block a channel.
+            continue
         batch_sequences[run_id] = sequence_no
         last_sequence = last_sequences.get(run_id)
-        if last_sequence is not None and sequence_no <= last_sequence:
+        if last_sequence is not None and sequence_no == last_sequence:
+            continue
+        if last_sequence is not None and sequence_no < last_sequence:
             if MachineTelemetrySample.objects.filter(event_id=event_id).exists():
                 continue
             raise StreamClientError("The stream returned an out-of-order reading.")

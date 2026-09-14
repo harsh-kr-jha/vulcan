@@ -428,6 +428,47 @@ def test_out_of_order_batch_does_not_advance_cursor(monkeypatch, machine, channe
     assert MachineTelemetrySample.objects.count() == 0
 
 
+def test_replayed_sequence_does_not_block_cursor(monkeypatch, machine, channel):
+    binding = bind_machine(machine, channel)
+    observed_at = timezone.now().isoformat()
+    first_id, replay_id, next_id = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    payload = {
+        "schema_version": "1",
+        "next_cursor": "13",
+        "readings": [
+            {
+                "event_id": str(first_id),
+                "observed_at": observed_at,
+                "sequence_no": 11,
+                "run_id": "run-1",
+                "values": {"temperature_current_c": 600, "cycle_phase": "loading"},
+            },
+            {
+                "event_id": str(replay_id),
+                "observed_at": observed_at,
+                "sequence_no": 11,
+                "run_id": "run-1",
+                "values": {"temperature_current_c": 601, "cycle_phase": "loading"},
+            },
+            {
+                "event_id": str(next_id),
+                "observed_at": observed_at,
+                "sequence_no": 12,
+                "run_id": "run-1",
+                "values": {"temperature_current_c": 602, "cycle_phase": "loading"},
+            },
+        ],
+    }
+    monkeypatch.setattr("apps.streams.services.request_json", lambda *args, **kwargs: payload)
+
+    assert poll_binding(binding) == 2
+    binding.refresh_from_db()
+    assert binding.cursor == "13"
+    assert MachineTelemetrySample.objects.filter(event_id=first_id).exists()
+    assert not MachineTelemetrySample.objects.filter(event_id=replay_id).exists()
+    assert MachineTelemetrySample.objects.filter(event_id=next_id).exists()
+
+
 def test_new_run_may_restart_its_sequence(monkeypatch, machine, channel):
     binding = bind_machine(machine, channel)
     old_event = MachineTelemetrySample.objects.create(

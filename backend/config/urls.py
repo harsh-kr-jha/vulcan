@@ -41,6 +41,7 @@ router.register("uploads", UploadViewSet, basename="upload")
 router.register("alerts", AlertViewSet, basename="alert")
 
 urlpatterns = [
+    path("api/ml/", include("apps.ml.urls")),
     path("health/", HealthView.as_view(), name="health"),
     path("api/platform/config/", PlatformConfigView.as_view(), name="platform-config"),
     path("api/auth/csrf/", CsrfTokenView.as_view(), name="csrf-token"),

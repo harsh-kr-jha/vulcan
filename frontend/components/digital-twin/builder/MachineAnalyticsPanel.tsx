@@ -6,6 +6,7 @@ import { api } from "@/lib/api-client";
 import type { MachineCycleHistory, MachineCycleOutcome } from "@/lib/data-stream-types";
 import type { MachineNode, MachineStatus } from "@/lib/spatial-types";
 import { QrCodePreview } from "./QrCodePreview";
+import { MachineMLSummary } from "@/components/machine-ml";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -197,6 +198,7 @@ export function MachineAnalyticsPanel({
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+        <MachineMLSummary machineId={machineId} />
         {/* Parameters with last 3 history entries */}
         {machine.parameters.length > 0 && (
           <section>
@@ -553,10 +555,14 @@ function FullHistorySheet({
                         </td>
                         <td className="px-3 py-2 font-semibold text-gray-800">#{cycle.cycle_number ?? "—"}</td>
                         <td className="whitespace-nowrap px-3 py-2 text-gray-600">{new Date(cycle.started_at).toLocaleString()}</td>
-                        <td className="px-3 py-2 text-gray-600">{cycle.recipe_id || "—"}</td>
+                        <td className="px-3 py-2 text-gray-600">{cycle.ml?.profile?.sku_name ?? cycle.recipe_id ?? "—"}
+                          {cycle.ml?.health != null && <small className={`block ${cycle.ml.health >= 90 ? "text-green-700" : cycle.ml.health >= 70 ? "text-amber-700" : "text-red-700"}`}>Health {cycle.ml.health.toFixed(1)}%</small>}
+                          {cycle.ml?.checkpoint_prediction && <small className="block">Predicted {cycle.ml.checkpoint_prediction.label} · {(100 * cycle.ml.checkpoint_prediction.failure_probability).toFixed(1)}% failure {cycle.ml.correct == null ? "" : cycle.ml.correct ? "· Correct" : "· Incorrect"}</small>}
+                        </td>
                         <td className="px-3 py-2 text-center font-mono text-gray-700">{cycle.sample_count}</td>
                         <td className="px-3 py-2 text-center">
                           {cycle.outcome ? (
+                            <div>
                             <select
                               aria-label={`Splice result for cycle ${cycle.cycle_number ?? cycle.cycle_id}`}
                               className={`rounded border px-2 py-1 text-xs font-semibold ${cycle.outcome.effective_label === "failure" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}
@@ -568,6 +574,12 @@ function FullHistorySheet({
                               <option value="good">Good</option>
                               <option value="failure">Failure</option>
                             </select>
+                            <small className="mt-1 block text-gray-500">
+                              {cycle.outcome.overridden_at
+                                ? `Human verified · ${cycle.outcome.overridden_by_name ?? "operator"}`
+                                : `Source label · ${cycle.outcome.source_label}`}
+                            </small>
+                            </div>
                           ) : (
                             <span className="text-gray-400">Pending</span>
                           )}
@@ -581,13 +593,15 @@ function FullHistorySheet({
                                 <thead><tr className="bg-gray-50">
                                   <th className="whitespace-nowrap px-2 py-1.5 text-left">Timestamp</th>
                                   <th className="px-2 py-1.5 text-left">Phase</th>
+                                  <th className="px-2 py-1.5">Failure probability</th>
                                   {allCols.map((col) => <th key={col.key} className="whitespace-nowrap px-2 py-1.5 text-center">{col.label}</th>)}
                                 </tr></thead>
                                 <tbody>
                                   {cycle.samples.map((sample) => <tr key={sample.id} className="border-t border-gray-100">
                                     <td className="whitespace-nowrap px-2 py-1.5 text-gray-600">{new Date(sample.observed_at).toLocaleString()}</td>
                                     <td className="px-2 py-1.5 font-medium text-gray-700">{sample.cycle_phase}</td>
-                                    {allCols.map((col) => <td key={col.key} className="px-2 py-1.5 text-center font-mono text-gray-800">{sample.values[col.key] == null ? "—" : String(sample.values[col.key])}</td>)}
+                                    <td className="px-2 py-1.5">{sample.ml?.prediction ? `${(100 * sample.ml.prediction.failure_probability).toFixed(1)}%` : "—"}</td>
+                                    {allCols.map((col) => <td key={col.key} className={`px-2 py-1.5 text-center font-mono ${sample.ml?.violations[col.key] ? "bg-red-100 text-red-800" : "text-gray-800"}`}>{sample.values[col.key] == null ? "—" : String(sample.values[col.key])}</td>)}
                                   </tr>)}
                                 </tbody>
                               </table>

@@ -126,6 +126,7 @@ class MachineTelemetrySample(UUIDModel, TenantScopedModel):
     cycle_phase = models.CharField(max_length=40, blank=True)
     recipe_id = models.CharField(max_length=100, blank=True)
     values = models.JSONField()
+    observation_processed = models.BooleanField(default=False, db_index=True)
 
     class Meta:
         ordering = ["-observed_at"]

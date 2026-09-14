@@ -448,11 +448,28 @@ export function FactoryVisualization({
                 onMouseEnter={(e) => handleMachineEnter(machine.id, e)}
                 onMouseMove={handleMachineMove}
                 onMouseLeave={handleMachineLeave}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setHoveredMachineId(null);
+                  setTooltipPos(null);
+                  handleMachineClick(machine.id);
+                }}
                 onContextMenu={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
+                  setHoveredMachineId(null);
+                  setTooltipPos(null);
                   handleMachineClick(machine.id);
                 }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setHoveredMachineId(null);
+                    setTooltipPos(null);
+                    handleMachineClick(machine.id);
+                  }
+                }}
+                tabIndex={0}
                 role="button"
                 aria-label={`Machine: ${machine.name}, Status: ${STATUS_LABELS[status]}`}
               >
@@ -595,7 +612,7 @@ export function FactoryVisualization({
           ) : (
             <p className="text-xs text-gray-400 italic">No data submitted yet</p>
           )}
-          <p className="text-xs text-blue-500 mt-1.5">Click for analytics</p>
+          <p className="text-xs text-blue-500 mt-1.5">Click to open analytics</p>
         </div>
       )}
     </div>

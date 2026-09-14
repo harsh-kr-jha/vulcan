@@ -12,6 +12,7 @@ import {
   Download,
   ExternalLink,
   FileSearch,
+  FileSpreadsheet,
   Gauge,
   Layers,
   Lightbulb,
@@ -304,6 +305,9 @@ function MachineAtTimeTWidget() {
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
           <Link href="/data?category=machines" className="button button-secondary" style={{ fontSize: "12px" }}>
             <QrCode size={13} /> Record QR Entry
+          </Link>
+          <Link href="/data?category=machines&view=sheet" className="button button-secondary" style={{ fontSize: "12px" }}>
+            <FileSpreadsheet size={13} /> Sheet Format
           </Link>
           <Link href="/digital-twin" className="button button-secondary" style={{ fontSize: "12px" }}>
             <Workflow size={13} /> View in Twin
@@ -723,8 +727,10 @@ export function DashboardOverview() {
             {activeFactory?.name || "Mushroom Facility"} · Twin status: {reportingMachinesCount} reporting / {totalMachinesCount} configured assets · Latest scan: {twinFeed.freshness.machines.last_updated ? new Date(twinFeed.freshness.machines.last_updated).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "no scans yet"}
           </p>
         </div>
-        <div className="page-actions">
+        <div className="page-actions" style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
           <Link href="/data" className="button button-accent">Open Live Data <ArrowRight size={14} /></Link>
+          <Link href="/data?view=sheet" className="button button-secondary"><FileSpreadsheet size={14} /> Sheet Format</Link>
+          <Link href="/data?preview=sheet" className="button button-secondary"><FileSpreadsheet size={14} /> Preview Sheet</Link>
           <button className="button button-secondary" onClick={exportSnapshot}><Download size={14} /> Export snapshot</button>
         </div>
       </header>

@@ -25,6 +25,8 @@ __pycache__/
 media/
 staticfiles/
 deploy/gce-customer/.env
+simulator/
+simulator-data/
 
 # Editors and operating systems
 .DS_Store

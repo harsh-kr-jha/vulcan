@@ -23,6 +23,13 @@ export interface MachineParameter {
   options?: string[]; // for "selection" type, up to 20 items
   required: boolean;
   order: number;
+  label?: string;
+  unit?: string;
+  semantic?: string;
+  origin?: "manual" | "stream";
+  sourceFieldId?: string;
+  sourceSchemaVersion?: string;
+  active?: boolean;
 }
 
 export interface IOSpec {
@@ -45,6 +52,18 @@ export interface CustomKpi {
   name: string; // 1–50 chars, unique per machine
   displayUnit: string; // 1–20 chars
   formula: KpiFormula;
+  isEnabled?: boolean;
+  disabledReason?: string;
+}
+
+export interface StreamBindingSummary {
+  id: string;
+  streamId: string;
+  channelId: string;
+  channelName: string;
+  status: string;
+  lastReceivedAt?: string | null;
+  lastError?: string;
 }
 
 export interface MachineNode {
@@ -57,6 +76,9 @@ export interface MachineNode {
   parameters: MachineParameter[]; // 0–50
   customKpis: CustomKpi[]; // 0–20
   status?: MachineStatus;
+  dataStreamId?: string | null;
+  dataStreamChannelId?: string | null;
+  streamBinding?: StreamBindingSummary | null;
 }
 
 export interface ConnectionLine {

@@ -1,4 +1,9 @@
 import type { DashboardFilters, FactoryMasterImportInspection, ImportInspection, ImportPreview, ImportValidation, WorkspacePayload } from "./factory-domain";
+import type {
+  DataInputStream,
+  MachineCycleHistory,
+  MachineCycleOutcome,
+} from "./data-stream-types";
 
 const API_ROOT = "/api/backend/api";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -180,6 +185,31 @@ export const api = {
   deleteImport: (id: string) => request<void>(`/imports/${id}/delete/`, { method: "DELETE" }),
   commitImport: (id: string) => request(`/imports/${id}/commit/`, { method: "POST", body: "{}" }),
   cancelImport: (id: string) => request(`/imports/${id}/cancel/`, { method: "POST", body: "{}" }),
+  listDataStreams: async (factory: string) => {
+    const payload = await request<DataInputStream[] | { results: DataInputStream[] }>(`/data-streams/?factory=${factory}`);
+    return Array.isArray(payload) ? payload : payload.results;
+  },
+  createDataStream: (data: object) => request<DataInputStream>("/data-streams/", { method: "POST", body: JSON.stringify(data) }),
+  updateDataStream: (id: string, data: object) => request<DataInputStream>(`/data-streams/${id}/`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteDataStream: (id: string) => request<void>(`/data-streams/${id}/`, { method: "DELETE" }),
+  discoverDataStream: (id: string) => request<{ stream: DataInputStream }>(`/data-streams/${id}/discover/`, { method: "POST", body: "{}" }),
+  controlDataStream: (id: string, action: string, data: object) => request<Record<string, unknown>>(`/data-streams/${id}/control/${action}/`, { method: "POST", body: JSON.stringify(data) }),
+  acceptDataStreamSchema: (machineId: string) => request<{ status: string; last_error: string }>(`/data-streams/machines/${machineId}/binding/accept-schema/`, { method: "POST", body: "{}" }),
+  updateMachineCycleOutcome: (
+    machineId: string,
+    outcomeId: string,
+    effectiveLabel: "good" | "failure",
+  ) => request<MachineCycleOutcome>(
+    `/data-streams/machines/${machineId}/outcomes/${outcomeId}/`,
+    { method: "PATCH", body: JSON.stringify({ effective_label: effectiveLabel }) },
+  ),
+  listMachineCycles: (machineId: string, cursor?: string | null, limit = 20) => {
+    const query = new URLSearchParams({ limit: String(limit) });
+    if (cursor) query.set("cursor", cursor);
+    return request<{ results: MachineCycleHistory[]; next_cursor: string | null }>(
+      `/data-streams/machines/${machineId}/cycles/?${query}`,
+    );
+  },
   setAlertStatus: (factory: string, id: string, status: string) => request(`/workspace/configuration/?factory=${factory}`, { method: "PATCH", body: JSON.stringify({ alertStatus: { id, status } }) }),
   createAction: (factory: string, alertId: string, title: string, owner?: string) => request("/workspace/actions/", { method: "POST", body: JSON.stringify({ factory, alertId, title, owner }) }),
   toggleAction: (factory: string, id: string) => request(`/workspace/actions/${id}/`, { method: "PATCH", body: JSON.stringify({ factory }) }),

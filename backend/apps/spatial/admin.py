@@ -39,7 +39,7 @@ class FactoryLayoutAdmin(admin.ModelAdmin):
 class MachineParameterInline(admin.TabularInline):
     model = MachineParameter
     extra = 0
-    fields = ("key", "data_type", "required", "order")
+    fields = ("key", "data_type", "unit", "origin", "required", "order")
 
 
 class MachineCustomKpiInline(admin.TabularInline):

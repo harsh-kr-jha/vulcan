@@ -87,6 +87,7 @@ INSTALLED_APPS = [
     "apps.alerts",
     "apps.audit",
     "apps.spatial",
+    "apps.streams",
 ]
 
 MIDDLEWARE = [
@@ -321,6 +322,10 @@ CELERY_TASK_ROUTES = {
     "apps.operations.tasks.standardise_upload": {"queue": "standardisation"},
     "apps.analytics.tasks.refresh_upload_analytics": {"queue": "analytics"},
 }
+
+DATA_STREAM_CREDENTIAL_KEY = os.getenv("DATA_STREAM_CREDENTIAL_KEY", SECRET_KEY)
+DATA_STREAM_POLL_SECONDS = max(1, int(os.getenv("DATA_STREAM_POLL_SECONDS", "5")))
+DATA_STREAM_RETENTION_DAYS = max(1, int(os.getenv("DATA_STREAM_RETENTION_DAYS", "30")))
 
 AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")
 AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "")

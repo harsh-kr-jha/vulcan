@@ -91,6 +91,22 @@ services:
     mem_limit: 320m
     mem_reservation: 128m
 
+  stream-worker:
+    image: ${BACKEND_IMAGE}
+    restart: unless-stopped
+    env_file: ${TAMASO_ENV_FILE:-.env}
+    environment:
+      DJANGO_DATABASE_URL: sqlite:////data/tamaso.sqlite3
+      TAMASO_SINGLE_NODE: "true"
+    command: ["python", "backend/manage.py", "poll_data_streams"]
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - /var/lib/tamaso/${CUSTOMER_ID}/data:/data
+    mem_limit: 192m
+    mem_reservation: 64m
+
   caddy:
     image: caddy:2.10.2-alpine
     restart: unless-stopped

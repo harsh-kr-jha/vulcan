@@ -222,6 +222,7 @@ export function ParametersSection({ parameters, onChange }: ParametersSectionPro
       <div className="flex flex-col gap-2">
         {parameters.map((param, index) => {
           const keyError = getKeyError(param);
+          const sourceManaged = param.origin === "stream";
 
           return (
             <div
@@ -235,7 +236,7 @@ export function ParametersSection({ parameters, onChange }: ParametersSectionPro
                   <button
                     type="button"
                     onClick={() => handleMoveUp(index)}
-                    disabled={index === 0}
+                    disabled={index === 0 || sourceManaged}
                     className="p-0.5 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label={`Move parameter ${param.key || "unnamed"} up`}
                   >
@@ -244,7 +245,7 @@ export function ParametersSection({ parameters, onChange }: ParametersSectionPro
                   <button
                     type="button"
                     onClick={() => handleMoveDown(index)}
-                    disabled={index === parameters.length - 1}
+                    disabled={index === parameters.length - 1 || sourceManaged}
                     className="p-0.5 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label={`Move parameter ${param.key || "unnamed"} down`}
                   >
@@ -258,6 +259,7 @@ export function ParametersSection({ parameters, onChange }: ParametersSectionPro
                     type="text"
                     value={param.key}
                     onChange={(e) => handleKeyChange(param.id, e.target.value)}
+                    disabled={sourceManaged}
                     placeholder="parameter_key"
                     maxLength={64}
                     className={`w-full px-2.5 py-1.5 text-sm border rounded-md outline-none transition-colors ${
@@ -286,6 +288,7 @@ export function ParametersSection({ parameters, onChange }: ParametersSectionPro
                   onChange={(e) =>
                     handleTypeChange(param.id, e.target.value as ParamDataType)
                   }
+                  disabled={sourceManaged}
                   className="px-2 py-1.5 text-sm border border-gray-200 rounded-md bg-white focus:border-blue-400 focus:ring-1 focus:ring-blue-100 outline-none"
                   aria-label={`Data type for parameter ${param.key || index + 1}`}
                 >
@@ -302,6 +305,7 @@ export function ParametersSection({ parameters, onChange }: ParametersSectionPro
                     type="checkbox"
                     checked={param.required}
                     onChange={() => handleRequiredToggle(param.id)}
+                    disabled={sourceManaged}
                     className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <span className="text-xs text-gray-500">Req</span>
@@ -311,12 +315,19 @@ export function ParametersSection({ parameters, onChange }: ParametersSectionPro
                 <button
                   type="button"
                   onClick={() => handleRemove(param.id)}
+                  disabled={sourceManaged}
                   className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
                   aria-label={`Remove parameter ${param.key || "unnamed"}`}
                 >
                   <Trash2 size={14} />
                 </button>
               </div>
+
+              {sourceManaged && (
+                <p className="mt-1 ml-7 text-[11px] text-blue-600">
+                  Managed by data stream · {param.label || param.key} · {param.unit || "unitless"}
+                </p>
+              )}
 
               {/* Selection options sub-form */}
               {param.dataType === "selection" && (
@@ -328,7 +339,7 @@ export function ParametersSection({ parameters, onChange }: ParametersSectionPro
                     <button
                       type="button"
                       onClick={() => handleAddOption(param.id)}
-                      disabled={(param.options ?? []).length >= MAX_OPTIONS}
+                      disabled={sourceManaged || (param.options ?? []).length >= MAX_OPTIONS}
                       className="inline-flex items-center gap-0.5 px-2 py-0.5 text-xs text-blue-600 hover:text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
                       aria-label={`Add option to parameter ${param.key || "unnamed"}`}
                     >
@@ -354,12 +365,14 @@ export function ParametersSection({ parameters, onChange }: ParametersSectionPro
                           }
                           placeholder={`Option ${optIdx + 1}`}
                           maxLength={MAX_OPTION_LENGTH}
+                          disabled={sourceManaged}
                           className="flex-1 px-2 py-1 text-xs border border-gray-200 rounded-md focus:border-blue-400 focus:ring-1 focus:ring-blue-100 outline-none"
                           aria-label={`Option ${optIdx + 1} for parameter ${param.key || "unnamed"}`}
                         />
                         <button
                           type="button"
                           onClick={() => handleRemoveOption(param.id, optIdx)}
+                          disabled={sourceManaged}
                           className="p-0.5 text-gray-400 hover:text-red-500 transition-colors"
                           aria-label={`Remove option ${optIdx + 1}`}
                         >

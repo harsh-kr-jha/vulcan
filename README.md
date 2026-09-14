@@ -68,3 +68,4 @@ npm run dev
 - [Branching Strategy](docs/branching-strategy.md) — Naming, merge direction, versioning
 - [Deployment](docs/deployment.md) — Customer GCE and Tamaso demo models
 - [Client Onboarding](docs/client-onboarding.md) — Step-by-step new customer procedure
+- [Data Input Streams](docs/data-input-streams.md) — Pull-gateway contract and operator workflow

@@ -86,6 +86,19 @@ services:
     command: celery -A config worker -l INFO -Q file_inspection,validation,standardisation,analytics,reports
     working_dir: /app/backend
 
+  stream-worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file: backend/.env
+    environment:
+      DJANGO_DATABASE_URL: postgresql://vulcan:vulcan@postgres:5432/vulcan
+    depends_on:
+      backend:
+        condition: service_started
+    command: python manage.py poll_data_streams
+    working_dir: /app/backend
+
   frontend:
     build:
       context: .

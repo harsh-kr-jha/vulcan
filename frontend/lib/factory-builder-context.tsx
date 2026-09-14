@@ -349,13 +349,26 @@ interface LayoutApiPayload {
       options: string[];
       required: boolean;
       order: number;
+      label?: string;
+      unit?: string;
+      semantic?: string;
+      origin?: "manual" | "stream";
+      source_field_id?: string;
+      source_schema_version?: string;
+      is_active?: boolean;
     }>;
     custom_kpis: Array<{
       id: string;
       name: string;
       display_unit: string;
       formula: { operations: Array<{ operator: string; parameterKey: string }> };
+      is_enabled?: boolean;
+      disabled_reason?: string;
     }>;
+    stream_binding?: {
+      id: string; stream_id: string; channel_id: string; channel_name: string;
+      status: string; last_received_at?: string | null; last_error?: string;
+    } | null;
     status?: string;
   }>;
   connections: Array<{
@@ -402,13 +415,24 @@ function serializeLayout(layout: FactoryLayout): object {
         options: p.options ?? [],
         required: p.required,
         order: p.order,
+        label: p.label ?? "",
+        unit: p.unit ?? "",
+        semantic: p.semantic ?? "measurement",
+        origin: p.origin ?? "manual",
+        source_field_id: p.sourceFieldId ?? "",
+        source_schema_version: p.sourceSchemaVersion ?? "",
+        is_active: p.active ?? true,
       })),
       custom_kpis: m.customKpis.map((k) => ({
         id: k.id,
         name: k.name,
         display_unit: k.displayUnit,
         formula: k.formula,
+        is_enabled: k.isEnabled ?? true,
+        disabled_reason: k.disabledReason ?? "",
       })),
+      data_stream_id: m.dataStreamId !== undefined ? m.dataStreamId : (m.streamBinding?.streamId ?? null),
+      data_stream_channel_id: m.dataStreamChannelId !== undefined ? m.dataStreamChannelId : (m.streamBinding?.channelId ?? null),
       status: m.status,
     })),
     connections: layout.connections.map((c) => ({
@@ -471,13 +495,33 @@ function deserializeLayout(payload: LayoutApiPayload): FactoryLayout {
         options: p.options,
         required: p.required,
         order: p.order,
+        label: p.label,
+        unit: p.unit,
+        semantic: p.semantic,
+        origin: p.origin,
+        sourceFieldId: p.source_field_id,
+        sourceSchemaVersion: p.source_schema_version,
+        active: p.is_active,
       })),
       customKpis: m.custom_kpis.map((k) => ({
         id: k.id,
         name: k.name,
         displayUnit: k.display_unit,
         formula: k.formula as { operations: Array<{ operator: "add" | "subtract" | "multiply" | "divide"; parameterKey: string }> },
+        isEnabled: k.is_enabled,
+        disabledReason: k.disabled_reason,
       })),
+      dataStreamId: m.stream_binding?.stream_id,
+      dataStreamChannelId: m.stream_binding?.channel_id,
+      streamBinding: m.stream_binding ? {
+        id: m.stream_binding.id,
+        streamId: m.stream_binding.stream_id,
+        channelId: m.stream_binding.channel_id,
+        channelName: m.stream_binding.channel_name,
+        status: m.stream_binding.status,
+        lastReceivedAt: m.stream_binding.last_received_at,
+        lastError: m.stream_binding.last_error,
+      } : null,
       status: m.status as "running" | "warning" | "down" | "idle" | "no_data" | undefined,
     })),
     connections: payload.connections.map((c) => ({

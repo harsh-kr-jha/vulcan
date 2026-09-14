@@ -51,13 +51,20 @@ interface LayoutApiPayload {
       options: string[];
       required: boolean;
       order: number;
+      label?: string; unit?: string; semantic?: string; origin?: "manual" | "stream";
+      source_field_id?: string; source_schema_version?: string; is_active?: boolean;
     }>;
     custom_kpis: Array<{
       id: string;
       name: string;
       display_unit: string;
       formula: { operations: Array<{ operator: string; parameterKey: string }> };
+      is_enabled?: boolean; disabled_reason?: string;
     }>;
+    stream_binding?: {
+      id: string; stream_id: string; channel_id: string; channel_name: string;
+      status: string; last_received_at?: string | null; last_error?: string;
+    } | null;
     status?: string;
   }>;
   connections: Array<{
@@ -113,6 +120,9 @@ function deserializeLayout(payload: LayoutApiPayload): FactoryLayout {
         options: p.options,
         required: p.required,
         order: p.order,
+        label: p.label, unit: p.unit, semantic: p.semantic, origin: p.origin,
+        sourceFieldId: p.source_field_id, sourceSchemaVersion: p.source_schema_version,
+        active: p.is_active,
       })),
       customKpis: m.custom_kpis.map((k) => ({
         id: k.id,
@@ -124,7 +134,17 @@ function deserializeLayout(payload: LayoutApiPayload): FactoryLayout {
             parameterKey: string;
           }>;
         },
+        isEnabled: k.is_enabled,
+        disabledReason: k.disabled_reason,
       })),
+      dataStreamId: m.stream_binding?.stream_id,
+      dataStreamChannelId: m.stream_binding?.channel_id,
+      streamBinding: m.stream_binding ? {
+        id: m.stream_binding.id, streamId: m.stream_binding.stream_id,
+        channelId: m.stream_binding.channel_id, channelName: m.stream_binding.channel_name,
+        status: m.stream_binding.status, lastReceivedAt: m.stream_binding.last_received_at,
+        lastError: m.stream_binding.last_error,
+      } : null,
       status: m.status as
         | "running"
         | "warning"
@@ -377,17 +397,23 @@ export function FactoryTwinPage() {
       // Fetch latest observation for each machine in parallel
       const fetches = builderState.layout.machines.map(async (machine) => {
         try {
-          const response = await fetch(
-            `${API_SPATIAL}/machines/${machine.id}/observations/?limit=1`,
+          let response = await fetch(
+            `/api/backend/api/data-streams/machines/${machine.id}/telemetry/?limit=1`,
             { headers: { Accept: "application/json" }, credentials: "same-origin" }
           );
           if (!response.ok) return;
-          const data = await response.json();
-          const results = Array.isArray(data) ? data : data.results ?? [];
+          let data = await response.json();
+          let results = Array.isArray(data) ? data : data.results ?? [];
+          if (results.length === 0) {
+            response = await fetch(`${API_SPATIAL}/machines/${machine.id}/observations/?limit=1`, { headers: { Accept: "application/json" }, credentials: "same-origin" });
+            if (!response.ok) return;
+            data = await response.json();
+            results = Array.isArray(data) ? data : data.results ?? [];
+          }
           if (results.length > 0) {
             obsMap[machine.id] = {
               values: results[0].values ?? {},
-              submittedAt: results[0].submitted_at,
+              submittedAt: results[0].observed_at ?? results[0].submitted_at,
             };
           }
         } catch {

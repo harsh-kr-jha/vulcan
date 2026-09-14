@@ -14,6 +14,7 @@ os.environ.update(
         "DJANGO_NUM_PROXIES": "0",
         "LOGIN_IP_RATE": "10/15m",
         "LOGIN_ACCOUNT_RATE": "5/15m",
+        "DATA_STREAM_CREDENTIAL_KEY": "test-only-data-stream-key",
     }
 )
 

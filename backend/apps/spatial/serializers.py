@@ -1,6 +1,7 @@
 import re
 from datetime import date
 
+from django.db import transaction
 from rest_framework import serializers
 
 from apps.spatial.models import (
@@ -23,15 +24,27 @@ PARAM_KEY_REGEX = re.compile(r"^[a-zA-Z0-9_]+$")
 class MachineParameterSerializer(serializers.ModelSerializer):
     class Meta:
         model = MachineParameter
-        fields = ["id", "key", "data_type", "options", "required", "order"]
+        fields = [
+            "id",
+            "key",
+            "label",
+            "data_type",
+            "unit",
+            "semantic",
+            "origin",
+            "source_field_id",
+            "source_schema_version",
+            "is_active",
+            "options",
+            "required",
+            "order",
+        ]
         read_only_fields = ["id"]
 
     def validate_key(self, value):
         """Validate key matches alphanumeric/underscore pattern and length."""
         if not value or len(value) > 64:
-            raise serializers.ValidationError(
-                "Key must be between 1 and 64 characters."
-            )
+            raise serializers.ValidationError("Key must be between 1 and 64 characters.")
         if not PARAM_KEY_REGEX.match(value):
             raise serializers.ValidationError(
                 "Key must contain only alphanumeric characters and underscores."
@@ -44,9 +57,9 @@ class MachineParameterSerializer(serializers.ModelSerializer):
         machine = self.context.get("machine")
 
         if machine and key:
-            existing_keys = MachineParameter.objects.filter(
-                machine=machine
-            ).values_list("key", flat=True)
+            existing_keys = MachineParameter.objects.filter(machine=machine).values_list(
+                "key", flat=True
+            )
 
             # Exclude current instance on update
             if self.instance:
@@ -55,7 +68,12 @@ class MachineParameterSerializer(serializers.ModelSerializer):
             for existing_key in existing_keys:
                 if existing_key.lower() == key.lower():
                     raise serializers.ValidationError(
-                        {"key": f"Parameter key '{key}' already exists (case-insensitive match with '{existing_key}')."}
+                        {
+                            "key": (
+                                f"Parameter key '{key}' already exists "
+                                f"(case-insensitive match with '{existing_key}')."
+                            )
+                        }
                     )
 
         return attrs
@@ -64,23 +82,19 @@ class MachineParameterSerializer(serializers.ModelSerializer):
 class MachineCustomKpiSerializer(serializers.ModelSerializer):
     class Meta:
         model = MachineCustomKpi
-        fields = ["id", "name", "display_unit", "formula"]
+        fields = ["id", "name", "display_unit", "formula", "is_enabled", "disabled_reason"]
         read_only_fields = ["id"]
 
     def validate_name(self, value):
         """Validate name length."""
         if not value or len(value) > 50:
-            raise serializers.ValidationError(
-                "Name must be between 1 and 50 characters."
-            )
+            raise serializers.ValidationError("Name must be between 1 and 50 characters.")
         return value
 
     def validate_display_unit(self, value):
         """Validate display unit length."""
         if not value or len(value) > 20:
-            raise serializers.ValidationError(
-                "Display unit must be between 1 and 20 characters."
-            )
+            raise serializers.ValidationError("Display unit must be between 1 and 20 characters.")
         return value
 
     def validate_formula(self, value):
@@ -93,16 +107,12 @@ class MachineCustomKpiSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Formula 'operations' must be a list.")
 
         if len(operations) > 10:
-            raise serializers.ValidationError(
-                "Formula cannot have more than 10 operations."
-            )
+            raise serializers.ValidationError("Formula cannot have more than 10 operations.")
 
         valid_operators = {"add", "subtract", "multiply", "divide"}
         for i, op in enumerate(operations):
             if not isinstance(op, dict):
-                raise serializers.ValidationError(
-                    f"Operation at index {i} must be an object."
-                )
+                raise serializers.ValidationError(f"Operation at index {i} must be an object.")
             operator = op.get("operator")
             param_key = op.get("parameterKey")
             if operator not in valid_operators:
@@ -123,9 +133,9 @@ class MachineCustomKpiSerializer(serializers.ModelSerializer):
         machine = self.context.get("machine")
 
         if machine and name:
-            existing_names = MachineCustomKpi.objects.filter(
-                machine=machine
-            ).values_list("name", flat=True)
+            existing_names = MachineCustomKpi.objects.filter(machine=machine).values_list(
+                "name", flat=True
+            )
 
             # Exclude current instance on update
             if self.instance:
@@ -145,6 +155,9 @@ class SpatialMachineSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(required=False)
     parameters = MachineParameterSerializer(many=True, required=False, default=[])
     custom_kpis = MachineCustomKpiSerializer(many=True, required=False, default=[])
+    data_stream_id = serializers.UUIDField(required=False, allow_null=True, write_only=True)
+    data_stream_channel_id = serializers.UUIDField(required=False, allow_null=True, write_only=True)
+    stream_binding = serializers.SerializerMethodField()
 
     class Meta:
         model = SpatialMachine
@@ -161,7 +174,25 @@ class SpatialMachineSerializer(serializers.ModelSerializer):
             "display_order",
             "parameters",
             "custom_kpis",
+            "data_stream_id",
+            "data_stream_channel_id",
+            "stream_binding",
         ]
+
+    def get_stream_binding(self, obj):
+        try:
+            binding = obj.stream_binding
+        except Exception:
+            return None
+        return {
+            "id": str(binding.id),
+            "stream_id": str(binding.channel.stream_id),
+            "channel_id": str(binding.channel_id),
+            "channel_name": binding.channel.name,
+            "status": binding.status,
+            "last_received_at": binding.last_received_at,
+            "last_error": binding.last_error,
+        }
 
 
 class MachineConnectionSerializer(serializers.ModelSerializer):
@@ -220,14 +251,37 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id"]
 
+    @staticmethod
+    def _apply_stream_binding(machine, tenant, stream_id, channel_id, requested):
+        if not requested:
+            return
+        from apps.streams.client import StreamClientError
+        from apps.streams.models import DataStreamChannel
+        from apps.streams.services import bind_machine
+
+        if stream_id and channel_id:
+            channel = DataStreamChannel.objects.filter(
+                id=channel_id, stream_id=stream_id, tenant=tenant, active=True
+            ).first()
+            if not channel:
+                raise serializers.ValidationError(
+                    {"machines": "Choose an active data-stream channel for this factory."}
+                )
+            try:
+                bind_machine(machine, channel, refresh_source=True)
+            except StreamClientError as exc:
+                raise serializers.ValidationError({"machines": str(exc)}) from exc
+        elif not stream_id and not channel_id:
+            bind_machine(machine, None)
+        else:
+            raise serializers.ValidationError(
+                {"machines": "Both data stream and channel must be selected."}
+            )
+
     def validate(self, attrs):
         """Validate machine positions within floor bounds and connection references."""
-        floor_width = attrs.get(
-            "floor_width", getattr(self.instance, "floor_width", None)
-        )
-        floor_height = attrs.get(
-            "floor_height", getattr(self.instance, "floor_height", None)
-        )
+        floor_width = attrs.get("floor_width", getattr(self.instance, "floor_width", None))
+        floor_height = attrs.get("floor_height", getattr(self.instance, "floor_height", None))
         machines_data = attrs.get("machines", [])
         connections_data = attrs.get("connections", [])
 
@@ -268,9 +322,7 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
             # If updating an existing layout and machines not being replaced,
             # include existing machine IDs
             if self.instance and not machines_data:
-                existing_ids = set(
-                    self.instance.machines.values_list("id", flat=True)
-                )
+                existing_ids = set(self.instance.machines.values_list("id", flat=True))
                 valid_machine_ids.update(existing_ids)
 
             # Include IDs from machines being submitted in the same request
@@ -306,6 +358,7 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    @transaction.atomic
     def create(self, validated_data):
         """Create a full layout with nested machines, connections, inventory, dispatch."""
         machines_data = validated_data.pop("machines", [])
@@ -321,6 +374,11 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
         for machine_data in machines_data:
             parameters_data = machine_data.pop("parameters", [])
             custom_kpis_data = machine_data.pop("custom_kpis", [])
+            stream_requested = (
+                "data_stream_id" in machine_data or "data_stream_channel_id" in machine_data
+            )
+            stream_id = machine_data.pop("data_stream_id", None)
+            channel_id = machine_data.pop("data_stream_channel_id", None)
             client_id = machine_data.pop("id", None)
 
             # Use client-provided ID as the PK if given
@@ -337,6 +395,8 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
 
             # Create parameters
             for param_data in parameters_data:
+                if param_data.get("origin", "manual") == "stream":
+                    continue
                 param_data.pop("id", None)
                 MachineParameter.objects.create(machine=machine, **param_data)
 
@@ -344,6 +404,8 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
             for kpi_data in custom_kpis_data:
                 kpi_data.pop("id", None)
                 MachineCustomKpi.objects.create(machine=machine, **kpi_data)
+
+            self._apply_stream_binding(machine, tenant, stream_id, channel_id, stream_requested)
 
         # Create connections, resolving source/target references
         for conn_data in connections_data:
@@ -366,19 +428,16 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
         # Create inventory configuration if provided
         if inventory_data:
             inventory_data.pop("id", None)
-            InventoryConfiguration.objects.create(
-                layout=layout, tenant=tenant, **inventory_data
-            )
+            InventoryConfiguration.objects.create(layout=layout, tenant=tenant, **inventory_data)
 
         # Create dispatch configuration if provided
         if dispatch_data:
             dispatch_data.pop("id", None)
-            DispatchConfiguration.objects.create(
-                layout=layout, tenant=tenant, **dispatch_data
-            )
+            DispatchConfiguration.objects.create(layout=layout, tenant=tenant, **dispatch_data)
 
         return layout
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         """Update layout with merge strategy for nested objects.
 
@@ -402,15 +461,18 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
 
         # Merge machines if provided (preserves observations)
         if machines_data is not None:
-            existing_machines = {
-                str(m.id): m for m in instance.machines.all()
-            }
+            existing_machines = {str(m.id): m for m in instance.machines.all()}
             incoming_ids = set()
             machine_id_map = {}
 
             for machine_data in machines_data:
                 parameters_data = machine_data.pop("parameters", [])
                 custom_kpis_data = machine_data.pop("custom_kpis", [])
+                stream_requested = (
+                    "data_stream_id" in machine_data or "data_stream_channel_id" in machine_data
+                )
+                stream_id = machine_data.pop("data_stream_id", None)
+                channel_id = machine_data.pop("data_stream_channel_id", None)
                 client_id = machine_data.pop("id", None)
 
                 if client_id and str(client_id) in existing_machines:
@@ -420,24 +482,26 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                         setattr(machine, attr, value)
                     machine.save()
 
-                    # Merge parameters: remove old, add new definitions
-                    machine.parameters.all().delete()
+                    # Stream definitions are source-owned and survive ordinary
+                    # Lexicon edits. Only the editable manual definitions are replaced.
+                    machine.parameters.filter(origin="manual").delete()
                     for param_data in parameters_data:
+                        if param_data.get("origin", "manual") == "stream":
+                            continue
                         param_data.pop("id", None)
-                        MachineParameter.objects.create(
-                            machine=machine, **param_data
-                        )
+                        MachineParameter.objects.create(machine=machine, **param_data)
 
                     # Merge custom KPIs: replace definitions
                     machine.custom_kpis.all().delete()
                     for kpi_data in custom_kpis_data:
                         kpi_data.pop("id", None)
-                        MachineCustomKpi.objects.create(
-                            machine=machine, **kpi_data
-                        )
+                        MachineCustomKpi.objects.create(machine=machine, **kpi_data)
 
                     incoming_ids.add(str(client_id))
                     machine_id_map[str(client_id)] = machine
+                    self._apply_stream_binding(
+                        machine, tenant, stream_id, channel_id, stream_requested
+                    )
                 else:
                     # Create new machine
                     create_kwargs = {
@@ -451,20 +515,21 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                     machine = SpatialMachine.objects.create(**create_kwargs)
 
                     for param_data in parameters_data:
+                        if param_data.get("origin", "manual") == "stream":
+                            continue
                         param_data.pop("id", None)
-                        MachineParameter.objects.create(
-                            machine=machine, **param_data
-                        )
+                        MachineParameter.objects.create(machine=machine, **param_data)
 
                     for kpi_data in custom_kpis_data:
                         kpi_data.pop("id", None)
-                        MachineCustomKpi.objects.create(
-                            machine=machine, **kpi_data
-                        )
+                        MachineCustomKpi.objects.create(machine=machine, **kpi_data)
 
                     mid = str(client_id) if client_id else str(machine.id)
                     incoming_ids.add(mid)
                     machine_id_map[mid] = machine
+                    self._apply_stream_binding(
+                        machine, tenant, stream_id, channel_id, stream_requested
+                    )
 
             # Remove machines that are no longer in the incoming data
             for old_id, old_machine in existing_machines.items():
@@ -562,9 +627,7 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                 create_data = {**inventory_data}
                 if new_materials is not None:
                     create_data["materials"] = new_materials
-                InventoryConfiguration.objects.create(
-                    layout=instance, tenant=tenant, **create_data
-                )
+                InventoryConfiguration.objects.create(layout=instance, tenant=tenant, **create_data)
 
         # Merge dispatch config (preserves dispatch events)
         if dispatch_data is not None:
@@ -585,9 +648,7 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                 if new_products is not None:
                     existing_products = existing_disp.products or []
                     existing_map = {
-                        p["id"]: p
-                        for p in existing_products
-                        if isinstance(p, dict) and p.get("id")
+                        p["id"]: p for p in existing_products if isinstance(p, dict) and p.get("id")
                     }
 
                     merged = []
@@ -600,12 +661,8 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                             merged.append(
                                 {
                                     "id": prod_id,
-                                    "name": prod.get(
-                                        "name", existing_map[prod_id].get("name")
-                                    ),
-                                    "unit": prod.get(
-                                        "unit", existing_map[prod_id].get("unit")
-                                    ),
+                                    "name": prod.get("name", existing_map[prod_id].get("name")),
+                                    "unit": prod.get("unit", existing_map[prod_id].get("unit")),
                                 }
                             )
                         else:
@@ -622,9 +679,7 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                 create_data = {**dispatch_data}
                 if new_products is not None:
                     create_data["products"] = new_products
-                DispatchConfiguration.objects.create(
-                    layout=instance, tenant=tenant, **create_data
-                )
+                DispatchConfiguration.objects.create(layout=instance, tenant=tenant, **create_data)
 
         # Re-fetch instance with proper prefetching to ensure response
         # serialization picks up all newly created nested objects
@@ -666,18 +721,18 @@ class MachineObservationSerializer(serializers.ModelSerializer):
 
         try:
             machine = SpatialMachine.objects.get(pk=machine_id)
-        except SpatialMachine.DoesNotExist:
-            raise serializers.ValidationError("Referenced machine does not exist.")
+        except SpatialMachine.DoesNotExist as exc:
+            raise serializers.ValidationError("Referenced machine does not exist.") from exc
 
         parameters = {p.key: p for p in machine.parameters.all()}
         errors = {}
 
         # Build set of valid IO field keys from inputs/outputs
         io_keys = set()
-        for io_item in (machine.inputs or []):
+        for io_item in machine.inputs or []:
             if isinstance(io_item, dict) and io_item.get("id"):
                 io_keys.add(f"input_{io_item['id']}")
-        for io_item in (machine.outputs or []):
+        for io_item in machine.outputs or []:
             if isinstance(io_item, dict) and io_item.get("id"):
                 io_keys.add(f"output_{io_item['id']}")
 
@@ -696,9 +751,7 @@ class MachineObservationSerializer(serializers.ModelSerializer):
                 continue
 
             param = parameters[key]
-            validation_error = self._validate_value_type(
-                key, submitted_value, param
-            )
+            validation_error = self._validate_value_type(key, submitted_value, param)
             if validation_error:
                 errors[key] = validation_error
 
@@ -734,7 +787,10 @@ class MachineObservationSerializer(serializers.ModelSerializer):
 
         elif data_type == ParamDataType.DATE:
             if not isinstance(value, str):
-                return f"Parameter '{key}' expects a date string (YYYY-MM-DD), got {type(value).__name__}."
+                return (
+                    f"Parameter '{key}' expects a date string (YYYY-MM-DD), "
+                    f"got {type(value).__name__}."
+                )
             try:
                 date.fromisoformat(value)
             except (ValueError, TypeError):
@@ -781,9 +837,7 @@ class InventoryChangeSerializer(serializers.ModelSerializer):
 
     def validate_direction(self, value):
         if value not in ("inbound", "outbound"):
-            raise serializers.ValidationError(
-                "Direction must be 'inbound' or 'outbound'."
-            )
+            raise serializers.ValidationError("Direction must be 'inbound' or 'outbound'.")
         return value
 
     def validate_quantity(self, value):
@@ -835,17 +889,13 @@ class InventoryChangeSerializer(serializers.ModelSerializer):
                 break
 
         # Compute current stock: initial + sum(inbound) - sum(outbound)
-        changes = InventoryChange.objects.filter(
-            inventory=inventory, material_id=material_id
-        )
-        inbound_total = (
-            changes.filter(direction="inbound").aggregate(total=Sum("quantity"))["total"]
-            or Decimal("0")
-        )
-        outbound_total = (
-            changes.filter(direction="outbound").aggregate(total=Sum("quantity"))["total"]
-            or Decimal("0")
-        )
+        changes = InventoryChange.objects.filter(inventory=inventory, material_id=material_id)
+        inbound_total = changes.filter(direction="inbound").aggregate(total=Sum("quantity"))[
+            "total"
+        ] or Decimal("0")
+        outbound_total = changes.filter(direction="outbound").aggregate(total=Sum("quantity"))[
+            "total"
+        ] or Decimal("0")
         current_stock = initial_quantity + inbound_total - outbound_total
 
         if removal_quantity > current_stock:
@@ -875,9 +925,7 @@ class DispatchEventSerializer(serializers.ModelSerializer):
 
     def validate_event_type(self, value):
         if value not in ("arrival", "dispatched"):
-            raise serializers.ValidationError(
-                "Event type must be 'arrival' or 'dispatched'."
-            )
+            raise serializers.ValidationError("Event type must be 'arrival' or 'dispatched'.")
         return value
 
     def validate_quantity(self, value):
@@ -886,9 +934,7 @@ class DispatchEventSerializer(serializers.ModelSerializer):
         min_val = Decimal("0.01")
         max_val = Decimal("999999999.99")
         if value < min_val or value > max_val:
-            raise serializers.ValidationError(
-                "Quantity must be between 0.01 and 999999999.99."
-            )
+            raise serializers.ValidationError("Quantity must be between 0.01 and 999999999.99.")
         return value
 
     def validate_product_id(self, value):
@@ -906,9 +952,7 @@ class DispatchEventSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         dispatch = self.context.get("dispatch")
         if dispatch and attrs.get("product_id") and attrs.get("unit"):
-            self._validate_unit_matches_product(
-                dispatch, attrs["product_id"], attrs["unit"]
-            )
+            self._validate_unit_matches_product(dispatch, attrs["product_id"], attrs["unit"])
         return attrs
 
     def _validate_unit_matches_product(self, dispatch, product_id, unit):

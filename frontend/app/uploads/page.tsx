@@ -1,5 +1,5 @@
-import { UploadManager } from "@/components/upload-manager";
+import { DataInputManager } from "@/components/data-input-manager";
 
 export default function UploadsPage() {
-  return <UploadManager />;
+  return <DataInputManager />;
 }

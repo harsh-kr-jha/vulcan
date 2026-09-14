@@ -35,6 +35,7 @@ class FactoryLayoutListCreateView(generics.ListCreateAPIView):
         return queryset.select_related("factory").prefetch_related(
             "machines__parameters",
             "machines__custom_kpis",
+            "machines__stream_binding__channel__stream",
             "connections",
             "inventory_config",
             "dispatch_config",
@@ -53,14 +54,17 @@ class FactoryLayoutDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         tenant = self.request.user.memberships.first().tenant
-        return FactoryLayout.objects.filter(tenant=tenant).select_related(
-            "factory"
-        ).prefetch_related(
-            "machines__parameters",
-            "machines__custom_kpis",
-            "connections",
-            "inventory_config",
-            "dispatch_config",
+        return (
+            FactoryLayout.objects.filter(tenant=tenant)
+            .select_related("factory")
+            .prefetch_related(
+                "machines__parameters",
+                "machines__custom_kpis",
+                "machines__stream_binding__channel__stream",
+                "connections",
+                "inventory_config",
+                "dispatch_config",
+            )
         )
 
 
@@ -79,44 +83,50 @@ class MachineEntrySchemaView(generics.RetrieveAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         machine = self.get_object()
-        parameters = machine.parameters.all().order_by("order")
+        parameters = machine.parameters.filter(is_active=True, origin="manual").order_by("order")
         serializer = MachineEntrySchemaSerializer(parameters, many=True)
 
         # Build input/output fields from machine's inputs/outputs JSON
         io_fields = []
-        for io_item in (machine.inputs or []):
+        for io_item in machine.inputs or []:
             if isinstance(io_item, dict) and io_item.get("label"):
-                io_fields.append({
-                    "id": io_item.get("id", ""),
-                    "key": f"input_{io_item['id']}",
-                    "label": f"Input: {io_item['label']}",
-                    "unit_type": io_item.get("unitType", ""),
-                    "data_type": "number",
-                    "options": [],
-                    "required": False,
-                    "order": 900 + len(io_fields),
-                    "io_type": "input",
-                })
-        for io_item in (machine.outputs or []):
+                io_fields.append(
+                    {
+                        "id": io_item.get("id", ""),
+                        "key": f"input_{io_item['id']}",
+                        "label": f"Input: {io_item['label']}",
+                        "unit_type": io_item.get("unitType", ""),
+                        "data_type": "number",
+                        "options": [],
+                        "required": False,
+                        "order": 900 + len(io_fields),
+                        "io_type": "input",
+                    }
+                )
+        for io_item in machine.outputs or []:
             if isinstance(io_item, dict) and io_item.get("label"):
-                io_fields.append({
-                    "id": io_item.get("id", ""),
-                    "key": f"output_{io_item['id']}",
-                    "label": f"Output: {io_item['label']}",
-                    "unit_type": io_item.get("unitType", ""),
-                    "data_type": "number",
-                    "options": [],
-                    "required": False,
-                    "order": 950 + len(io_fields),
-                    "io_type": "output",
-                })
+                io_fields.append(
+                    {
+                        "id": io_item.get("id", ""),
+                        "key": f"output_{io_item['id']}",
+                        "label": f"Output: {io_item['label']}",
+                        "unit_type": io_item.get("unitType", ""),
+                        "data_type": "number",
+                        "options": [],
+                        "required": False,
+                        "order": 950 + len(io_fields),
+                        "io_type": "output",
+                    }
+                )
 
-        return Response({
-            "machine_name": machine.name,
-            "machine_id": str(machine.id),
-            "parameters": serializer.data,
-            "io_fields": io_fields,
-        })
+        return Response(
+            {
+                "machine_name": machine.name,
+                "machine_id": str(machine.id),
+                "parameters": serializer.data,
+                "io_fields": io_fields,
+            }
+        )
 
 
 class MachineObservationListCreateView(generics.ListCreateAPIView):
@@ -128,9 +138,7 @@ class MachineObservationListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         tenant = self.request.user.memberships.first().tenant
         machine_id = self.kwargs["machine_id"]
-        return MachineObservation.objects.filter(
-            tenant=tenant, machine_id=machine_id
-        )
+        return MachineObservation.objects.filter(tenant=tenant, machine_id=machine_id)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -168,9 +176,7 @@ class InventoryChangeCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         tenant = self.request.user.memberships.first().tenant
         layout_id = self.kwargs["layout_id"]
-        inventory = InventoryConfiguration.objects.get(
-            tenant=tenant, layout_id=layout_id
-        )
+        inventory = InventoryConfiguration.objects.get(tenant=tenant, layout_id=layout_id)
         serializer.save(
             tenant=tenant,
             inventory=inventory,
@@ -190,18 +196,14 @@ class InventoryDetailView(generics.RetrieveAPIView):
     def retrieve(self, request, *args, **kwargs):
         from decimal import Decimal
 
-        from django.db.models import Q, Sum
+        from django.db.models import Sum
 
         tenant = request.user.memberships.first().tenant
         layout_id = self.kwargs["layout_id"]
         try:
-            inventory = InventoryConfiguration.objects.get(
-                tenant=tenant, layout_id=layout_id
-            )
+            inventory = InventoryConfiguration.objects.get(tenant=tenant, layout_id=layout_id)
         except InventoryConfiguration.DoesNotExist:
-            return Response(
-                {"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
         from apps.spatial.serializers import InventoryConfigurationSerializer
 
@@ -219,16 +221,12 @@ class InventoryDetailView(generics.RetrieveAPIView):
             if not mat_id:
                 continue
             initial = Decimal(str(material.get("quantity", 0)))
-            inbound = (
-                changes.filter(material_id=mat_id, direction="inbound")
-                .aggregate(total=Sum("quantity"))["total"]
-                or Decimal("0")
-            )
-            outbound = (
-                changes.filter(material_id=mat_id, direction="outbound")
-                .aggregate(total=Sum("quantity"))["total"]
-                or Decimal("0")
-            )
+            inbound = changes.filter(material_id=mat_id, direction="inbound").aggregate(
+                total=Sum("quantity")
+            )["total"] or Decimal("0")
+            outbound = changes.filter(material_id=mat_id, direction="outbound").aggregate(
+                total=Sum("quantity")
+            )["total"] or Decimal("0")
             stock[mat_id] = float(initial + inbound - outbound)
 
         data["stock"] = stock
@@ -256,9 +254,7 @@ class DispatchEventCreateView(generics.CreateAPIView):
     def perform_create(self, serializer):
         tenant = self.request.user.memberships.first().tenant
         layout_id = self.kwargs["layout_id"]
-        dispatch = DispatchConfiguration.objects.get(
-            tenant=tenant, layout_id=layout_id
-        )
+        dispatch = DispatchConfiguration.objects.get(tenant=tenant, layout_id=layout_id)
         serializer.save(
             tenant=tenant,
             dispatch=dispatch,
@@ -283,13 +279,9 @@ class DispatchDetailView(generics.RetrieveAPIView):
         tenant = request.user.memberships.first().tenant
         layout_id = self.kwargs["layout_id"]
         try:
-            dispatch = DispatchConfiguration.objects.get(
-                tenant=tenant, layout_id=layout_id
-            )
+            dispatch = DispatchConfiguration.objects.get(tenant=tenant, layout_id=layout_id)
         except DispatchConfiguration.DoesNotExist:
-            return Response(
-                {"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
         from apps.spatial.serializers import DispatchConfigurationSerializer
 
@@ -307,16 +299,12 @@ class DispatchDetailView(generics.RetrieveAPIView):
             prod_id = product.get("id")
             if not prod_id:
                 continue
-            arrivals = (
-                events.filter(product_id=prod_id, event_type="arrival")
-                .aggregate(total=Sum("quantity"))["total"]
-                or Decimal("0")
-            )
-            dispatched = (
-                events.filter(product_id=prod_id, event_type="dispatched")
-                .aggregate(total=Sum("quantity"))["total"]
-                or Decimal("0")
-            )
+            arrivals = events.filter(product_id=prod_id, event_type="arrival").aggregate(
+                total=Sum("quantity")
+            )["total"] or Decimal("0")
+            dispatched = events.filter(product_id=prod_id, event_type="dispatched").aggregate(
+                total=Sum("quantity")
+            )["total"] or Decimal("0")
             awaiting[prod_id] = float(arrivals - dispatched)
             dispatched_totals[prod_id] = float(dispatched)
 

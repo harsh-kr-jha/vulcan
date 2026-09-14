@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { X, Activity, BarChart3, Clock, Maximize2 } from "lucide-react";
+import { Fragment, useCallback, useEffect, useState } from "react";
+import { X, Activity, BarChart3, ChevronDown, Clock, Maximize2 } from "lucide-react";
+import { api } from "@/lib/api-client";
+import type { MachineCycleHistory, MachineCycleOutcome } from "@/lib/data-stream-types";
 import type { MachineNode, MachineStatus } from "@/lib/spatial-types";
 import { QrCodePreview } from "./QrCodePreview";
 
@@ -18,7 +20,11 @@ export interface MachineAnalyticsPanelProps {
 interface ObservationRow {
   values: Record<string, unknown>;
   submitted_at: string;
+  observed_at?: string;
   submitted_by?: string | null;
+  run_id?: string;
+  cycle_id?: string;
+  outcome?: MachineCycleOutcome | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -60,6 +66,32 @@ export function MachineAnalyticsPanel({
   const [observations, setObservations] = useState<ObservationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFullHistory, setShowFullHistory] = useState(false);
+  const [savingOutcome, setSavingOutcome] = useState("");
+  const [outcomeError, setOutcomeError] = useState("");
+
+  async function updateOutcome(
+    outcome: MachineCycleOutcome,
+    label: "good" | "failure",
+  ): Promise<MachineCycleOutcome | null> {
+    setSavingOutcome(outcome.id);
+    setOutcomeError("");
+    try {
+      const updated = await api.updateMachineCycleOutcome(machineId, outcome.id, label);
+      setObservations((current) =>
+        current.map((row) =>
+          row.run_id === updated.run_id && row.cycle_id === updated.cycle_id
+            ? { ...row, outcome: updated }
+            : row,
+        ),
+      );
+      return updated;
+    } catch (cause) {
+      setOutcomeError(cause instanceof Error ? cause.message : "Could not update the result.");
+      return null;
+    } finally {
+      setSavingOutcome("");
+    }
+  }
 
   // Fetch recent observations for this machine
   useEffect(() => {
@@ -68,8 +100,8 @@ export function MachineAnalyticsPanel({
     async function fetchObservations() {
       setLoading(true);
       try {
-        const response = await fetch(
-          `${API_SPATIAL}/machines/${machineId}/observations/?limit=10`,
+        let response = await fetch(
+          `/api/backend/api/data-streams/machines/${machineId}/telemetry/?limit=50`,
           {
             headers: { Accept: "application/json" },
             credentials: "same-origin",
@@ -79,13 +111,16 @@ export function MachineAnalyticsPanel({
           setObservations([]);
           return;
         }
-        const data = await response.json();
+        let data = await response.json();
+        let results = Array.isArray(data) ? data : data.results ?? [];
+        if (results.length === 0) {
+          response = await fetch(`${API_SPATIAL}/machines/${machineId}/observations/?limit=10`, { headers: { Accept: "application/json" }, credentials: "same-origin" });
+          if (!response.ok) { setObservations([]); return; }
+          data = await response.json();
+          results = Array.isArray(data) ? data : data.results ?? [];
+        }
         if (!cancelled) {
-          // Handle paginated or array response
-          const results = Array.isArray(data)
-            ? data
-            : data.results ?? [];
-          setObservations(results);
+          setObservations(results.map((row: ObservationRow) => ({ ...row, submitted_at: row.observed_at ?? row.submitted_at })));
         }
       } catch {
         if (!cancelled) setObservations([]);
@@ -328,7 +363,9 @@ export function MachineAnalyticsPanel({
       {showFullHistory && (
         <FullHistorySheet
           machine={machine}
-          observations={observations}
+          savingOutcome={savingOutcome}
+          outcomeError={outcomeError}
+          onUpdateOutcome={updateOutcome}
           onClose={() => setShowFullHistory(false)}
         />
       )}
@@ -342,17 +379,99 @@ export function MachineAnalyticsPanel({
 
 interface FullHistorySheetProps {
   machine: MachineNode;
-  observations: ObservationRow[];
+  savingOutcome: string;
+  outcomeError: string;
+  onUpdateOutcome: (
+    outcome: MachineCycleOutcome,
+    label: "good" | "failure",
+  ) => Promise<MachineCycleOutcome | null>;
   onClose: () => void;
 }
 
-function FullHistorySheet({ machine, observations, onClose }: FullHistorySheetProps) {
+function FullHistorySheet({
+  machine,
+  savingOutcome,
+  outcomeError,
+  onUpdateOutcome,
+  onClose,
+}: FullHistorySheetProps) {
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     },
     [onClose]
   );
+
+  const [cycles, setCycles] = useState<MachineCycleHistory[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState("");
+  const [expandedCycles, setExpandedCycles] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    let cancelled = false;
+    api.listMachineCycles(machine.id)
+      .then((page) => {
+        if (cancelled) return;
+        setCycles(page.results);
+        setNextCursor(page.next_cursor);
+      })
+      .catch((cause: unknown) => {
+        if (!cancelled) {
+          setHistoryError(cause instanceof Error ? cause.message : "Could not load cycle history.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setHistoryLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [machine.id]);
+
+  async function loadOlderCycles() {
+    if (!nextCursor || historyLoading) return;
+    setHistoryLoading(true);
+    setHistoryError("");
+    try {
+      const page = await api.listMachineCycles(machine.id, nextCursor);
+      setCycles((current) => {
+        const existing = new Set(current.map((cycle) => `${cycle.run_id}:${cycle.cycle_id}`));
+        return [
+          ...current,
+          ...page.results.filter((cycle) => !existing.has(`${cycle.run_id}:${cycle.cycle_id}`)),
+        ];
+      });
+      setNextCursor(page.next_cursor);
+    } catch (cause) {
+      setHistoryError(cause instanceof Error ? cause.message : "Could not load older cycles.");
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  function toggleCycle(key: string) {
+    setExpandedCycles((current) => {
+      const next = new Set(current);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  async function changeCycleOutcome(
+    cycle: MachineCycleHistory,
+    label: "good" | "failure",
+  ) {
+    if (!cycle.outcome) return;
+    const updated = await onUpdateOutcome(cycle.outcome, label);
+    if (!updated) return;
+    setCycles((current) =>
+      current.map((item) =>
+        item.run_id === cycle.run_id && item.cycle_id === cycle.cycle_id
+          ? { ...item, outcome: updated }
+          : item,
+      ),
+    );
+  }
 
   // Build columns: parameters + inputs + outputs
   const paramCols = machine.parameters.map((p) => ({ key: p.key, label: p.key, type: "Parameter" as const }));
@@ -380,7 +499,7 @@ function FullHistorySheet({ machine, observations, onClose }: FullHistorySheetPr
               {machine.name} — Full History
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              {observations.length} snapshot{observations.length !== 1 ? "s" : ""} · {paramCols.length} parameters · {inputCols.length} inputs · {outputCols.length} outputs
+              {cycles.length} cycle{cycles.length !== 1 ? "s" : ""} loaded · {paramCols.length} parameters · expand a cycle for its samples
             </p>
           </div>
           <button
@@ -392,89 +511,108 @@ function FullHistorySheet({ machine, observations, onClose }: FullHistorySheetPr
           </button>
         </div>
 
-        {/* Sheet Body – spreadsheet table, scrollable both ways */}
+        {/* Cycle rows with complete, expandable sample details */}
         <div className="flex-1 overflow-auto">
-          {observations.length === 0 ? (
+          {historyLoading && cycles.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-sm text-gray-400">
+              Loading cycle history…
+            </div>
+          ) : cycles.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center h-full">
-              <p className="text-sm text-gray-400">No observations recorded yet.</p>
+              <p className="text-sm text-gray-400">No machine cycles recorded yet.</p>
             </div>
           ) : (
             <table className="text-xs border-collapse min-w-full">
               <thead className="sticky top-0 z-10">
-                {/* Column type row */}
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="sticky left-0 z-20 bg-gray-50 px-3 py-1 border-r border-gray-200" />
-                  <th className="sticky left-[50px] z-20 bg-gray-50 px-3 py-1 border-r border-gray-200" />
-                  {allCols.map((col, cIdx) => (
-                    <th key={cIdx} className="px-3 py-1 text-center">
-                      <span
-                        className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-medium ${
-                          col.type === "Parameter"
-                            ? "bg-blue-50 text-blue-700"
-                            : col.type === "Input"
-                            ? "bg-green-50 text-green-700"
-                            : "bg-orange-50 text-orange-700"
-                        }`}
-                      >
-                        {col.type}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-                {/* Column name row */}
                 <tr className="bg-gray-100 border-b border-gray-200">
-                  <th className="sticky left-0 z-20 bg-gray-100 text-left px-3 py-2 font-semibold text-gray-600 min-w-[50px] border-r border-gray-200">
-                    #
-                  </th>
-                  <th className="sticky left-[50px] z-20 bg-gray-100 text-left px-3 py-2 font-semibold text-gray-600 min-w-[140px] border-r border-gray-200">
-                    Timestamp
-                  </th>
-                  {allCols.map((col, cIdx) => (
-                    <th
-                      key={cIdx}
-                      className="text-center px-3 py-2 font-semibold text-gray-700 whitespace-nowrap min-w-[90px]"
-                    >
-                      {col.label}
-                    </th>
-                  ))}
+                  <th className="w-10 px-3 py-2" />
+                  <th className="px-3 py-2 text-left font-semibold text-gray-700">Cycle</th>
+                  <th className="px-3 py-2 text-left font-semibold text-gray-700">Time</th>
+                  <th className="px-3 py-2 text-left font-semibold text-gray-700">Recipe</th>
+                  <th className="px-3 py-2 text-center font-semibold text-gray-700">Samples</th>
+                  <th className="min-w-[130px] px-3 py-2 text-center font-semibold text-gray-700">Splice result</th>
                 </tr>
               </thead>
               <tbody>
-                {observations.map((obs, rowIdx) => (
-                  <tr
-                    key={rowIdx}
-                    className={`${rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50/60"} hover:bg-blue-50/30 transition-colors`}
-                  >
-                    <td className="sticky left-0 bg-inherit px-3 py-2 text-center font-bold text-gray-500 border-r border-gray-100">
-                      {rowIdx + 1}
-                    </td>
-                    <td className="sticky left-[50px] bg-inherit px-3 py-2 text-xs text-gray-700 font-medium whitespace-nowrap border-r border-gray-100">
-                      {obs.submitted_at
-                        ? new Date(obs.submitted_at).toLocaleString()
-                        : "—"}
-                    </td>
-                    {allCols.map((col, cIdx) => {
-                      const val = obs.values[col.key];
-                      return (
-                        <td
-                          key={cIdx}
-                          className="text-center px-3 py-2 font-mono text-gray-900"
-                        >
-                          {val !== undefined && val !== null
-                            ? String(val)
-                            : "\u2014"}
+                {cycles.map((cycle, rowIdx) => {
+                  const key = `${cycle.run_id}:${cycle.cycle_id}`;
+                  const expanded = expandedCycles.has(key);
+                  return (
+                    <Fragment key={key}>
+                      <tr className={`${rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50/60"} hover:bg-blue-50/40`}>
+                        <td className="px-3 py-2 text-center">
+                          <button
+                            type="button"
+                            className="rounded p-1 text-gray-500 hover:bg-gray-200"
+                            aria-label={`${expanded ? "Collapse" : "Expand"} cycle ${cycle.cycle_number ?? cycle.cycle_id}`}
+                            aria-expanded={expanded}
+                            onClick={() => toggleCycle(key)}
+                          >
+                            <ChevronDown size={14} className={`transition-transform ${expanded ? "rotate-180" : ""}`} />
+                          </button>
                         </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+                        <td className="px-3 py-2 font-semibold text-gray-800">#{cycle.cycle_number ?? "—"}</td>
+                        <td className="whitespace-nowrap px-3 py-2 text-gray-600">{new Date(cycle.started_at).toLocaleString()}</td>
+                        <td className="px-3 py-2 text-gray-600">{cycle.recipe_id || "—"}</td>
+                        <td className="px-3 py-2 text-center font-mono text-gray-700">{cycle.sample_count}</td>
+                        <td className="px-3 py-2 text-center">
+                          {cycle.outcome ? (
+                            <select
+                              aria-label={`Splice result for cycle ${cycle.cycle_number ?? cycle.cycle_id}`}
+                              className={`rounded border px-2 py-1 text-xs font-semibold ${cycle.outcome.effective_label === "failure" ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}
+                              disabled={savingOutcome === cycle.outcome.id}
+                              title={cycle.outcome.overridden_at ? `Human verified by ${cycle.outcome.overridden_by_name ?? "operator"}` : `Source label: ${cycle.outcome.source_label}`}
+                              value={cycle.outcome.effective_label}
+                              onChange={(event) => void changeCycleOutcome(cycle, event.target.value as "good" | "failure")}
+                            >
+                              <option value="good">Good</option>
+                              <option value="failure">Failure</option>
+                            </select>
+                          ) : (
+                            <span className="text-gray-400">Pending</span>
+                          )}
+                        </td>
+                      </tr>
+                      {expanded && (
+                        <tr>
+                          <td colSpan={6} className="border-y border-blue-100 bg-blue-50/30 p-3">
+                            <div className="overflow-x-auto rounded border border-gray-200 bg-white">
+                              <table className="min-w-full border-collapse text-[11px]">
+                                <thead><tr className="bg-gray-50">
+                                  <th className="whitespace-nowrap px-2 py-1.5 text-left">Timestamp</th>
+                                  <th className="px-2 py-1.5 text-left">Phase</th>
+                                  {allCols.map((col) => <th key={col.key} className="whitespace-nowrap px-2 py-1.5 text-center">{col.label}</th>)}
+                                </tr></thead>
+                                <tbody>
+                                  {cycle.samples.map((sample) => <tr key={sample.id} className="border-t border-gray-100">
+                                    <td className="whitespace-nowrap px-2 py-1.5 text-gray-600">{new Date(sample.observed_at).toLocaleString()}</td>
+                                    <td className="px-2 py-1.5 font-medium text-gray-700">{sample.cycle_phase}</td>
+                                    {allCols.map((col) => <td key={col.key} className="px-2 py-1.5 text-center font-mono text-gray-800">{sample.values[col.key] == null ? "—" : String(sample.values[col.key])}</td>)}
+                                  </tr>)}
+                                </tbody>
+                              </table>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
+          )}
+          {nextCursor && (
+            <div className="flex justify-center border-t border-gray-100 p-4">
+              <button type="button" className="button button-secondary" disabled={historyLoading} onClick={() => void loadOlderCycles()}>
+                {historyLoading ? "Loading…" : "Load older cycles"}
+              </button>
+            </div>
           )}
         </div>
 
         {/* Sheet Footer */}
         <div className="shrink-0 border-t border-gray-200 bg-gray-50 px-6 py-3 flex items-center justify-end">
+          {(outcomeError || historyError) && <p className="mr-auto text-xs text-red-600">{outcomeError || historyError}</p>}
           <button
             onClick={onClose}
             className="rounded-md bg-gray-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-gray-800 transition-colors"

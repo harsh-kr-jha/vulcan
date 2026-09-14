@@ -1,8 +1,11 @@
 "use client";
 
 import { Plus, Trash2, X } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
+import { useFactory } from "@/lib/factory-context";
+import { api } from "@/lib/api-client";
+import type { DataInputStream } from "@/lib/data-stream-types";
 import { validateMachineName, validateIOSpec } from "@/lib/spatial-validators";
 import type { IOSpec, MachineParameter, CustomKpi } from "@/lib/spatial-types";
 import { ParametersSection } from "./ParametersSection";
@@ -39,11 +42,10 @@ export function MachineConfigPanel({
   onClose,
 }: MachineConfigPanelProps) {
   const { state, configureMachine, removeMachine } = useFactoryBuilder();
+  const { state: factoryState } = useFactory();
 
   // Load existing machine data if editing
   const existingMachine = state.layout.machines.find((m) => m.id === machineId);
-  const layoutId = state.layout.id;
-
   const [name, setName] = useState(existingMachine?.name ?? "");
   const [inputs, setInputs] = useState<IOSpecDraft[]>(
     existingMachine?.inputs.map((io) => ({ id: io.id, label: io.label, unitType: io.unitType })) ?? []
@@ -57,6 +59,39 @@ export function MachineConfigPanel({
   const [customKpis, setCustomKpis] = useState<CustomKpi[]>(
     existingMachine?.customKpis ?? []
   );
+  const [streams, setStreams] = useState<DataInputStream[]>([]);
+  const [dataStreamId, setDataStreamId] = useState(existingMachine?.dataStreamId ?? existingMachine?.streamBinding?.streamId ?? "");
+  const [channelId, setChannelId] = useState(existingMachine?.dataStreamChannelId ?? existingMachine?.streamBinding?.channelId ?? "");
+
+  useEffect(() => {
+    let cancelled = false;
+    api.listDataStreams(factoryState.activeFactoryId).then((items) => { if (!cancelled) setStreams(items); }).catch(() => { if (!cancelled) setStreams([]); });
+    return () => { cancelled = true; };
+  }, [factoryState.activeFactoryId]);
+
+  const selectedStream = streams.find((stream) => stream.id === dataStreamId);
+  const selectedChannel = selectedStream?.channels.find((channel) => channel.id === channelId);
+  const incomingFields = selectedChannel?.schema.fields ?? [];
+  const replacementKeys = parameters
+    .filter(
+      (parameter) =>
+        parameter.origin !== "stream" &&
+        incomingFields.some((field) => field.key.toLowerCase() === parameter.key.toLowerCase())
+    )
+    .map((parameter) => parameter.key);
+  const typeChangedKeys = parameters
+    .filter((parameter) => {
+      const field = incomingFields.find(
+        (candidate) => candidate.key.toLowerCase() === parameter.key.toLowerCase()
+      );
+      return field && field.data_type !== parameter.dataType;
+    })
+    .map((parameter) => parameter.key);
+  const affectedKpis = customKpis
+    .filter((kpi) =>
+      kpi.formula.operations.some((operation) => typeChangedKeys.includes(operation.parameterKey))
+    )
+    .map((kpi) => kpi.name);
 
   // Validation
   const nameValidation = name.trim().length === 0 ? null : validateMachineName(name.trim());
@@ -77,7 +112,7 @@ export function MachineConfigPanel({
 
   const inputsValid = validateIOSpecs(inputs);
   const outputsValid = validateIOSpecs(outputs);
-  const isFormValid = isNameValid && inputsValid && outputsValid;
+  const isFormValid = isNameValid && inputsValid && outputsValid && (!dataStreamId || !!channelId);
 
   // Actions
   const handleConfirm = useCallback(() => {
@@ -101,10 +136,12 @@ export function MachineConfigPanel({
       outputs: configuredOutputs,
       parameters,
       customKpis,
+      dataStreamId: dataStreamId || null,
+      dataStreamChannelId: channelId || null,
     });
 
     onClose();
-  }, [isFormValid, inputs, outputs, name, parameters, customKpis, machineId, configureMachine, onClose]);
+  }, [isFormValid, inputs, outputs, name, parameters, customKpis, dataStreamId, channelId, machineId, configureMachine, onClose]);
 
   const handleCancel = useCallback(() => {
     if (isNew) {
@@ -117,35 +154,35 @@ export function MachineConfigPanel({
   const [deleteStep, setDeleteStep] = useState<"idle" | "confirming">("idle");
 
   // I/O management
-  const addInput = useCallback(() => {
+  function addInput() {
     if (inputs.length >= 10) return;
     setInputs((prev) => [...prev, { id: generateId(), label: "", unitType: "" }]);
-  }, [inputs.length]);
+  }
 
-  const removeInput = useCallback((id: string) => {
+  function removeInput(id: string) {
     setInputs((prev) => prev.filter((io) => io.id !== id));
-  }, []);
+  }
 
-  const updateInput = useCallback((id: string, field: "label" | "unitType", value: string) => {
+  function updateInput(id: string, field: "label" | "unitType", value: string) {
     setInputs((prev) =>
       prev.map((io) => (io.id === id ? { ...io, [field]: value } : io))
     );
-  }, []);
+  }
 
-  const addOutput = useCallback(() => {
+  function addOutput() {
     if (outputs.length >= 10) return;
     setOutputs((prev) => [...prev, { id: generateId(), label: "", unitType: "" }]);
-  }, [outputs.length]);
+  }
 
-  const removeOutput = useCallback((id: string) => {
+  function removeOutput(id: string) {
     setOutputs((prev) => prev.filter((io) => io.id !== id));
-  }, []);
+  }
 
-  const updateOutput = useCallback((id: string, field: "label" | "unitType", value: string) => {
+  function updateOutput(id: string, field: "label" | "unitType", value: string) {
     setOutputs((prev) =>
       prev.map((io) => (io.id === id ? { ...io, [field]: value } : io))
     );
-  }, []);
+  }
 
   return (
     <div className="machine-config-backdrop" onClick={handleCancel}>
@@ -195,6 +232,28 @@ export function MachineConfigPanel({
               {name.trim().length}/50 characters
             </span>
           </div>
+
+          <fieldset className="machine-config-io-section">
+            <legend className="builder-dialog-label">Data input stream</legend>
+            <label className="block text-xs text-gray-500 mb-2">Source
+              <select className="builder-dialog-input mt-1" value={dataStreamId} onChange={(event) => {
+                const nextId = event.target.value;
+                const next = streams.find((stream) => stream.id === nextId);
+                setDataStreamId(nextId);
+                setChannelId(next?.channels.find((channel) => !channel.assigned_machine_id || channel.assigned_machine_id === machineId)?.id ?? "");
+              }}>
+                <option value="">No live stream</option>
+                {streams.filter((stream) => stream.enabled && stream.status === "connected").map((stream) => <option key={stream.id} value={stream.id}>{stream.name}</option>)}
+              </select>
+            </label>
+            {dataStreamId && <label className="block text-xs text-gray-500">Channel
+              <select className="builder-dialog-input mt-1" value={channelId} onChange={(event) => setChannelId(event.target.value)}>
+                <option value="">Choose an available channel</option>
+                {selectedStream?.channels.filter((channel) => channel.active && (!channel.assigned_machine_id || channel.assigned_machine_id === machineId)).map((channel) => <option key={channel.id} value={channel.id}>{channel.name} · {channel.schema.fields?.length ?? 0} parameters</option>)}
+              </select>
+            </label>}
+            {selectedChannel && <div className="mt-2 rounded-md bg-blue-50 p-2 text-xs text-blue-800"><strong>{selectedChannel.schema.fields?.length ?? 0} source parameters will be initialized.</strong>{replacementKeys.length > 0 && <p className="mt-1">Source definitions will replace: {replacementKeys.join(", ")}.</p>}{affectedKpis.length > 0 && <p className="mt-1 text-amber-800">Type changes will disable these KPIs for review: {affectedKpis.join(", ")}.</p>}</div>}
+          </fieldset>
 
           {/* Inputs Section */}
           <fieldset className="machine-config-io-section">

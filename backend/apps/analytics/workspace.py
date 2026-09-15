@@ -11,6 +11,7 @@ from uuid import uuid4
 
 from django.conf import settings
 from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 
 from apps.operations.imports import serialize_upload
@@ -169,6 +170,34 @@ def build_workspace_snapshot(identity, factory, filters, targets=None):
     }
     for item in factory.master_records.select_related("parent").order_by("kind", "name"):
         masters[item.kind].append(FactoryMasterSerializer(item).data)
+    # Keep the legacy workspace shape temporarily, but source its machine list
+    # exclusively from Lexicon's canonical machines.
+    try:
+        canonical_machines = factory.spatial_layout.machines.filter(is_active=True).select_related(
+            "process__parent"
+        )
+    except ObjectDoesNotExist:
+        canonical_machines = []
+    masters["machines"] = [
+        {
+            "id": str(machine.id),
+            "factoryId": str(factory.id),
+            "kind": "machines",
+            "name": machine.name,
+            "code": machine.code,
+            "parentId": (
+                str(machine.process.parent_id)
+                if machine.process_id and machine.process.parent_id
+                else None
+            ),
+            "metadata": {
+                **(machine.metadata or {}),
+                "processCode": machine.process.code if machine.process_id else "",
+            },
+            "active": True,
+        }
+        for machine in canonical_machines
+    ]
     # Draft inspection, mapping and validation rows are implementation details of
     # the open dialog. A source becomes part of factory history only after the
     # operator explicitly imports its valid rows.
@@ -420,7 +449,6 @@ def build_intelligence(factory, targets, filters):
     custom_kpis = calculate_custom_kpis(
         factory.configuration.get("customKpis", []), custom_variables
     )
-    digital_twin = build_digital_twin(factory, process_runs)
     return {
         "totals": {
             "planned": planned,
@@ -467,7 +495,6 @@ def build_intelligence(factory, targets, filters):
         "steamRecovery": steam_recovery,
         "customKpiVariables": custom_variables,
         "customKpis": custom_kpis,
-        "digitalTwin": digital_twin,
         "projects": projects,
         "losses": losses,
         "dataAvailability": {

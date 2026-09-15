@@ -60,17 +60,6 @@ type ProcessForm = {
   capacityPerHour: string;
 };
 
-type MachineForm = {
-  name: string;
-  code: string;
-  parentId: string;
-  processCode: string;
-  manufacturer: string;
-  model: string;
-  commissionedYear: string;
-  powerKw: string;
-  capacityPerHour: string;
-};
 
 const defaultFactoryDetails: FactoryDetails = {
   factoryType: "Controlled-environment mushroom farm",
@@ -438,183 +427,14 @@ function ProcessManager() {
   );
 }
 
-function MachineManager() {
-  const { state, upsertMaster, removeMaster } = useFactory();
-  const mushroomMode = usePlatform().features.mushroomAnalytics;
-  const [editing, setEditing] = useState<MasterItem | null | "new">(null);
-  const lines = activeFactoryItems(state.masters.lines, state.activeFactoryId);
-  const processes = activeFactoryItems(state.masters.processes, state.activeFactoryId);
-  const machines = activeFactoryItems(state.masters.machines, state.activeFactoryId);
-  const [form, setForm] = useState<MachineForm>({
-    name: "",
-    code: "",
-    parentId: "",
-    processCode: "",
-    manufacturer: "",
-    model: "",
-    commissionedYear: "",
-    powerKw: "",
-    capacityPerHour: "",
-  });
-  const availableProcesses = processes
-    .filter((process) => process.parentId === form.parentId)
-    .sort((left, right) => metadataNumber(left, "sequence", 999) - metadataNumber(right, "sequence", 999));
-  const assignedProcess = processes.find((process) => process.code === form.processCode);
-
-  function open(item?: MasterItem) {
-    const parentId = item?.parentId ?? lines[0]?.id ?? "";
-    const lineProcesses = processes
-      .filter((process) => process.parentId === parentId)
-      .sort((left, right) => metadataNumber(left, "sequence", 999) - metadataNumber(right, "sequence", 999));
-    setEditing(item ?? "new");
-    setForm({
-      name: item?.name ?? "",
-      code: item?.code ?? "",
-      parentId,
-      processCode: metadataText(item, "processCode", lineProcesses[0]?.code ?? ""),
-      manufacturer: metadataText(item, "manufacturer"),
-      model: metadataText(item, "model"),
-      commissionedYear: metadataText(item, "commissionedYear"),
-      powerKw: metadataText(item, "powerKw"),
-      capacityPerHour: metadataText(item, "capacityPerHour"),
-    });
-  }
-
-  async function save(event: FormEvent) {
-    event.preventDefault();
-    await upsertMaster("machines", {
-      id: editing === "new" ? undefined : editing?.id,
-      name: form.name,
-      code: form.code,
-      parentId: form.parentId,
-      metadata: compactMetadata([
-        ["processCode", form.processCode],
-        ["manufacturer", form.manufacturer.trim()],
-        ["model", form.model.trim()],
-        ["commissionedYear", optionalNumber(form.commissionedYear)],
-        ["powerKw", optionalNumber(form.powerKw)],
-        ["capacityPerHour", optionalNumber(form.capacityPerHour)],
-      ]),
-    });
-    setEditing(null);
-  }
-
-  return (
-    <section className="panel master-manager">
-      <SettingsHeader
-        title={mushroomMode ? "Growing rooms & assets" : "Machines & assets"}
-        subtitle="Line-owned assets associated with the process they perform"
-        action={
-          <button className="button button-secondary" disabled={!lines.length} onClick={() => open()}>
-            <Plus size={13} /> Add machine
-          </button>
-        }
-      />
-      <div className="master-list">
-        {machines.map((machine) => {
-          const line = lines.find((item) => item.id === machine.parentId);
-          const processCode = metadataText(machine, "processCode");
-          const process = processes.find((item) => item.code === processCode);
-          return (
-            <button key={machine.id} onClick={() => open(machine)}>
-              <span className="master-icon"><Wrench size={15} /></span>
-              <div>
-                <strong>{machine.name}</strong>
-                <small>{machine.code} · {line?.name ?? "Unassigned line"} · {process?.name ?? "No process assigned"}</small>
-              </div>
-              <ChevronRight size={13} />
-            </button>
-          );
-        })}
-        {!machines.length && <div className="empty-state">No active {mushroomMode ? "rooms or farm" : "machines or production"} assets yet.</div>}
-      </div>
-      {editing && (
-        <div className="nested-editor">
-          <form onSubmit={save}>
-            <div>
-              <strong>{editing === "new" ? "Add machine" : `Edit ${editing.name}`}</strong>
-              <button type="button" onClick={() => setEditing(null)} aria-label="Close editor">
-                <X size={14} />
-              </button>
-            </div>
-            <label>
-              {mushroomMode ? "Room or asset name" : "Machine or asset name"}
-              <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
-            </label>
-            <label>
-              {mushroomMode ? "Room or asset code" : "Machine or asset code"}
-              <input value={form.code} onChange={(event) => setForm({ ...form, code: event.target.value.toUpperCase() })} required />
-            </label>
-            <label>
-              {mushroomMode ? "Farm wing" : "Production line"}
-              <select
-                value={form.parentId}
-                onChange={(event) => {
-                  const parentId = event.target.value;
-                  const firstProcess = processes
-                    .filter((process) => process.parentId === parentId)
-                    .sort((left, right) => metadataNumber(left, "sequence", 999) - metadataNumber(right, "sequence", 999))[0];
-                  setForm({ ...form, parentId, processCode: firstProcess?.code ?? "" });
-                }}
-                required
-              >
-                {lines.map((line) => <option value={line.id} key={line.id}>{line.name}</option>)}
-              </select>
-            </label>
-            <label>
-              Process association
-              <select value={form.processCode} onChange={(event) => setForm({ ...form, processCode: event.target.value })}>
-                <option value="">Not assigned</option>
-                {availableProcesses.map((process) => (
-                  <option value={process.code} key={process.id}>
-                    {metadataNumber(process, "sequence", 0)} · {process.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Manufacturer
-              <input value={form.manufacturer} onChange={(event) => setForm({ ...form, manufacturer: event.target.value })} />
-            </label>
-            <label>
-              Model
-              <input value={form.model} onChange={(event) => setForm({ ...form, model: event.target.value })} />
-            </label>
-            <label>
-              Commissioned year
-              <input type="number" min="1800" max={new Date().getFullYear()} step="1" value={form.commissionedYear} onChange={(event) => setForm({ ...form, commissionedYear: event.target.value })} />
-            </label>
-            <label>
-              Rated power (kW)
-              <input type="number" min="0" step="any" value={form.powerKw} onChange={(event) => setForm({ ...form, powerKw: event.target.value })} />
-            </label>
-            <label>
-              Rated throughput ({metadataText(assignedProcess, "outputUnit", "units")}/hour)
-              <input type="number" min="0" step="any" value={form.capacityPerHour} onChange={(event) => setForm({ ...form, capacityPerHour: event.target.value })} />
-            </label>
-            <div>
-              {editing !== "new" && (
-                <button
-                  type="button"
-                  className="button button-danger"
-                  onClick={() => {
-                    void removeMaster("machines", editing.id);
-                    setEditing(null);
-                  }}
-                >
-                  <Trash2 size={12} /> Deactivate
-                </button>
-              )}
-              <button className="button button-primary">
-                <Check size={12} /> Save machine
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-    </section>
-  );
+export function ProductionStructureManager() {
+  const mushroom = usePlatform().features.mushroomAnalytics;
+  return <>
+    <MasterManager collection="lines" title={mushroom ? "Farm wings" : "Production lines"} subtitle="The main operating flows represented in Lexicon" />
+    <ProcessManager />
+  </>;
 }
+
 
 const masterKindLabels: Record<string, string> = {
   lines: "Lines",
@@ -1189,11 +1009,12 @@ export function FactorySettings() {
         <div className="settings-content">
           {section === "profile" && <ProfileSection key={state.activeFactoryId} />}
           {section === "assets" && (
-            <>
-              <MasterManager collection="lines" title={mushroom ? "Farm wings" : "Production lines"} subtitle={`Independent ${mushroom ? "cultivation" : "production"} flows and KPI groupings`} />
-              <ProcessManager />
-              <MachineManager />
-            </>
+            <section className="panel live-empty-state">
+              <Workflow size={30} />
+              <h2>Production structure now lives in Lexicon</h2>
+              <p>Create lines, processes, machines, connections and data inputs together so every workspace uses the same factory identity.</p>
+              <a className="button button-primary" href="/digital-twin">Open Lexicon <ChevronRight size={13} /></a>
+            </section>
           )}
           {section === "catalogue" && (
             <>

@@ -1,9 +1,10 @@
-import type { DashboardFilters, FactoryMasterImportInspection, ImportInspection, ImportPreview, ImportValidation, WorkspacePayload } from "./factory-domain";
+import type { DashboardFilters, FactoryMasterImportInspection, ImportInspection, ImportPreview, ImportValidation, LiveDashboardPayload, WorkspacePayload } from "./factory-domain";
 import type {
   DataInputStream,
   MachineCycleHistory,
   MachineCycleOutcome,
 } from "./data-stream-types";
+import type { MachineDataPreview, MachineDataScope, MachineDataSummary } from "./data-management-types";
 
 const API_ROOT = "/api/backend/api";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -146,6 +147,16 @@ function filterQuery(filters: DashboardFilters) {
   return new URLSearchParams({ factory: filters.factoryId, from: filters.from, to: filters.to, line: filters.line, machine: filters.machine, sku: filters.sku, shift: filters.shift }).toString();
 }
 
+function machineDataQuery(factory: string, machine: string, scope: MachineDataScope) {
+  const query = new URLSearchParams({ factory, machine, scope: scope.scope });
+  if (scope.run_id) query.set("run_id", scope.run_id);
+  if (scope.cycle_id) query.set("cycle_id", scope.cycle_id);
+  if (scope.from) query.set("from", scope.from);
+  if (scope.to) query.set("to", scope.to);
+  if (scope.cycles) query.set("cycles", JSON.stringify(scope.cycles));
+  return query;
+}
+
 export const api = {
   mlStatus: <T>(machineId: string) => request<T>(`/ml/machines/${machineId}/`),
   mlAction: (machineId: string, action: string, data: object) => request(`/ml/machines/${machineId}/${action}/`, { method: "POST", body: JSON.stringify(data) }),
@@ -172,6 +183,36 @@ export const api = {
     me: () => request<AuthUser>("/auth/me/"),
   },
   workspace: (filters: DashboardFilters) => request<WorkspacePayload>(`/workspace/?${filterQuery(filters)}`),
+  liveDashboard: (factory: string, machine?: string | null, signal?: AbortSignal) => {
+    const query = new URLSearchParams({ factory });
+    if (machine) query.set("machine", machine);
+    return request<LiveDashboardPayload>(`/dashboard/live/?${query}`, { signal });
+  },
+  machineDataSummary: (factory: string, machine?: string) => {
+    const query = new URLSearchParams({ factory });
+    if (machine) query.set("machine", machine);
+    return request<MachineDataSummary>(`/data-management/?${query}`);
+  },
+  previewMachineData: (factory: string, machine: string, scope: MachineDataScope) =>
+    request<MachineDataPreview>(`/data-management/preview/?${machineDataQuery(factory, machine, scope)}`),
+  deleteMachineData: (factory: string, machine: string, scope: MachineDataScope) =>
+    request<{ deleted: { telemetry: number; outcomes: number; mlCycles: number; manual: number } }>(
+      "/data-management/",
+      { method: "POST", body: JSON.stringify({ factory, machine, ...scope }) },
+    ),
+  exportMachineData: async (factory: string, machine: string, scope: MachineDataScope) => {
+    const response = await fetch(`${API_ROOT}/data-management/export/?${machineDataQuery(factory, machine, scope)}`, {
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      const payload = await parseResponse(response);
+      throw new ApiError(firstMessage(payload) ?? "The Excel export could not be created.", response.status, payload);
+    }
+    const disposition = response.headers.get("content-disposition") ?? "";
+    const filename = disposition.match(/filename="([^"]+)"/)?.[1] ?? "machine-data.xlsx";
+    return { blob: await response.blob(), filename };
+  },
   createFactory: (data: object) => request("/factories/", { method: "POST", body: JSON.stringify(data) }),
   updateFactory: (id: string, data: object) => request(`/factories/${id}/`, { method: "PATCH", body: JSON.stringify(data) }),
   updateConfiguration: (factory: string, data: object) => request<WorkspacePayload>(`/workspace/configuration/?factory=${factory}`, { method: "PATCH", body: JSON.stringify(data) }),
@@ -195,7 +236,7 @@ export const api = {
   updateDataStream: (id: string, data: object) => request<DataInputStream>(`/data-streams/${id}/`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteDataStream: (id: string) => request<void>(`/data-streams/${id}/`, { method: "DELETE" }),
   discoverDataStream: (id: string) => request<{ stream: DataInputStream }>(`/data-streams/${id}/discover/`, { method: "POST", body: "{}" }),
-  controlDataStream: (id: string, action: string, data: object) => request<Record<string, unknown>>(`/data-streams/${id}/control/${action}/`, { method: "POST", body: JSON.stringify(data) }),
+  controlDataStream: (id: string, action: string, data: object) => request<{ result: Record<string, unknown>; state: string; stream: DataInputStream }>(`/data-streams/${id}/control/${action}/`, { method: "POST", body: JSON.stringify(data) }),
   acceptDataStreamSchema: (machineId: string) => request<{ status: string; last_error: string }>(`/data-streams/machines/${machineId}/binding/accept-schema/`, { method: "POST", body: "{}" }),
   updateMachineCycleOutcome: (
     machineId: string,

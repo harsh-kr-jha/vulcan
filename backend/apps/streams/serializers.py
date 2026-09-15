@@ -21,6 +21,7 @@ class DataStreamChannelSerializer(serializers.ModelSerializer):
     binding_error = serializers.SerializerMethodField()
     binding_last_received_at = serializers.SerializerMethodField()
     schema_review = serializers.SerializerMethodField()
+    control_state = serializers.SerializerMethodField()
 
     class Meta:
         model = DataStreamChannel
@@ -38,6 +39,7 @@ class DataStreamChannelSerializer(serializers.ModelSerializer):
             "binding_error",
             "binding_last_received_at",
             "schema_review",
+            "control_state",
         ]
 
     def get_assigned_machine_id(self, obj):
@@ -100,6 +102,13 @@ class DataStreamChannelSerializer(serializers.ModelSerializer):
                     }
                 )
         return {"version": snapshot.version, "changes": changes}
+
+    def get_control_state(self, obj):
+        metadata = (
+            obj.stream.source_metadata if isinstance(obj.stream.source_metadata, dict) else {}
+        )
+        states = metadata.get("controlStates", {})
+        return states.get(obj.external_id, "unknown") if isinstance(states, dict) else "unknown"
 
 
 class DataInputStreamSerializer(serializers.ModelSerializer):

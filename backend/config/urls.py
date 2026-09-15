@@ -1,6 +1,7 @@
 from apps.alerts.views import AlertViewSet
 from apps.analytics.views import PerformanceSummaryView
 from apps.analytics.workspace_views import (
+    LiveDashboardView,
     WorkspaceActionView,
     WorkspaceConfigurationView,
     WorkspaceQuestionView,
@@ -17,6 +18,11 @@ from apps.operations.import_views import (
     ImportValidationView,
 )
 from apps.operations.views import UploadViewSet
+from apps.streams.data_management import (
+    MachineDataExportView,
+    MachineDataManagementView,
+    MachineDataPreviewView,
+)
 from apps.tenancy.views import (
     CsrfTokenView,
     FactoryMasterImportApplyView,
@@ -51,6 +57,18 @@ urlpatterns = [
     path("api/auth/", include("rest_framework.urls")),
     path("api/performance/summary/", PerformanceSummaryView.as_view(), name="performance-summary"),
     path("api/workspace/", WorkspaceView.as_view(), name="workspace"),
+    path("api/dashboard/live/", LiveDashboardView.as_view(), name="live-dashboard"),
+    path("api/data-management/", MachineDataManagementView.as_view(), name="data-management"),
+    path(
+        "api/data-management/preview/",
+        MachineDataPreviewView.as_view(),
+        name="data-management-preview",
+    ),
+    path(
+        "api/data-management/export/",
+        MachineDataExportView.as_view(),
+        name="data-management-export",
+    ),
     path(
         "api/workspace/configuration/",
         WorkspaceConfigurationView.as_view(),

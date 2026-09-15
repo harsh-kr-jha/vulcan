@@ -2,7 +2,15 @@ import uuid
 from datetime import timedelta
 
 import pytest
-from apps.spatial.models import FactoryLayout, MachineCustomKpi, MachineParameter, SpatialMachine
+from apps.ml.models import MachineCycle
+from apps.spatial.models import (
+    FactoryLayout,
+    MachineCurrentState,
+    MachineCustomKpi,
+    MachineParameter,
+    SpatialMachine,
+)
+from apps.spatial.services import update_machine_current_state
 from apps.streams.client import StreamClientError
 from apps.streams.crypto import decrypt_secret, encrypt_secret
 from apps.streams.models import (
@@ -131,6 +139,111 @@ def test_api_key_is_encrypted_and_never_serialized(api_client, factory):
     result = listed.data.get("results", listed.data)[0]
     assert "api_key" not in result
     assert "encrypted_secret" not in result
+
+
+def test_control_action_persists_channel_runtime_state(monkeypatch, api_client, stream, channel):
+    stream.capabilities = {
+        "controls": [
+            {"id": "start", "label": "Start", "inputs": []},
+            {"id": "pause", "label": "Pause", "inputs": []},
+        ]
+    }
+    stream.save(update_fields=["capabilities"])
+    monkeypatch.setattr(
+        "apps.streams.views.request_json", lambda *args, **kwargs: {"status": "paused"}
+    )
+
+    response = api_client.post(
+        f"/api/data-streams/{stream.id}/control/pause/",
+        {"channel_id": channel.external_id},
+        format="json",
+    )
+
+    assert response.status_code == 200, response.data
+    assert response.data["state"] == "paused"
+    assert response.data["stream"]["channels"][0]["control_state"] == "paused"
+    stream.refresh_from_db()
+    assert stream.source_metadata["controlStates"][channel.external_id] == "paused"
+
+
+def test_machine_data_can_be_previewed_exported_and_deleted_by_cycle(
+    api_client, factory, tenant, machine
+):
+    first_time = timezone.now() - timedelta(minutes=2)
+    second_time = timezone.now() - timedelta(minutes=1)
+    first = MachineTelemetrySample.objects.create(
+        tenant=tenant,
+        machine=machine,
+        channel_external_id="machine-1",
+        schema_version="1",
+        event_id=uuid.uuid4(),
+        observed_at=first_time,
+        sequence_no=1,
+        run_id="run-1",
+        cycle_id="cycle-1",
+        cycle_number=1,
+        values={"temperature": 42},
+    )
+    second = MachineTelemetrySample.objects.create(
+        tenant=tenant,
+        machine=machine,
+        channel_external_id="machine-1",
+        schema_version="1",
+        event_id=uuid.uuid4(),
+        observed_at=second_time,
+        sequence_no=2,
+        run_id="run-1",
+        cycle_id="cycle-2",
+        cycle_number=2,
+        values={"temperature": 45},
+    )
+    MachineCycle.objects.create(
+        tenant=tenant,
+        machine=machine,
+        run_id="run-1",
+        cycle_id="cycle-2",
+        started_at=second_time,
+    )
+    update_machine_current_state(
+        machine=machine,
+        observed_at=second.observed_at,
+        source="stream",
+        source_record_id=second.id,
+        values=second.values,
+        run_id=second.run_id,
+        cycle_id=second.cycle_id,
+    )
+    query = (
+        f"factory={factory.id}&machine={machine.id}&scope=cycle"
+        "&run_id=run-1&cycle_id=cycle-2"
+    )
+
+    summary = api_client.get(f"/api/data-management/?factory={factory.id}&machine={machine.id}")
+    preview = api_client.get(f"/api/data-management/preview/?{query}")
+    exported = api_client.get(f"/api/data-management/export/?{query}")
+    deleted = api_client.post(
+        "/api/data-management/",
+        {
+            "factory": str(factory.id),
+            "machine": str(machine.id),
+            "scope": "cycles",
+            "cycles": [{"run_id": "run-1", "cycle_id": "cycle-2"}],
+        },
+        format="json",
+    )
+
+    assert summary.status_code == 200
+    assert summary.data["totals"] == {"machines": 1, "samples": 2, "cycles": 2}
+    assert preview.status_code == 200
+    assert preview.data["totalRows"] == 1
+    assert exported.status_code == 200
+    assert exported["Content-Type"].endswith("spreadsheetml.sheet")
+    assert deleted.status_code == 200, deleted.data
+    assert deleted.data["deleted"]["telemetry"] == 1
+    assert deleted.data["deleted"]["mlCycles"] == 1
+    assert MachineTelemetrySample.objects.filter(pk=first.pk).exists()
+    assert not MachineTelemetrySample.objects.filter(pk=second.pk).exists()
+    assert MachineCurrentState.objects.get(machine=machine).source_record_id == first.id
 
 
 def test_binding_replaces_manual_parameter_and_starts_at_current_cursor(machine, channel):

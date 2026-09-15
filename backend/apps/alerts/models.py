@@ -1,7 +1,7 @@
 from django.db import models
 
 from apps.common.models import TenantScopedModel, UUIDModel
-from apps.tenancy.models import Factory, Machine, ProductionLine
+from apps.tenancy.models import Factory
 
 
 class AlertRule(UUIDModel, TenantScopedModel):
@@ -35,8 +35,12 @@ class AlertStatus(models.TextChoices):
 
 class Alert(UUIDModel, TenantScopedModel):
     factory = models.ForeignKey(Factory, on_delete=models.PROTECT, related_name="alerts")
-    line = models.ForeignKey(ProductionLine, on_delete=models.PROTECT, null=True, blank=True)
-    machine = models.ForeignKey(Machine, on_delete=models.PROTECT, null=True, blank=True)
+    line = models.ForeignKey(
+        "tenancy.FactoryMaster", on_delete=models.PROTECT, null=True, blank=True
+    )
+    machine = models.ForeignKey(
+        "spatial.SpatialMachine", on_delete=models.PROTECT, null=True, blank=True
+    )
     rule = models.ForeignKey(AlertRule, on_delete=models.PROTECT, related_name="alerts")
     title = models.CharField(max_length=220)
     explanation = models.TextField()

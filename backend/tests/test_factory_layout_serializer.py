@@ -483,11 +483,11 @@ class TestFactoryLayoutSerializerUpdate:
         assert update_serializer.is_valid(), update_serializer.errors
         updated = update_serializer.save()
 
-        assert updated.machines.count() == 1
-        new_machine = updated.machines.first()
+        assert updated.machines.filter(is_active=True).count() == 1
+        new_machine = updated.machines.get(is_active=True)
         assert new_machine.name == "New Machine"
         assert new_machine.parameters.count() == 1
-        assert not SpatialMachine.objects.filter(name="Old Machine").exists()
+        assert SpatialMachine.objects.filter(name="Old Machine", is_active=False).exists()
 
     def test_update_replaces_connections(self, tenant, factory, layout_payload):
         id_a = str(uuid.uuid4())

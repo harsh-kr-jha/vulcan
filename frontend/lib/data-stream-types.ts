@@ -33,6 +33,7 @@ export interface DataStreamChannel {
       new_unit: string;
     }>;
   } | null;
+  control_state?: "running" | "paused" | "stopped" | "unknown" | string;
 }
 
 export interface DataInputStream {

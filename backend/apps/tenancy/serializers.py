@@ -165,6 +165,10 @@ class FactoryMasterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"metadata": "Metadata must be an object."})
 
         if kind == FactoryMaster.Kind.MACHINE:
+            if self.instance is None:
+                raise serializers.ValidationError(
+                    {"kind": "Machines are created in Lexicon, not Factory Setup."}
+                )
             if parent is None or parent.kind != FactoryMaster.Kind.LINE:
                 raise serializers.ValidationError(
                     {"parentId": "Every machine must belong to a production line."}

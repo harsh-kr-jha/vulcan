@@ -47,6 +47,8 @@ export function MachineConfigPanel({
   // Load existing machine data if editing
   const existingMachine = state.layout.machines.find((m) => m.id === machineId);
   const [name, setName] = useState(existingMachine?.name ?? "");
+  const [code, setCode] = useState(existingMachine?.code ?? "");
+  const [processId, setProcessId] = useState(existingMachine?.processId ?? "");
   const [inputs, setInputs] = useState<IOSpecDraft[]>(
     existingMachine?.inputs.map((io) => ({ id: io.id, label: io.label, unitType: io.unitType })) ?? []
   );
@@ -132,6 +134,8 @@ export function MachineConfigPanel({
 
     configureMachine(machineId, {
       name: name.trim(),
+      code: code.trim().toUpperCase(),
+      processId: processId || null,
       inputs: configuredInputs,
       outputs: configuredOutputs,
       parameters,
@@ -141,7 +145,7 @@ export function MachineConfigPanel({
     });
 
     onClose();
-  }, [isFormValid, inputs, outputs, name, parameters, customKpis, dataStreamId, channelId, machineId, configureMachine, onClose]);
+  }, [isFormValid, inputs, outputs, name, code, processId, parameters, customKpis, dataStreamId, channelId, machineId, configureMachine, onClose]);
 
   const handleCancel = useCallback(() => {
     if (isNew) {
@@ -232,6 +236,18 @@ export function MachineConfigPanel({
             <span className="machine-config-hint">
               {name.trim().length}/50 characters
             </span>
+          </div>
+
+          <div className="builder-dialog-field">
+            <label className="builder-dialog-label" htmlFor="machine-code">Machine code</label>
+            <input id="machine-code" className="builder-dialog-input" placeholder="Generated from name when blank" value={code} onChange={(event) => setCode(event.target.value.toUpperCase())} maxLength={60} />
+          </div>
+          <div className="builder-dialog-field">
+            <label className="builder-dialog-label" htmlFor="machine-process">Production process</label>
+            <select id="machine-process" className="builder-dialog-input" value={processId} onChange={(event) => setProcessId(event.target.value)}>
+              <option value="">Not assigned</option>
+              {factoryState.masters.processes.filter((item) => item.active && item.factoryId === factoryState.activeFactoryId).map((item) => <option key={item.id} value={item.id}>{item.name} ({item.code})</option>)}
+            </select>
           </div>
 
           <fieldset className="machine-config-io-section">

@@ -18,6 +18,7 @@ from apps.spatial.serializers import (
     MachineEntrySchemaSerializer,
     MachineObservationSerializer,
 )
+from apps.spatial.services import update_machine_current_state
 
 
 class FactoryLayoutListCreateView(generics.ListCreateAPIView):
@@ -28,7 +29,7 @@ class FactoryLayoutListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         tenant = self.request.user.memberships.first().tenant
-        queryset = FactoryLayout.objects.filter(tenant=tenant)
+        queryset = FactoryLayout.objects.filter(tenant=tenant, is_active=True)
         factory_id = self.request.query_params.get("factory")
         if factory_id:
             queryset = queryset.filter(factory_id=factory_id)
@@ -65,6 +66,12 @@ class FactoryLayoutDetailView(generics.RetrieveUpdateDestroyAPIView):
                 "inventory_config",
                 "dispatch_config",
             )
+        )
+
+    def destroy(self, request, *args, **kwargs):
+        return Response(
+            {"detail": "Factory layouts are retained for operational history."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
 
 
@@ -148,10 +155,17 @@ class MachineObservationListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         tenant = self.request.user.memberships.first().tenant
         machine_id = self.kwargs["machine_id"]
-        serializer.save(
+        observation = serializer.save(
             tenant=tenant,
             machine_id=machine_id,
             submitted_by=self.request.user,
+        )
+        update_machine_current_state(
+            machine=observation.machine,
+            observed_at=observation.submitted_at,
+            source="manual",
+            source_record_id=observation.id,
+            values=observation.values,
         )
 
 

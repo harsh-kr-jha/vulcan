@@ -330,6 +330,28 @@ def inspect_master_import(factory: Factory, uploaded_file) -> dict[str, Any]:
             and row.existing.metadata == row.metadata
             and same_parent
         )
+        if (
+            row.kind == FactoryMaster.Kind.MACHINE
+            and row.existing
+            and (row.existing.metadata or {}).get("canonicalMachineId")
+        ):
+            from apps.spatial.models import SpatialMachine
+
+            canonical = SpatialMachine.objects.filter(
+                id=row.existing.metadata["canonicalMachineId"],
+                layout__factory=factory,
+            ).first()
+            process_code = canonical.process.code if canonical and canonical.process_id else ""
+            same_values = bool(
+                canonical
+                and canonical.is_active
+                and canonical.name == row.name[:50]
+                and canonical.code.casefold() == row.code.casefold()
+                and process_code.casefold()
+                == str(row.metadata.get("processCode", "")).casefold()
+            )
+            row.action = "unchanged" if same_values else "update"
+            continue
         if not row.existing:
             row.action = "create"
         elif not row.existing.is_active:
@@ -536,6 +558,51 @@ def apply_master_import(
                     code__iexact=row.parent_code,
                     is_active=True,
                 )
+
+        if row.kind == FactoryMaster.Kind.MACHINE:
+            from apps.spatial.models import FactoryLayout, SpatialMachine
+
+            layout, _ = FactoryLayout.objects.get_or_create(
+                factory=factory,
+                defaults={"tenant": tenant, "floor_width": 100, "floor_height": 100},
+            )
+            process_code = str(row.metadata.get("processCode", "")).strip()
+            process = FactoryMaster.objects.filter(
+                factory=factory,
+                kind=FactoryMaster.Kind.PROCESS,
+                code__iexact=process_code,
+                is_active=True,
+            ).first() if process_code else None
+            machine = SpatialMachine.objects.filter(layout=layout, code__iexact=row.code).first()
+            if machine is None:
+                name_matches = SpatialMachine.objects.filter(layout=layout, name__iexact=row.name)
+                machine = name_matches.first() if name_matches.count() == 1 else None
+            if machine is None:
+                machine = SpatialMachine(tenant=tenant, layout=layout)
+            machine.code = row.code
+            machine.name = row.name[:50]
+            machine.process = process
+            machine.metadata = row.metadata
+            machine.is_active = True
+            machine.full_clean()
+            machine.save()
+
+            item = FactoryMaster.objects.filter(
+                factory=factory, kind=row.kind, code__iexact=row.code
+            ).first() or FactoryMaster(factory=factory, kind=row.kind, code=row.code)
+            item.tenant = tenant
+            item.name = row.name
+            item.code = row.code
+            item.parent = parent
+            item.metadata = {
+                **row.metadata,
+                "canonicalMachineId": str(machine.id),
+                "migrationOutcome": "imported_to_lexicon",
+            }
+            item.is_active = False
+            item.save()
+            counts[row.action] += 1
+            continue
 
         item = FactoryMaster.objects.filter(
             factory=factory, kind=row.kind, code__iexact=row.code

@@ -41,7 +41,7 @@ const mushroomGuides = [
       "Map required columns; set unwanted optional columns to Do not import.",
       "Review mismatch directions, then import only valid rows.",
     ],
-    action: { href: "/uploads", label: "Open data upload" },
+    action: { href: "/data", label: "Open data" },
   },
   {
     id: "rules",
@@ -78,7 +78,7 @@ const sharedFaqs = [
   { question: "Are rules shared between factories?", answer: "No. Rules and KPI targets belong to the selected factory. Switching factories loads that factory’s saved configuration and records.", tags: "rules targets factory" },
   { question: "How is the supplier score calculated?", answer: "It combines delivery timing (60 points), delivered quantity (25), accepted quality (10), and agreed terms (5). Late days reduce timing points by 10 per day.", tags: "supplier score delivery formula" },
   { question: "How do I create and show a custom KPI?", answer: "Open Data visualisation, select Add custom KPI, choose two approved aggregate variables and an operation, then save. Use Add to Home on the saved KPI card to pin its Django-calculated result to the command centre.", tags: "custom kpi formula home visualisation" },
-  { question: "Can I preview an uploaded CSV without downloading it?", answer: "Yes. On Data upload, click Preview beside a source. Vulcan retrieves up to 50 preserved original rows from Django and displays their source headers.", tags: "csv xlsx preview source rows" },
+  { question: "Can I preview an uploaded CSV without downloading it?", answer: "Yes. On Data, click Preview beside a source. Vulcan retrieves up to 50 preserved original rows from Django and displays their source headers.", tags: "csv xlsx preview source rows" },
   { question: "Why does each stage have its own observation sheet?", answer: "A sheet is assigned to one configured crop stage, so Django can attach its immutable stage code even when the source omits it. Approved rows drive that stage in the Farm Twin.", tags: "stage sheet farm twin mapping code" },
   { question: "Is the Farm Twin a live sensor feed?", answer: "No. It shows the newest approved room-observation sheet on or before the selected end date. Older reports are marked stale rather than presented as live data.", tags: "farm twin live latest stale room state" },
   { question: "Which file formats can I upload?", answer: "The importer accepts CSV and XLSX files up to 10 MB. Downloadable templates show the standard columns and a valid example row.", tags: "csv xlsx template size" },
@@ -118,7 +118,7 @@ export function SetupHelp() {
       <label className="help-search panel"><Search size={18} /><span className="sr-only">Search help</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search mapping, stale data, suppliers, rules…" />{query && <button type="button" onClick={() => setQuery("")}>Clear</button>}</label>
       <section className="help-quick-grid">
         <Link className="panel" href="/settings"><Settings2 size={18} /><span><strong>Configure {variant.terminology.siteSingular}</strong><small>{mushroomMode ? "Stages, rooms, rounds and reasons" : "Processes, lines, machines and reasons"}</small></span><ArrowRight size={14} /></Link>
-        <Link className="panel" href="/uploads"><UploadCloud size={18} /><span><strong>Add {variant.terminology.siteSingular} data</strong><small>Inspect and validate a sheet</small></span><ArrowRight size={14} /></Link>
+        <Link className="panel" href="/data"><UploadCloud size={18} /><span><strong>Add {variant.terminology.siteSingular} data</strong><small>Inspect and validate a sheet</small></span><ArrowRight size={14} /></Link>
         <Link className="panel" href="/methodology"><BookOpen size={18} /><span><strong>Review calculations</strong><small>Inputs, formulae and results</small></span><ArrowRight size={14} /></Link>
       </section>
       {!normalized && <section className="help-docs-layout">

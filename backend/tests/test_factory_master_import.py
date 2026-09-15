@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 from apps.audit.models import AuditEvent
+from apps.spatial.models import SpatialMachine
 from apps.tenancy.models import FactoryMaster, Role
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -76,7 +77,7 @@ def test_apply_is_atomic_hierarchical_audited_and_idempotent(api_client, factory
     assert response.status_code == 200
     assert response.data["appliedTotal"] == 81
     assert response.data["applied"]["create"] == 81
-    assert FactoryMaster.objects.filter(factory=factory, is_active=True).count() == 81
+    assert FactoryMaster.objects.filter(factory=factory, is_active=True).count() == 69
 
     process = FactoryMaster.objects.get(factory=factory, code="L2-OWLD")
     machine = FactoryMaster.objects.get(factory=factory, code="OWM-01")
@@ -85,6 +86,10 @@ def test_apply_is_atomic_hierarchical_audited_and_idempotent(api_client, factory
     assert process.metadata["source"] == "factory-master-csv"
     assert machine.parent.code == "LINE-02"
     assert machine.metadata["processCode"] == "L2-OWLD"
+    assert machine.is_active is False
+    canonical = SpatialMachine.objects.get(id=machine.metadata["canonicalMachineId"])
+    assert canonical.code == "OWM-01"
+    assert canonical.process == process
     assert AuditEvent.objects.filter(
         event_type="factory_masters.imported", entity_id=str(factory.id)
     ).exists()

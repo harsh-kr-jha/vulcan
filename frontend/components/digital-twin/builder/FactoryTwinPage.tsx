@@ -1,12 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Factory, Loader2, Maximize2, Minimize2, Pencil, Save, Trash2, X } from "lucide-react";
+import { Factory, Loader2, MapPinOff, Maximize2, Minimize2, Pencil, Save, Workflow, X } from "lucide-react";
 import { useFactory } from "@/lib/factory-context";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
-import { getCsrfToken } from "@/lib/api-client";
 import type {
-  ConnectionLine,
   FactoryLayout,
   GridPosition,
   MachineNode,
@@ -22,6 +20,7 @@ import { DispatchPanel } from "./DispatchPanel";
 import { MachineConfigPanel } from "./MachineConfigPanel";
 import { ConnectionConfigPanel } from "./ConnectionConfigPanel";
 import { MachineAnalyticsPanel } from "./MachineAnalyticsPanel";
+import { ProductionStructureManager } from "@/components/factory-settings";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -37,6 +36,8 @@ interface LayoutApiPayload {
   unit_system: string;
   machines: Array<{
     id: string;
+    code?: string;
+    process_id?: string | null;
     name: string;
     position_x: number;
     position_y: number;
@@ -67,6 +68,7 @@ interface LayoutApiPayload {
     } | null;
     status?: string;
   }>;
+  unplaced_machines?: LayoutApiPayload["machines"];
   connections: Array<{
     id: string;
     source: string;
@@ -106,6 +108,8 @@ function deserializeLayout(payload: LayoutApiPayload): FactoryLayout {
     },
     machines: payload.machines.map((m) => ({
       id: m.id,
+      code: m.code,
+      processId: m.process_id,
       name: m.name,
       position: { x: m.position_x, y: m.position_y },
       size: (m.size_width && m.size_height && (m.size_width > 1 || m.size_height > 1))
@@ -218,9 +222,6 @@ export function FactoryTwinPage() {
     cancelEdit,
     enterEditMode,
     placeMachine,
-    removeMachine,
-    completeConnection,
-    resetLayout,
     restoreDraft,
     saving,
     saveError,
@@ -231,6 +232,8 @@ export function FactoryTwinPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showBuilderDialog, setShowBuilderDialog] = useState(false);
   const [isImmersive, setIsImmersive] = useState(false);
+  const [showStructure, setShowStructure] = useState(false);
+  const [unplacedMachines, setUnplacedMachines] = useState<LayoutApiPayload["machines"]>([]);
 
   // Panel state
   const [configMachineId, setConfigMachineId] = useState<string | null>(null);
@@ -239,8 +242,6 @@ export function FactoryTwinPage() {
     null
   );
 
-  // Delete confirmation state
-  const [deleteStep, setDeleteStep] = useState<"idle" | "confirming" | "deleting">("idle");
 
   // Live data for view mode (observations per machine)
   const [machineObservations, setMachineObservations] = useState<
@@ -257,11 +258,11 @@ export function FactoryTwinPage() {
 
   // Use a ref for loadLayout to avoid it being a dependency that causes re-fetches
   const loadLayoutRef = useRef(loadLayout);
-  loadLayoutRef.current = loadLayout;
+  useEffect(() => { loadLayoutRef.current = loadLayout; }, [loadLayout]);
 
   // Use a ref for restoreDraft to avoid re-fetch dependency
   const restoreDraftRef = useRef(restoreDraft);
-  restoreDraftRef.current = restoreDraft;
+  useEffect(() => { restoreDraftRef.current = restoreDraft; }, [restoreDraft]);
 
   // Track whether we've already fetched to prevent infinite re-triggers
   const hasFetchedRef = useRef(false);
@@ -274,8 +275,8 @@ export function FactoryTwinPage() {
     if (hasFetchedRef.current) return;
 
     if (!factoryId) {
-      setPageMode("empty");
-      return;
+      const timer = window.setTimeout(() => setPageMode("empty"), 0);
+      return () => window.clearTimeout(timer);
     }
 
     let cancelled = false;
@@ -340,6 +341,7 @@ export function FactoryTwinPage() {
         }
 
         const layout = deserializeLayout(payload);
+        setUnplacedMachines(payload.unplaced_machines ?? []);
         loadLayoutRef.current(layout);
         hasFetchedRef.current = true;
         setPageMode("viewing");
@@ -372,7 +374,8 @@ export function FactoryTwinPage() {
       builderState.layout.floor.height > 0 &&
       builderState.isDirty
     ) {
-      setPageMode("editing");
+      const timer = window.setTimeout(() => setPageMode("editing"), 0);
+      return () => window.clearTimeout(timer);
     }
   }, [
     pageMode,
@@ -453,39 +456,6 @@ export function FactoryTwinPage() {
     setPageMode("editing");
   }, [enterEditMode]);
 
-  // Delete layout - double confirmation flow
-  const handleDeleteRequest = useCallback(() => {
-    setDeleteStep("confirming");
-  }, []);
-
-  const handleDeleteCancel = useCallback(() => {
-    setDeleteStep("idle");
-  }, []);
-
-  const handleDeleteConfirm = useCallback(async () => {
-    setDeleteStep("deleting");
-    try {
-      const csrfToken = await getCsrfToken();
-      const response = await fetch(
-        `${API_SPATIAL}/layouts/${builderState.layout.id}/`,
-        {
-          method: "DELETE",
-          headers: { "X-CSRFToken": csrfToken },
-          credentials: "same-origin",
-        }
-      );
-      if (!response.ok && response.status !== 204) {
-        throw new Error("Failed to delete layout");
-      }
-      resetLayout();
-      hasFetchedRef.current = false;
-      setPageMode("empty");
-      setDeleteStep("idle");
-    } catch {
-      setDeleteStep("idle");
-    }
-  }, [builderState.layout.id, resetLayout]);
-
   // Save layout (Task 13.1)
   const handleSave = useCallback(async () => {
     try {
@@ -541,6 +511,31 @@ export function FactoryTwinPage() {
     setConfigMachineId(machineId);
     setConfigMachineIsNew(false);
   }, []);
+
+  const handlePlaceUnplaced = useCallback((raw: LayoutApiPayload["machines"][number]) => {
+    const occupied = new Set(builderState.layout.machines.map((machine) => `${machine.position.x}:${machine.position.y}`));
+    let position = { x: 0, y: 0 };
+    outer: for (let y = 0; y < builderState.layout.floor.height; y += 1) {
+      for (let x = 0; x < builderState.layout.floor.width; x += 1) {
+        if (!occupied.has(`${x}:${y}`)) { position = { x, y }; break outer; }
+      }
+    }
+    const staged = deserializeLayout({
+      id: builderState.layout.id,
+      factory: builderState.layout.factoryId,
+      floor_width: builderState.layout.floor.width,
+      floor_height: builderState.layout.floor.height,
+      unit_system: builderState.layout.floor.unit,
+      machines: [{ ...raw, position_x: position.x, position_y: position.y }],
+      connections: [],
+    }).machines[0];
+    enterEditMode();
+    placeMachine(staged);
+    setUnplacedMachines((items) => items.filter((item) => item.id !== raw.id));
+    setPageMode("editing");
+    setConfigMachineId(raw.id);
+    setConfigMachineIsNew(false);
+  }, [builderState.layout, enterEditMode, placeMachine]);
 
   // Delete a machine from the grid (handled inside MachineConfigPanel now)
 
@@ -626,7 +621,11 @@ export function FactoryTwinPage() {
       pageMode === "editing" &&
       !configConnectionId
     ) {
-      setConfigConnectionId(builderState.selectedConnectionId);
+      const timer = window.setTimeout(
+        () => setConfigConnectionId(builderState.selectedConnectionId),
+        0,
+      );
+      return () => window.clearTimeout(timer);
     }
   }, [builderState.selectedConnectionId, pageMode, configConnectionId]);
 
@@ -705,39 +704,7 @@ export function FactoryTwinPage() {
             Lexicon™
           </h1>
           <div className="flex items-center gap-2">
-            {deleteStep === "idle" && (
-              <button
-                type="button"
-                onClick={handleDeleteRequest}
-                title="Delete Layout"
-                className="icon-button"
-                style={{ color: "var(--red)" }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            )}
-            {deleteStep === "confirming" && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-red-600 font-medium">Are you sure?</span>
-                <button
-                  type="button"
-                  onClick={handleDeleteConfirm}
-                  className="button button-danger"
-                >
-                  Yes, Delete
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDeleteCancel}
-                  className="button button-secondary"
-                >
-                  No
-                </button>
-              </div>
-            )}
-            {deleteStep === "deleting" && (
-              <span className="text-sm text-gray-500">Deleting...</span>
-            )}
+            <button type="button" onClick={() => setShowStructure(true)} className="button button-secondary"><Workflow className="h-4 w-4" /> Structure</button>
             <button
               type="button"
               onClick={handleEditLayout}
@@ -756,6 +723,7 @@ export function FactoryTwinPage() {
             </button>
           </div>
         </div>
+        {unplacedMachines.length > 0 && <div className="flex flex-wrap items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-900"><MapPinOff size={15} /><strong>{unplacedMachines.length} imported machine{unplacedMachines.length === 1 ? " is" : "s are"} waiting for placement.</strong>{unplacedMachines.map((machine) => <button key={machine.id} className="rounded-md border border-amber-300 bg-white px-2 py-1 font-semibold" onClick={() => handlePlaceUnplaced(machine)}>Place {machine.name}</button>)}</div>}
 
         {/* Three-column layout: Inventory | Visualization | Dispatch */}
         <div className="relative flex flex-1 overflow-hidden min-h-0">
@@ -786,6 +754,7 @@ export function FactoryTwinPage() {
               onClose={handleCloseAnalytics}
             />
           )}
+          {showStructure && <div className="fixed inset-0 z-50 overflow-y-auto bg-black/30 p-6" onClick={() => setShowStructure(false)}><div className="mx-auto max-w-4xl space-y-4 rounded-2xl bg-gray-50 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}><div className="flex items-center justify-between"><div><h2 className="font-semibold text-gray-900">Lexicon production structure</h2><p className="text-sm text-gray-500">Lines and ordered processes used by every machine.</p></div><button className="icon-button" onClick={() => setShowStructure(false)}><X size={18} /></button></div><ProductionStructureManager /></div></div>}
         </div>
       </div>
     );
@@ -813,6 +782,7 @@ export function FactoryTwinPage() {
         </h1>
 
         <div className="flex items-center gap-2">
+          <button type="button" onClick={() => setShowStructure(true)} className="button button-secondary"><Workflow className="h-4 w-4" /> Structure</button>
           {/* Save error banner */}
           {saveError && (
             <span className="text-xs text-red-600 mr-2" role="alert">
@@ -907,6 +877,7 @@ export function FactoryTwinPage() {
           onClose={handleCloseConnectionConfig}
         />
       )}
+      {showStructure && <div className="fixed inset-0 z-50 overflow-y-auto bg-black/30 p-6" onClick={() => setShowStructure(false)}><div className="mx-auto max-w-4xl space-y-4 rounded-2xl bg-gray-50 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}><div className="flex items-center justify-between"><div><h2 className="font-semibold text-gray-900">Lexicon production structure</h2><p className="text-sm text-gray-500">Lines and ordered processes used by every machine.</p></div><button className="icon-button" onClick={() => setShowStructure(false)}><X size={18} /></button></div><ProductionStructureManager /></div></div>}
     </div>
   );
 

@@ -69,7 +69,7 @@ export function ProjectsWorkspace() {
         <h1>{mushroom ? "Crop cycles" : "Projects"} <span>{mushroom ? "from compost to cold room." : "from order to delivery."}</span></h1>
         <p className="page-subtitle">One live view of every order, owner, milestone and delivery risk.</p>
       </div>
-      <div className="page-actions"><Link className="button button-secondary" href="/uploads?add=project_stages"><UploadCloud size={14} />Import {mushroom ? "crop" : "project"} stages</Link><Link className="button button-accent" href="/uploads?add=projects">Import {projectPlural} <ArrowRight size={14} /></Link></div>
+      <div className="page-actions"><Link className="button button-secondary" href="/data?add=project_stages"><UploadCloud size={14} />Import {mushroom ? "crop" : "project"} stages</Link><Link className="button button-accent" href="/data?add=projects">Import {projectPlural} <ArrowRight size={14} /></Link></div>
     </header>
 
     <section className="project-source-note">
@@ -111,7 +111,7 @@ export function ProjectsWorkspace() {
             <span className="project-open"><ArrowRight size={16} /></span>
           </Link>;
         })}
-        {!filteredProjects.length && <div className="project-empty"><PackageCheck size={28} /><strong>{projects.length ? `No ${projectPlural} match this view` : `No approved ${projectSingular} source`}</strong><p>{projects.length ? `Change the search or filters to see other ${projectPlural}.` : `Import the ${variant.datasets.projects} sheet to populate this ${variant.terminology.siteSingular}.`}</p>{!projects.length && <Link className="button button-primary" href="/uploads?add=projects">Import {projectPlural} <ArrowRight size={13} /></Link>}</div>}
+        {!filteredProjects.length && <div className="project-empty"><PackageCheck size={28} /><strong>{projects.length ? `No ${projectPlural} match this view` : `No approved ${projectSingular} source`}</strong><p>{projects.length ? `Change the search or filters to see other ${projectPlural}.` : `Import the ${variant.datasets.projects} sheet to populate this ${variant.terminology.siteSingular}.`}</p>{!projects.length && <Link className="button button-primary" href="/data?add=projects">Import {projectPlural} <ArrowRight size={13} /></Link>}</div>}
       </div>
     </section>
   </>;

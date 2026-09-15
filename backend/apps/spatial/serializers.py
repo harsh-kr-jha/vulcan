@@ -1,7 +1,7 @@
 import re
 from datetime import date
 
-from django.db import transaction
+from django.db import models, transaction
 from rest_framework import serializers
 
 from apps.spatial.models import (
@@ -17,6 +17,7 @@ from apps.spatial.models import (
     ParamDataType,
     SpatialMachine,
 )
+from apps.tenancy.models import FactoryMaster
 
 PARAM_KEY_REGEX = re.compile(r"^[a-zA-Z0-9_]+$")
 
@@ -158,12 +159,24 @@ class SpatialMachineSerializer(serializers.ModelSerializer):
     data_stream_id = serializers.UUIDField(required=False, allow_null=True, write_only=True)
     data_stream_channel_id = serializers.UUIDField(required=False, allow_null=True, write_only=True)
     stream_binding = serializers.SerializerMethodField()
+    process_id = serializers.PrimaryKeyRelatedField(
+        source="process",
+        queryset=FactoryMaster.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    process = serializers.SerializerMethodField()
+    line = serializers.SerializerMethodField()
 
     class Meta:
         model = SpatialMachine
         fields = [
             "id",
+            "code",
             "name",
+            "process_id",
+            "process",
+            "line",
             "position_x",
             "position_y",
             "size_width",
@@ -172,12 +185,23 @@ class SpatialMachineSerializer(serializers.ModelSerializer):
             "outputs",
             "status",
             "display_order",
+            "is_active",
+            "metadata",
             "parameters",
             "custom_kpis",
             "data_stream_id",
             "data_stream_channel_id",
             "stream_binding",
         ]
+
+    def get_process(self, obj):
+        if not obj.process_id:
+            return None
+        return {"id": str(obj.process_id), "name": obj.process.name, "code": obj.process.code}
+
+    def get_line(self, obj):
+        line = obj.process.parent if obj.process_id and obj.process.parent_id else None
+        return {"id": str(line.id), "name": line.name, "code": line.code} if line else None
 
     def get_stream_binding(self, obj):
         try:
@@ -193,6 +217,13 @@ class SpatialMachineSerializer(serializers.ModelSerializer):
             "last_received_at": binding.last_received_at,
             "last_error": binding.last_error,
         }
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        process = attrs.get("process", getattr(self.instance, "process", None))
+        if process and process.kind != FactoryMaster.Kind.PROCESS:
+            raise serializers.ValidationError({"process_id": "Choose a manufacturing process."})
+        return attrs
 
 
 class MachineConnectionSerializer(serializers.ModelSerializer):
@@ -288,8 +319,14 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
         # Validate machine positions are within floor bounds
         if floor_width is not None and floor_height is not None:
             for machine_data in machines_data:
-                pos_x = machine_data.get("position_x", 0)
-                pos_y = machine_data.get("position_y", 0)
+                pos_x = machine_data.get("position_x")
+                pos_y = machine_data.get("position_y")
+                if (pos_x is None) != (pos_y is None):
+                    raise serializers.ValidationError(
+                        {"machines": "Machine placement requires both X and Y coordinates."}
+                    )
+                if pos_x is None:
+                    continue
                 if pos_x >= int(floor_width) or pos_y >= int(floor_height):
                     raise serializers.ValidationError(
                         {
@@ -304,6 +341,8 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
         positions = set()
         for machine_data in machines_data:
             pos = (machine_data.get("position_x"), machine_data.get("position_y"))
+            if pos[0] is None or pos[1] is None:
+                continue
             if pos in positions:
                 raise serializers.ValidationError(
                     {
@@ -314,6 +353,16 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                     }
                 )
             positions.add(pos)
+
+        factory = attrs.get("factory", getattr(self.instance, "factory", None))
+        for machine_data in machines_data:
+            process = machine_data.get("process")
+            if process and (
+                process.factory_id != factory.id or process.kind != FactoryMaster.Kind.PROCESS
+            ):
+                raise serializers.ValidationError(
+                    {"machines": "Every assigned process must belong to this factory."}
+                )
 
         # Validate connection source/target references
         if connections_data:
@@ -358,6 +407,45 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["machines"] = SpatialMachineSerializer(
+            instance.machines.filter(
+                is_active=True, position_x__isnull=False, position_y__isnull=False
+            ).select_related("process__parent"),
+            many=True,
+        ).data
+        representation["unplaced_machines"] = SpatialMachineSerializer(
+            instance.machines.filter(is_active=True)
+            .filter(models.Q(position_x__isnull=True) | models.Q(position_y__isnull=True))
+            .select_related("process__parent"),
+            many=True,
+        ).data
+        return representation
+
+    @staticmethod
+    def _ensure_machine_code(layout, machine_data, exclude_id=None):
+        requested = (
+            re.sub(
+                r"[^A-Za-z0-9]+",
+                "-",
+                str(machine_data.get("code") or machine_data.get("name") or "MACHINE"),
+            )
+            .strip("-")
+            .upper()[:60]
+        )
+        base = requested or "MACHINE"
+        candidate = base
+        suffix = 2
+        query = layout.machines.all()
+        if exclude_id:
+            query = query.exclude(id=exclude_id)
+        while query.filter(code__iexact=candidate).exists():
+            tail = f"-{suffix}"
+            candidate = f"{base[: 60 - len(tail)]}{tail}"
+            suffix += 1
+        machine_data["code"] = candidate
+
     @transaction.atomic
     def create(self, validated_data):
         """Create a full layout with nested machines, connections, inventory, dispatch."""
@@ -380,6 +468,7 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
             stream_id = machine_data.pop("data_stream_id", None)
             channel_id = machine_data.pop("data_stream_channel_id", None)
             client_id = machine_data.pop("id", None)
+            self._ensure_machine_code(layout, machine_data)
 
             # Use client-provided ID as the PK if given
             create_kwargs = {"layout": layout, "tenant": tenant, **machine_data}
@@ -478,6 +567,7 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                 if client_id and str(client_id) in existing_machines:
                     # Update existing machine in place (preserves observations)
                     machine = existing_machines[str(client_id)]
+                    self._ensure_machine_code(instance, machine_data, machine.id)
                     for attr, value in machine_data.items():
                         setattr(machine, attr, value)
                     machine.save()
@@ -504,6 +594,7 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                     )
                 else:
                     # Create new machine
+                    self._ensure_machine_code(instance, machine_data)
                     create_kwargs = {
                         "layout": instance,
                         "tenant": tenant,
@@ -533,8 +624,16 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
 
             # Remove machines that are no longer in the incoming data
             for old_id, old_machine in existing_machines.items():
-                if old_id not in incoming_ids:
-                    old_machine.delete()
+                if old_id not in incoming_ids and old_machine.position_x is not None:
+                    old_machine.is_active = False
+                    old_machine.save(update_fields=["is_active", "updated_at"])
+                    try:
+                        binding = old_machine.stream_binding
+                    except Exception:
+                        binding = None
+                    if binding:
+                        binding.status = "paused"
+                        binding.save(update_fields=["status", "updated_at"])
 
             # Replace connections if provided alongside machines
             if connections_data is not None:

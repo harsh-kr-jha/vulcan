@@ -288,8 +288,8 @@ try {
   }
 
   await clickText("a", "Add farm data");
-  await waitFor(`location.pathname === "/uploads"`, "data upload navigation");
-  await waitFor(`document.body.innerText.includes("Import only what is valid")`, "data upload page render");
+  await waitFor(`location.pathname === "/data"`, "data navigation");
+  await waitFor(`document.body.innerText.includes("Import only what is valid")`, "data page render");
   await pause(500);
 
   const imported = [];
@@ -335,7 +335,7 @@ try {
   );
   if (fixtureDir) {
     const expectedNames = imported.map((fixture) => fixture.name);
-    await navigate("/uploads");
+    await navigate("/data");
     for (const name of expectedNames) {
       await waitFor(
         `document.body.innerText.includes(${JSON.stringify(name)})`,

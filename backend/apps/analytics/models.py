@@ -1,7 +1,7 @@
 from django.db import models
 
 from apps.common.models import TenantScopedModel, UUIDModel
-from apps.tenancy.models import Factory, Machine, ProductionLine
+from apps.tenancy.models import Factory
 
 
 class KPIDefinition(UUIDModel, TenantScopedModel):
@@ -24,14 +24,18 @@ class KPIDefinition(UUIDModel, TenantScopedModel):
 class DailyMetric(UUIDModel, TenantScopedModel):
     factory = models.ForeignKey(Factory, on_delete=models.PROTECT, related_name="daily_metrics")
     line = models.ForeignKey(
-        ProductionLine,
+        "tenancy.FactoryMaster",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="daily_metrics",
     )
     machine = models.ForeignKey(
-        Machine, on_delete=models.PROTECT, null=True, blank=True, related_name="daily_metrics"
+        "spatial.SpatialMachine",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="daily_metrics",
     )
     operational_date = models.DateField()
     kpi_code = models.CharField(max_length=80)
@@ -68,8 +72,12 @@ class DailyMetric(UUIDModel, TenantScopedModel):
 
 class LossEvent(UUIDModel, TenantScopedModel):
     factory = models.ForeignKey(Factory, on_delete=models.PROTECT, related_name="loss_events")
-    line = models.ForeignKey(ProductionLine, on_delete=models.PROTECT, null=True, blank=True)
-    machine = models.ForeignKey(Machine, on_delete=models.PROTECT, null=True, blank=True)
+    line = models.ForeignKey(
+        "tenancy.FactoryMaster", on_delete=models.PROTECT, null=True, blank=True
+    )
+    machine = models.ForeignKey(
+        "spatial.SpatialMachine", on_delete=models.PROTECT, null=True, blank=True
+    )
     period_start = models.DateTimeField()
     period_end = models.DateTimeField()
     category = models.CharField(max_length=80)

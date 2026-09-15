@@ -120,38 +120,6 @@ class Membership(UUIDModel, TimestampedModel):
         return f"{self.user} · {self.tenant} · {self.role}"
 
 
-class ProductionLine(UUIDModel, TimestampedModel):
-    tenant = models.ForeignKey(Tenant, on_delete=models.PROTECT)
-    factory = models.ForeignKey(Factory, on_delete=models.PROTECT, related_name="production_lines")
-    name = models.CharField(max_length=120)
-    code = models.CharField(max_length=40)
-    is_active = models.BooleanField(default=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["factory", "code"], name="unique_line_code_per_factory")
-        ]
-        indexes = [models.Index(fields=["tenant", "factory", "is_active"])]
-
-
-class Machine(UUIDModel, TimestampedModel):
-    tenant = models.ForeignKey(Tenant, on_delete=models.PROTECT)
-    factory = models.ForeignKey(Factory, on_delete=models.PROTECT, related_name="machines")
-    line = models.ForeignKey(ProductionLine, on_delete=models.PROTECT, related_name="machines")
-    name = models.CharField(max_length=120)
-    code = models.CharField(max_length=40)
-    is_active = models.BooleanField(default=True)
-    metadata = models.JSONField(default=dict, blank=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["factory", "code"], name="unique_machine_code_per_factory"
-            )
-        ]
-        indexes = [models.Index(fields=["tenant", "factory", "line", "is_active"])]
-
-
 class FactoryMaster(UUIDModel, TimestampedModel):
     """Small, factory-owned reference records used during import validation."""
 

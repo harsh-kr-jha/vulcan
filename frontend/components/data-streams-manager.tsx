@@ -144,8 +144,8 @@ export function DataStreamsManager() {
         payload.fault_probability = Number(faultProbability);
       }
       if (inputs.has("cold_start")) payload.cold_start = coldStart;
-      await api.controlDataStream(stream.id, action, payload);
-      await discover(stream);
+      const result = await api.controlDataStream(stream.id, action, payload);
+      setStreams((current) => current.map((item) => item.id === stream.id ? result.stream : item));
     } catch (cause) {
       const fallback = `Could not ${action.replace("_", " ")} source.`;
       setError(cause instanceof Error ? cause.message : fallback);
@@ -379,7 +379,12 @@ export function DataStreamsManager() {
                     className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-gray-50 p-3"
                   >
                     <div>
-                      <span className="text-sm font-medium">{channel.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{channel.name}</span>
+                        {channel.control_state && channel.control_state !== "unknown" && (
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${channel.control_state === "running" ? "bg-emerald-100 text-emerald-800" : channel.control_state === "paused" ? "bg-amber-100 text-amber-800" : "bg-red-100 text-red-800"}`}>{channel.control_state}</span>
+                        )}
+                      </div>
                       <small className="block text-gray-500">
                         {channel.schema_version} · {channel.schema.fields?.length ?? 0} fields ·{" "}
                         {relativeTime(channel.binding_last_received_at)}
@@ -453,10 +458,20 @@ export function DataStreamsManager() {
                           const Icon = CONTROL_ICONS[item.id] ?? Activity;
                           const key = `${item.id}-${stream.id}-${channel.external_id}`;
                           const working = busy === key;
+                          const runningAction = controls.some((control) => control.id === "start") ? "start" : "resume";
+                          const selected = (channel.control_state === "running" && item.id === runningAction)
+                            || (channel.control_state === "paused" && item.id === "pause")
+                            || (channel.control_state === "stopped" && item.id === "stop");
+                          const selectedStyle = channel.control_state === "running"
+                            ? "stream-control-running"
+                            : channel.control_state === "paused"
+                              ? "stream-control-paused"
+                              : "stream-control-stopped";
                           return (
                             <button
                               key={item.id}
-                              className="button button-secondary"
+                              className={`button button-secondary ${selected ? `stream-control-selected ${selectedStyle}` : ""}`}
+                              aria-pressed={selected}
                               disabled={working}
                               onClick={() => void control(stream, item.id, channel.external_id)}
                             >

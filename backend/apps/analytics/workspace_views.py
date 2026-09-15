@@ -1,6 +1,8 @@
 from datetime import date, timedelta
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -8,6 +10,7 @@ from rest_framework.views import APIView
 
 from apps.alerts.models import ActionItem
 from apps.analytics.cache import invalidate_workspace
+from apps.analytics.live import build_live_dashboard
 from apps.analytics.workspace import (
     DEFAULT_TARGETS,
     answer_question,
@@ -33,6 +36,30 @@ class WorkspaceView(APIView):
         identity = workspace_identity_for_request(request, factory)
         filters = filter_values(request, factory)
         return Response(workspace_snapshot(identity, factory, filters))
+
+
+class LiveDashboardView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        factory = resolve_factory(request)
+        try:
+            return Response(
+                build_live_dashboard(factory, request.query_params.get("machine"))
+            )
+        except ObjectDoesNotExist:
+            return Response(
+                {
+                    "factoryId": str(factory.id),
+                    "layoutExists": False,
+                    "machines": [],
+                    "selectedMachineId": None,
+                    "current": None,
+                    "generatedAt": timezone.now(),
+                }
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=404)
 
 
 class WorkspaceConfigurationView(APIView):

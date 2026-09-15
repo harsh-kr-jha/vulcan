@@ -2,6 +2,7 @@ const PROTECTED_PREFIXES = [
   "/dashboard",
   "/projects",
   "/digital-twin",
+  "/data",
   "/uploads",
   "/performance",
   "/alerts",

@@ -335,6 +335,8 @@ interface LayoutApiPayload {
   unit_system: string;
   machines: Array<{
     id: string;
+    code?: string;
+    process_id?: string | null;
     name: string;
     position_x: number;
     position_y: number;
@@ -401,6 +403,8 @@ function serializeLayout(layout: FactoryLayout): object {
     unit_system: layout.floor.unit,
     machines: layout.machines.map((m) => ({
       id: m.id,
+      code: m.code,
+      process_id: m.processId,
       name: m.name,
       position_x: m.position.x,
       position_y: m.position.y,
@@ -481,6 +485,8 @@ function deserializeLayout(payload: LayoutApiPayload): FactoryLayout {
     },
     machines: payload.machines.map((m) => ({
       id: m.id,
+      code: m.code,
+      processId: m.process_id,
       name: m.name,
       position: { x: m.position_x, y: m.position_y },
       size: (m.size_width && m.size_height && (m.size_width > 1 || m.size_height > 1))

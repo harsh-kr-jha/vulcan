@@ -7,9 +7,7 @@ from .models import (
     EmailIdentity,
     Factory,
     FactoryMaster,
-    Machine,
     Membership,
-    ProductionLine,
     Tenant,
 )
 
@@ -96,24 +94,6 @@ class MembershipAdmin(admin.ModelAdmin):
     search_fields = ("user__username", "user__email", "tenant__name")
     autocomplete_fields = ("user", "tenant", "factories")
     filter_horizontal = ("factories",)
-    readonly_fields = ("id", "created_at", "updated_at")
-
-
-@admin.register(ProductionLine)
-class ProductionLineAdmin(admin.ModelAdmin):
-    list_display = ("name", "code", "factory", "tenant", "is_active")
-    list_filter = ("is_active", "tenant", "factory")
-    search_fields = ("name", "code", "factory__name")
-    autocomplete_fields = ("tenant", "factory")
-    readonly_fields = ("id", "created_at", "updated_at")
-
-
-@admin.register(Machine)
-class MachineAdmin(admin.ModelAdmin):
-    list_display = ("name", "code", "line", "factory", "tenant", "is_active")
-    list_filter = ("is_active", "tenant", "factory", "line")
-    search_fields = ("name", "code", "line__name", "factory__name")
-    autocomplete_fields = ("tenant", "factory", "line")
     readonly_fields = ("id", "created_at", "updated_at")
 
 

@@ -9,13 +9,13 @@ from django.utils import timezone
 from apps.alerts.models import Alert, AlertRule
 from apps.analytics.models import DailyMetric, LossEvent
 from apps.operations.models import Upload, UploadState
+from apps.spatial.models import FactoryLayout, SpatialMachine
 from apps.tenancy.models import (
     Company,
     EmailIdentity,
     Factory,
-    Machine,
+    FactoryMaster,
     Membership,
-    ProductionLine,
     Role,
     Tenant,
 )
@@ -62,21 +62,26 @@ class Command(BaseCommand):
             defaults={"role": Role.FACTORY_MANAGER, "all_factories": True},
         )
 
-        line, _ = ProductionLine.objects.get_or_create(
+        line, _ = FactoryMaster.objects.get_or_create(
             tenant=tenant,
             factory=factory,
+            kind=FactoryMaster.Kind.LINE,
             code="LN-02",
             defaults={"name": "Press Line 02"},
+        )
+        layout, _ = FactoryLayout.objects.get_or_create(
+            tenant=tenant,
+            factory=factory,
+            defaults={"floor_width": 100, "floor_height": 50},
         )
         machine_names = ["Press 01", "Press 02", "Press 04"]
         machines = []
         for index, name in enumerate(machine_names, start=1):
-            machine, _ = Machine.objects.get_or_create(
+            machine, _ = SpatialMachine.objects.get_or_create(
                 tenant=tenant,
-                factory=factory,
-                line=line,
+                layout=layout,
                 code=f"PRS-{index:02}",
-                defaults={"name": name},
+                defaults={"name": name, "position_x": index * 3, "position_y": 3},
             )
             machines.append(machine)
 

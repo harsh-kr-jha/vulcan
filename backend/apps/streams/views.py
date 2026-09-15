@@ -81,13 +81,43 @@ class DataInputStreamViewSet(viewsets.ModelViewSet):
         allowed = {item.get("id") for item in controls if isinstance(item, dict)}
         if not valid_control_action(control_action or "") or control_action not in allowed:
             return Response({"detail": "This source did not advertise that control."}, status=400)
+        channel_id = str(request.data.get("channel_id", ""))
+        if not stream.channels.filter(external_id=channel_id).exists():
+            return Response({"detail": "Choose a channel belonging to this source."}, status=400)
         try:
             result = request_json(
                 stream, f"/v1/control/{control_action}", method="POST", payload=request.data
             )
         except StreamClientError as exc:
             return Response({"detail": str(exc)}, status=502)
-        return Response(result)
+        state_by_action = {
+            "start": "running",
+            "resume": "running",
+            "new_run": "running",
+            "pause": "paused",
+            "stop": "stopped",
+        }
+        reported_state = result.get("state") or result.get("status")
+        next_state = state_by_action.get(control_action, control_action)
+        if isinstance(reported_state, str) and reported_state.lower() in {
+            "running",
+            "paused",
+            "stopped",
+        }:
+            next_state = reported_state.lower()
+        metadata = stream.source_metadata if isinstance(stream.source_metadata, dict) else {}
+        states = metadata.get("controlStates", {})
+        states = states.copy() if isinstance(states, dict) else {}
+        states[channel_id] = next_state
+        stream.source_metadata = {**metadata, "controlStates": states}
+        stream.save(update_fields=["source_metadata", "updated_at"])
+        return Response(
+            {
+                "result": result,
+                "state": next_state,
+                "stream": self.get_serializer(stream).data,
+            }
+        )
 
 
 class MachineStreamBindingView(APIView):

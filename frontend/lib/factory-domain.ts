@@ -76,7 +76,8 @@ export interface Intelligence {
   steamRecovery: SteamRecoveryMetrics;
   customKpiVariables: CustomKpiVariable[];
   customKpis: CustomKpiResult[];
-  digitalTwin: DigitalTwinPayload;
+  /** @deprecated Live machine state is served by /dashboard/live/. */
+  digitalTwin?: DigitalTwinPayload;
   projects: FactoryProject[];
   losses: { productionGapUnits: number; downtimeLostUnits: number; speedLostUnits: number; rejectedUnits: number; reworkUnits: number };
   dataAvailability: Record<DatasetType, number>;
@@ -91,6 +92,23 @@ export interface ValidationIssueData { row: number; field: string; severity: "wa
 export interface ImportValidation { upload: UploadDataset; issues: ValidationIssueData[]; directions: string[]; canImport: boolean }
 export interface ImportPreview { upload: UploadDataset; headers: string[]; rows: Record<string, string | number | null>[]; totalRows: number; mapping: Record<string, string>; omittedFields: string[] }
 export interface WorkspacePayload { state: FactoryState; intelligence: Intelligence }
+
+export type LiveMachineState = "down" | "warning" | "degraded" | "stale" | "running" | "idle" | "no_data";
+export interface LiveMachineSummary {
+  id: string; name: string; code: string; state: LiveMachineState; attention: boolean;
+  lastObservedAt: string | null; placed: boolean;
+  process: { id: string; name: string; code: string } | null;
+  line: { id: string; name: string; code: string } | null;
+}
+export interface LiveVariable { key: string; label: string; value: unknown; unit: string; semantic: string; abnormal: boolean; order: number }
+export interface LiveMachineCurrent extends LiveMachineSummary {
+  source: "stream" | "manual" | null; observedAt: string | null;
+  activity: { runId: string; cycleId: string; cycleNumber: number | null; phase: string; recipeId: string };
+  highlightedVariables: LiveVariable[]; variables: LiveVariable[]; violations: Record<string, boolean>;
+  stream: { name: string; channel: string; status: string; lastReceivedAt: string | null; lastError: string } | null;
+  ml: { enabled: boolean; active: boolean; health: number | null; prediction: { modelId: string; observedAt: string; failureProbability: number | null; label: string; threshold: number | null } | null };
+}
+export interface LiveDashboardPayload { factoryId: string; layoutExists: boolean; machines: LiveMachineSummary[]; selectedMachineId: string | null; current: LiveMachineCurrent | null; generatedAt: string }
 
 const today = new Date();
 const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 6);

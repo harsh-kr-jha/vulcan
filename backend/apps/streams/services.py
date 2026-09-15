@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from apps.spatial.models import MachineParameter, ParamDataType
+from apps.spatial.services import update_machine_current_state
 from apps.streams.client import StreamClientError, request_json, valid_control_action
 from apps.streams.models import (
     BindingStatus,
@@ -146,7 +147,11 @@ def discover_stream(stream: DataInputStream):
         )
         removed_channels.update(active=False)
         stream.capabilities = capabilities
+        existing_metadata = (
+            stream.source_metadata if isinstance(stream.source_metadata, dict) else {}
+        )
         stream.source_metadata = {
+            **existing_metadata,
             "source_id": manifest.get("source_id", ""),
             "name": manifest.get("name", stream.name),
             "version": manifest.get("version", ""),
@@ -454,6 +459,21 @@ def poll_binding(binding: MachineStreamBinding):
     now = timezone.now()
     with transaction.atomic():
         MachineTelemetrySample.objects.bulk_create(samples, ignore_conflicts=True)
+        if samples:
+            latest_sample = max(samples, key=lambda item: item.observed_at)
+            update_machine_current_state(
+                machine=binding.machine,
+                observed_at=latest_sample.observed_at,
+                source="stream",
+                source_record_id=latest_sample.id,
+                values=latest_sample.values,
+                schema_version=latest_sample.schema_version,
+                run_id=latest_sample.run_id,
+                cycle_id=latest_sample.cycle_id,
+                cycle_number=latest_sample.cycle_number,
+                cycle_phase=latest_sample.cycle_phase,
+                recipe_id=latest_sample.recipe_id,
+            )
         for outcome_data in outcomes:
             outcome, created = MachineCycleOutcome.objects.get_or_create(
                 tenant=binding.tenant,

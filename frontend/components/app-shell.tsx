@@ -48,7 +48,7 @@ function Sidebar({ open, closed, onClose, onNavigate }: { open: boolean; closed:
       { href: "/dashboard", label: "Home", icon: LayoutDashboard, module: "dashboard" },
       { href: "/projects", label: variant.navigation.projects, icon: FolderKanban, module: "projects" },
       { href: "/digital-twin", label: variant.navigation["digital-twin"], icon: Workflow, module: "digital-twin" },
-      { href: "/uploads", label: "Data upload", icon: UploadCloud, module: "uploads" },
+      { href: "/data", label: "Data", icon: UploadCloud, module: "uploads" },
       { href: "/performance", label: "Performance", icon: Gauge, module: "performance" },
       { href: "/alerts", label: "Alerts", icon: ShieldAlert, module: "alerts" },
     ].filter((item) => variant.modules.includes(item.module)) },

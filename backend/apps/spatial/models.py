@@ -48,12 +48,21 @@ class FactoryLayout(UUIDModel, TenantScopedModel):
 
 
 class SpatialMachine(UUIDModel, TenantScopedModel):
-    """A machine placed on the factory floor grid."""
+    """The canonical operational machine, optionally placed on the factory floor."""
 
     layout = models.ForeignKey(FactoryLayout, on_delete=models.CASCADE, related_name="machines")
+    code = models.CharField(max_length=60, blank=True)
     name = models.CharField(max_length=50)
-    position_x = models.PositiveIntegerField()  # grid column
-    position_y = models.PositiveIntegerField()  # grid row
+    process = models.ForeignKey(
+        "tenancy.FactoryMaster",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="spatial_machines",
+        limit_choices_to={"kind": "processes"},
+    )
+    position_x = models.PositiveIntegerField(null=True, blank=True)  # grid column
+    position_y = models.PositiveIntegerField(null=True, blank=True)  # grid row
     size_width = models.PositiveIntegerField(default=1)  # tiles wide
     size_height = models.PositiveIntegerField(default=1)  # tiles tall
     inputs = models.JSONField(default=list, blank=True)  # [{id, label, unitType}]
@@ -64,6 +73,8 @@ class SpatialMachine(UUIDModel, TenantScopedModel):
         default=MachineOperationalStatus.NO_DATA,
     )
     display_order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    metadata = models.JSONField(default=dict, blank=True)
 
     class Meta:
         constraints = [
@@ -71,13 +82,48 @@ class SpatialMachine(UUIDModel, TenantScopedModel):
                 fields=["layout", "position_x", "position_y"],
                 name="unique_machine_position_per_layout",
             ),
+            models.UniqueConstraint(
+                fields=["layout", "code"],
+                condition=~models.Q(code=""),
+                name="unique_spatial_machine_code_per_layout",
+            ),
         ]
         indexes = [
             models.Index(fields=["tenant", "layout"]),
         ]
 
     def __str__(self) -> str:
-        return f"{self.name} @ ({self.position_x}, {self.position_y})"
+        placement = (
+            f"({self.position_x}, {self.position_y})"
+            if self.position_x is not None and self.position_y is not None
+            else "unplaced"
+        )
+        return f"{self.name} @ {placement}"
+
+
+class MachineCurrentState(UUIDModel, TenantScopedModel):
+    """Latest accepted observation for a machine; raw source records remain immutable."""
+
+    class Source(models.TextChoices):
+        STREAM = "stream", "Data stream"
+        MANUAL = "manual", "Manual / QR entry"
+
+    machine = models.OneToOneField(
+        SpatialMachine, on_delete=models.CASCADE, related_name="current_state"
+    )
+    observed_at = models.DateTimeField()
+    source = models.CharField(max_length=20, choices=Source.choices)
+    source_record_id = models.UUIDField()
+    schema_version = models.CharField(max_length=80, blank=True)
+    run_id = models.CharField(max_length=100, blank=True)
+    cycle_id = models.CharField(max_length=100, blank=True)
+    cycle_number = models.PositiveBigIntegerField(null=True, blank=True)
+    cycle_phase = models.CharField(max_length=40, blank=True)
+    recipe_id = models.CharField(max_length=100, blank=True)
+    values = models.JSONField(default=dict)
+
+    class Meta:
+        indexes = [models.Index(fields=["tenant", "-observed_at"])]
 
 
 class MachineParameter(UUIDModel):

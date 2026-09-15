@@ -68,6 +68,8 @@ export interface StreamBindingSummary {
 
 export interface MachineNode {
   id: string;
+  code?: string;
+  processId?: string | null;
   name: string; // 1–50 chars
   position: GridPosition;
   size?: { width: number; height: number }; // tiles occupied (e.g. 2×3)

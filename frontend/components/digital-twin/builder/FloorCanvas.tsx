@@ -171,22 +171,22 @@ function GridLayer({ floor, viewBox }: GridLayerProps) {
 
   return (
     <g className="grid-layer">
-      {/* Grid lines */}
-      <g className="grid-lines">
-        {verticalLines}
-        {horizontalLines}
-      </g>
-      {/* Floor boundary */}
+      {/* Floor boundary background */}
       <rect
         x={0}
         y={0}
         width={floor.width}
         height={floor.height}
-        fill="none"
-        stroke="#9ca3af"
+        fill="#ffffff"
+        stroke="#94a3b8"
         strokeWidth={2}
         vectorEffect="non-scaling-stroke"
       />
+      {/* Grid lines */}
+      <g className="grid-lines">
+        {verticalLines}
+        {horizontalLines}
+      </g>
       {/* Axis labels */}
       <g className="axis-labels">
         {xLabels}
@@ -422,6 +422,42 @@ function InteractionLayer({ floor, viewBox, svgRef, isEditMode, onAreaSelected }
   );
 }
 
+/**
+ * Convert screen client coordinates to exact SVG user-space coordinates
+ * using the SVG element's current transformation matrix (CTM).
+ * Accurately accounts for preserveAspectRatio letterboxing and scaling.
+ */
+function screenToSvgCoords(
+  svg: SVGSVGElement,
+  clientX: number,
+  clientY: number,
+  fallbackVb?: ViewBox
+): { x: number; y: number } {
+  try {
+    const ctm = svg.getScreenCTM();
+    if (ctm) {
+      const inv = ctm.inverse();
+      const pt = svg.createSVGPoint();
+      pt.x = clientX;
+      pt.y = clientY;
+      const transformed = pt.matrixTransform(inv);
+      if (Number.isFinite(transformed.x) && Number.isFinite(transformed.y)) {
+        return { x: transformed.x, y: transformed.y };
+      }
+    }
+  } catch {
+    // Fallback below
+  }
+  if (fallbackVb) {
+    const rect = svg.getBoundingClientRect();
+    return {
+      x: ((clientX - rect.left) / (rect.width || 1)) * fallbackVb.width + fallbackVb.x,
+      y: ((clientY - rect.top) / (rect.height || 1)) * fallbackVb.height + fallbackVb.y,
+    };
+  }
+  return { x: 0, y: 0 };
+}
+
 // ---------------------------------------------------------------------------
 // FloorCanvas – main SVG component
 // ---------------------------------------------------------------------------
@@ -478,33 +514,39 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
 
   // Track pointer state for panning
   const [isPanning, setIsPanning] = useState(false);
-  const panStart = useRef<{ x: number; y: number; vbX: number; vbY: number }>({
-    x: 0,
-    y: 0,
+  const panStart = useRef<{ screenX: number; screenY: number; vbX: number; vbY: number }>({
+    screenX: 0,
+    screenY: 0,
     vbX: 0,
     vbY: 0,
   });
 
-  // Clamp viewBox to floor boundaries (with axis padding allowance and zoom-out margin)
+  // Clamp viewBox to floor boundaries (symmetric center-based allowance prevents corner sticking)
   const clampViewBox = useCallback(
     (vb: ViewBox): ViewBox => {
       const baseWidth = floor.width + AXIS_PADDING * 2;
       const baseHeight = floor.height + AXIS_PADDING * 2;
-      const maxWidth = baseWidth * 2.5;
-      const maxHeight = baseHeight * 2.5;
+      const minWidth = MIN_VIEWPORT_CELLS;
+      const maxWidth = baseWidth * 3.5;
 
-      const width = Math.max(MIN_VIEWPORT_CELLS, Math.min(vb.width, maxWidth));
-      const height = Math.max(MIN_VIEWPORT_CELLS, Math.min(vb.height, maxHeight));
+      const width = Math.max(minWidth, Math.min(vb.width, maxWidth));
+      const aspectRatio = baseHeight / baseWidth;
+      const height = width * aspectRatio;
 
-      const marginX = floor.width * 0.5;
-      const marginY = floor.height * 0.5;
-      const minX = -AXIS_PADDING - marginX;
-      const minY = -AXIS_PADDING - marginY;
-      const maxX = floor.width + AXIS_PADDING + marginX - width;
-      const maxY = floor.height + AXIS_PADDING + marginY - height;
+      const centerX = floor.width / 2;
+      const centerY = floor.height / 2;
 
-      const x = Math.max(Math.min(minX, maxX), Math.min(Math.max(minX, maxX), vb.x));
-      const y = Math.max(Math.min(minY, maxY), Math.min(Math.max(minY, maxY), vb.y));
+      // Allowance ensures user can navigate across all sides of the floor without inverting bounds
+      const allowanceX = Math.max(floor.width * 1.2, width * 0.85);
+      const allowanceY = Math.max(floor.height * 1.2, height * 0.85);
+
+      const minX = centerX - allowanceX - width / 2;
+      const maxX = centerX + allowanceX - width / 2;
+      const minY = centerY - allowanceY - height / 2;
+      const maxY = centerY + allowanceY - height / 2;
+
+      const x = Math.max(minX, Math.min(maxX, vb.x));
+      const y = Math.max(minY, Math.min(maxY, vb.y));
 
       return { x, y, width, height };
     },
@@ -530,19 +572,25 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
       // Pinch-to-zoom on trackpad sends ctrlKey + small deltaY
       const isPinch = e.ctrlKey;
       const zoomFactor = isPinch
-        ? (e.deltaY > 0 ? 1.05 : 0.95) // Finer zoom for pinch
-        : (e.deltaY > 0 ? 1.1 : 0.9);
+        ? (e.deltaY > 0 ? 1.05 : 0.95)
+        : (e.deltaY > 0 ? 1.15 : 0.87);
 
-      // Get cursor position in SVG coordinates
-      const rect = svg.getBoundingClientRect();
-      const cursorX = ((e.clientX - rect.left) / rect.width) * vb.width + vb.x;
-      const cursorY = ((e.clientY - rect.top) / rect.height) * vb.height + vb.y;
+      // Get exact cursor position in SVG coordinates via CTM
+      const coords = screenToSvgCoords(svg, e.clientX, e.clientY, vb);
+      const cursorX = coords.x;
+      const cursorY = coords.y;
 
-      const newWidth = vb.width * zoomFactor;
-      const newHeight = vb.height * zoomFactor;
+      const baseWidth = floor.width + AXIS_PADDING * 2;
+      const minWidth = MIN_VIEWPORT_CELLS;
+      const maxWidth = baseWidth * 3.5;
 
-      const newX = cursorX - (cursorX - vb.x) * zoomFactor;
-      const newY = cursorY - (cursorY - vb.y) * zoomFactor;
+      const targetWidth = vb.width * zoomFactor;
+      const newWidth = Math.max(minWidth, Math.min(targetWidth, maxWidth));
+      const actualFactor = newWidth / vb.width;
+      const newHeight = vb.height * actualFactor;
+
+      const newX = cursorX - (cursorX - vb.x) * actualFactor;
+      const newY = cursorY - (cursorY - vb.y) * actualFactor;
 
       setViewBox(
         clampViewBoxRef.current({
@@ -557,28 +605,23 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
     // { passive: false } is critical — allows preventDefault() to stop page scroll
     svg.addEventListener("wheel", handleNativeWheel, { passive: false });
     return () => svg.removeEventListener("wheel", handleNativeWheel);
-  }, [setViewBox]);
+  }, [setViewBox, floor.width]);
 
-  // Pan handlers — LEFT click drag to pan (no threshold needed since placement uses right click)
+  // Pan handlers — LEFT click or MIDDLE click drag to pan
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      // Middle mouse button: always pan
-      if (e.button === 1) {
-        e.preventDefault();
+      if (e.button === 0 || e.button === 1) {
         setIsPanning(true);
-        panStart.current = { x: e.clientX, y: e.clientY, vbX: viewBox.x, vbY: viewBox.y };
+        panStart.current = {
+          screenX: e.clientX,
+          screenY: e.clientY,
+          vbX: viewBoxRef.current.x,
+          vbY: viewBoxRef.current.y,
+        };
         e.currentTarget.setPointerCapture(e.pointerId);
-        return;
-      }
-      // Left click: always pan (placement is on right click now)
-      if (e.button === 0) {
-        setIsPanning(true);
-        panStart.current = { x: e.clientX, y: e.clientY, vbX: viewBox.x, vbY: viewBox.y };
-        e.currentTarget.setPointerCapture(e.pointerId);
-        return;
       }
     },
-    [viewBox.x, viewBox.y]
+    []
   );
 
   const handlePointerMove = useCallback(
@@ -587,23 +630,40 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
       const svg = svgRef.current;
       if (!svg) return;
 
-      const rect = svg.getBoundingClientRect();
-      const dx = ((e.clientX - panStart.current.x) / rect.width) * viewBox.width;
-      const dy = ((e.clientY - panStart.current.y) / rect.height) * viewBox.height;
+      const dxPixels = e.clientX - panStart.current.screenX;
+      const dyPixels = e.clientY - panStart.current.screenY;
+
+      // 1:1 pixel tracking using SVG CTM scale
+      const ctm = svg.getScreenCTM();
+      let scaleX = viewBoxRef.current.width / (svg.clientWidth || 1);
+      let scaleY = viewBoxRef.current.height / (svg.clientHeight || 1);
+
+      if (ctm && ctm.a !== 0 && ctm.d !== 0) {
+        scaleX = 1 / Math.abs(ctm.a);
+        scaleY = 1 / Math.abs(ctm.d);
+      }
+
+      const dxSvg = dxPixels * scaleX;
+      const dySvg = dyPixels * scaleY;
 
       setViewBox(
-        clampViewBox({
-          ...viewBox,
-          x: panStart.current.vbX - dx,
-          y: panStart.current.vbY - dy,
+        clampViewBoxRef.current({
+          ...viewBoxRef.current,
+          x: panStart.current.vbX - dxSvg,
+          y: panStart.current.vbY - dySvg,
         })
       );
     },
-    [isPanning, viewBox, clampViewBox, setViewBox]
+    [isPanning, setViewBox]
   );
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {
     setIsPanning(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
   }, []);
 
   // Fullscreen toggle
@@ -631,8 +691,10 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
     const factor = 0.8;
     const centerX = vb.x + vb.width / 2;
     const centerY = vb.y + vb.height / 2;
-    const newWidth = vb.width * factor;
-    const newHeight = vb.height * factor;
+    const baseWidth = floor.width + AXIS_PADDING * 2;
+    const newWidth = Math.max(MIN_VIEWPORT_CELLS, Math.min(vb.width * factor, baseWidth * 3.5));
+    const actualFactor = newWidth / vb.width;
+    const newHeight = vb.height * actualFactor;
     setViewBox(
       clampViewBoxRef.current({
         x: centerX - newWidth / 2,
@@ -641,15 +703,17 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
         height: newHeight,
       })
     );
-  }, [setViewBox]);
+  }, [floor.width, setViewBox]);
 
   const handleZoomOut = useCallback(() => {
     const vb = viewBoxRef.current;
     const factor = 1.25;
     const centerX = vb.x + vb.width / 2;
     const centerY = vb.y + vb.height / 2;
-    const newWidth = vb.width * factor;
-    const newHeight = vb.height * factor;
+    const baseWidth = floor.width + AXIS_PADDING * 2;
+    const newWidth = Math.max(MIN_VIEWPORT_CELLS, Math.min(vb.width * factor, baseWidth * 3.5));
+    const actualFactor = newWidth / vb.width;
+    const newHeight = vb.height * actualFactor;
     setViewBox(
       clampViewBoxRef.current({
         x: centerX - newWidth / 2,
@@ -658,14 +722,16 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
         height: newHeight,
       })
     );
-  }, [setViewBox]);
+  }, [floor.width, setViewBox]);
 
   const handleResetZoom = useCallback(() => {
+    const baseWidth = floor.width + AXIS_PADDING * 2;
+    const baseHeight = floor.height + AXIS_PADDING * 2;
     setViewBox({
       x: -AXIS_PADDING,
       y: -AXIS_PADDING,
-      width: floor.width + AXIS_PADDING * 2,
-      height: floor.height + AXIS_PADDING * 2,
+      width: baseWidth,
+      height: baseHeight,
     });
   }, [floor.width, floor.height, setViewBox]);
 

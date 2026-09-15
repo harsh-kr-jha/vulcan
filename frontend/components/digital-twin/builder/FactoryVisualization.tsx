@@ -95,6 +95,42 @@ function computeEdgePoint(
   return { x: center.x + dx * t, y: center.y + dy * t };
 }
 
+/**
+ * Convert screen client coordinates to exact SVG user-space coordinates
+ * using the SVG element's current transformation matrix (CTM).
+ * Accurately accounts for preserveAspectRatio letterboxing and scaling.
+ */
+function screenToSvgCoords(
+  svg: SVGSVGElement,
+  clientX: number,
+  clientY: number,
+  fallbackVb?: ViewBox
+): { x: number; y: number } {
+  try {
+    const ctm = svg.getScreenCTM();
+    if (ctm) {
+      const inv = ctm.inverse();
+      const pt = svg.createSVGPoint();
+      pt.x = clientX;
+      pt.y = clientY;
+      const transformed = pt.matrixTransform(inv);
+      if (Number.isFinite(transformed.x) && Number.isFinite(transformed.y)) {
+        return { x: transformed.x, y: transformed.y };
+      }
+    }
+  } catch {
+    // Fallback below
+  }
+  if (fallbackVb) {
+    const rect = svg.getBoundingClientRect();
+    return {
+      x: ((clientX - rect.left) / (rect.width || 1)) * fallbackVb.width + fallbackVb.x,
+      y: ((clientY - rect.top) / (rect.height || 1)) * fallbackVb.height + fallbackVb.y,
+    };
+  }
+  return { x: 0, y: 0 };
+}
+
 // ---------------------------------------------------------------------------
 // FactoryVisualization – SVG top-view grid layout
 // ---------------------------------------------------------------------------
@@ -136,25 +172,33 @@ export function FactoryVisualization({
     setViewBox(baseViewBox);
   }, [baseViewBox]);
 
-  // Zoom bounds
-  const minViewBoxWidth = Math.max(1.5, Math.min(floor.width, floor.height) * 0.08);
-  const maxViewBoxWidth = Math.max(floor.width, floor.height) * 3 + PADDING * 2;
+  // Zoom bounds: allow zooming in down to 10% of floor size and out to 3.5x base size
+  const minViewBoxWidth = Math.max(1.5, Math.min(floor.width, floor.height) * 0.1);
+  const maxViewBoxWidth = (floor.width + PADDING * 2) * 3.5;
 
+  // Robust symmetric clamp: viewport center stays within an allowance of the floor center.
+  // minX is guaranteed to be strictly less than maxX for any positive width (no corner stick).
   const clampViewBox = useCallback(
     (vb: ViewBox): ViewBox => {
       const aspectRatio = baseViewBox.height / baseViewBox.width;
       const width = Math.max(minViewBoxWidth, Math.min(vb.width, maxViewBoxWidth));
       const height = width * aspectRatio;
 
-      const marginX = floor.width * 0.5;
-      const marginY = floor.height * 0.5;
-      const minX = -PADDING - marginX;
-      const maxX = floor.width + PADDING + marginX - width;
-      const minY = -PADDING - marginY;
-      const maxY = floor.height + PADDING + marginY - height;
+      const centerX = floor.width / 2;
+      const centerY = floor.height / 2;
 
-      const x = Math.max(Math.min(minX, maxX), Math.min(Math.max(minX, maxX), vb.x));
-      const y = Math.max(Math.min(minY, maxY), Math.min(Math.max(minY, maxY), vb.y));
+      // Allowance allows comfortable panning across the entire floor without drifting into infinite void
+      const allowanceX = Math.max(floor.width * 1.2, width * 0.85);
+      const allowanceY = Math.max(floor.height * 1.2, height * 0.85);
+
+      const minX = centerX - allowanceX - width / 2;
+      const maxX = centerX + allowanceX - width / 2;
+      const minY = centerY - allowanceY - height / 2;
+      const maxY = centerY + allowanceY - height / 2;
+
+      const x = Math.max(minX, Math.min(maxX, vb.x));
+      const y = Math.max(minY, Math.min(maxY, vb.y));
+
       return { x, y, width, height };
     },
     [baseViewBox.width, baseViewBox.height, floor.width, floor.height, minViewBoxWidth, maxViewBoxWidth]
@@ -169,24 +213,27 @@ export function FactoryVisualization({
       const svg = svgRef.current;
       if (!svg) return;
       const vb = viewBoxRef.current;
-      const rect = svg.getBoundingClientRect();
 
-      let cursorX: number;
-      let cursorY: number;
+      let focalX: number;
+      let focalY: number;
+
       if (clientX !== undefined && clientY !== undefined) {
-        cursorX = ((clientX - rect.left) / rect.width) * vb.width + vb.x;
-        cursorY = ((clientY - rect.top) / rect.height) * vb.height + vb.y;
+        const coords = screenToSvgCoords(svg, clientX, clientY, vb);
+        focalX = coords.x;
+        focalY = coords.y;
       } else {
-        cursorX = vb.x + vb.width / 2;
-        cursorY = vb.y + vb.height / 2;
+        focalX = vb.x + vb.width / 2;
+        focalY = vb.y + vb.height / 2;
       }
 
-      const newWidth = Math.min(maxViewBoxWidth, Math.max(minViewBoxWidth, vb.width * factor));
+      const targetWidth = vb.width * factor;
+      const newWidth = Math.max(minViewBoxWidth, Math.min(targetWidth, maxViewBoxWidth));
       const actualFactor = newWidth / vb.width;
       const newHeight = vb.height * actualFactor;
 
-      const newX = cursorX - (cursorX - vb.x) * actualFactor;
-      const newY = cursorY - (cursorY - vb.y) * actualFactor;
+      // Invariant: focal point remains under the exact same screen pixel
+      const newX = focalX - (focalX - vb.x) * actualFactor;
+      const newY = focalY - (focalY - vb.y) * actualFactor;
 
       setViewBox(clampViewBoxRef.current({ x: newX, y: newY, width: newWidth, height: newHeight }));
     },
@@ -214,9 +261,9 @@ export function FactoryVisualization({
     return () => svg.removeEventListener("wheel", handleWheel);
   }, [zoomAtPoint]);
 
-  // Pointer drag to pan
+  // Pointer drag to pan (1:1 pixel tracking using CTM)
   const [isPanning, setIsPanning] = useState(false);
-  const panStartRef = useRef({ x: 0, y: 0, vbX: 0, vbY: 0 });
+  const panStartRef = useRef({ screenX: 0, screenY: 0, vbX: 0, vbY: 0 });
   const hasDraggedRef = useRef(false);
 
   const handlePointerDown = useCallback(
@@ -224,11 +271,16 @@ export function FactoryVisualization({
       if (e.button === 0 || e.button === 1) {
         setIsPanning(true);
         hasDraggedRef.current = false;
-        panStartRef.current = { x: e.clientX, y: e.clientY, vbX: viewBox.x, vbY: viewBox.y };
+        panStartRef.current = {
+          screenX: e.clientX,
+          screenY: e.clientY,
+          vbX: viewBoxRef.current.x,
+          vbY: viewBoxRef.current.y,
+        };
         e.currentTarget.setPointerCapture(e.pointerId);
       }
     },
-    [viewBox.x, viewBox.y]
+    []
   );
 
   const handlePointerMove = useCallback(
@@ -237,25 +289,35 @@ export function FactoryVisualization({
       const svg = svgRef.current;
       if (!svg) return;
 
-      const dxPixels = e.clientX - panStartRef.current.x;
-      const dyPixels = e.clientY - panStartRef.current.y;
+      const dxPixels = e.clientX - panStartRef.current.screenX;
+      const dyPixels = e.clientY - panStartRef.current.screenY;
+
       if (Math.hypot(dxPixels, dyPixels) > 4) {
         hasDraggedRef.current = true;
       }
 
-      const rect = svg.getBoundingClientRect();
-      const dx = (dxPixels / rect.width) * viewBox.width;
-      const dy = (dyPixels / rect.height) * viewBox.height;
+      // Convert pixel delta to SVG units using SVG CTM scale
+      const ctm = svg.getScreenCTM();
+      let scaleX = viewBoxRef.current.width / (svg.clientWidth || 1);
+      let scaleY = viewBoxRef.current.height / (svg.clientHeight || 1);
+
+      if (ctm && ctm.a !== 0 && ctm.d !== 0) {
+        scaleX = 1 / Math.abs(ctm.a);
+        scaleY = 1 / Math.abs(ctm.d);
+      }
+
+      const dxSvg = dxPixels * scaleX;
+      const dySvg = dyPixels * scaleY;
 
       setViewBox(
-        clampViewBox({
-          ...viewBox,
-          x: panStartRef.current.vbX - dx,
-          y: panStartRef.current.vbY - dy,
+        clampViewBoxRef.current({
+          ...viewBoxRef.current,
+          x: panStartRef.current.vbX - dxSvg,
+          y: panStartRef.current.vbY - dySvg,
         })
       );
     },
-    [isPanning, viewBox, clampViewBox]
+    [isPanning]
   );
 
   const handlePointerUp = useCallback((e: React.PointerEvent<SVGSVGElement>) => {

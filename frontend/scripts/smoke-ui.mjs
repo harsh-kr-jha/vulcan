@@ -258,9 +258,7 @@ try {
   await waitFor(`location.pathname === "/dashboard"`, "authenticated dashboard navigation", 300);
   await selectFarm("Musroom");
   const requiredWidgets = [
-    "Harvest against plan",
-    "Crop loss and room interruptions",
-    "Priority exceptions",
+    "Growing-room conditions",
   ];
   for (const title of requiredWidgets) await waitFor(`document.body.innerText.includes(${JSON.stringify(title)})`, `widget “${title}”`);
   const conditionsUseFullRow = await evaluate(`(() => {
@@ -330,7 +328,7 @@ try {
   await navigate("/dashboard");
   await selectFarm("Musroom");
   await waitFor(
-    `document.body.innerText.includes("Priority exceptions")`,
+    `document.body.innerText.includes("Growing-room conditions")`,
     "command-centre render",
   );
   if (fixtureDir) {
@@ -346,7 +344,7 @@ try {
     await navigate("/dashboard");
     await selectFarm("Musroom");
     await waitFor(
-      `document.body.innerText.includes("Priority exceptions")`,
+      `document.body.innerText.includes("Growing-room conditions")`,
       "command-centre render after persistence check",
     );
   }

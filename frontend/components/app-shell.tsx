@@ -8,6 +8,7 @@ import {
   ChevronDown,
   CircleHelp,
   ClipboardList,
+  Clock,
   Database,
   Factory,
   Gauge,
@@ -15,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
+  ShieldAlert,
   Sigma,
   Settings2,
   Sparkles,
@@ -24,8 +26,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFactory } from "@/lib/factory-context";
+import type { IntelligenceAlert } from "@/lib/factory-domain";
 
 const navGroups = [
   { label: "Workspace", items: [
@@ -133,6 +136,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     setTimeout(() => setAlertFeedback(""), 3000);
   }
 
+  useEffect(() => {
+    if (!notificationsOpen) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setNotificationsOpen(false);
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [notificationsOpen]);
+
   return <div className={`app-shell sidebar-is-${sidebarMode}`}>
     <Sidebar open={sidebarMode === "open"} closed={sidebarMode === "closed"} onClose={closeSidebar} onNavigate={closeAfterNavigation} />
     <button className="sidebar-toggle" onClick={toggleSidebar} aria-label="Open or close sidebar"><PanelLeftClose className="sidebar-close-icon" size={17} /><PanelLeftOpen className="sidebar-open-icon" size={17} /></button>
@@ -159,120 +171,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>}
 
-          <button className="icon-button notification-button" aria-label="Notifications & Alerts" onClick={() => { setNotificationsOpen((value) => !value); setActionsOpen(false); setProfileOpen(false); }}>
+          <button
+            className="icon-button notification-button"
+            aria-label={`Notifications & Alerts (${activeAlerts.length} active)`}
+            onClick={() => {
+              setNotificationsOpen((value) => !value);
+              setActionsOpen(false);
+              setProfileOpen(false);
+            }}
+          >
             <Bell size={19} />
-            {activeAlerts.length > 0 && <span className="action-counter" style={{ background: criticalAlerts.length > 0 ? "var(--color-danger, #d9534f)" : "var(--color-accent, #337ab7)" }}>{activeAlerts.length}</span>}
+            {activeAlerts.length > 0 && (
+              <span
+                className="action-counter"
+                style={{
+                  background:
+                    criticalAlerts.length > 0
+                      ? "var(--red)"
+                      : "var(--green)",
+                }}
+              >
+                {activeAlerts.length > 99 ? "99+" : activeAlerts.length}
+              </span>
+            )}
           </button>
-          {notificationsOpen && <div className="topbar-popover notification-popover" style={{ width: "380px", maxHeight: "520px", display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "8px", borderBottom: "1px solid var(--color-border, #e5e7eb)" }}>
-              <div>
-                <strong>Alert Center</strong>
-                <small style={{ display: "block", color: "var(--color-text-muted)", fontSize: "11px" }}>{activeAlerts.length} active exceptions</small>
-              </div>
-              <div style={{ display: "flex", gap: "4px" }}>
-                {(["active", "critical", "all"] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setAlertFilter(tab)}
-                    style={{
-                      padding: "2px 8px",
-                      fontSize: "11px",
-                      borderRadius: "12px",
-                      border: "1px solid",
-                      borderColor: alertFilter === tab ? "var(--color-primary, #416f57)" : "transparent",
-                      background: alertFilter === tab ? "rgba(65,111,87,0.12)" : "transparent",
-                      color: alertFilter === tab ? "var(--color-primary, #416f57)" : "var(--color-text-muted)",
-                      cursor: "pointer",
-                      textTransform: "capitalize",
-                      fontWeight: alertFilter === tab ? 600 : 400,
-                    }}
-                  >
-                    {tab} {tab === "active" ? `(${activeAlerts.length})` : tab === "critical" ? `(${criticalAlerts.length})` : `(${allAlerts.length})`}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {alertFeedback && <div style={{ padding: "6px 10px", background: "rgba(65,111,87,0.1)", color: "var(--color-primary, #416f57)", fontSize: "11px", borderRadius: "4px", margin: "6px 0", display: "flex", alignItems: "center", gap: "6px" }}>
-              <Check size={12} /><span>{alertFeedback}</span>
-            </div>}
-
-            <div style={{ overflowY: "auto", flex: 1, paddingRight: "2px", marginTop: "6px" }}>
-              {displayedAlerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  style={{
-                    padding: "10px",
-                    borderRadius: "6px",
-                    marginBottom: "8px",
-                    background: alert.status === "resolved" ? "rgba(0,0,0,0.02)" : "var(--color-card-bg, #ffffff)",
-                    border: "1px solid var(--color-border, #e5e7eb)",
-                    borderLeft: `4px solid ${alert.severity === "critical" ? "#e53e3e" : alert.severity === "high" ? "#dd6b20" : "#3182ce"}`,
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "6px" }}>
-                    <strong style={{ fontSize: "12px", color: alert.status === "resolved" ? "var(--color-text-muted)" : "inherit" }}>
-                      {alert.title}
-                    </strong>
-                    <span style={{ fontSize: "10px", padding: "1px 5px", borderRadius: "3px", textTransform: "uppercase", background: alert.severity === "critical" ? "rgba(229,62,62,0.1)" : "rgba(0,0,0,0.06)", color: alert.severity === "critical" ? "#e53e3e" : "inherit" }}>
-                      {alert.severity}
-                    </span>
-                  </div>
-                  <p style={{ fontSize: "11px", color: "var(--color-text-muted)", margin: "3px 0 6px 0" }}>
-                    <b>{alert.asset}</b> · Observed: {alert.observed}
-                  </p>
-                  {alert.recommendation && (
-                    <p style={{ fontSize: "11px", margin: "0 0 8px 0", color: "var(--color-text-secondary, #4a5568)", lineHeight: "1.3" }}>
-                      {alert.recommendation}
-                    </p>
-                  )}
-                  <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", alignItems: "center", marginTop: "4px" }}>
-                    {alert.status === "new" && (
-                      <button
-                        className="button button-secondary"
-                        style={{ padding: "2px 6px", fontSize: "10px", height: "auto" }}
-                        onClick={() => handleAlertStatus(alert.id, "acknowledged", alert.title)}
-                      >
-                        <Check size={11} /> Acknowledge
-                      </button>
-                    )}
-                    {alert.status !== "resolved" && (
-                      <button
-                        className="button button-primary"
-                        style={{ padding: "2px 6px", fontSize: "10px", height: "auto" }}
-                        onClick={() => handleAlertStatus(alert.id, "resolved", alert.title)}
-                      >
-                        <CheckCircle2 size={11} /> Resolve
-                      </button>
-                    )}
-                    {alert.status !== "dismissed" && alert.status !== "resolved" && (
-                      <button
-                        className="button button-secondary"
-                        style={{ padding: "2px 6px", fontSize: "10px", height: "auto" }}
-                        onClick={() => handleAlertStatus(alert.id, "dismissed", alert.title)}
-                      >
-                        Dismiss
-                      </button>
-                    )}
-                    <button
-                      className="button button-secondary"
-                      style={{ padding: "2px 6px", fontSize: "10px", height: "auto" }}
-                      onClick={() => handleCreateAction(alert.id, alert.title)}
-                    >
-                      <Sparkles size={11} /> Action
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {!displayedAlerts.length && (
-                <div style={{ padding: "24px 12px", textAlign: "center", color: "var(--color-text-muted)" }}>
-                  <CheckCircle2 size={24} style={{ margin: "0 auto 8px auto", color: "var(--color-primary, #416f57)" }} />
-                  <p style={{ margin: 0, fontWeight: 500 }}>All nominal</p>
-                  <small>No {alertFilter !== "all" ? alertFilter : ""} alerts for this factory.</small>
-                </div>
-              )}
-            </div>
-          </div>}
 
           <button className="profile-button" aria-label="Open workspace menu" onClick={() => { setProfileOpen((value) => !value); setNotificationsOpen(false); setActionsOpen(false); }}>
             <span className="profile-avatar">MFT</span>
@@ -286,5 +208,235 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
       <main className="page-content">{children}</main>
     </div>
+
+    {notificationsOpen && (
+      <div
+        className="modal-backdrop alert-dialog-backdrop"
+        onClick={() => setNotificationsOpen(false)}
+        role="presentation"
+      >
+        <div
+          className="alert-center-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="alert-dialog-title"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="alert-dialog-header">
+            <div>
+              <div className="alert-dialog-tag">
+                <ShieldAlert size={14} />
+                <span>Operational Intelligence · Alert Center</span>
+              </div>
+              <h2 id="alert-dialog-title">Active Factory Exceptions</h2>
+              <p>Real-time anomaly detection, machine variances, and guided resolution for active factory.</p>
+            </div>
+            <button
+              type="button"
+              className="alert-dialog-close"
+              onClick={() => setNotificationsOpen(false)}
+              aria-label="Close Alert Center"
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="alert-dialog-toolbar">
+            <div className="alert-filter-tabs">
+              {(["active", "critical", "all"] as const).map((tab) => {
+                const count =
+                  tab === "active"
+                    ? activeAlerts.length
+                    : tab === "critical"
+                    ? criticalAlerts.length
+                    : allAlerts.length;
+                const isSelected = alertFilter === tab;
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    className={`alert-tab-button ${isSelected ? "active" : ""}`}
+                    onClick={() => setAlertFilter(tab)}
+                  >
+                    <span>{tab.charAt(0).toUpperCase() + tab.slice(1)}</span>
+                    <span
+                      className={`alert-tab-badge ${
+                        tab === "critical" && criticalAlerts.length > 0
+                          ? "critical-badge"
+                          : ""
+                      }`}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="alert-dialog-stats">
+              <span className="stat-pill">
+                <small>Active</small> <strong>{activeAlerts.length}</strong>
+              </span>
+              <span className="stat-pill danger">
+                <small>Critical</small> <strong>{criticalAlerts.length}</strong>
+              </span>
+              <span className="stat-pill">
+                <small>Total</small> <strong>{allAlerts.length}</strong>
+              </span>
+            </div>
+          </div>
+
+          {alertFeedback && (
+            <div className="alert-feedback-banner">
+              <Check size={14} />
+              <span>{alertFeedback}</span>
+            </div>
+          )}
+
+          <div className="alert-dialog-body">
+            {displayedAlerts.map((alert) => {
+              const isResolved = alert.status === "resolved";
+              const isNew = alert.status === "new";
+
+              return (
+                <article
+                  key={alert.id}
+                  className={`alert-entry-card severity-${alert.severity} status-${alert.status}`}
+                >
+                  <div className="alert-entry-top">
+                    <div className="alert-entry-badges">
+                      <span className={`severity-tag severity-${alert.severity}`}>
+                        {alert.severity}
+                      </span>
+                      <span className={`status-tag status-${alert.status}`}>
+                        {alert.status}
+                      </span>
+                    </div>
+                    {(alert.relativeTime || alert.occurredAt) && (
+                      <span className="alert-entry-time">
+                        <Clock size={12} />
+                        <span>{alert.relativeTime || alert.occurredAt}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="alert-entry-title-row">
+                    <h3 className="alert-entry-title">{alert.title}</h3>
+                  </div>
+
+                  {alert.description && alert.description !== alert.title && (
+                    <p className="alert-entry-description">{alert.description}</p>
+                  )}
+
+                  <div className="alert-meta-grid">
+                    <div className="alert-meta-item">
+                      <span className="meta-label">Affected Area / Asset</span>
+                      <strong className="meta-value">{alert.asset}</strong>
+                    </div>
+                    <div className="alert-meta-item">
+                      <span className="meta-label">Observed Condition</span>
+                      <strong className="meta-value">{alert.observed}</strong>
+                    </div>
+                    {alert.threshold && (
+                      <div className="alert-meta-item">
+                        <span className="meta-label">Target / Rule</span>
+                        <strong className="meta-value">{alert.threshold}</strong>
+                      </div>
+                    )}
+                  </div>
+
+                  {alert.recommendation && (
+                    <div className="alert-recommendation-box">
+                      <div className="recommendation-header">
+                        <Sparkles size={13} />
+                        <span>Recommended Resolution</span>
+                      </div>
+                      <p className="recommendation-text">{alert.recommendation}</p>
+                    </div>
+                  )}
+
+                  <div className="alert-entry-actions">
+                    {isNew && (
+                      <button
+                        type="button"
+                        className="alert-btn btn-acknowledge"
+                        onClick={() =>
+                          handleAlertStatus(alert.id, "acknowledged", alert.title)
+                        }
+                      >
+                        <Check size={13} />
+                        <span>Acknowledge</span>
+                      </button>
+                    )}
+                    {!isResolved && (
+                      <button
+                        type="button"
+                        className="alert-btn btn-resolve"
+                        onClick={() => handleAlertStatus(alert.id, "resolved", alert.title)}
+                      >
+                        <CheckCircle2 size={13} />
+                        <span>Resolve</span>
+                      </button>
+                    )}
+                    {alert.status !== "dismissed" && !isResolved && (
+                      <button
+                        type="button"
+                        className="alert-btn btn-dismiss"
+                        onClick={() =>
+                          handleAlertStatus(alert.id, "dismissed", alert.title)
+                        }
+                      >
+                        <span>Dismiss</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="alert-btn btn-action"
+                      onClick={() => handleCreateAction(alert.id, alert.title)}
+                    >
+                      <Sparkles size={13} />
+                      <span>Create Action</span>
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+
+            {!displayedAlerts.length && (
+              <div className="alert-empty-state">
+                <div className="empty-icon-wrapper">
+                  <CheckCircle2 size={32} />
+                </div>
+                <h4>All Nominal</h4>
+                <p>
+                  {alertFilter === "critical"
+                    ? "No critical alerts found for this mushroom factory."
+                    : alertFilter === "active"
+                    ? "No active exceptions requiring immediate attention."
+                    : "No alerts match the selected criteria."}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="alert-dialog-footer">
+            <div className="alert-footer-summary">
+              <span>
+                Showing <strong>{displayedAlerts.length}</strong> of{" "}
+                <strong>{allAlerts.length}</strong> total exceptions
+                {criticalAlerts.length > 0 && ` (${criticalAlerts.length} critical)`}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="button button-secondary alert-dialog-close-btn"
+              onClick={() => setNotificationsOpen(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   </div>;
 }

@@ -626,9 +626,22 @@ export function FactoryDataView() {
                       <Link
                         href={`/digital-twin/entry/${evt.machine_id}`}
                         target="_blank"
-                        style={{ fontSize: "11px", color: "var(--color-primary, #416f57)", display: "inline-flex", alignItems: "center", gap: "3px", marginTop: "4px" }}
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: 500,
+                          color: "var(--color-primary, #416f57)",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          marginTop: "6px",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid rgba(65, 111, 87, 0.2)",
+                          background: "rgba(65, 111, 87, 0.05)",
+                          minHeight: "36px",
+                        }}
                       >
-                        Open form <ExternalLink size={10} />
+                        Open form <ExternalLink size={12} />
                       </Link>
                     )}
                   </div>

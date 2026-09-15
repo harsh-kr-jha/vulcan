@@ -124,7 +124,7 @@ function SingleMachineNode({
         stroke={stroke}
         strokeWidth={isSelected ? 0.12 : 0.08}
         style={{
-          transition: "fill 0.15s ease, stroke-width 0.15s ease",
+          transition: "fill 0.15s ease, stroke 0.15s ease",
           filter: isHovered ? "brightness(0.95)" : undefined,
         }}
       />

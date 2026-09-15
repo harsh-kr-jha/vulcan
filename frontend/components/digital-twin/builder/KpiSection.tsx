@@ -398,7 +398,7 @@ export function KpiSection({ kpis, parameters, onChange }: KpiSectionProps) {
                       <button
                         type="button"
                         onClick={() => handleRemoveOperation(kpi.id, opIndex)}
-                        className="rounded p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
+                        className="rounded p-1.5 text-gray-500 transition hover:bg-red-50 hover:text-red-700 min-h-[32px] min-w-[32px] flex items-center justify-center"
                         aria-label={`Remove operation ${opIndex + 1}`}
                       >
                         <Trash2 size={12} />

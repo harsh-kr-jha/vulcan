@@ -50,11 +50,13 @@ function PanelHeader({
   title,
   subtitle,
   href,
+  actionLabel = "View details",
 }: {
   number: number;
   title: string;
   subtitle: string;
   href?: string;
+  actionLabel?: string;
 }) {
   return (
     <div className="panel-header command-panel-header">
@@ -65,7 +67,7 @@ function PanelHeader({
       </div>
       {href && (
         <Link className="panel-action" href={href}>
-          Explore <ArrowRight size={12} />
+          {actionLabel} <ArrowRight size={12} />
         </Link>
       )}
     </div>
@@ -595,6 +597,7 @@ function RoomConditionsWidget({ number }: { number: number }) {
         title="Growing-room conditions"
         subtitle="Latest temperature, humidity and CO2 by room (Twin live stream)"
         href="/digital-twin"
+        actionLabel="Open Twin"
       />
       <div className="room-condition-list">
         {displayRooms.map((item) => (
@@ -639,6 +642,7 @@ function PriorityExceptionsWidget({ number }: { number: number }) {
         title="Priority exceptions"
         subtitle="Exceptions triageable via top-right Alert Center"
         href="/data"
+        actionLabel="Inspect alerts"
       />
       <div className="priority-alerts">
         {alerts.map((alert) => (

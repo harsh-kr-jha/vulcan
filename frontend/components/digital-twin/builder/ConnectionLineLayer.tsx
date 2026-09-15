@@ -201,7 +201,7 @@ function ConnectionPath({
         style={{
           cursor: isEditMode ? "pointer" : "default",
           pointerEvents: isEditMode ? "stroke" : "none",
-          transition: "stroke 0.15s ease, stroke-width 0.15s ease",
+          transition: "stroke 0.15s ease, opacity 0.15s ease",
         }}
         onContextMenu={handleClick}
       >

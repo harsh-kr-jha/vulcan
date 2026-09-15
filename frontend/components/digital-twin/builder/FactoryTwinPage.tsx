@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Factory, Loader2, Maximize2, Minimize2, Pencil, Save, Trash2, X } from "lucide-react";
+import { Boxes, Factory, LayoutGrid, Loader2, Maximize2, Minimize2, Pencil, Save, Trash2, Truck, X } from "lucide-react";
 import { useFactory } from "@/lib/factory-context";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
 import { getCsrfToken } from "@/lib/api-client";
@@ -211,6 +211,7 @@ export function FactoryTwinPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showBuilderDialog, setShowBuilderDialog] = useState(false);
   const [isImmersive, setIsImmersive] = useState(false);
+  const [mobileTwinTab, setMobileTwinTab] = useState<"floor" | "inventory" | "dispatch">("floor");
 
   // Panel state
   const [configMachineId, setConfigMachineId] = useState<string | null>(null);
@@ -717,15 +718,55 @@ export function FactoryTwinPage() {
           </div>
         </div>
 
-        {/* Three-column layout: Inventory | Visualization | Dispatch */}
+        {/* Mobile View Switcher Tabs (hidden on md and larger) */}
+        <div className="flex md:hidden border-b border-gray-200 bg-gray-50 px-2 py-1.5 gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => setMobileTwinTab("floor")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs rounded-md transition-colors ${
+              mobileTwinTab === "floor"
+                ? "bg-white text-emerald-700 shadow-xs border border-gray-200 font-semibold"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+            Floor Map
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTwinTab("inventory")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs rounded-md transition-colors ${
+              mobileTwinTab === "inventory"
+                ? "bg-white text-emerald-700 shadow-xs border border-gray-200 font-semibold"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            <Boxes className="h-3.5 w-3.5" />
+            Inventory
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTwinTab("dispatch")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs rounded-md transition-colors ${
+              mobileTwinTab === "dispatch"
+                ? "bg-white text-emerald-700 shadow-xs border border-gray-200 font-semibold"
+                : "text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            <Truck className="h-3.5 w-3.5" />
+            Dispatch
+          </button>
+        </div>
+
+        {/* Three-column layout on desktop; tab-switched on mobile */}
         <div className="relative flex flex-1 overflow-hidden min-h-0">
           {/* Inventory Panel (left) */}
-          <aside className="w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3">
+          <aside className={`${mobileTwinTab === "inventory" ? "flex flex-col w-full" : "hidden"} md:flex md:flex-col md:w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3`}>
             <InventoryPanel isEditMode={false} />
           </aside>
 
           {/* Main visualization area */}
-          <main className="flex-1 overflow-hidden min-h-0 min-w-0">
+          <main className={`${mobileTwinTab === "floor" ? "flex flex-col flex-1" : "hidden"} md:flex md:flex-col md:flex-1 overflow-hidden min-h-0 min-w-0`}>
             <FactoryVisualization
               layout={builderState.layout}
               observations={machineObservations}
@@ -734,7 +775,7 @@ export function FactoryTwinPage() {
           </main>
 
           {/* Dispatch Panel (right) */}
-          <aside className="w-72 shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-3">
+          <aside className={`${mobileTwinTab === "dispatch" ? "flex flex-col w-full" : "hidden"} md:flex md:flex-col md:w-72 shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-3`}>
             <DispatchPanel isEditMode={false} />
           </aside>
 
@@ -820,15 +861,55 @@ export function FactoryTwinPage() {
         </div>
       </div>
 
-      {/* Three-column layout: Inventory | FloorCanvas | Dispatch */}
+      {/* Mobile View Switcher Tabs for Editor (hidden on md and larger) */}
+      <div className="flex md:hidden border-b border-gray-200 bg-gray-50 px-2 py-1.5 gap-1 shrink-0">
+        <button
+          type="button"
+          onClick={() => setMobileTwinTab("floor")}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs rounded-md transition-colors ${
+            mobileTwinTab === "floor"
+              ? "bg-white text-emerald-700 shadow-xs border border-gray-200 font-semibold"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          <LayoutGrid className="h-3.5 w-3.5" />
+          Floor Canvas
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTwinTab("inventory")}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs rounded-md transition-colors ${
+            mobileTwinTab === "inventory"
+              ? "bg-white text-emerald-700 shadow-xs border border-gray-200 font-semibold"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          <Boxes className="h-3.5 w-3.5" />
+          Inventory
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTwinTab("dispatch")}
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 text-xs rounded-md transition-colors ${
+            mobileTwinTab === "dispatch"
+              ? "bg-white text-emerald-700 shadow-xs border border-gray-200 font-semibold"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+        >
+          <Truck className="h-3.5 w-3.5" />
+          Dispatch
+        </button>
+      </div>
+
+      {/* Three-column layout on desktop; tab-switched on mobile */}
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* Inventory Panel (left) */}
-        <aside className="w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3">
+        <aside className={`${mobileTwinTab === "inventory" ? "flex flex-col w-full" : "hidden"} md:flex md:flex-col md:w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3`}>
           <InventoryPanel isEditMode={true} />
         </aside>
 
         {/* Main canvas area */}
-        <main className="flex-1 overflow-hidden min-h-0 min-w-0">
+        <main className={`${mobileTwinTab === "floor" ? "flex flex-col flex-1" : "hidden"} md:flex md:flex-col md:flex-1 overflow-hidden min-h-0 min-w-0`}>
           <FloorCanvas onAreaSelected={handleAreaSelected}>
             <ConnectionLineLayer
               onSelectConnection={handleConnectionCompleted}
@@ -838,7 +919,7 @@ export function FactoryTwinPage() {
         </main>
 
         {/* Dispatch Panel (right) */}
-        <aside className="w-72 shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-3">
+        <aside className={`${mobileTwinTab === "dispatch" ? "flex flex-col w-full" : "hidden"} md:flex md:flex-col md:w-72 shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-3`}>
           <DispatchPanel isEditMode={true} />
         </aside>
       </div>

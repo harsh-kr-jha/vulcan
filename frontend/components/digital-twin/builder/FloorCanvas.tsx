@@ -747,7 +747,7 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
           <button
             type="button"
             onClick={handleZoomOut}
-            className="p-1.5 hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+            className="p-2 sm:p-1.5 min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
             title="Zoom Out (or scroll down)"
             aria-label="Zoom Out"
           >
@@ -756,7 +756,7 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
           <button
             type="button"
             onClick={handleResetZoom}
-            className="px-2 py-1 text-xs font-semibold tabular-nums hover:bg-gray-100 rounded text-gray-700 min-w-[3.2rem] text-center cursor-pointer"
+            className="px-2.5 py-1.5 sm:py-1 min-h-[36px] flex items-center justify-center text-xs font-semibold tabular-nums hover:bg-gray-100 rounded text-gray-700 min-w-[3.2rem] text-center cursor-pointer"
             title="Reset Zoom to 100%"
           >
             {zoomPercentage}%
@@ -764,7 +764,7 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
           <button
             type="button"
             onClick={handleZoomIn}
-            className="p-1.5 hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+            className="p-2 sm:p-1.5 min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
             title="Zoom In (or scroll up)"
             aria-label="Zoom In"
           >
@@ -774,7 +774,7 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
           <button
             type="button"
             onClick={handleResetZoom}
-            className="p-1.5 hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+            className="p-2 sm:p-1.5 min-h-[36px] min-w-[36px] flex items-center justify-center hover:bg-gray-100 rounded text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
             title="Fit to Screen"
             aria-label="Fit to Screen"
           >
@@ -783,7 +783,7 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
         </div>
 
         {/* Mini Navigation Hint */}
-        <div className="absolute bottom-4 left-4 pointer-events-none text-[11px] text-gray-400 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded border border-gray-100 shadow-xs select-none">
+        <div className="hidden sm:block absolute bottom-4 left-4 pointer-events-none text-[11px] text-gray-400 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded border border-gray-100 shadow-xs select-none">
           Scroll to zoom • Drag to pan • Right-click drag to place machine
         </div>
       </div>

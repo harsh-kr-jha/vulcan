@@ -247,7 +247,7 @@ export function PerformanceExplorer() {
   return (
     <>
       <header className="page-header">
-        <div><p className="eyebrow">Cultivation · validated data</p><h1>Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
+        <div><h1 className="typography-display">Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
         {selectedTab && <button className="button button-secondary" onClick={exportData}><Download size={14} /> Export {selectedTab}</button>}
       </header>
       <CommandFilters />

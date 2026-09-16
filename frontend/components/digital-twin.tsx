@@ -147,13 +147,13 @@ export function DigitalTwin() {
   }
 
   if (!twin.lines.length) return <>
-    <header className="page-header twin-page-header"><div><p className="eyebrow">Mushroom factory twin · crop flow</p><h1>{twin.factory.name || "Vulcan"} <span>cultivation flow.</span></h1><p className="page-subtitle">A stage-by-stage view of the mushroom factory and its latest reported room state.</p></div></header>
-    <section className="panel twin-empty"><Factory size={31} /><h2>Build this mushroom factory&apos;s cultivation flow</h2><p>Add a farm wing, define its crop stages in order, then connect rooms and assets.</p><div><Link className="button button-primary" href="/settings?tab=processes"><Settings2 size={14} /> Set up crop flow</Link><Link className="button button-secondary" href="/data"><Database size={14} /> View Live Data Stream</Link></div></section>
+    <header className="page-header twin-page-header"><div><h1 className="typography-display">{twin.factory.name || "Vulcan"} <span>cultivation flow.</span></h1><p className="page-subtitle typography-body">A stage-by-stage view of the mushroom factory and its latest reported room state.</p></div></header>
+    <section className="panel twin-empty"><Factory size={31} /><h2 className="typography-headline">Build this mushroom factory&apos;s cultivation flow</h2><p className="typography-body">Add a farm wing, define its crop stages in order, then connect rooms and assets.</p><div><Link className="button button-primary" href="/settings?tab=processes"><Settings2 size={14} /> Set up crop flow</Link><Link className="button button-secondary" href="/data"><Database size={14} /> View Live Data Stream</Link></div></section>
   </>;
 
   return <>
     <header className="page-header twin-page-header">
-      <div><p className="eyebrow">Mushroom factory twin · crop flow</p><h1>{twin.factory.name} <span>cultivation flow.</span></h1><p className="page-subtitle">Latest stage and room conditions across the selected mushroom factory.</p></div>
+      <div><h1 className="typography-display">{twin.factory.name} <span>cultivation flow.</span></h1><p className="page-subtitle typography-body">Latest stage and room conditions across the selected mushroom factory.</p></div>
       <button className="button button-secondary" onClick={() => void refresh()} disabled={loading}><RefreshCw className={loading ? "spin" : ""} size={14} /> {loading ? "Refreshing" : "Refresh state"}</button>
     </header>
 

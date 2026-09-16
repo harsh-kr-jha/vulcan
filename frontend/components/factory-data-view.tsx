@@ -382,9 +382,8 @@ export function FactoryDataView() {
     <>
       <header className="page-header command-centre-header">
         <div>
-          <p className="eyebrow">Mushroom Factory Twin · Canonical Data Truth</p>
-          <h1>Twin Data <span>&amp; Telemetry</span></h1>
-          <p className="page-subtitle">
+          <h1 className="typography-display">Twin Data <span>&amp; Telemetry</span></h1>
+          <p className="page-subtitle typography-body">
             {activeFactory?.name ?? "Mushroom Factory"} · Live data streams submitted via machine, inventory, and dispatch QR codes.
           </p>
         </div>

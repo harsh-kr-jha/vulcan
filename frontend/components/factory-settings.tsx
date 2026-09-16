@@ -1155,9 +1155,8 @@ export function FactorySettings() {
     <>
       <header className="page-header">
         <div>
-          <p className="eyebrow">Mushroom farm configuration</p>
-          <h1>Define <span>how the crop flows.</span></h1>
-          <p className="page-subtitle">Farm context, cultivation stages, rooms, assets and harvest units—synchronized with Mushroom Factory Twin.</p>
+          <h1 className="typography-display">Define <span>how the crop flows.</span></h1>
+          <p className="page-subtitle typography-body">Farm context, cultivation stages, rooms, assets and harvest units—synchronized with Mushroom Factory Twin.</p>
         </div>
         <button className="button button-accent" onClick={() => setCreateOpen(true)}>
           <Plus size={13} /> Create farm

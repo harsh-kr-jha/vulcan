@@ -60,11 +60,11 @@ function HomeModuleGrid() {
       <header>
         <div>
           <div>
-            <h2>Move through your mushroom factory</h2>
-            <p>Open a workspace directly and see the current crop state.</p>
+            <h2 className="typography-headline">Move through your mushroom factory</h2>
+            <p className="typography-body">Open a workspace directly and see the current crop state.</p>
           </div>
         </div>
-        <small>3 cultivation modules</small>
+        <small className="typography-label">3 cultivation modules</small>
       </header>
       <div className="home-module-grid">
         {modules.map((module) => {
@@ -75,13 +75,13 @@ function HomeModuleGrid() {
                 <Icon size={18} />
               </span>
               <div>
-                <b>{module.label}</b>
-                <p>{module.description}</p>
+                <b className="typography-title">{module.label}</b>
+                <p className="typography-body">{module.description}</p>
                 <div className="home-module-status">
                   <strong>{module.value}</strong>
-                  <span>{module.status}</span>
+                  <span className="typography-label">{module.status}</span>
                 </div>
-                <small>{module.meta}</small>
+                <small className="typography-label">{module.meta}</small>
               </div>
               <ArrowRight size={15} />
             </Link>
@@ -109,8 +109,8 @@ function PanelHeader({
     <div className="panel-header command-panel-header">
       {number !== undefined && <div className="widget-number">{number}</div>}
       <div className="panel-title-group">
-        <h2 className="panel-title">{title}</h2>
-        <p className="panel-subtitle">{subtitle}</p>
+        <h2 className="panel-title typography-headline">{title}</h2>
+        <p className="panel-subtitle typography-body">{subtitle}</p>
       </div>
       {href && (
         <Link className="panel-action" href={href}>
@@ -481,18 +481,10 @@ export function DashboardOverview() {
     <>
       <header className="page-header command-centre-header">
         <div>
-          <p className="eyebrow">
-            Mushroom Crop Command Centre ·{" "}
-            {new Date(`${filters.to}T00:00:00`).toLocaleDateString("en-IN", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </p>
-          <h1>
+          <h1 className="typography-display">
             See every crop. <span>Improve every flush.</span>
           </h1>
-          <p className="page-subtitle">
+          <p className="page-subtitle typography-body">
             {activeFactory?.name || "Mushroom Facility"} · {reportingMachinesCount} of {totalMachinesCount} rooms active ·
             Telemetry: {twinFeed.freshness.machines.status === "fresh" ? "All systems live" : "Standby"}
           </p>

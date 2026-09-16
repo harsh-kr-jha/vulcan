@@ -224,12 +224,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         >
           <div className="alert-dialog-header">
             <div>
-              <div className="alert-dialog-tag">
-                <ShieldAlert size={14} />
-                <span>Operational Intelligence · Alert Center</span>
-              </div>
-              <h2 id="alert-dialog-title">Active Factory Exceptions</h2>
-              <p>Real-time anomaly detection, machine variances, and guided resolution for active factory.</p>
+              <h2 id="alert-dialog-title" className="typography-headline">Active Factory Exceptions</h2>
+              <p className="typography-body">Real-time anomaly detection, machine variances, and guided resolution for active factory.</p>
             </div>
             <button
               type="button"

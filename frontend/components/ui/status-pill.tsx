@@ -17,7 +17,7 @@ const uploadStatusLabels: Record<UploadStatus, string> = {
 
 export function UploadStatusPill({ status }: { status: UploadStatus }) {
   return (
-    <span className={`status-pill status-${status.toLowerCase()}`}>
+    <span className={`status-pill status-${status.toLowerCase()} typography-label`}>
       <span className="status-dot" />
       {uploadStatusLabels[status]}
     </span>
@@ -29,5 +29,5 @@ export function SeverityPill({
 }: {
   severity: "critical" | "high" | "medium" | "low";
 }) {
-  return <span className={`severity-pill severity-${severity}`}>{severity}</span>;
+  return <span className={`severity-pill severity-${severity} typography-label`}>{severity}</span>;
 }

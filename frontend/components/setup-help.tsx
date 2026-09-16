@@ -93,7 +93,7 @@ export function SetupHelp() {
   return (
     <>
       <header className="page-header help-page-header">
-        <div><p className="eyebrow">Help · product documentation</p><h1>Find the answer. <span>Keep growing.</span></h1><p className="page-subtitle">Practical guides for the complete mushroom-farm data workflow.</p></div>
+        <div><h1 className="typography-display">Find the answer. <span>Keep growing.</span></h1><p className="page-subtitle typography-body">Practical guides for the complete mushroom-farm data workflow.</p></div>
       </header>
       <label className="help-search panel"><Search size={18} /><span className="sr-only">Search help</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search mapping, stale data, suppliers, rules…" />{query && <button type="button" onClick={() => setQuery("")}>Clear</button>}</label>
       <section className="help-quick-grid">
@@ -103,10 +103,10 @@ export function SetupHelp() {
       </section>
       {!normalized && <section className="help-docs-layout">
         <aside className="panel help-doc-nav"><div><BookOpen size={16} /><strong>Setup guides</strong></div>{guides.map((item, index) => <button className={activeGuide === item.id ? "active" : ""} key={item.id} onClick={() => setActiveGuide(item.id)}><span>{String(index + 1).padStart(2, "0")}</span>{item.title}<ArrowRight size={12} /></button>)}</aside>
-        <article className="panel help-guide"><p className="eyebrow">Step-by-step</p><h2>{guide.title}</h2><p>{guide.summary}</p><ol>{guide.steps.map((step) => <li key={step}><span>{guide.steps.indexOf(step) + 1}</span><p>{step}</p></li>)}</ol><Link className="button button-primary" href={guide.action.href}>{guide.action.label} <ArrowRight size={13} /></Link></article>
+        <article className="panel help-guide"><h2 className="typography-headline">{guide.title}</h2><p className="typography-body">{guide.summary}</p><ol>{guide.steps.map((step) => <li key={step}><span>{guide.steps.indexOf(step) + 1}</span><p>{step}</p></li>)}</ol><Link className="button button-primary" href={guide.action.href}>{guide.action.label} <ArrowRight size={13} /></Link></article>
       </section>}
       <section className="panel faq-section">
-        <header><div><FileQuestion size={18} /><span><h2>Frequently asked questions</h2><p>{matchingFaqs.length} {matchingFaqs.length === 1 ? "answer" : "answers"}{normalized ? " matching your search" : ""}</p></span></div></header>
+        <header><div><FileQuestion size={18} /><span><h2 className="typography-headline">Frequently asked questions</h2><p>{matchingFaqs.length} {matchingFaqs.length === 1 ? "answer" : "answers"}{normalized ? " matching your search" : ""}</p></span></div></header>
         <div className="faq-list">{matchingFaqs.map((faq) => <details key={faq.question}><summary><span>{faq.question}</span><ChevronDown size={15} /></summary><p>{faq.answer}</p></details>)}{!matchingFaqs.length && <div className="help-no-results"><Search size={22} /><strong>No matching documentation</strong><span>Try a simpler term such as “mapping”, “supplier” or “stale”.</span></div>}</div>
       </section>
     </>

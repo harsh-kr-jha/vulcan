@@ -112,7 +112,7 @@ export function RulesTargets() {
   return (
     <>
       <header className="page-header">
-        <div><p className="eyebrow">Manage · decision rules</p><h1>Set the limits. <span>Keep decisions consistent.</span></h1><p className="page-subtitle">Targets control how {factory?.name ?? "this mushroom factory"} is evaluated. Calculations remain unchanged and auditable.</p></div>
+        <div><h1 className="typography-display">Set the limits. <span>Keep decisions consistent.</span></h1><p className="page-subtitle typography-body">Targets control how {factory?.name ?? "this mushroom factory"} is evaluated. Calculations remain unchanged and auditable.</p></div>
       </header>
       <RulesEditor key={state.activeFactoryId} />
     </>

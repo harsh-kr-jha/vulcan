@@ -385,6 +385,7 @@ export function FactoryVisualization({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
+        onContextMenu={(e) => e.preventDefault()}
         style={{ cursor: isPanning ? "grabbing" : "grab", touchAction: "none" }}
       >
           {/* Defs: arrow markers, shadows */}
@@ -522,6 +523,11 @@ export function FactoryVisualization({
                 onMouseMove={handleMachineMove}
                 onMouseLeave={handleMachineLeave}
                 onClick={() => handleMachineClick(machine.id)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleMachineClick(machine.id);
+                }}
                 role="button"
                 aria-label={`Machine: ${machine.name}, Status: ${STATUS_LABELS[status]}`}
               >

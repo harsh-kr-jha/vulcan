@@ -198,7 +198,7 @@ function RoomConditionsWidget({ number }: { number?: number }) {
       return null;
     };
 
-    return twinMachines.slice(0, 8).map((m) => {
+    return twinMachines.map((m) => {
       const obs = m.latest_observation;
       const vals = obs?.values ?? {};
 
@@ -245,7 +245,7 @@ function RoomConditionsWidget({ number }: { number?: number }) {
         title="Growing-room conditions"
         subtitle="Live temperature, humidity and CO2 by room (Twin live stream)"
         href={displayRooms.length > 0 ? "/digital-twin" : undefined}
-        actionLabel={twinMachines.length > 8 ? `View all ${twinMachines.length} in Twin` : "Open Twin"}
+        actionLabel="Open Twin"
       />
 
       {displayRooms.length > 0 ? (
@@ -308,7 +308,9 @@ function RoomConditionsWidget({ number }: { number?: number }) {
 export function DashboardOverview() {
   const { state, filters, intelligence, twinFeed } = useFactory();
   const activeFactory = state.factories.find((factory) => factory.id === state.activeFactoryId);
-  const reportingMachinesCount = twinFeed.machines.filter((m) => m.status === "reporting").length;
+  const reportingMachinesCount =
+    twinFeed.freshness.machines.reporting_count ??
+    twinFeed.machines.filter((m) => m.latest_observation !== null).length;
   const totalMachinesCount = twinFeed.machines.length;
   const invMaterialsCount = twinFeed.inventory ? Object.keys(twinFeed.inventory.stock).length : 0;
   const dispatchAwaitingKg = twinFeed.dispatch

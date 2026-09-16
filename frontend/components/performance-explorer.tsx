@@ -246,8 +246,8 @@ export function PerformanceExplorer() {
   }
 
   function exportData() {
-    if (!selectedTab) return;
-    downloadBlob(JSON.stringify({ factory: state.activeFactoryId, filters, module: selectedTab, intelligence }, null, 2), `musroom-${selectedTab.toLowerCase().replaceAll(" ", "-")}-${filters.to}.json`, "application/json");
+    const prefix = state.factories.find((f) => f.id === state.activeFactoryId)?.name.toLowerCase().replace(/[^a-z0-9]/g, "-") || "mushroom";
+    downloadBlob(JSON.stringify({ factory: state.activeFactoryId, filters, module: selectedTab, intelligence }, null, 2), `${prefix}-${selectedTab.toLowerCase().replaceAll(" ", "-")}-${filters.to}.json`, "application/json");
   }
 
   if (loading) {

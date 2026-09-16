@@ -1063,6 +1063,7 @@ export function FactoryDataView() {
             <QrCodePreview
               machineId={qrModalItem.id}
               machineName={qrModalItem.name}
+              type={qrModalItem.type}
             />
           </div>
         </div>

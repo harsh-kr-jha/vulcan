@@ -2,20 +2,34 @@
 
 import { Download, Eye, EyeOff, Printer, QrCode } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { generateMachineQrSvg, generateMachineQrDataUrl, dataUrlToBlob } from "@/lib/qr-generator";
+import {
+  generateMachineQrSvg,
+  generateMachineQrDataUrl,
+  generateInventoryQrSvg,
+  generateInventoryQrDataUrl,
+  generateDispatchQrSvg,
+  generateDispatchQrDataUrl,
+  dataUrlToBlob,
+} from "@/lib/qr-generator";
 import { useFactory } from "@/lib/factory-context";
 
 export interface QrCodePreviewProps {
   machineId: string;
   machineName: string;
   machineCode?: string;
+  type?: "machine" | "inventory" | "dispatch";
 }
 
 /**
  * Renders a labeled QR JPG (company + factory + machine name) via canvas,
  * with download, print, and preview as small icon sphere buttons.
  */
-export function QrCodePreview({ machineId, machineName, machineCode }: QrCodePreviewProps) {
+export function QrCodePreview({
+  machineId,
+  machineName,
+  machineCode,
+  type = "machine",
+}: QrCodePreviewProps) {
   const { state, filters } = useFactory();
   const [svgString, setSvgString] = useState<string | null>(null);
   const [dataUrl, setDataUrl] = useState<string | null>(null);
@@ -32,14 +46,26 @@ export function QrCodePreview({ machineId, machineName, machineCode }: QrCodePre
     ? `${machineName} (${machineCode})`
     : machineName;
 
+  const generateSvg = useCallback(() => {
+    if (type === "inventory") return generateInventoryQrSvg(machineId);
+    if (type === "dispatch") return generateDispatchQrSvg(machineId);
+    return generateMachineQrSvg(machineId);
+  }, [type, machineId]);
+
+  const generateDataUrl = useCallback(() => {
+    if (type === "inventory") return generateInventoryQrDataUrl(machineId);
+    if (type === "dispatch") return generateDispatchQrDataUrl(machineId);
+    return generateMachineQrDataUrl(machineId);
+  }, [type, machineId]);
+
   // Generate QR data URL
   const ensureGenerated = useCallback(async () => {
     if (dataUrl) return dataUrl;
     setGenerating(true);
     try {
       const [svg, url] = await Promise.all([
-        svgString ? Promise.resolve(svgString) : generateMachineQrSvg(machineId),
-        generateMachineQrDataUrl(machineId),
+        svgString ? Promise.resolve(svgString) : generateSvg(),
+        generateDataUrl(),
       ]);
       setSvgString(svg);
       setDataUrl(url);
@@ -47,7 +73,7 @@ export function QrCodePreview({ machineId, machineName, machineCode }: QrCodePre
     } finally {
       setGenerating(false);
     }
-  }, [dataUrl, svgString, machineId]);
+  }, [dataUrl, svgString, generateSvg, generateDataUrl]);
 
   // Generate SVG for inline preview
   useEffect(() => {
@@ -55,12 +81,12 @@ export function QrCodePreview({ machineId, machineName, machineCode }: QrCodePre
     let cancelled = false;
     (async () => {
       try {
-        const svg = await generateMachineQrSvg(machineId);
+        const svg = await generateSvg();
         if (!cancelled) setSvgString(svg);
       } catch { /* ignore */ }
     })();
     return () => { cancelled = true; };
-  }, [showPreview, svgString, machineId]);
+  }, [showPreview, svgString, generateSvg]);
 
   /**
    * Renders labeled QR image on a canvas and returns a Blob.
@@ -91,7 +117,7 @@ export function QrCodePreview({ machineId, machineName, machineCode }: QrCodePre
     ctx.fillStyle = "#6b7280";
     ctx.font = "500 11px system-ui, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("VULCAN · LEXICON™", width / 2, padding + 14);
+    ctx.fillText("VULCAN · TWIN", width / 2, padding + 14);
 
     // Factory name (below brand)
     ctx.fillStyle = "#374151";

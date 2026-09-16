@@ -46,10 +46,11 @@ function SingleMachineNode({
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
-      // Left click does nothing on machines (left is for pan)
+      e.preventDefault();
       e.stopPropagation();
+      onSelect(machine.id);
     },
-    []
+    [machine.id, onSelect]
   );
 
   const handleRightClick = useCallback(

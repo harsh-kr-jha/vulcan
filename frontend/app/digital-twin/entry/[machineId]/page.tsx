@@ -201,11 +201,37 @@ export default function MachineDataEntryPage() {
 
         if (!response.ok) {
           const body = await response.json().catch(() => null);
-          const detail =
-            body && typeof body === "object" && "detail" in body
-              ? (body as { detail: string }).detail
-              : "Submission failed. Please try again.";
-          throw new Error(detail);
+          let errorMsg = "Submission failed. Please try again.";
+          const newFieldErrors: Record<string, string> = {};
+
+          if (body && typeof body === "object") {
+            if ("detail" in body && typeof body.detail === "string") {
+              errorMsg = body.detail;
+            } else if ("values" in body && typeof body.values === "object" && body.values !== null) {
+              const valErrors = body.values as Record<string, unknown>;
+              const errParts: string[] = [];
+              for (const [fKey, fErr] of Object.entries(valErrors)) {
+                const msg = Array.isArray(fErr) ? fErr.join(", ") : String(fErr);
+                newFieldErrors[fKey] = msg;
+                errParts.push(`${fKey}: ${msg}`);
+              }
+              if (errParts.length > 0) {
+                errorMsg = errParts.join("; ");
+              }
+            } else {
+              for (const [k, v] of Object.entries(body)) {
+                if (k === "non_field_errors" && Array.isArray(v)) {
+                  errorMsg = v.join(", ");
+                } else {
+                  newFieldErrors[k] = Array.isArray(v) ? v.join(", ") : String(v);
+                }
+              }
+            }
+          }
+          if (Object.keys(newFieldErrors).length > 0) {
+            setFieldErrors(newFieldErrors);
+          }
+          throw new Error(errorMsg);
         }
 
         // Success: reset form
@@ -311,7 +337,7 @@ export default function MachineDataEntryPage() {
           {/* No fields configured message */}
           {schema && (schema.parameters.length === 0 && (!schema.io_fields || schema.io_fields.length === 0)) && (
             <div className="entry-error-banner">
-              No parameters configured for this machine. Add parameters in the Lexicon™ builder.
+              No parameters configured for this machine. Add parameters in the Factory Twin builder.
             </div>
           )}
 

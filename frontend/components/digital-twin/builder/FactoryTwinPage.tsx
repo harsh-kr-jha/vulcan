@@ -244,20 +244,21 @@ export function FactoryTwinPage() {
   const restoreDraftRef = useRef(restoreDraft);
   restoreDraftRef.current = restoreDraft;
 
-  // Track whether we've already fetched to prevent infinite re-triggers
-  const hasFetchedRef = useRef(false);
+  // Track last fetched factory ID to refetch when active factory changes
+  const lastFetchedFactoryIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Don't fetch until the factory context has hydrated
     if (!hydrated) return;
 
-    // Already fetched successfully — don't refetch
-    if (hasFetchedRef.current) return;
-
     if (!factoryId) {
+      lastFetchedFactoryIdRef.current = null;
       setPageMode("empty");
       return;
     }
+
+    // Already fetched layout for this factory
+    if (lastFetchedFactoryIdRef.current === factoryId) return;
 
     let cancelled = false;
 
@@ -277,7 +278,7 @@ export function FactoryTwinPage() {
         if (cancelled) return;
 
         if (response.status === 404) {
-          hasFetchedRef.current = true;
+          lastFetchedFactoryIdRef.current = factoryId;
           // Try restoring an unsaved draft from localStorage
           if (restoreDraftRef.current()) {
             setPageMode("editing");
@@ -310,7 +311,7 @@ export function FactoryTwinPage() {
         }
 
         if (!payload || !payload.id) {
-          hasFetchedRef.current = true;
+          lastFetchedFactoryIdRef.current = factoryId;
           // Try restoring an unsaved draft from localStorage
           if (restoreDraftRef.current()) {
             setPageMode("editing");
@@ -322,14 +323,14 @@ export function FactoryTwinPage() {
 
         const layout = deserializeLayout(payload);
         loadLayoutRef.current(layout);
-        hasFetchedRef.current = true;
+        lastFetchedFactoryIdRef.current = factoryId;
         setPageMode("viewing");
       } catch (err) {
         if (cancelled) return;
         setLoadError(
           err instanceof Error ? err.message : "Failed to load layout."
         );
-        hasFetchedRef.current = true;
+        lastFetchedFactoryIdRef.current = factoryId;
         setPageMode("empty");
       }
     }
@@ -453,7 +454,7 @@ export function FactoryTwinPage() {
         throw new Error("Failed to delete layout");
       }
       resetLayout();
-      hasFetchedRef.current = false;
+      lastFetchedFactoryIdRef.current = null;
       setPageMode("empty");
       setDeleteStep("idle");
       void refreshTwinFeed();
@@ -602,7 +603,7 @@ export function FactoryTwinPage() {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-        <p className="text-sm text-gray-500">Loading Lexicon™ layout...</p>
+        <p className="text-sm text-gray-500">Loading Factory Twin layout...</p>
       </div>
     );
   }
@@ -616,10 +617,10 @@ export function FactoryTwinPage() {
         </div>
         <div className="text-center">
           <h2 className="text-lg font-semibold text-gray-900">
-            No Lexicon™ Layout
+            No Factory Twin Layout
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            Build your Lexicon™ mushroom factory map to start placing machines and tracking
+            Build your mushroom factory digital twin map to start placing machines and tracking
             operations.
           </p>
         </div>
@@ -639,7 +640,7 @@ export function FactoryTwinPage() {
           disabled={!factoryId}
           className="button button-primary"
         >
-          Build Lexicon™
+          Build Factory Twin
         </button>
 
         {!factoryId && (
@@ -665,7 +666,7 @@ export function FactoryTwinPage() {
         {/* Toolbar */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
           <h1 className="text-base font-semibold text-gray-900">
-            Lexicon™
+            Mushroom Factory Twin
           </h1>
           <div className="flex items-center gap-2">
             {deleteStep === "idle" && (
@@ -811,8 +812,8 @@ export function FactoryTwinPage() {
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
         <h1 className="text-base font-semibold text-gray-900">
           {builderState.isEditingExisting
-            ? "Edit Lexicon™ Layout"
-            : "Build Lexicon™ Layout"}
+            ? "Edit Factory Twin Layout"
+            : "Build Factory Twin Layout"}
         </h1>
 
         <div className="flex items-center gap-2">
@@ -848,7 +849,7 @@ export function FactoryTwinPage() {
             ) : (
               <Save className="h-3.5 w-3.5" />
             )}
-            {saving ? "Saving..." : "Save Lexicon™"}
+            {saving ? "Saving..." : "Save Factory Twin"}
           </button>
 
           {/* Immersive mode toggle */}

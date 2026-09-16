@@ -378,27 +378,37 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
 
         tenant = instance.tenant
 
-        # Replace machines if provided (full replacement strategy)
+        # Replace machines if provided (in-place update to preserve observation telemetry)
         if machines_data is not None:
-            # Delete existing machines (cascades to parameters, KPIs, connections)
-            instance.machines.all().delete()
-
+            existing_machines = {str(m.id): m for m in instance.machines.all()}
+            retained_machine_ids = set()
             machine_id_map = {}
+
             for machine_data in machines_data:
                 parameters_data = machine_data.pop("parameters", [])
                 custom_kpis_data = machine_data.pop("custom_kpis", [])
                 client_id = machine_data.pop("id", None)
+                client_id_str = str(client_id) if client_id else None
 
-                create_kwargs = {"layout": instance, "tenant": tenant, **machine_data}
-                if client_id:
-                    create_kwargs["id"] = client_id
+                machine = existing_machines.get(client_id_str) if client_id_str else None
 
-                machine = SpatialMachine.objects.create(**create_kwargs)
+                if machine:
+                    for attr, val in machine_data.items():
+                        setattr(machine, attr, val)
+                    machine.save()
+                    retained_machine_ids.add(str(machine.id))
+                else:
+                    create_kwargs = {"layout": instance, "tenant": tenant, **machine_data}
+                    if client_id:
+                        create_kwargs["id"] = client_id
+                    machine = SpatialMachine.objects.create(**create_kwargs)
+                    retained_machine_ids.add(str(machine.id))
 
                 if client_id:
                     machine_id_map[client_id] = machine
-                else:
-                    machine_id_map[machine.id] = machine
+                    machine_id_map[str(client_id)] = machine
+                machine_id_map[machine.id] = machine
+                machine_id_map[str(machine.id)] = machine
 
                 for param_data in parameters_data:
                     param_data.pop("id", None)
@@ -408,6 +418,11 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                     kpi_data.pop("id", None)
                     MachineCustomKpi.objects.create(machine=machine, **kpi_data)
 
+            # Delete only machines that were genuinely removed from the layout
+            for old_id_str, old_machine in existing_machines.items():
+                if old_id_str not in retained_machine_ids:
+                    old_machine.delete()
+
             # Replace connections if provided alongside machines
             if connections_data is not None:
                 instance.connections.all().delete()
@@ -416,8 +431,8 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                     source_id = conn_data.pop("source_id", None)
                     target_id = conn_data.pop("target_id", None)
 
-                    source = machine_id_map.get(source_id)
-                    target = machine_id_map.get(target_id)
+                    source = machine_id_map.get(source_id) or (machine_id_map.get(str(source_id)) if source_id else None)
+                    target = machine_id_map.get(target_id) or (machine_id_map.get(str(target_id)) if target_id else None)
 
                     if source and target:
                         MachineConnection.objects.create(

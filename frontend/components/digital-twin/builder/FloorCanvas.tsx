@@ -786,7 +786,9 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
-          onContextMenu={(e) => { /* Let child handlers (interaction layer, machines) handle right-click */ }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+          }}
           style={{ cursor: isPanning ? "grabbing" : "grab", touchAction: "none" }}
         >
           {/* Grid layer (virtualized – only renders visible cells) */}
@@ -849,8 +851,8 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
         </div>
 
         {/* Mini Navigation Hint */}
-        <div className="hidden sm:block absolute bottom-4 left-4 pointer-events-none text-[11px] text-gray-400 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded border border-gray-100 shadow-xs select-none">
-          Scroll to zoom • Drag to pan • Right-click drag to place machine
+        <div className="hidden sm:block absolute bottom-4 left-4 pointer-events-none text-[11px] text-gray-500 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded border border-gray-200 shadow-xs select-none">
+          Click machine for details • Scroll to zoom • Drag to pan • Right-click drag to place
         </div>
       </div>
     </div>

@@ -28,6 +28,12 @@ deploy/gce-customer/.env
 simulator/
 simulator-data/
 
+# Externally trained model binaries (keep manifests and documentation in Git)
+models/**/*.joblib
+models/**/*.pkl
+models/**/*.pickle
+models/**/*.onnx
+
 # Editors and operating systems
 .DS_Store
 .idea/

@@ -18,9 +18,10 @@ from apps.ml.models import (
     MachineCycle,
     ObservationConfig,
     OutcomeBinding,
+    PredictionModel,
     ProductionProfile,
-    TrainingRun,
 )
+from apps.ml.registry import semantic_version_key
 from apps.spatial.models import SpatialMachine
 from apps.streams.models import DataStreamChannel, MachineStreamBinding
 from apps.tenancy.models import FactoryMaster, Role
@@ -64,6 +65,8 @@ def prediction_data(s):
         return None
     return {
         "model": str(s.model_id),
+        "model_name": s.model.name,
+        "model_version": s.model.version,
         "observed_at": s.observed_at,
         "failure_probability": s.failure_probability,
         "label": s.predicted_label,
@@ -83,8 +86,6 @@ class MachineMLView(APIView):
         )
 
     def get(self, request, machine_id, action="status"):
-        from apps.ml.training import eligibility
-
         machine = self.machine(request, machine_id)
         config = ObservationConfig.objects.filter(machine=machine).first()
         profiles = list(
@@ -92,7 +93,13 @@ class MachineMLView(APIView):
             .select_related("sku")
             .order_by("-created_at")
         )
-        runs = TrainingRun.objects.filter(profile__machine=machine).order_by("-created_at")[:50]
+        models = list(
+            PredictionModel.objects.filter(profile__machine=machine)
+            .select_related("profile")
+            .order_by("name")[:50]
+        )
+        models.sort(key=lambda model: semantic_version_key(model.version), reverse=True)
+        models.sort(key=lambda model: model.name)
         active = config.active_profile if config else None
         latest = MachineCycle.objects.filter(machine=machine).order_by("-started_at").first()
         state = "Off" if not config or not config.enabled else "Collecting"
@@ -101,7 +108,7 @@ class MachineMLView(APIView):
                 state = "Stale"
             elif (
                 active
-                and TrainingRun.objects.filter(
+                and PredictionModel.objects.filter(
                     profile__machine=machine,
                     profile__sku=active.sku,
                     profile__contract=active.contract,
@@ -111,18 +118,6 @@ class MachineMLView(APIView):
                 ).exists()
             ):
                 state = "Active"
-            elif (
-                active
-                and TrainingRun.objects.filter(
-                    profile__machine=machine,
-                    profile__sku=active.sku,
-                    profile__contract=active.contract,
-                    profile__checkpoint_phase=active.checkpoint_phase,
-                    profile__checkpoint_second=active.checkpoint_second,
-                    status="candidate",
-                ).exists()
-            ):
-                state = "Candidate ready"
         binding = OutcomeBinding.objects.filter(machine=machine).first()
         stream_binding = (
             MachineStreamBinding.objects.filter(machine=machine)
@@ -162,24 +157,32 @@ class MachineMLView(APIView):
                 if config and config.pending_profile_id
                 else None,
                 "profiles": [profile_data(p) for p in profiles],
-                "collection": eligibility(active) if active else None,
                 "latest_cycle": cycle_data(latest),
                 "outcome_channel": str(binding.channel_id) if binding else None,
                 "outcome_error": binding.last_error if binding else "",
                 "can_manage": membership_for_request(request).role in MANAGERS,
-                "runs": [
+                "models": [
                     {
-                        "id": str(r.id),
-                        "profile": str(r.profile_id),
-                        "status": r.status,
-                        "active": r.active,
-                        "metrics": r.metrics,
-                        "error": r.error,
-                        "threshold": r.threshold,
-                        "created_at": r.created_at,
-                        "updated_at": r.updated_at,
+                        "id": str(model.id),
+                        "profile": str(model.profile_id),
+                        "name": model.name,
+                        "version": model.version,
+                        "runtime": model.runtime,
+                        "active": model.active,
+                        "selected": bool(
+                            model.active
+                            and active
+                            and model.profile.sku_id == active.sku_id
+                            and model.profile.contract == active.contract
+                            and model.profile.checkpoint_phase == active.checkpoint_phase
+                            and model.profile.checkpoint_second == active.checkpoint_second
+                        ),
+                        "metrics": model.metrics,
+                        "threshold": model.threshold,
+                        "source": model.artifact_key.partition(":")[0],
+                        "discovered_at": model.updated_at,
                     }
-                    for r in runs
+                    for model in models
                 ],
             }
         )
@@ -302,59 +305,6 @@ class MachineMLView(APIView):
                         "cursor": channel.latest_cursor,
                     },
                 )
-        elif action == "train":
-            from apps.ml.queue import enqueue
-            from apps.ml.training import labeled_cycles, rows_eligibility
-
-            if not config.active_profile:
-                raise ValidationError(
-                    "Collect 200 labeled cycles, including at least 20 of each class."
-                )
-            cycle_limit = data.get("cycle_limit")
-            if cycle_limit is not None and (
-                isinstance(cycle_limit, bool)
-                or not isinstance(cycle_limit, int)
-                or cycle_limit < 200
-            ):
-                raise ValidationError("Training data range must contain at least 200 cycles.")
-            rows = labeled_cycles(config.active_profile)
-            selected_rows = rows[-cycle_limit:] if cycle_limit else rows
-            if not rows_eligibility(selected_rows):
-                raise ValidationError(
-                    "Selected data requires 200 labeled cycles, "
-                    "including at least 20 of each class."
-                )
-            if TrainingRun.objects.filter(
-                profile=config.active_profile, status__in=["queued", "training"]
-            ).exists():
-                raise ValidationError("Training is already queued or running.")
-            run = TrainingRun.objects.create(
-                tenant=machine.tenant,
-                profile=config.active_profile,
-                metrics={"requested_cycle_limit": cycle_limit},
-            )
-            transaction.on_commit(lambda: enqueue(run.id))
-        elif action in {"promote", "rollback"}:
-            run = get_object_or_404(TrainingRun, pk=data.get("run"), profile__machine=machine)
-            if (
-                run.status not in {"candidate", "approved"}
-                or not config.active_profile
-                or run.profile.contract != config.active_profile.contract
-                or run.profile.sku_id != config.active_profile.sku_id
-                or run.profile.checkpoint_phase != config.active_profile.checkpoint_phase
-                or run.profile.checkpoint_second != config.active_profile.checkpoint_second
-            ):
-                raise ValidationError("Choose a compatible validated model for the active SKU.")
-            from apps.ml.training import load_artifact
-
-            load_artifact(run)
-            TrainingRun.objects.filter(
-                profile__machine=machine, profile__sku=run.profile.sku, active=True
-            ).update(active=False)
-            run.active = True
-            run.status = "approved"
-            run.approved_by = request.user
-            run.save()
         else:
             raise ValidationError("Unknown ML action.")
         return Response({"ok": True})

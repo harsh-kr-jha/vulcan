@@ -320,7 +320,6 @@ CELERY_TASK_ROUTES = {
     "apps.operations.tasks.validate_upload": {"queue": "validation"},
     "apps.operations.tasks.standardise_upload": {"queue": "standardisation"},
     "apps.analytics.tasks.refresh_upload_analytics": {"queue": "analytics"},
-    "apps.ml.tasks.train_model": {"queue": "machine_learning"},
 }
 
 DATA_STREAM_CREDENTIAL_KEY = os.getenv("DATA_STREAM_CREDENTIAL_KEY", SECRET_KEY)
@@ -331,11 +330,11 @@ AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")
 AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "")
 AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL")
 AWS_S3_PUBLIC_ENDPOINT_URL = os.getenv("AWS_S3_PUBLIC_ENDPOINT_URL", AWS_S3_ENDPOINT_URL)
-ML_ARTIFACT_DIR = (
-    os.getenv("ML_ARTIFACT_DIR", str(REPOSITORY_ROOT / ".data" / "ml-models"))
-    if DEBUG or SINGLE_NODE
-    else ""
-)
+ML_MODEL_SOURCE = os.getenv("ML_MODEL_SOURCE", "local")
+ML_MODEL_DIR = os.getenv("ML_MODEL_DIR", str(REPOSITORY_ROOT / "models"))
+ML_MODEL_BUCKET = os.getenv("ML_MODEL_BUCKET", AWS_S3_BUCKET)
+ML_MODEL_PREFIX = os.getenv("ML_MODEL_PREFIX", "models")
+ML_MODEL_ENDPOINT_URL = os.getenv("ML_MODEL_ENDPOINT_URL") or AWS_S3_ENDPOINT_URL
 UPLOAD_URL_TTL_SECONDS = int(os.getenv("UPLOAD_URL_TTL_SECONDS", "900"))
 MAX_EXCEL_UPLOAD_BYTES = int(os.getenv("MAX_EXCEL_UPLOAD_BYTES", str(50 * 1024 * 1024)))
 MAX_CSV_UPLOAD_BYTES = int(os.getenv("MAX_CSV_UPLOAD_BYTES", str(500 * 1024 * 1024)))

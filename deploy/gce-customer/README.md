@@ -2,7 +2,7 @@
 
 This profile deploys one selected Vulcan variant to Compute Engine while keeping durable relational
 state in Cloud SQL PostgreSQL. The VM runs the web containers and independent ingestion,
-observation, and model-training processes.
+observation and external-model inference processes.
 
 ## Persistence contract
 
@@ -109,4 +109,4 @@ or apply an explicit reverse migration.
 
 Stop all application writers. Download the selected GCS dump and restore it to a new Cloud SQL
 database with `pg_restore`; verify it before changing `DJANGO_DATABASE_URL`. Keep the previous
-database available until the restored application passes health and smoke-training checks.
+database available until the restored application passes health and prediction smoke checks.

@@ -1,3 +1,5 @@
+import hashlib
+import json
 import uuid
 from datetime import timedelta
 
@@ -12,13 +14,23 @@ from django.utils import timezone
 pytestmark = pytest.mark.django_db
 
 
+class FailurePipeline:
+    def predict_proba(self, rows):
+        return [[0.1, 0.9] for _ in rows]
+
+
 @pytest.fixture
 def setup_ml(tenant, factory):
     layout = FactoryLayout.objects.create(
         tenant=tenant, factory=factory, floor_width=100, floor_height=100
     )
     machine = SpatialMachine.objects.create(
-        tenant=tenant, layout=layout, name="ML test", position_x=1, position_y=1
+        tenant=tenant,
+        layout=layout,
+        code="test-machine",
+        name="ML test",
+        position_x=1,
+        position_y=1,
     )
     sku = FactoryMaster.objects.create(
         tenant=tenant, factory=factory, kind="skus", name="Tube", code="T1"
@@ -160,148 +172,83 @@ def test_configuration_validates_and_scopes_sku(api_client, setup_ml):
     assert response.status_code == 400
 
 
-def test_training_validation_artifact_and_live_inference(setup_ml, monkeypatch):
-    import io
+def install_model(tmp_path, machine, profile, version, *, stage="production", checksum=None):
+    import joblib
+    from django.utils.text import slugify
 
-    from apps.ml.models import TrainingRun
-    from apps.ml.training import load_artifact, train
-    from apps.streams.models import MachineCycleOutcome
+    model_dir = tmp_path.joinpath(
+        slugify(machine.tenant.slug),
+        slugify(machine.layout.factory.code),
+        slugify(machine.code),
+        slugify(profile.sku.code),
+        "quality-risk",
+        f"v{version}",
+    )
+    model_dir.mkdir(parents=True)
+    artifact = model_dir / "model.joblib"
+    joblib.dump(FailurePipeline(), artifact)
+    digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
+    manifest = {
+        "schema_version": 1,
+        "name": "quality-risk",
+        "version": version,
+        "runtime": "sklearn-joblib",
+        "stage": stage,
+        "machine": {
+            "tenant": machine.tenant.slug,
+            "factory": machine.layout.factory.code,
+            "code": machine.code,
+        },
+        "profile": {
+            "sku": profile.sku.code,
+            "version": profile.version,
+            "contract": profile.contract,
+            "checkpoint_phase": profile.checkpoint_phase,
+            "checkpoint_second": profile.checkpoint_second,
+        },
+        "artifact": artifact.name,
+        "sha256": checksum or digest,
+        "threshold": 0.7,
+        "metrics": {"balanced_accuracy": 0.91},
+    }
+    (model_dir / "manifest.json").write_text(json.dumps(manifest))
+
+
+def test_registry_versions_selects_latest_production_model_and_predicts(
+    setup_ml, settings, tmp_path
+):
+    from apps.ml.models import PredictionModel
+    from apps.ml.registry import sync_models
 
     machine, profile, _ = setup_ml
-    artifacts = {}
+    settings.ML_MODEL_SOURCE = "local"
+    settings.ML_MODEL_DIR = str(tmp_path)
+    install_model(tmp_path, machine, profile, "1.2.0")
+    install_model(tmp_path, machine, profile, "1.10.0")
 
-    class Storage:
-        bucket = "private-test"
+    assert sync_models() == {"discovered": 2, "active": 1}
+    assert list(PredictionModel.objects.order_by("version").values_list("version", "active")) == [
+        ("1.10.0", True),
+        ("1.2.0", False),
+    ]
 
-        def __init__(self):
-            self.client = self
-
-        def put_object(self, **kwargs):
-            artifacts[kwargs["Key"]] = kwargs["Body"]
-
-        def get_object(self, **kwargs):
-            return {"Body": io.BytesIO(artifacts[kwargs["Key"]])}
-
-    monkeypatch.setattr("apps.ml.training.ObjectStorage", Storage)
-    cycles, snapshots, outcomes = [], [], []
-    for i in range(240):
-        bad = i % 2 == 0
-        cycle = MachineCycle(
-            tenant=machine.tenant,
-            machine=machine,
-            profile=profile,
-            run_id=f"run-{i // 80}",
-            cycle_id=str(i),
-            completed=True,
-            started_at=timezone.now() + timedelta(seconds=i),
-        )
-        cycles.append(cycle)
-        for j in range(2):
-            snapshots.append(
-                FeatureSnapshot(
-                    tenant=machine.tenant,
-                    cycle=cycle,
-                    event_id=uuid.uuid4(),
-                    sequence_no=i * 2 + j,
-                    observed_at=cycle.started_at,
-                    checkpoint=j == 1,
-                    features={
-                        "field:temperature:phase:cutting:latest": 650 if bad else 600,
-                        "context:phase": "cutting",
-                        "context:elapsed": j + 1,
-                    },
-                )
-            )
-        outcomes.append(
-            MachineCycleOutcome(
-                tenant=machine.tenant,
-                machine=machine,
-                run_id=cycle.run_id,
-                cycle_id=cycle.cycle_id,
-                source_label="failure" if bad else "good",
-                effective_label="failure" if bad else "good",
-            )
-        )
-    MachineCycle.objects.bulk_create(cycles)
-    FeatureSnapshot.objects.bulk_create(snapshots)
-    MachineCycleOutcome.objects.bulk_create(outcomes)
-    run = TrainingRun.objects.create(tenant=machine.tenant, profile=profile)
-    train(run.id)
-    run.refresh_from_db()
-    assert run.status == "candidate", run.error
-    assert run.metrics["balanced_accuracy"] >= 0.70
-    assert run.metrics["split_strategy"] == "run_isolated"
-    partitions = {}
-    for row in run.dataset:
-        assert row["cycle"] not in partitions
-        partitions[row["cycle"]] = row["partition"]
-    assert load_artifact(run) is not None
-    run.active = True
-    run.save()
     event = sample(machine, 999, cycle="unseen", value=650)
     observe(event)
     prediction = FeatureSnapshot.objects.get(event_id=event.event_id)
-    assert prediction.model == run
+    assert prediction.model.version == "1.10.0"
     assert prediction.predicted_label == "failure"
 
 
-def test_local_model_artifact_round_trip(settings, tmp_path, monkeypatch):
-    from apps.ml.training import _read_artifact, _store_artifact
-
-    settings.ML_ARTIFACT_DIR = str(tmp_path)
-    monkeypatch.setattr(
-        "apps.ml.training.ObjectStorage",
-        lambda: type("Storage", (), {"client": None})(),
-    )
-
-    key = _store_artifact("ml/tenant/run/model.joblib", b"private model")
-
-    assert key == "local:ml/tenant/run/model.joblib"
-    assert _read_artifact(key) == b"private model"
-    assert (tmp_path / "ml/tenant/run/model.joblib").stat().st_mode & 0o777 == 0o600
-
-
-def test_split_cycles_stratifies_when_run_groups_have_one_class():
-    from types import SimpleNamespace
-
-    from apps.ml.training import split_cycles
-
-    def row(run_id, label, index):
-        return (
-            SimpleNamespace(run_id=run_id, id=f"{run_id}-{index}"),
-            SimpleNamespace(effective_label=label),
-            [],
-        )
-
-    rows = [row("small-start", "good", index) for index in range(6)]
-    rows += [row("main", "good", index) for index in range(257)]
-    rows += [row("main", "failure", index) for index in range(31)]
-    rows += [row("small-end", "good", index) for index in range(17)]
-
-    partitions = split_cycles(rows)
-
-    assert [len(partition) for partition in partitions] == [187, 62, 62]
-    for partition in partitions:
-        labels = [outcome.effective_label for _, outcome, _ in partition]
-        assert labels.count("good") >= 5
-        assert labels.count("failure") >= 5
-    assert split_cycles(rows) == partitions
-
-
-def test_training_action_saves_selected_cycle_range(api_client, setup_ml, monkeypatch):
-    from apps.ml.models import TrainingRun
+def test_registry_rejects_artifact_checksum_mismatch(setup_ml, settings, tmp_path):
+    from apps.ml.registry import sync_models
 
     machine, profile, _ = setup_ml
-    monkeypatch.setattr("apps.ml.training.labeled_cycles", lambda selected: [None] * 300)
-    monkeypatch.setattr("apps.ml.training.rows_eligibility", lambda rows: True)
+    settings.ML_MODEL_SOURCE = "local"
+    settings.ML_MODEL_DIR = str(tmp_path)
+    install_model(tmp_path, machine, profile, "2.0.0", checksum="0" * 64)
 
-    response = api_client.post(
-        f"/api/ml/machines/{machine.id}/train/", {"cycle_limit": 200}, format="json"
-    )
-
-    assert response.status_code == 200
-    run = TrainingRun.objects.get(profile=profile)
-    assert run.metrics["requested_cycle_limit"] == 200
+    with pytest.raises(ValueError, match="Checksum mismatch"):
+        sync_models()
 
 
 def test_delayed_quality_channel_keeps_human_override(setup_ml, user, monkeypatch, factory):
@@ -362,24 +309,3 @@ def test_delayed_quality_channel_keeps_human_override(setup_ml, user, monkeypatc
     assert outcome.source_label == "failure"
     assert outcome.effective_label == "good"
     assert OutcomeReceipt.objects.filter(event_id=quality_event_id).count() == 1
-
-
-def test_local_scheduler_supersedes_duplicate_requests(setup_ml, settings, monkeypatch):
-    from apps.ml.models import TrainingRun
-    from apps.ml.worker import schedule_training
-
-    _, profile, config = setup_ml
-    config.enabled = False  # Only exercise already-requested runs in this test.
-    config.save(update_fields=["enabled"])
-    older = TrainingRun.objects.create(tenant=profile.tenant, profile=profile, error="old")
-    newer = TrainingRun.objects.create(tenant=profile.tenant, profile=profile, error="new")
-    trained = []
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    monkeypatch.setattr("apps.ml.training.train", lambda run_id: trained.append(run_id))
-
-    schedule_training()
-
-    older.refresh_from_db()
-    assert older.status == "superseded"
-    assert older.error == ""
-    assert trained == [newer.id]

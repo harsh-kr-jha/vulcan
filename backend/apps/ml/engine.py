@@ -4,7 +4,7 @@ import math
 
 from django.db import transaction
 
-from apps.ml.models import FeatureSnapshot, MachineCycle, ObservationConfig, TrainingRun
+from apps.ml.models import FeatureSnapshot, MachineCycle, ObservationConfig, PredictionModel
 
 
 def field_contract(fields):
@@ -176,7 +176,7 @@ def observe(sample):
     if config.stale_reason.lower() == "database is locked":
         config.stale_reason = ""
         config.save(update_fields=["stale_reason"])
-    model = TrainingRun.objects.filter(
+    model = PredictionModel.objects.filter(
         profile__machine=sample.machine,
         profile__sku=profile.sku,
         profile__contract=profile.contract,
@@ -185,10 +185,10 @@ def observe(sample):
         active=True,
     ).first()
     if model:
-        from apps.ml.training import load_artifact
+        from apps.ml.registry import load_model
 
         try:
-            pipeline = load_artifact(model)
+            pipeline = load_model(model)
             probability = float(pipeline.predict_proba([features])[0][1])
             snapshot.model = model
             snapshot.failure_probability = probability

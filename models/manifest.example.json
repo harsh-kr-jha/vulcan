@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "name": "quality-risk",
+  "version": "2.3.1",
+  "runtime": "sklearn-joblib",
+  "stage": "available",
+  "machine": { "tenant": "acme", "factory": "PUNE-01", "code": "CNC-07" },
+  "profile": {
+    "sku": "AXLE-20",
+    "version": 4,
+    "contract": "replace-with-profile-feature-contract-sha256",
+    "checkpoint_phase": "cutting",
+    "checkpoint_second": 3
+  },
+  "artifact": "model.joblib",
+  "sha256": "replace-with-model-file-sha256",
+  "threshold": 0.62,
+  "metrics": {
+    "balanced_accuracy": 0.91,
+    "evaluation_dataset": "factory-pune-2026-09"
+  }
+}

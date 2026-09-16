@@ -55,20 +55,25 @@ class MachineCycle(UUIDModel, TenantScopedModel):
         ]
 
 
-class TrainingRun(UUIDModel, TenantScopedModel):
+class PredictionModel(UUIDModel, TenantScopedModel):
     profile = models.ForeignKey(ProductionProfile, on_delete=models.PROTECT)
-    status = models.CharField(max_length=20, default="queued")
+    name = models.SlugField(max_length=80)
+    version = models.CharField(max_length=40)
+    runtime = models.CharField(max_length=30, default="sklearn-joblib")
     metrics = models.JSONField(default=dict)
-    dataset = models.JSONField(default=list)
     artifact_key = models.TextField(blank=True)
+    manifest_key = models.TextField(blank=True)
     checksum = models.CharField(max_length=64, blank=True)
     threshold = models.FloatField(default=0.5)
-    error = models.TextField(blank=True)
     active = models.BooleanField(default=False)
-    approved_by = models.ForeignKey("auth.User", null=True, on_delete=models.PROTECT)
 
     class Meta:
-        indexes = [models.Index(fields=["profile", "status", "active"], name="ml_run_state_idx")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["profile", "name", "version"], name="ml_model_profile_version"
+            )
+        ]
+        indexes = [models.Index(fields=["profile", "active"], name="ml_model_active_idx")]
 
 
 class FeatureSnapshot(UUIDModel, TenantScopedModel):
@@ -79,7 +84,7 @@ class FeatureSnapshot(UUIDModel, TenantScopedModel):
     features = models.JSONField(default=dict)
     checkpoint = models.BooleanField(default=False)
     violations = models.JSONField(default=dict)
-    model = models.ForeignKey(TrainingRun, null=True, on_delete=models.PROTECT)
+    model = models.ForeignKey(PredictionModel, null=True, on_delete=models.PROTECT)
     failure_probability = models.FloatField(null=True)
     predicted_label = models.CharField(max_length=20, blank=True)
     threshold = models.FloatField(null=True)

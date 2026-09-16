@@ -119,7 +119,7 @@ docker compose --env-file .env run --rm backend \
   python backend/manage.py migrate --plan
 
 # --- Stop application writers for migration ---
-docker compose --env-file .env stop frontend backend stream-worker ml-observer ml-trainer
+docker compose --env-file .env stop frontend backend stream-worker ml-observer
 
 # --- Apply migrations ---
 docker compose --env-file .env run --rm backend \

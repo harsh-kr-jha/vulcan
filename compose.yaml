@@ -59,6 +59,9 @@ services:
     env_file: backend/.env
     environment:
       DJANGO_DATABASE_URL: postgresql://vulcan:vulcan@postgres:5432/vulcan
+      ML_MODEL_DIR: /app/models
+    volumes:
+      - ./models:/app/models:ro
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -106,6 +109,9 @@ services:
     env_file: backend/.env
     environment:
       DJANGO_DATABASE_URL: postgresql://vulcan:vulcan@postgres:5432/vulcan
+      ML_MODEL_DIR: /app/models
+    volumes:
+      - ./models:/app/models:ro
     depends_on:
       backend:
         condition: service_started
@@ -113,20 +119,6 @@ services:
         condition: service_healthy
     command: python manage.py observe_machines
     working_dir: /app/backend
-
-  ml-trainer:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    env_file: backend/.env
-    environment:
-      DJANGO_DATABASE_URL: postgresql://vulcan:vulcan@postgres:5432/vulcan
-      OMP_NUM_THREADS: "1"
-    depends_on:
-      redis:
-        condition: service_healthy
-    working_dir: /app/backend
-    command: celery -A config worker -l INFO -Q machine_learning --concurrency=1
 
   frontend:
     build:

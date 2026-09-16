@@ -33,14 +33,15 @@ services:
       - sh
       - -c
       - >-
-        chown -R 10001:10001 /data /backups /static &&
-        chmod 700 /data /backups &&
+        chown -R 10001:10001 /data /backups /static /models &&
+        chmod 700 /data /backups /models &&
         chmod 755 /static
     restart: "no"
     volumes:
       - /var/lib/tamaso/${CUSTOMER_ID}/data:/data
       - /var/lib/tamaso/${CUSTOMER_ID}/backups:/backups
       - /var/lib/tamaso/${CUSTOMER_ID}/static:/static
+      - /var/lib/tamaso/${CUSTOMER_ID}/models:/models
 
   backend:
     image: ${BACKEND_IMAGE}
@@ -48,6 +49,11 @@ services:
     env_file: ${TAMASO_ENV_FILE:-.env}
     environment:
       DJANGO_DATABASE_URL: ${DJANGO_DATABASE_URL:?Cloud SQL PostgreSQL URL is required}
+      ML_MODEL_SOURCE: ${ML_MODEL_SOURCE:-local}
+      ML_MODEL_DIR: /models
+      ML_MODEL_BUCKET: ${ML_MODEL_BUCKET:-}
+      ML_MODEL_PREFIX: ${ML_MODEL_PREFIX:-models}
+      ML_MODEL_ENDPOINT_URL: ${ML_MODEL_ENDPOINT_URL:-}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       DJANGO_CACHE_URL: ${DJANGO_CACHE_URL:-redis://redis:6379/1}
       DJANGO_STATIC_ROOT: /static
@@ -79,6 +85,7 @@ services:
       - "8000"
     volumes:
       - /var/lib/tamaso/${CUSTOMER_ID}/data:/data
+      - /var/lib/tamaso/${CUSTOMER_ID}/models:/models:ro
       - /var/lib/tamaso/${CUSTOMER_ID}/backups:/backups
       - /var/lib/tamaso/${CUSTOMER_ID}/static:/static
     healthcheck:
@@ -138,30 +145,20 @@ services:
       DJANGO_DATABASE_URL: ${DJANGO_DATABASE_URL:?Cloud SQL PostgreSQL URL is required}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       CELERY_TASK_ALWAYS_EAGER: "false"
+      ML_MODEL_SOURCE: ${ML_MODEL_SOURCE:-local}
+      ML_MODEL_DIR: /models
+      ML_MODEL_BUCKET: ${ML_MODEL_BUCKET:-}
+      ML_MODEL_PREFIX: ${ML_MODEL_PREFIX:-models}
+      ML_MODEL_ENDPOINT_URL: ${ML_MODEL_ENDPOINT_URL:-}
     command: ["python", "backend/manage.py", "observe_machines"]
     depends_on:
       backend:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - /var/lib/tamaso/${CUSTOMER_ID}/models:/models:ro
     mem_limit: 384m
-
-  ml-trainer:
-    image: ${BACKEND_IMAGE}
-    restart: unless-stopped
-    env_file: ${TAMASO_ENV_FILE:-.env}
-    environment:
-      DJANGO_DATABASE_URL: ${DJANGO_DATABASE_URL:?Cloud SQL PostgreSQL URL is required}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
-      CELERY_TASK_ALWAYS_EAGER: "false"
-      OMP_NUM_THREADS: "1"
-    command: ["celery", "-A", "config", "worker", "-l", "INFO", "-Q", "machine_learning", "--concurrency=1"]
-    depends_on:
-      backend:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    mem_limit: 1g
 
   caddy:
     image: caddy:2.10.2-alpine

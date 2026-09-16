@@ -13,7 +13,6 @@ from apps.ml.models import (
     ObservationConfig,
     OutcomeBinding,
     OutcomeReceipt,
-    TrainingRun,
 )
 from apps.streams.client import request_json
 from apps.streams.models import MachineCycleOutcome, MachineTelemetrySample
@@ -109,64 +108,5 @@ def process_pending(limit=500):
             binding.save()
 
 
-def schedule_training():
-    from django.conf import settings
-
-    from apps.ml.queue import enqueue
-    from apps.ml.training import eligibility, labeled_cycles, train
-
-    queued = list(
-        TrainingRun.objects.filter(status="queued")
-        .select_related("profile")
-        .order_by("-created_at")[:50]
-    )
-    newest_by_profile = {}
-    for run in queued:
-        if run.profile_id in newest_by_profile:
-            TrainingRun.objects.filter(pk=run.pk, status="queued").update(
-                status="superseded", error=""
-            )
-            continue
-        newest_by_profile[run.profile_id] = run.id
-        if settings.CELERY_TASK_ALWAYS_EAGER:
-            train(run.id)
-        else:
-            enqueue(run.id)
-
-    for config in ObservationConfig.objects.filter(
-        enabled=True, active_profile__isnull=False
-    ).select_related("active_profile"):
-        profile = config.active_profile
-        runs = TrainingRun.objects.filter(
-            profile__machine=profile.machine,
-            profile__sku=profile.sku,
-            profile__contract=profile.contract,
-            profile__checkpoint_phase=profile.checkpoint_phase,
-            profile__checkpoint_second=profile.checkpoint_second,
-        )
-        if runs.filter(status__in=["queued", "training", "candidate"]).exists():
-            continue
-        latest = runs.order_by("-created_at").first()
-        if (
-            latest
-            and latest.status == "failed"
-            and latest.created_at > timezone.now() - timedelta(hours=1)
-        ):
-            continue
-        if not eligibility(profile)["eligible"]:
-            continue
-        rows = labeled_cycles(profile)
-        if latest:
-            previous = {r["cycle"]: r for r in latest.dataset}
-            new = sum(str(c.id) not in previous for c, _, _ in rows)
-            corrections = sum(
-                str(c.id) in previous
-                and o.overridden_at is not None
-                and previous[str(c.id)].get("human_revision", "") != o.overridden_at.isoformat()
-                for c, o, _ in rows
-            )
-            if new < 100 and corrections < 10:
-                continue
-        run = TrainingRun.objects.create(tenant=config.tenant, profile=profile)
-        enqueue(run.id)
+def prune_feature_history():
     FeatureSnapshot.objects.filter(created_at__lt=timezone.now() - timedelta(days=365)).delete()

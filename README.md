@@ -69,5 +69,5 @@ make migrate-sqlite
 - [Deployment](docs/deployment.md) — Customer GCE and Tamaso demo models
 - [Client Onboarding](docs/client-onboarding.md) — Step-by-step new customer procedure
 - [Data Input Streams](docs/data-input-streams.md) — Pull-gateway contract and operator workflow
-- [Machine ML Observation](docs/machine-learning-observation.md) — Production profiles, range health, training, and model operations
-- [GCP ML Architecture](docs/gcp-ml-architecture.md) — PostgreSQL, workers, model artifacts, and continuous training
+- [Machine ML Observation](docs/machine-learning-observation.md) — Production profiles, inference, and external model registry
+- [GCP ML Architecture](docs/gcp-ml-architecture.md) — Read-only model serving from local folders or cloud storage

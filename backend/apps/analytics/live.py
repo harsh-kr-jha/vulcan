@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from apps.ml.models import MachineCycle, ObservationConfig, TrainingRun
+from apps.ml.models import MachineCycle, ObservationConfig, PredictionModel
 
 STATE_PRIORITY = {
     "down": 0,
@@ -218,7 +218,14 @@ def build_live_dashboard(factory, requested_machine_id=None):
         has_active_model = bool(
             config
             and config.active_profile_id
-            and TrainingRun.objects.filter(profile=config.active_profile, active=True).exists()
+            and PredictionModel.objects.filter(
+                profile__machine=selected,
+                profile__sku=config.active_profile.sku,
+                profile__contract=config.active_profile.contract,
+                profile__checkpoint_phase=config.active_profile.checkpoint_phase,
+                profile__checkpoint_second=config.active_profile.checkpoint_second,
+                active=True,
+            ).exists()
         )
         current_payload = {
             **by_id[selected_id],

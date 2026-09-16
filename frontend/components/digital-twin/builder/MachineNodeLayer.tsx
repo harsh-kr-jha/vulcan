@@ -74,12 +74,32 @@ function SingleMachineNode({
   const { x, y } = machine.position;
   const machineWidth = machine.size?.width ?? 1;
   const machineHeight = machine.size?.height ?? 1;
-  const fill = isSelected ? MACHINE_FILL_SELECTED : MACHINE_FILL;
-  const stroke = isSelected ? MACHINE_STROKE_SELECTED : MACHINE_STROKE;
+
+  const nameLower = machine.name.toLowerCase();
+  const isPlatform = nameLower.includes("platform");
+  const isPath = nameLower.includes("path") || nameLower.includes("corridor");
+  const isStrawManure = nameLower.includes("straw") && nameLower.includes("manure");
+
+  let fill = isSelected ? MACHINE_FILL_SELECTED : MACHINE_FILL;
+  let stroke = isSelected ? MACHINE_STROKE_SELECTED : MACHINE_STROKE;
+  let textColor = TEXT_COLOR;
+
+  if (isPlatform) {
+    fill = isSelected ? "#b45309" : "#8c4314";
+    stroke = isSelected ? "#f59e0b" : "#6d3410";
+    textColor = "#ffffff";
+  } else if (isPath) {
+    fill = isSelected ? "#7c3aed" : "#5820b8";
+    stroke = isSelected ? "#c084fc" : "#431499";
+    textColor = "#ffffff";
+  } else {
+    fill = isSelected ? "#bfdbfe" : "#cce2fe";
+    stroke = isSelected ? "#1d4ed8" : "#93c5fd";
+  }
 
   // Font size dynamically fits machine name
   const nameLen = Math.max(machine.name.length, 1);
-  const maxFontSize = Math.min(machineWidth, machineHeight) * 0.35;
+  const maxFontSize = isPlatform ? Math.min(machineWidth, machineHeight) * 0.32 : Math.min(machineWidth, machineHeight) * 0.35;
   const fitFontSize = Math.min(maxFontSize, ((machineWidth - 0.2) * 0.95) / (nameLen * 0.58));
   const fontSize = Math.max(fitFontSize, 0.22);
 
@@ -129,20 +149,83 @@ function SingleMachineNode({
         }}
       />
 
+      {/* Path decoration in edit mode */}
+      {isPath && (
+        <g style={{ pointerEvents: "none" }}>
+          <polygon
+            points={`${x + machineWidth - 0.15},${y + machineHeight / 2} ${x + machineWidth - 0.9},${y + 0.5} ${x + machineWidth - 0.9},${y + machineHeight - 0.5}`}
+            fill="#86efac"
+            opacity={0.95}
+          />
+          {Array.from({ length: 9 }).map((_, arrIdx) => {
+            const arrX = x + 1.8 + arrIdx * 3.2;
+            if (arrX > x + machineWidth - 2.5) return null;
+            if (arrIdx === 4) return null;
+            const arrY = y + machineHeight / 2;
+            return (
+              <g key={`edit-arr-${arrIdx}`} fill="#86efac" opacity={0.95}>
+                <polygon points={`${arrX - 0.75},${arrY} ${arrX - 0.35},${arrY - 0.35} ${arrX - 0.35},${arrY + 0.35}`} />
+                <rect x={arrX - 0.35} y={arrY - 0.1} width={0.7} height={0.2} rx={0.05} />
+                <polygon points={`${arrX + 0.75},${arrY} ${arrX + 0.35},${arrY - 0.35} ${arrX + 0.35},${arrY + 0.35}`} />
+              </g>
+            );
+          })}
+        </g>
+      )}
+
       {/* Machine name label – centered inside the rect, clipped to bounds */}
-      <text
-        x={x + machineWidth / 2}
-        y={y + machineHeight / 2}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize={fontSize}
-        fontWeight={500}
-        fill={TEXT_COLOR}
-        clipPath={`url(#${clipId})`}
-        style={{ pointerEvents: "none", userSelect: "none" }}
-      >
-        {displayName}
-      </text>
+      {isStrawManure ? (
+        <g clipPath={`url(#${clipId})`} style={{ pointerEvents: "none", userSelect: "none" }}>
+          <text x={x + machineWidth / 2} y={y + machineHeight * 0.26} textAnchor="middle" fontSize={0.34} fontWeight={600} fill={textColor}>
+            Straw
+          </text>
+          <text x={x + machineWidth / 2} y={y + machineHeight * 0.44} textAnchor="middle" fontSize={0.32} fontWeight={600} fill={textColor}>
+            +
+          </text>
+          <text x={x + machineWidth / 2} y={y + machineHeight * 0.62} textAnchor="middle" fontSize={0.30} fontWeight={600} fill={textColor}>
+            Chicken manure
+          </text>
+          <text x={x + machineWidth / 2} y={y + machineHeight * 0.80} textAnchor="middle" fontSize={0.30} fontWeight={600} fill={textColor}>
+            Inventory
+          </text>
+        </g>
+      ) : isPath ? (
+        <g clipPath={`url(#${clipId})`} style={{ pointerEvents: "none", userSelect: "none" }}>
+          <rect
+            x={x + machineWidth / 2 - 1.2}
+            y={y + machineHeight / 2 - 0.45}
+            width={2.4}
+            height={0.9}
+            rx={0.2}
+            fill="#86efac"
+          />
+          <text
+            x={x + machineWidth / 2}
+            y={y + machineHeight / 2 + 0.08}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={0.42}
+            fontWeight={700}
+            fill="#064e3b"
+          >
+            Path
+          </text>
+        </g>
+      ) : (
+        <text
+          x={x + machineWidth / 2}
+          y={y + machineHeight / 2}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={fontSize}
+          fontWeight={600}
+          fill={textColor}
+          clipPath={`url(#${clipId})`}
+          style={{ pointerEvents: "none", userSelect: "none" }}
+        >
+          {displayName}
+        </text>
+      )}
 
       {/* Hover tooltip – shows full machine name above the machine */}
       {isHovered && machine.name && (

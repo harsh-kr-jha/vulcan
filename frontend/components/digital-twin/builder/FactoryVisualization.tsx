@@ -536,78 +536,182 @@ export function FactoryVisualization({
                     />
                   </clipPath>
                 </defs>
-                {/* Machine body */}
-                <rect
-                  x={machine.position.x + 0.05}
-                  y={machine.position.y + 0.05}
-                  width={w - 0.1}
-                  height={h - 0.1}
-                  rx={0.12}
-                  fill={STATUS_FILLS[status]}
-                  stroke={isHovered ? "#2563eb" : STATUS_STROKES[status]}
-                  strokeWidth={isHovered ? 0.1 : 0.06}
-                  filter="url(#machine-shadow)"
-                  style={{ transition: "stroke 0.15s, opacity 0.15s" }}
-                />
-                {/* Status indicator dot */}
-                <circle
-                  cx={machine.position.x + w - 0.25}
-                  cy={machine.position.y + 0.25}
-                  r={0.12}
-                  fill={STATUS_STROKES[status]}
-                />
-                {/* Data indicator (bottom-left corner) */}
-                {hasData && (
-                  <g style={{ pointerEvents: "none" }}>
-                    <circle
-                      cx={machine.position.x + 0.25}
-                      cy={machine.position.y + h - 0.25}
-                      r={0.12}
-                      fill="#2563eb"
-                    />
-                  </g>
-                )}
-                {/* Machine name – clipped to box bounds */}
+                {/* Machine body and content */}
                 {(() => {
-                  const nameLen = Math.max(machine.name.length, 1);
-                  const maxFontSize = Math.min(w, h) * 0.28;
-                  const fitFontSize = Math.min(maxFontSize, ((w - 0.2) * 0.95) / (nameLen * 0.58));
-                  const dynamicFontSize = Math.max(fitFontSize, 0.22);
-                  const availW = (w - 0.1) * 0.95;
-                  const avgCharW = dynamicFontSize * 0.55;
-                  const maxC = Math.max(2, Math.floor(availW / avgCharW));
-                  const displayName = machine.name.length > maxC
-                    ? machine.name.slice(0, maxC - 1) + "\u2026"
-                    : machine.name;
+                  const nameLower = machine.name.toLowerCase();
+                  const isPlatform = nameLower.includes("platform");
+                  const isPath = nameLower.includes("path") || nameLower.includes("corridor");
+                  const isStrawManure = nameLower.includes("straw") && nameLower.includes("manure");
+
+                  let nodeFill = STATUS_FILLS[status];
+                  let nodeStroke = isHovered ? "#2563eb" : STATUS_STROKES[status];
+                  let nameFill = "#1e293b";
+                  let statusFill = STATUS_STROKES[status];
+
+                  if (isPlatform) {
+                    nodeFill = status === "down" ? "#dc2626" : status === "warning" ? "#d97706" : "#8c4314";
+                    nodeStroke = isHovered ? "#ea580c" : "#6d3410";
+                    nameFill = "#ffffff";
+                    statusFill = "#fed7aa";
+                  } else if (isPath) {
+                    nodeFill = status === "down" ? "#dc2626" : status === "warning" ? "#d97706" : "#5820b8";
+                    nodeStroke = isHovered ? "#a855f7" : "#431499";
+                    nameFill = "#ffffff";
+                    statusFill = "#d8b4fe";
+                  } else {
+                    if (status === "running" || status === "no_data" || status === "idle") {
+                      nodeFill = "#cce2fe";
+                      nodeStroke = isHovered ? "#2563eb" : "#93c5fd";
+                    }
+                  }
+
                   return (
                     <>
-                      <text
-                        x={machine.position.x + w / 2}
-                        y={machine.position.y + h / 2}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        fontSize={dynamicFontSize}
-                        fontWeight={600}
-                        fill="#1e293b"
-                        clipPath={`url(#viz-clip-${machine.id})`}
-                        style={{ pointerEvents: "none", userSelect: "none", fontFamily: "var(--font-family), system-ui, sans-serif" }}
-                      >
-                        {displayName}
-                      </text>
-                      {/* Status label below name – also clipped */}
-                      <text
-                        x={machine.position.x + w / 2}
-                        y={machine.position.y + h / 2 + dynamicFontSize * 1.25}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        fontSize={Math.max(dynamicFontSize * 0.7, 0.18)}
-                        fontWeight={500}
-                        fill={STATUS_STROKES[status]}
-                        clipPath={`url(#viz-clip-${machine.id})`}
-                        style={{ pointerEvents: "none", userSelect: "none", fontFamily: "var(--font-family), system-ui, sans-serif" }}
-                      >
-                        {STATUS_LABELS[status]}
-                      </text>
+                      {/* Body */}
+                      <rect
+                        x={machine.position.x + 0.05}
+                        y={machine.position.y + 0.05}
+                        width={w - 0.1}
+                        height={h - 0.1}
+                        rx={0.15}
+                        fill={nodeFill}
+                        stroke={nodeStroke}
+                        strokeWidth={isHovered ? 0.1 : 0.06}
+                        filter="url(#machine-shadow)"
+                        style={{ transition: "stroke 0.15s, opacity 0.15s" }}
+                      />
+
+                      {/* Path decoration: mint green arrows and right chevron touching Platform */}
+                      {isPath && (
+                        <g style={{ pointerEvents: "none" }}>
+                          <polygon
+                            points={`${machine.position.x + w - 0.15},${machine.position.y + h / 2} ${machine.position.x + w - 0.9},${machine.position.y + 0.5} ${machine.position.x + w - 0.9},${machine.position.y + h - 0.5}`}
+                            fill="#86efac"
+                            opacity={0.95}
+                          />
+                          {Array.from({ length: 9 }).map((_, arrIdx) => {
+                            const arrX = machine.position.x + 1.8 + arrIdx * 3.2;
+                            if (arrX > machine.position.x + w - 2.5) return null;
+                            if (arrIdx === 4) return null; // keep center for Path badge
+                            const arrY = machine.position.y + h / 2;
+                            return (
+                              <g key={`arr-${arrIdx}`} fill="#86efac" opacity={0.95}>
+                                <polygon points={`${arrX - 0.75},${arrY} ${arrX - 0.35},${arrY - 0.35} ${arrX - 0.35},${arrY + 0.35}`} />
+                                <rect x={arrX - 0.35} y={arrY - 0.1} width={0.7} height={0.2} rx={0.05} />
+                                <polygon points={`${arrX + 0.75},${arrY} ${arrX + 0.35},${arrY - 0.35} ${arrX + 0.35},${arrY + 0.35}`} />
+                              </g>
+                            );
+                          })}
+                        </g>
+                      )}
+
+                      {/* Status indicator dot */}
+                      <circle
+                        cx={machine.position.x + w - 0.28}
+                        cy={machine.position.y + 0.28}
+                        r={0.12}
+                        fill={isPlatform || isPath ? "#86efac" : STATUS_STROKES[status]}
+                        stroke={isPlatform || isPath ? "#14532d" : "#ffffff"}
+                        strokeWidth={0.04}
+                      />
+
+                      {/* Data indicator (bottom-left corner) */}
+                      {hasData && (
+                        <g style={{ pointerEvents: "none" }}>
+                          <circle
+                            cx={machine.position.x + 0.28}
+                            cy={machine.position.y + h - 0.28}
+                            r={0.12}
+                            fill={isPlatform || isPath ? "#38bdf8" : "#2563eb"}
+                            stroke="#ffffff"
+                            strokeWidth={0.04}
+                          />
+                        </g>
+                      )}
+
+                      {/* Machine text / multi-line layout */}
+                      {isStrawManure ? (
+                        <g clipPath={`url(#viz-clip-${machine.id})`} style={{ pointerEvents: "none", userSelect: "none" }}>
+                          <text x={machine.position.x + w / 2} y={machine.position.y + h * 0.26} textAnchor="middle" fontSize={0.34} fontWeight={600} fill={nameFill}>
+                            Straw
+                          </text>
+                          <text x={machine.position.x + w / 2} y={machine.position.y + h * 0.44} textAnchor="middle" fontSize={0.32} fontWeight={600} fill={nameFill}>
+                            +
+                          </text>
+                          <text x={machine.position.x + w / 2} y={machine.position.y + h * 0.62} textAnchor="middle" fontSize={0.30} fontWeight={600} fill={nameFill}>
+                            Chicken manure
+                          </text>
+                          <text x={machine.position.x + w / 2} y={machine.position.y + h * 0.80} textAnchor="middle" fontSize={0.30} fontWeight={600} fill={nameFill}>
+                            Inventory
+                          </text>
+                        </g>
+                      ) : isPath ? (
+                        <g clipPath={`url(#viz-clip-${machine.id})`} style={{ pointerEvents: "none", userSelect: "none" }}>
+                          <rect
+                            x={machine.position.x + w / 2 - 1.2}
+                            y={machine.position.y + h / 2 - 0.45}
+                            width={2.4}
+                            height={0.9}
+                            rx={0.2}
+                            fill="#86efac"
+                          />
+                          <text
+                            x={machine.position.x + w / 2}
+                            y={machine.position.y + h / 2 + 0.08}
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            fontSize={0.42}
+                            fontWeight={700}
+                            fill="#064e3b"
+                          >
+                            Path
+                          </text>
+                        </g>
+                      ) : (
+                        (() => {
+                          const nameLen = Math.max(machine.name.length, 1);
+                          const maxFontSize = isPlatform ? Math.min(w, h) * 0.32 : Math.min(w, h) * 0.28;
+                          const fitFontSize = Math.min(maxFontSize, ((w - 0.2) * 0.95) / (nameLen * 0.58));
+                          const dynamicFontSize = Math.max(fitFontSize, 0.24);
+                          const availW = (w - 0.1) * 0.95;
+                          const avgCharW = dynamicFontSize * 0.55;
+                          const maxC = Math.max(2, Math.floor(availW / avgCharW));
+                          const displayName = machine.name.length > maxC
+                            ? machine.name.slice(0, maxC - 1) + "\u2026"
+                            : machine.name;
+
+                          return (
+                            <>
+                              <text
+                                x={machine.position.x + w / 2}
+                                y={machine.position.y + h / 2 - (isPlatform ? 0.15 : 0)}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fontSize={dynamicFontSize}
+                                fontWeight={600}
+                                fill={nameFill}
+                                clipPath={`url(#viz-clip-${machine.id})`}
+                                style={{ pointerEvents: "none", userSelect: "none", fontFamily: "var(--font-family), system-ui, sans-serif" }}
+                              >
+                                {displayName}
+                              </text>
+                              <text
+                                x={machine.position.x + w / 2}
+                                y={machine.position.y + h / 2 + dynamicFontSize * 1.25}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fontSize={Math.max(dynamicFontSize * 0.65, 0.18)}
+                                fontWeight={500}
+                                fill={statusFill}
+                                clipPath={`url(#viz-clip-${machine.id})`}
+                                style={{ pointerEvents: "none", userSelect: "none", fontFamily: "var(--font-family), system-ui, sans-serif" }}
+                              >
+                                {STATUS_LABELS[status]}
+                              </text>
+                            </>
+                          );
+                        })()
+                      )}
                     </>
                   );
                 })()}

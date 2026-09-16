@@ -784,7 +784,9 @@ export function FactoryVisualization({
           ) : (
             <p className="text-xs text-gray-400 italic">No data submitted yet</p>
           )}
-          <p className="text-xs text-blue-500 mt-1.5">Click for analytics</p>
+          <p className="text-xs font-semibold text-emerald-600 mt-1.5 flex items-center gap-1">
+            Click machine to view analytics & full history sheet
+          </p>
         </div>
       )}
 

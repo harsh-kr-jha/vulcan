@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, FileSpreadsheet } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
 import { validateMachineName, validateIOSpec } from "@/lib/spatial-validators";
@@ -8,6 +8,7 @@ import type { IOSpec, MachineParameter, CustomKpi } from "@/lib/spatial-types";
 import { ParametersSection } from "./ParametersSection";
 import { KpiSection } from "./KpiSection";
 import { QrCodePreview } from "./QrCodePreview";
+import { MachineHistorySheetModal } from "./MachineHistorySheetModal";
 
 export interface MachineConfigPanelProps {
   machineId: string;
@@ -56,6 +57,7 @@ export function MachineConfigPanel({
   const [customKpis, setCustomKpis] = useState<CustomKpi[]>(
     existingMachine?.customKpis ?? []
   );
+  const [showHistorySheet, setShowHistorySheet] = useState(false);
 
   // Validation
   const nameValidation = name.trim().length === 0 ? null : validateMachineName(name.trim());
@@ -308,13 +310,33 @@ export function MachineConfigPanel({
           </div>
         </div>
 
-        {/* QR Code Preview for existing (saved) machines */}
+        {/* QR Code Preview & History Sheet for existing (saved) machines */}
         {!isNew && existingMachine && (
-          <div className="px-4 pb-4">
+          <div className="px-4 pb-4 space-y-2">
+            <button
+              type="button"
+              onClick={() => setShowHistorySheet(true)}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <FileSpreadsheet size={15} className="text-emerald-700" />
+              View Full History (Sheet Preview)
+            </button>
             <QrCodePreview machineId={machineId} machineName={name || existingMachine.name} />
           </div>
         )}
       </aside>
+
+      {/* Full History Sheet Modal */}
+      {showHistorySheet && existingMachine && (
+        <MachineHistorySheetModal
+          machineId={machineId}
+          machineName={name || existingMachine.name}
+          parameters={parameters}
+          inputs={inputs}
+          outputs={outputs}
+          onClose={() => setShowHistorySheet(false)}
+        />
+      )}
     </div>
   );
 }

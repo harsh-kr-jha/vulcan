@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { X, Activity, BarChart3, Clock, Maximize2, ArrowDownRight, ArrowUpRight, Sliders, Layers } from "lucide-react";
+import { X, Activity, BarChart3, Clock, Maximize2, ArrowDownRight, ArrowUpRight, Sliders, Layers, FileSpreadsheet } from "lucide-react";
 import type { MachineNode, MachineStatus } from "@/lib/spatial-types";
 import { QrCodePreview } from "./QrCodePreview";
+import { MachineHistorySheetModal } from "./MachineHistorySheetModal";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -162,6 +163,30 @@ export function MachineAnalyticsPanel({
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+        {/* Full History Sheet Hero Action Banner */}
+        <div className="rounded-lg bg-gradient-to-br from-emerald-50 via-teal-50/50 to-emerald-50 border border-emerald-200/80 p-3 shadow-xs">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1.5">
+              <FileSpreadsheet size={15} className="text-emerald-700" />
+              <span className="text-xs font-bold text-emerald-950">Historical Telemetry</span>
+            </div>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800">
+              Excel Sheet View
+            </span>
+          </div>
+          <p className="text-[11px] text-emerald-700 leading-snug mb-2.5">
+            Complete historical observation timeline in spreadsheet format with live search, CSV export, and Excel clipboard copy.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowFullHistory(true)}
+            className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-md text-xs font-semibold shadow-xs hover:shadow transition-all cursor-pointer"
+          >
+            <FileSpreadsheet size={14} />
+            View Full History (Sheet Preview)
+          </button>
+        </div>
+
         {/* Inputs & Outputs (I/O Specifications) */}
         <section className="space-y-2.5">
           <div className="flex items-center gap-1.5 mb-1">
@@ -255,16 +280,14 @@ export function MachineAnalyticsPanel({
                 Parameters ({machine.parameters.length})
               </h3>
             </div>
-            {observations.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowFullHistory(true)}
-                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
-              >
-                <Maximize2 size={12} />
-                Full History
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setShowFullHistory(true)}
+              className="inline-flex items-center gap-1 text-xs text-emerald-700 hover:text-emerald-900 font-medium transition-colors bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 cursor-pointer"
+            >
+              <FileSpreadsheet size={12} />
+              Full History Sheet
+            </button>
           </div>
 
           {machine.parameters.length === 0 ? (
@@ -405,165 +428,17 @@ export function MachineAnalyticsPanel({
 
       </div>
 
-      {/* Full History Sheet (overlay) */}
+      {/* Full History Sheet Modal (Excel preview) */}
       {showFullHistory && (
-        <FullHistorySheet
-          machine={machine}
-          observations={observations}
+        <MachineHistorySheetModal
+          machineId={machine.id}
+          machineName={machine.name}
+          parameters={machine.parameters}
+          inputs={machine.inputs}
+          outputs={machine.outputs}
           onClose={() => setShowFullHistory(false)}
         />
       )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Full History Sheet – snapshot view with parameters + inputs/outputs
-// ---------------------------------------------------------------------------
-
-interface FullHistorySheetProps {
-  machine: MachineNode;
-  observations: ObservationRow[];
-  onClose: () => void;
-}
-
-function FullHistorySheet({ machine, observations, onClose }: FullHistorySheetProps) {
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    },
-    [onClose]
-  );
-
-  // Build columns: parameters + inputs + outputs
-  const paramCols = machine.parameters.map((p) => ({ key: p.key, label: p.key, type: "Parameter" as const }));
-  const inputCols = machine.inputs.map((io) => ({ key: `input_${io.id}`, label: `${io.label} (${io.unitType})`, type: "Input" as const }));
-  const outputCols = machine.outputs.map((io) => ({ key: `output_${io.id}`, label: `${io.label} (${io.unitType})`, type: "Output" as const }));
-  const allCols = [...paramCols, ...inputCols, ...outputCols];
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-      onClick={onClose}
-      onKeyDown={handleKeyDown}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Full history for ${machine.name}`}
-    >
-      <div
-        className="relative w-[95vw] max-w-6xl h-[85vh] bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Sheet Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50 shrink-0">
-          <div>
-            <h2 className="text-sm font-semibold text-gray-900">
-              {machine.name} — Full History
-            </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              {observations.length} snapshot{observations.length !== 1 ? "s" : ""} · {paramCols.length} parameters · {inputCols.length} inputs · {outputCols.length} outputs
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-md hover:bg-gray-200 text-gray-400 hover:text-gray-700 transition-colors"
-            aria-label="Close history sheet"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Sheet Body – spreadsheet table, scrollable both ways */}
-        <div className="flex-1 overflow-auto">
-          {observations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center h-full">
-              <p className="text-sm text-gray-400">No observations recorded yet.</p>
-            </div>
-          ) : (
-            <table className="text-xs border-collapse min-w-full">
-              <thead className="sticky top-0 z-10">
-                {/* Column type row */}
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="sticky left-0 z-20 bg-gray-50 px-3 py-1 border-r border-gray-200" />
-                  <th className="sticky left-[50px] z-20 bg-gray-50 px-3 py-1 border-r border-gray-200" />
-                  {allCols.map((col, cIdx) => (
-                    <th key={cIdx} className="px-3 py-1 text-center">
-                      <span
-                        className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-medium ${
-                          col.type === "Parameter"
-                            ? "bg-blue-50 text-blue-700"
-                            : col.type === "Input"
-                            ? "bg-green-50 text-green-700"
-                            : "bg-orange-50 text-orange-700"
-                        }`}
-                      >
-                        {col.type}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-                {/* Column name row */}
-                <tr className="bg-gray-100 border-b border-gray-200">
-                  <th className="sticky left-0 z-20 bg-gray-100 text-left px-3 py-2 font-semibold text-gray-600 min-w-[50px] border-r border-gray-200">
-                    #
-                  </th>
-                  <th className="sticky left-[50px] z-20 bg-gray-100 text-left px-3 py-2 font-semibold text-gray-600 min-w-[140px] border-r border-gray-200">
-                    Timestamp
-                  </th>
-                  {allCols.map((col, cIdx) => (
-                    <th
-                      key={cIdx}
-                      className="text-center px-3 py-2 font-semibold text-gray-700 whitespace-nowrap min-w-[90px]"
-                    >
-                      {col.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {observations.map((obs, rowIdx) => (
-                  <tr
-                    key={rowIdx}
-                    className={`${rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50/60"} hover:bg-blue-50/30 transition-colors`}
-                  >
-                    <td className="sticky left-0 bg-inherit px-3 py-2 text-center font-bold text-gray-500 border-r border-gray-100">
-                      {rowIdx + 1}
-                    </td>
-                    <td className="sticky left-[50px] bg-inherit px-3 py-2 text-xs text-gray-700 font-medium whitespace-nowrap border-r border-gray-100">
-                      {obs.submitted_at
-                        ? new Date(obs.submitted_at).toLocaleString()
-                        : "—"}
-                    </td>
-                    {allCols.map((col, cIdx) => {
-                      const val = obs.values[col.key];
-                      return (
-                        <td
-                          key={cIdx}
-                          className="text-center px-3 py-2 font-mono text-gray-900"
-                        >
-                          {val !== undefined && val !== null
-                            ? String(val)
-                            : "\u2014"}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-
-        {/* Sheet Footer */}
-        <div className="shrink-0 border-t border-gray-200 bg-gray-50 px-6 py-3 flex items-center justify-end">
-          <button
-            onClick={onClose}
-            className="rounded-md bg-gray-900 px-4 py-1.5 text-xs font-medium text-white hover:bg-gray-800 transition-colors"
-          >
-            Close
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

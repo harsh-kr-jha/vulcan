@@ -2338,6 +2338,158 @@ a {
   height: 100%;
 }
 
+.metric-info-btn {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--muted-2);
+  cursor: pointer;
+  display: inline-flex;
+  height: 24px;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.15s ease;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.metric-info-btn:hover {
+  background: rgba(0, 160, 108, 0.12);
+  border-color: rgba(0, 160, 108, 0.25);
+  color: var(--green);
+  transform: scale(1.1);
+}
+
+.metric-info-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.metric-strip-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.metric-info-dialog {
+  max-width: 580px;
+}
+
+.metric-info-value-box {
+  background: var(--surface-low);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.metric-info-value-box .metric-info-val-left span {
+  display: block;
+  font-size: var(--font-readable-min);
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.metric-info-value-box .metric-info-val-left strong {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+  font-feature-settings: "tnum";
+}
+
+.metric-info-value-box .metric-info-val-right {
+  text-align: right;
+}
+
+.metric-info-value-box .metric-info-val-right span {
+  display: inline-block;
+  background: rgba(0, 160, 108, 0.12);
+  color: var(--green);
+  border: 1px solid rgba(0, 160, 108, 0.25);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 12px;
+}
+
+.metric-info-block {
+  margin-bottom: 16px;
+}
+
+.metric-info-block:last-child {
+  margin-bottom: 0;
+}
+
+.metric-info-block-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.metric-info-formula-code {
+  background: #121a14;
+  border: 1px solid #283e2e;
+  border-radius: 8px;
+  color: #8dccad;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 14px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.metric-info-inputs-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.metric-info-input-chip {
+  background: var(--surface-low);
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+}
+
+.metric-info-desc-text {
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.metric-info-treatment-text {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  background: var(--surface-low);
+  border-left: 3px solid var(--green);
+  padding: 8px 12px;
+  border-radius: 0 6px 6px 0;
+}
+
 .formula-card {
   background: var(--sidebar);
   border: 0;

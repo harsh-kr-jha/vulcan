@@ -4,93 +4,15 @@ import {
   Activity,
   ArrowRight,
   Boxes,
-  Database,
   ExternalLink,
-  Gauge,
   ShieldAlert,
   Truck,
-  Workflow,
   Wrench,
 } from "lucide-react";
 import Link from "next/link";
 
 import { CommandFilters } from "@/components/command-filters";
 import { useFactory } from "@/lib/factory-context";
-
-function HomeModuleGrid() {
-  const { intelligence, twinFeed } = useFactory();
-  const twin = intelligence.digitalTwin.summary;
-  const hasProduction = intelligence.dataAvailability.production > 0;
-  const reportingRooms = twinFeed.freshness.machines.reporting_count;
-  const totalRooms = twinFeed.machines.length || twin.machines;
-  const modules = [
-    {
-      href: "/digital-twin",
-      label: "Mushroom factory twin",
-      description: "See crop stages, growing rooms and layout map.",
-      value: reportingRooms.toString(),
-      status: `of ${totalRooms} rooms reporting live`,
-      meta: `${twinFeed.freshness.machines.status === "fresh" ? "All telemetry live" : "Telemetry standby"}`,
-      icon: Workflow,
-    },
-    {
-      href: "/data",
-      label: "Live Twin Data",
-      description: "Inspect incoming QR telemetry for rooms, inventory & dispatch.",
-      value: twinFeed.recent_events.length.toString(),
-      status: "QR events captured",
-      meta: `Freshness: ${twinFeed.freshness.machines.status}`,
-      icon: Database,
-    },
-    {
-      href: "/performance",
-      label: "Cultivation",
-      description: "Understand harvest, conversion, climate and crop loss.",
-      value: `${(intelligence.mushroom?.biologicalEfficiency ?? 0).toFixed(1)}%`,
-      status: "biological efficiency",
-      meta: hasProduction
-        ? `${(intelligence.mushroom?.planAttainment ?? 0).toFixed(1)}% harvest attainment`
-        : "Awaiting harvest data",
-      icon: Gauge,
-    },
-  ];
-
-  return (
-    <section className="home-module-section">
-      <header>
-        <div>
-          <div>
-            <h2 className="typography-headline">Move through your mushroom factory</h2>
-            <p className="typography-body">Open a workspace directly and see the current crop state.</p>
-          </div>
-        </div>
-        <small className="typography-label">3 cultivation modules</small>
-      </header>
-      <div className="home-module-grid">
-        {modules.map((module) => {
-          const Icon = module.icon;
-          return (
-            <Link className="home-module-card" href={module.href} key={module.href}>
-              <span>
-                <Icon size={18} />
-              </span>
-              <div>
-                <b className="typography-title">{module.label}</b>
-                <p className="typography-body">{module.description}</p>
-                <div className="home-module-status">
-                  <strong>{module.value}</strong>
-                  <span className="typography-label">{module.status}</span>
-                </div>
-                <small className="typography-label">{module.meta}</small>
-              </div>
-              <ArrowRight size={15} />
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
 
 function PanelHeader({
   number,
@@ -507,8 +429,6 @@ export function DashboardOverview() {
           ))}
         </div>
       )}
-
-      <HomeModuleGrid />
 
       <div className="home-decision-grid">
         <RoomConditionsWidget />

@@ -4359,15 +4359,20 @@ a {
 .command-centre-grid > :nth-child(7) { grid-column: span 12; }
 
 .command-widget {
-  min-height: 310px;
-  padding : 20px;
+  min-height: auto;
+  padding: 20px;
 }
 
 .command-panel-header {
-  align-items: center;
-  gap: 9px;
-  justify-content: flex-start;
-  padding-bottom: 12px;
+  align-items: flex-start;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 0 0 16px 0;
+}
+
+.command-panel-header h2,
+.command-panel-header .panel-title {
+  margin: 0;
 }
 
 .command-panel-header .panel-title-group {
@@ -6741,16 +6746,196 @@ i.twin-status-no_data,
 .project-not-found h1 { font-size: 20px; margin: 5px 0 0; }
 .project-not-found p { color: var(--muted); font-size: var(--font-readable-min); margin: 0 0 8px; }
 
-.room-condition-list { display: grid; gap: 0; }
-.room-condition-list article { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: minmax(150px, 1.4fr) repeat(3, minmax(70px, .55fr)) 88px; padding: 12px 2px; }
-.room-condition-list article:last-child { border-bottom: 0; }
-.room-condition-list article > div { display: grid; gap: 3px; }
-.room-condition-list article strong { font-size: var(--font-readable-min); }
-.room-condition-list article small { color: var(--muted); font-size: var(--font-readable-min); }
-.room-condition-list article > span { display: grid; gap: 2px; }
-.room-condition-list article > span b { font-size: var(--font-readable-min); }
-.room-condition-list article > em { background: #e8f3eb; border-radius: var(--radius-pill); color: var(--green); font-size: var(--font-readable-min); font-style: normal; justify-self: end; padding: 4px 7px; }
-.room-condition-list article.room-condition-warning > em { background: #fae5e0; color: var(--red); }
+.room-conditions-table-wrap {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface, #ffffff);
+}
+
+.room-condition-header {
+  align-items: center;
+  background: var(--surface-subtle, rgba(9, 30, 66, 0.03));
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(180px, 1.6fr) repeat(3, minmax(95px, 0.85fr)) minmax(115px, 0.95fr);
+  padding: 8px 16px;
+}
+
+.room-condition-header span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.room-condition-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.room-condition-list article {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(180px, 1.6fr) repeat(3, minmax(95px, 0.85fr)) minmax(115px, 0.95fr);
+  padding: 12px 16px;
+  transition: background-color 0.12s ease;
+}
+
+.room-condition-list article:hover {
+  background-color: var(--surface-hover, rgba(9, 30, 66, 0.02));
+}
+
+.room-condition-list article:last-child {
+  border-bottom: 0;
+}
+
+.room-condition-list article > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.room-condition-list article strong {
+  color: var(--text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-condition-list article small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.room-condition-list article > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.room-condition-list article > span small {
+  display: none;
+}
+
+.room-condition-list article > span b {
+  color: var(--text);
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.room-condition-list article > em {
+  align-items: center;
+  background: #e8f3eb;
+  border: 1px solid rgba(30, 126, 52, 0.2);
+  border-radius: 6px;
+  color: #1e7e34;
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 700;
+  justify-content: center;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  padding: 4px 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.room-condition-list article.room-condition-warning > em {
+  background: #fae5e0;
+  border-color: rgba(198, 40, 40, 0.2);
+  color: #c62828;
+}
+
+.room-condition-list article.room-condition-standby > em {
+  background: rgba(9, 30, 66, 0.05);
+  border-color: var(--line);
+  color: var(--muted);
+}
+
+.room-conditions-empty {
+  align-items: center;
+  background: var(--surface-subtle, rgba(9, 30, 66, 0.02));
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 14px 18px;
+}
+
+.room-conditions-empty-info {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.room-conditions-empty-icon {
+  align-items: center;
+  background: rgba(65, 111, 87, 0.1);
+  border-radius: 6px;
+  color: var(--green);
+  display: flex;
+  flex-shrink: 0;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.room-conditions-empty-info strong {
+  color: var(--text);
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.room-conditions-empty-info p {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  margin: 2px 0 0;
+}
+
+@media (max-width: 768px) {
+  .room-condition-header {
+    display: none;
+  }
+  .room-condition-list article {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 12px 12px;
+  }
+  .room-condition-list article > div {
+    grid-column: 1 / -1;
+  }
+  .room-condition-list article > span small {
+    display: block;
+    font-size: 0.6875rem;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .room-condition-list article > em {
+    grid-column: 1 / -1;
+    justify-self: flex-start;
+  }
+  .room-conditions-empty {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
 
 @media (max-width: 1250px) {
   .project-list-heading,
@@ -6833,9 +7018,6 @@ i.twin-status-no_data,
   .home-module-section > header > small { display: none; }
   .home-module-grid { grid-template-columns: 1fr; }
   .home-module-card { min-height: 94px; }
-  .room-condition-list article { grid-template-columns: minmax(130px, 1.3fr) repeat(2, minmax(62px, .55fr)); }
-  .room-condition-list article > span:nth-of-type(3),
-  .room-condition-list article > em { display: none; }
   .project-source-note { grid-template-columns: 34px minmax(0, 1fr); }
   .project-source-note > small { display: none; }
   .project-list-toolbar { align-items: stretch; flex-direction: column; gap: 10px; }

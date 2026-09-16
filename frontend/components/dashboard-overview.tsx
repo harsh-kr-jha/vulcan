@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Activity,
   ArrowRight,
@@ -13,6 +14,21 @@ import Link from "next/link";
 
 import { CommandFilters } from "@/components/command-filters";
 import { useFactory } from "@/lib/factory-context";
+
+function formatTime(ts: string | null) {
+  if (!ts) return "No scans recorded yet";
+  const date = new Date(ts);
+  const diffMin = Math.round((Date.now() - date.getTime()) / 60000);
+  if (diffMin < 1) return "Just now";
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffMin < 1440) return `${Math.round(diffMin / 60)}h ago`;
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 function PanelHeader({
   number,
@@ -106,21 +122,6 @@ function TwinFreshnessDashboard() {
         ⚪ Awaiting scan
       </span>
     );
-  };
-
-  const formatTime = (ts: string | null) => {
-    if (!ts) return "No scans recorded yet";
-    const date = new Date(ts);
-    const diffMin = Math.round((Date.now() - date.getTime()) / 60000);
-    if (diffMin < 1) return "Just now";
-    if (diffMin < 60) return `${diffMin}m ago`;
-    if (diffMin < 1440) return `${Math.round(diffMin / 60)}h ago`;
-    return date.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   const invMaterialsCount = twinFeed.inventory ? Object.keys(twinFeed.inventory.stock).length : 0;
@@ -282,79 +283,142 @@ function TwinFreshnessDashboard() {
 }
 
 function RoomConditionsWidget({ number }: { number?: number }) {
-  const { intelligence, twinFeed } = useFactory();
+  const { twinFeed } = useFactory();
 
-  const liveRooms = twinFeed.machines
-    .filter((m) => m.latest_observation && Object.keys(m.latest_observation.values).length > 0)
-    .map((m) => {
-      const vals = m.latest_observation?.values ?? {};
-      const temp = typeof vals.temperature === "number" ? vals.temperature : null;
-      const hum = typeof vals.humidity === "number" ? vals.humidity : null;
-      const co2 = typeof vals.co2 === "number" ? vals.co2 : null;
+  const twinMachines = twinFeed.machines || [];
+
+  // Strictly connect to Digital Twin: only display rooms configured in the Digital Twin
+  const displayRooms = useMemo(() => {
+    // If no twin layout / twin deleted, return empty list (never fall back to historical runs)
+    if (twinMachines.length === 0) return [];
+
+    const extractNum = (values: Record<string, unknown>, keys: string[]): number | null => {
+      for (const key of keys) {
+        const val = values[key];
+        if (typeof val === "number" && !isNaN(val)) return val;
+        if (typeof val === "string" && val.trim() !== "") {
+          const num = Number(val);
+          if (!isNaN(num)) return num;
+        }
+      }
+      const entries = Object.entries(values);
+      for (const targetKey of keys) {
+        const match = entries.find(([k]) => k.toLowerCase() === targetKey.toLowerCase());
+        if (match) {
+          const val = match[1];
+          if (typeof val === "number" && !isNaN(val)) return val;
+          if (typeof val === "string" && val.trim() !== "") {
+            const num = Number(val);
+            if (!isNaN(num)) return num;
+          }
+        }
+      }
+      return null;
+    };
+
+    return twinMachines.slice(0, 8).map((m) => {
+      const obs = m.latest_observation;
+      const vals = obs?.values ?? {};
+
+      const temp = extractNum(vals, ["temperature", "temp", "temperature_c", "temp_c"]);
+      const hum = extractNum(vals, ["humidity", "humidity_pct", "rh", "rh_pct", "relative_humidity"]);
+      const co2 = extractNum(vals, ["co2", "co2_ppm", "carbon_dioxide"]);
+
+      const hasObservation = obs !== null && (temp !== null || hum !== null || co2 !== null || Object.keys(vals).length > 0);
+
+      let statusLabel = "Awaiting scan";
+      let statusClass = "room-condition-standby";
+
+      if (hasObservation) {
+        if (m.status === "warning") {
+          statusLabel = "Out of range";
+          statusClass = "room-condition-warning";
+        } else {
+          statusLabel = "In range";
+          statusClass = "room-condition-normal";
+        }
+      }
+
+      const sublabel = hasObservation && obs?.submitted_at
+        ? `Scanned ${formatTime(obs.submitted_at)}`
+        : "Twin asset · Standby";
+
       return {
+        id: m.id,
         room: m.name,
-        sublabel: "Live Twin Telemetry",
+        sublabel,
         temperatureC: temp,
         humidityPct: hum,
         co2Ppm: co2,
-        compliant: true,
-        live: true,
+        statusLabel,
+        statusClass,
       };
     });
-
-  const displayRooms =
-    liveRooms.length > 0
-      ? liveRooms.slice(0, 6)
-      : intelligence.roomConditions
-          .filter((item) => item.temperatureC !== null || item.humidityPct !== null || item.co2Ppm !== null)
-          .slice(0, 6)
-          .map((item) => ({
-            room: item.room,
-            sublabel: item.batchId || item.process || "Monitored room",
-            temperatureC: item.temperatureC,
-            humidityPct: item.humidityPct,
-            co2Ppm: item.co2Ppm,
-            compliant: item.compliant,
-            live: false,
-          }));
+  }, [twinMachines]);
 
   return (
     <section className="panel command-widget room-conditions-widget">
       <PanelHeader
         number={number}
         title="Growing-room conditions"
-        subtitle="Latest temperature, humidity and CO2 by room (Twin live stream)"
-        href="/digital-twin"
-        actionLabel="Open Twin"
+        subtitle="Live temperature, humidity and CO2 by room (Twin live stream)"
+        href={displayRooms.length > 0 ? "/digital-twin" : undefined}
+        actionLabel={twinMachines.length > 8 ? `View all ${twinMachines.length} in Twin` : "Open Twin"}
       />
-      <div className="room-condition-list">
-        {displayRooms.map((item) => (
-          <article key={item.room} className={item.compliant === false ? "room-condition-warning" : ""}>
-            <div>
-              <strong>{item.room}</strong>
-              <small>{item.sublabel}</small>
+
+      {displayRooms.length > 0 ? (
+        <div className="room-conditions-table-wrap">
+          <div className="room-condition-header">
+            <span className="room-col-name typography-label">Room / Zone</span>
+            <span className="room-col-metric typography-label">Temperature</span>
+            <span className="room-col-metric typography-label">Humidity</span>
+            <span className="room-col-metric typography-label">CO2 Level</span>
+            <span className="room-col-status typography-label">Status</span>
+          </div>
+
+          <div className="room-condition-list">
+            {displayRooms.map((item) => (
+              <article
+                key={item.id}
+                className={item.statusClass}
+              >
+                <div className="room-col-name">
+                  <strong>{item.room}</strong>
+                  <small>{item.sublabel}</small>
+                </div>
+                <span className="room-col-metric">
+                  <small>Temp</small>
+                  <b>{item.temperatureC === null ? "—" : `${item.temperatureC.toFixed(1)}°C`}</b>
+                </span>
+                <span className="room-col-metric">
+                  <small>RH</small>
+                  <b>{item.humidityPct === null ? "—" : `${item.humidityPct.toFixed(1)}%`}</b>
+                </span>
+                <span className="room-col-metric">
+                  <small>CO2</small>
+                  <b>{item.co2Ppm === null ? "—" : `${item.co2Ppm.toLocaleString("en-IN")} ppm`}</b>
+                </span>
+                <em>{item.statusLabel}</em>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="room-conditions-empty">
+          <div className="room-conditions-empty-info">
+            <div className="room-conditions-empty-icon">
+              <Activity size={18} />
             </div>
-            <span>
-              <small>Temp</small>
-              <b>{item.temperatureC === null ? "—" : `${item.temperatureC.toFixed(1)}°C`}</b>
-            </span>
-            <span>
-              <small>RH</small>
-              <b>{item.humidityPct === null ? "—" : `${item.humidityPct.toFixed(1)}%`}</b>
-            </span>
-            <span>
-              <small>CO2</small>
-              <b>{item.co2Ppm === null ? "—" : `${item.co2Ppm.toFixed(0)} ppm`}</b>
-            </span>
-            <em>{item.compliant === false ? "Out of range" : item.live ? "Live QR" : "In range"}</em>
-          </article>
-        ))}
-        {!displayRooms.length && (
-          <p style={{ fontSize: "12px", color: "var(--color-text-muted)", padding: "12px 0" }}>
-            No room telemetry registered. Scan room QR codes or configure Twin assets.
-          </p>
-        )}
-      </div>
+            <div>
+              <strong>No digital twin rooms configured</strong>
+              <p>Configure room assets in Digital Twin to stream live environmental telemetry.</p>
+            </div>
+          </div>
+          <Link href="/digital-twin" className="button button-secondary">
+            Configure Twin <ArrowRight size={13} style={{ marginLeft: 4 }} />
+          </Link>
+        </div>
+      )}
     </section>
   );
 }

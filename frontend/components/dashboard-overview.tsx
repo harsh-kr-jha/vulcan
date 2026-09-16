@@ -351,6 +351,7 @@ export function DashboardOverview() {
     <>
       <header className="page-header command-centre-header">
         <div>
+          <p className="eyebrow">Cultivation Command Centre</p>
           <h1 className="typography-display">
             See every crop. <span>Improve every flush.</span>
           </h1>

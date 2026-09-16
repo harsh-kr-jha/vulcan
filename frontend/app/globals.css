@@ -2,33 +2,33 @@
 @import "tailwindcss/utilities.css";
 
 :root {
-  --canvas: #fff8ef;
+  --canvas: #ffffff;
   --surface: #ffffff;
   --surface-warm: #f4ebc3;
-  --surface-low: #f9f3e8;
+  --surface-low: #f9f6f0;
   --surface-container: #f4ede3;
   --surface-high: #eee7dd;
-  --surface-highest: #e8e2d7;
+  --surface-highest: #d8d2c8;
   --ink: #1e1b15;
   --ink-variant: #3d4a42;
   --muted: #3d4a42;
   --muted-2: #6d7a71;
   --line: #d8d2c8;
-  --line-strong: #bccabf;
-  --sidebar: #333029;
-  --sidebar-2: #454139;
-  --sidebar-ink: #f6f0e5;
-  --sidebar-muted: #cfc7bd;
-  --lime: #7efabe;
+  --line-strong: #8dccad;
+  --sidebar: #1e2621;
+  --sidebar-2: #28332c;
+  --sidebar-ink: #f4ebc3;
+  --sidebar-muted: #d8d2c8;
+  --lime: #8dccad;
   --green: #00a06c;
   --green-dark: #006a46;
   --green-hover: #008559;
-  --green-soft: #adedcd;
+  --green-soft: #8dccad;
   --on-green-soft: #0c5139;
-  --blue: #2b6950;
-  --blue-soft: #dcece2;
+  --blue: #00a06c;
+  --blue-soft: #8dccad33;
   --amber: #8a6514;
-  --amber-soft: #fff4d4;
+  --amber-soft: #f4ebc3;
   --red: #ba1a1a;
   --red-dark: #93000a;
   --red-soft: #ffdad6;
@@ -369,14 +369,25 @@ a {
 
 .brand-mark {
   align-items: center;
-  background: var(--lime);
-  border-radius: 9px;
-  color: var(--sidebar);
+  background: transparent;
   display: inline-flex;
-  height: 34px;
+  height: 36px;
   justify-content: center;
-  transform: skew(-4deg);
-  width: 34px;
+  transform: none;
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.brand-mark .vulcan-logo,
+.brand-mark img {
+  filter: drop-shadow(0 2px 8px rgba(0, 160, 108, 0.3));
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.brand:hover .brand-mark .vulcan-logo,
+.brand:hover .brand-mark img {
+  transform: scale(1.06);
+  filter: drop-shadow(0 4px 12px rgba(0, 160, 108, 0.45));
 }
 
 .brand > span:last-child {
@@ -590,14 +601,12 @@ a {
 
 .sidebar-is-closed .mobile-brand .brand-mark {
   align-items: center;
-  background: var(--lime);
-  border-radius: 6px;
-  color: var(--sidebar);
+  background: transparent;
   display: inline-flex;
-  height: 25px;
+  height: 26px;
   justify-content: center;
-  transform: skew(-4deg);
-  width: 25px;
+  transform: none;
+  width: 26px;
 }
 
 .app-main {
@@ -812,8 +821,27 @@ a {
   margin-bottom: 24px;
 }
 
-.eyebrow {
-  display: none !important;
+.eyebrow,
+.page-header .eyebrow,
+.modal-step,
+.custom-kpi-heading .eyebrow,
+.login-story-copy .eyebrow,
+[data-eyebrow] {
+  align-items: center;
+  background: #121a14;
+  border: 1px solid #283e2e;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 0 1px #0b120d;
+  color: #ffffff !important;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  margin-bottom: 8px;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  width: fit-content;
 }
 
 .page-header h1 {
@@ -2779,7 +2807,20 @@ a {
 }
 
 .login-story-copy .eyebrow {
-  color: var(--lime);
+  align-items: center;
+  background: #121a14;
+  border: 1px solid #283e2e;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 0 1px #0b120d;
+  color: #ffffff !important;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  width: fit-content;
 }
 
 .login-story-copy h1 {
@@ -3227,9 +3268,10 @@ a {
   }
 
   .mobile-brand .brand-mark {
-    border-radius: 6px;
-    height: 25px;
-    width: 25px;
+    background: transparent;
+    height: 26px;
+    transform: none;
+    width: 26px;
   }
 
   .topbar-context,
@@ -7301,7 +7343,21 @@ body {
 
 .eyebrow,
 .page-header .eyebrow {
-  display: none !important;
+  align-items: center;
+  background: #121a14;
+  border: 1px solid #283e2e;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), 0 0 0 1px #0b120d;
+  color: #ffffff !important;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  margin-bottom: 8px;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  width: fit-content;
 }
 
 .page-subtitle {

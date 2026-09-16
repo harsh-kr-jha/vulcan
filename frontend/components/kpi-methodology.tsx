@@ -81,7 +81,7 @@ export function KpiMethodology() {
   return (
     <>
       <header className="page-header">
-        <div><h1 className="typography-display">See how every number <span>becomes a decision.</span></h1><p className="page-subtitle typography-body">A plain-language map of approved inputs, Django calculations, assumptions and the current mushroom factory result.</p></div>
+        <div><p className="eyebrow">Deterministic Analytics</p><h1 className="typography-display">See how every number <span>becomes a decision.</span></h1><p className="page-subtitle typography-body">A plain-language map of approved inputs, Django calculations, assumptions and the current mushroom factory result.</p></div>
         <button className="button button-accent" disabled={intelligence.customKpis.length >= 12} onClick={() => setBuilderOpen(true)}><Plus size={14} /> Add custom KPI</button>
       </header>
       <section className="panel methodology-flow">

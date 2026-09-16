@@ -1155,6 +1155,7 @@ export function FactorySettings() {
     <>
       <header className="page-header">
         <div>
+          <p className="eyebrow">Facility Architecture</p>
           <h1 className="typography-display">Define <span>how the crop flows.</span></h1>
           <p className="page-subtitle typography-body">Farm context, cultivation stages, rooms, assets and harvest units—synchronized with Mushroom Factory Twin.</p>
         </div>

@@ -114,8 +114,8 @@ export function QrCodePreview({
     ctx.fillRect(0, 0, width, height);
 
     // Brand: Vulcan (top)
-    ctx.fillStyle = "#6b7280";
-    ctx.font = "500 11px system-ui, sans-serif";
+    ctx.fillStyle = "#00a06c";
+    ctx.font = "700 11px system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("VULCAN · TWIN", width / 2, padding + 14);
 

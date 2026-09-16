@@ -254,7 +254,7 @@ export function PerformanceExplorer() {
     return (
       <>
         <header className="page-header">
-          <div><h1 className="typography-display">Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
+          <div><p className="eyebrow">Yield &amp; Performance</p><h1 className="typography-display">Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
         </header>
         <div className="performance-loading">
           <Loader2 size={24} className="spin" style={{ color: "var(--accent, #416f57)" }} />
@@ -268,7 +268,7 @@ export function PerformanceExplorer() {
     return (
       <>
         <header className="page-header">
-          <div><h1 className="typography-display">Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
+          <div><p className="eyebrow">Yield &amp; Performance</p><h1 className="typography-display">Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
         </header>
         <section className="panel performance-no-twin">
           <Cpu size={32} style={{ color: "var(--accent, #416f57)", marginBottom: 6 }} />
@@ -286,6 +286,7 @@ export function PerformanceExplorer() {
     <>
       <header className="page-header">
         <div>
+          <p className="eyebrow">Yield &amp; Performance</p>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
             <h1 className="typography-display" style={{ margin: 0 }}>Understand every crop. <span>Improve every flush.</span></h1>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, padding: "2px 8px", borderRadius: 12, background: "rgba(65, 111, 87, 0.12)", color: "var(--accent, #416f57)", fontWeight: 600, border: "1px solid rgba(65, 111, 87, 0.25)" }}>

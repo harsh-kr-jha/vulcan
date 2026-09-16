@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { VulcanLogo } from "@/components/vulcan-logo";
 import { api } from "./api-client";
 import type { CustomKpiDefinition, DashboardFilters, FactoryConfig, FactoryMasters, FactoryState, FactoryTargets, Intelligence, MasterItem, TwinFeedPayload } from "./factory-domain";
 import { defaultFilters, emptyIntelligence, emptyTwinFeed } from "./factory-domain";
@@ -81,7 +82,7 @@ export function FactoryProvider({ children }: { children: React.ReactNode }) {
   const toggleAction = useCallback((id: string) => mutate(() => api.toggleAction(activeFactoryId, id)), [mutate, activeFactoryId]);
   const askQuestion = useCallback((question: string) => api.ask(activeFactoryId, filters, question), [activeFactoryId, filters]);
   const value = useMemo(() => ({ state, intelligence, filters, hydrated, loading, error, twinFeed, refreshTwinFeed, setFilters, setActiveFactory, refresh, updateCompany, createFactory, updateFactory, upsertMaster, removeMaster, updateAlertStatus, createAction, toggleAction, updateTargets, updateCustomKpis, askQuestion }), [state, intelligence, filters, hydrated, loading, error, twinFeed, refreshTwinFeed, refresh, updateCompany, createFactory, updateFactory, upsertMaster, removeMaster, updateAlertStatus, createAction, toggleAction, updateTargets, updateCustomKpis, askQuestion, setActiveFactory]);
-  if (!hydrated) return <div className="application-loading" role="status"><span /><strong>Connecting to Vulcan farm intelligence…</strong></div>;
+  if (!hydrated) return <div className="application-loading" role="status"><VulcanLogo size={56} priority /><span /><strong>Connecting to Vulcan farm intelligence…</strong></div>;
   return <FactoryContext.Provider value={value}>{error && <div className="api-error-banner" role="alert">{error}</div>}{children}</FactoryContext.Provider>;
 }
 

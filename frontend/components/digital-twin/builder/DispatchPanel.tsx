@@ -557,7 +557,7 @@ function DispatchQrCode({ layoutId }: DispatchQrCodeProps) {
       canvas.width = w; canvas.height = h;
       ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
       ctx.textAlign = "center";
-      ctx.fillStyle = "#6b7280"; ctx.font = "500 11px system-ui, sans-serif";
+      ctx.fillStyle = "#00a06c"; ctx.font = "700 11px system-ui, sans-serif";
       ctx.fillText("VULCAN · TWIN", w / 2, padding + 14);
       ctx.fillStyle = "#374151"; ctx.font = "600 14px system-ui, sans-serif";
       ctx.fillText(factoryName, w / 2, padding + 38);
@@ -587,7 +587,7 @@ function DispatchQrCode({ layoutId }: DispatchQrCodeProps) {
       canvas.width = w; canvas.height = h;
       ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
       ctx.textAlign = "center";
-      ctx.fillStyle = "#6b7280"; ctx.font = "500 11px system-ui, sans-serif";
+      ctx.fillStyle = "#00a06c"; ctx.font = "700 11px system-ui, sans-serif";
       ctx.fillText("VULCAN · TWIN", w / 2, padding + 14);
       ctx.fillStyle = "#374151"; ctx.font = "600 14px system-ui, sans-serif";
       ctx.fillText(factoryName, w / 2, padding + 38);

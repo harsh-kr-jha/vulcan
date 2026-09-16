@@ -16,11 +16,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
-  ShieldAlert,
   Sigma,
   Settings2,
   Sparkles,
-  Sprout,
   Workflow,
   X,
 } from "lucide-react";
@@ -28,7 +26,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useFactory } from "@/lib/factory-context";
-import type { IntelligenceAlert } from "@/lib/factory-domain";
+import { VulcanLogo } from "@/components/vulcan-logo";
 
 const navGroups = [
   { label: "Workspace", items: [
@@ -45,7 +43,7 @@ const navGroups = [
 ];
 
 function Brand() {
-  return <Link className="brand" href="/" aria-label="Vulcan home"><span className="brand-mark"><Sprout size={18} strokeWidth={2.8} /></span><span><strong>VULCAN</strong><small>Cultivation intelligence</small></span></Link>;
+  return <Link className="brand" href="/" aria-label="Vulcan home"><span className="brand-mark"><VulcanLogo size={32} /></span><span><strong>VULCAN</strong><small>Cultivation intelligence</small></span></Link>;
 }
 
 function Sidebar({ open, closed, onClose, onNavigate }: { open: boolean; closed: boolean; onClose: () => void; onNavigate: () => void }) {
@@ -104,15 +102,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const allAlerts = intelligence.alerts;
   const activeAlerts = allAlerts.filter((alert) => alert.status !== "resolved" && alert.status !== "dismissed");
   const criticalAlerts = activeAlerts.filter((alert) => alert.severity === "critical");
-  const newAlerts = activeAlerts.filter((alert) => alert.status === "new");
 
   const displayedAlerts = allAlerts.filter((alert) => {
     if (alertFilter === "active") return alert.status !== "resolved" && alert.status !== "dismissed";
     if (alertFilter === "critical") return alert.severity === "critical" && alert.status !== "resolved";
     return true;
   });
-
-  if (pathname === "/login") return <>{children}</>;
 
   function toggleSidebar() {
     setSidebarMode((current) => {
@@ -145,12 +140,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [notificationsOpen]);
 
+  if (pathname === "/login") return <>{children}</>;
+
   return <div className={`app-shell sidebar-is-${sidebarMode}`}>
     <Sidebar open={sidebarMode === "open"} closed={sidebarMode === "closed"} onClose={closeSidebar} onNavigate={closeAfterNavigation} />
     <button className="sidebar-toggle" onClick={toggleSidebar} aria-label="Open or close sidebar"><PanelLeftClose className="sidebar-close-icon" size={17} /><PanelLeftOpen className="sidebar-open-icon" size={17} /></button>
     <div className="app-main">
       <header className="topbar">
-        <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark"><Sprout size={16} /></span><strong>VULCAN</strong></div></div>
+        <div className="mobile-brand-row"><div className="mobile-brand"><span className="brand-mark"><VulcanLogo size={22} /></span><strong>VULCAN</strong></div></div>
         <div className="topbar-context"><span className="shift-label">{filters.shift === "all" ? "All shifts" : filters.shift} · {filters.from} to {filters.to}</span></div>
         <div className="topbar-actions">
           <button className="icon-button action-menu-button" aria-label={`${openActions.length} open action items`} onClick={() => { setActionsOpen((value) => !value); setNotificationsOpen(false); setProfileOpen(false); }}>

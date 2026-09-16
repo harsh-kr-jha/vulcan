@@ -4046,7 +4046,7 @@ a {
   display: grid;
   gap: 7px;
   grid-template-columns: 1.65fr repeat(5, 1fr) 30px;
-  margin-bottom: 13px;
+  margin-bottom: 16px;
   padding: 10px;
 }
 
@@ -4120,7 +4120,7 @@ a {
 }
 
 .command-centre-header {
-  margin-bottom: 17px;
+  margin-bottom: 16px;
 }
 
 .answer-summary-strip,
@@ -4130,7 +4130,7 @@ a {
   color: #fff;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  margin-bottom: 13px;
+  margin-bottom: 16px;
   overflow: hidden;
 }
 
@@ -5189,32 +5189,176 @@ a {
 }
 
 /* Home keeps one simple reading order: summary, trend, losses, exceptions. */
+.home-summary-strip > div {
+  padding: 13px 16px;
+}
+
+.home-summary-strip strong {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 2px 0 3px 0;
+  overflow: visible;
+  white-space: normal;
+}
+
 .home-summary-strip small {
-  color: rgba(255, 255, 255, .58);
+  color: rgba(255, 255, 255, .62);
   display: block;
   font-size: var(--font-readable-min);
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 .home-decision-grid {
-  display: grid;
-  gap: 13px;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .home-decision-grid > .command-widget {
-  grid-column: 1 / -1;
   min-width: 0;
   width: 100%;
 }
 
-.home-production-widget,
-.home-alert-widget {
-  grid-column: 1 / -1;
+/* Twin Freshness Widget & Sub-cards */
+.twin-freshness-widget {
+  min-height: auto;
+  padding: 20px;
 }
 
-.home-loss-widget {
-  grid-column: 1 / -1;
+.freshness-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 860px) {
+  .freshness-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.freshness-subcard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card, 12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.freshness-subcard:hover {
+  border-color: var(--line-strong, #bccabf);
+  box-shadow: 0 4px 12px rgba(9, 30, 66, 0.08);
+}
+
+.freshness-subcard-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.freshness-subcard-title {
+  align-items: center;
+  color: var(--ink);
+  display: flex;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 7px;
+}
+
+.freshness-subcard-value {
+  align-items: baseline;
+  color: var(--ink);
+  display: flex;
+  font-size: 22px;
+  font-weight: 700;
+  gap: 6px;
+  line-height: 1.15;
+  margin: 0 0 6px 0;
+}
+
+.freshness-subcard-value small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.freshness-subcard-sublabel {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.freshness-subcard-sublabel b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.freshness-subcard-footer {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  padding-top: 10px;
+}
+
+.freshness-subcard-footer span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.freshness-subcard-footer a {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.freshness-subcard-footer a:hover {
+  color: var(--green-dark, #2b4b3b);
+  text-decoration: underline;
+}
+
+.freshness-badge {
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 8px;
+  text-transform: uppercase;
+}
+
+.badge-fresh {
+  background: rgba(65, 111, 87, 0.12);
+  border: 1px solid rgba(65, 111, 87, 0.25);
+  color: #276749;
+}
+
+.badge-moderate {
+  background: rgba(221, 107, 32, 0.12);
+  border: 1px solid rgba(221, 107, 32, 0.25);
+  color: #c05621;
+}
+
+.badge-stale {
+  background: rgba(229, 62, 62, 0.12);
+  border: 1px solid rgba(229, 62, 62, 0.25);
+  color: #c53030;
+}
+
+.badge-standby {
+  background: rgba(113, 128, 150, 0.12);
+  border: 1px solid rgba(113, 128, 150, 0.25);
+  color: #4a5568;
 }
 
 .loss-kpi-row {

@@ -59,69 +59,17 @@ function PanelHeader({
   );
 }
 
-function TwinFreshnessDashboard() {
+function TwinFreshnessDashboard({ number }: { number?: number }) {
   const { twinFeed } = useFactory();
 
   const getStatusBadge = (status: "fresh" | "moderate" | "stale" | "no_data") => {
     if (status === "fresh")
-      return (
-        <span
-          style={{
-            padding: "2px 8px",
-            borderRadius: "10px",
-            fontSize: "11px",
-            fontWeight: 600,
-            background: "rgba(65,111,87,0.15)",
-            color: "#276749",
-          }}
-        >
-          🟢 Fresh · Live
-        </span>
-      );
+      return <span className="freshness-badge badge-fresh">Fresh · Live</span>;
     if (status === "moderate")
-      return (
-        <span
-          style={{
-            padding: "2px 8px",
-            borderRadius: "10px",
-            fontSize: "11px",
-            fontWeight: 600,
-            background: "rgba(221,107,32,0.15)",
-            color: "#c05621",
-          }}
-        >
-          🟡 &lt;24h ago
-        </span>
-      );
+      return <span className="freshness-badge badge-moderate">&lt;24h ago</span>;
     if (status === "stale")
-      return (
-        <span
-          style={{
-            padding: "2px 8px",
-            borderRadius: "10px",
-            fontSize: "11px",
-            fontWeight: 600,
-            background: "rgba(229,62,62,0.15)",
-            color: "#c53030",
-          }}
-        >
-          🔴 Needs update
-        </span>
-      );
-    return (
-      <span
-        style={{
-          padding: "2px 8px",
-          borderRadius: "10px",
-          fontSize: "11px",
-          fontWeight: 600,
-          background: "rgba(113,128,150,0.15)",
-          color: "#4a5568",
-        }}
-      >
-        ⚪ Awaiting scan
-      </span>
-    );
+      return <span className="freshness-badge badge-stale">Needs update</span>;
+    return <span className="freshness-badge badge-standby">Awaiting scan</span>;
   };
 
   const invMaterialsCount = twinFeed.inventory ? Object.keys(twinFeed.inventory.stock).length : 0;
@@ -130,149 +78,83 @@ function TwinFreshnessDashboard() {
     : 0;
 
   return (
-    <section className="panel" style={{ padding: "20px", marginBottom: "20px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "16px",
-          flexWrap: "wrap",
-          gap: "8px",
-        }}
-      >
-        <div>
-          <h2 style={{ fontSize: "16px", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
-            <Activity size={18} style={{ color: "var(--color-primary, #416f57)" }} />
-            Mushroom Factory Twin · Live Data Freshness
-          </h2>
-          <p style={{ fontSize: "12px", color: "var(--color-text-muted)", margin: "4px 0 0 0" }}>
-            Tracking live data incoming from QR codes attached to each machine, room, inventory, and dispatch.
-          </p>
-        </div>
-        <Link href="/data" className="button button-secondary" style={{ fontSize: "12px" }}>
-          View Data Feed <ArrowRight size={12} />
-        </Link>
-      </div>
+    <section className="panel command-widget twin-freshness-widget">
+      <PanelHeader
+        number={number}
+        title="Live telemetry freshness & scans"
+        subtitle="Tracking live telemetry incoming from QR codes across machines, rooms, inventory, and dispatch"
+        href="/data"
+        actionLabel="View Data Feed"
+      />
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: "16px",
-        }}
-      >
+      <div className="freshness-card-grid">
         {/* Element 1: Machines & Rooms */}
-        <div
-          style={{
-            border: "1px solid var(--color-border, #e2e8f0)",
-            borderRadius: "8px",
-            padding: "16px",
-            background: "var(--color-card-bg, #ffffff)",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 600, fontSize: "13px" }}>
-              <Wrench size={16} style={{ color: "#276749" }} />
+        <div className="freshness-subcard">
+          <div className="freshness-subcard-header">
+            <span className="freshness-subcard-title">
+              <Wrench size={15} style={{ color: "var(--green, #416f57)" }} />
               1. Machines &amp; Rooms
             </span>
             {getStatusBadge(twinFeed.freshness.machines.status)}
           </div>
-          <p style={{ fontSize: "20px", fontWeight: 700, margin: "6px 0", color: "#276749" }}>
+          <p className="freshness-subcard-value">
             {twinFeed.freshness.machines.reporting_count} / {twinFeed.machines.length || 0}{" "}
-            <small style={{ fontSize: "12px", fontWeight: 400 }}>rooms active</small>
+            <small>rooms active</small>
           </p>
-          <p style={{ fontSize: "11px", color: "var(--color-text-muted)", margin: "4px 0 10px 0" }}>
+          <p className="freshness-subcard-sublabel">
             Latest scan: <b>{formatTime(twinFeed.freshness.machines.last_updated)}</b>
           </p>
-          <div
-            style={{
-              borderTop: "1px solid var(--color-border, #edf2f7)",
-              paddingTop: "8px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>Climate &amp; run telemetry</span>
-            <Link href="/data" style={{ fontSize: "11px", color: "var(--color-primary, #416f57)", fontWeight: 500 }}>
+          <div className="freshness-subcard-footer">
+            <span>Climate &amp; run telemetry</span>
+            <Link href="/data">
               Inspect rooms →
             </Link>
           </div>
         </div>
 
         {/* Element 2: Inventory */}
-        <div
-          style={{
-            border: "1px solid var(--color-border, #e2e8f0)",
-            borderRadius: "8px",
-            padding: "16px",
-            background: "var(--color-card-bg, #ffffff)",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 600, fontSize: "13px" }}>
-              <Boxes size={16} style={{ color: "#c05621" }} />
+        <div className="freshness-subcard">
+          <div className="freshness-subcard-header">
+            <span className="freshness-subcard-title">
+              <Boxes size={15} style={{ color: "#c05621" }} />
               2. Materials Inventory
             </span>
             {getStatusBadge(twinFeed.freshness.inventory.status)}
           </div>
-          <p style={{ fontSize: "20px", fontWeight: 700, margin: "6px 0", color: "#c05621" }}>
-            {invMaterialsCount} <small style={{ fontSize: "12px", fontWeight: 400 }}>materials tracked</small>
+          <p className="freshness-subcard-value">
+            {invMaterialsCount}{" "}
+            <small>materials tracked</small>
           </p>
-          <p style={{ fontSize: "11px", color: "var(--color-text-muted)", margin: "4px 0 10px 0" }}>
+          <p className="freshness-subcard-sublabel">
             Latest change: <b>{formatTime(twinFeed.freshness.inventory.last_updated)}</b>
           </p>
-          <div
-            style={{
-              borderTop: "1px solid var(--color-border, #edf2f7)",
-              paddingTop: "8px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>Substrates, spawn, soil</span>
-            <Link href="/data" style={{ fontSize: "11px", color: "var(--color-primary, #416f57)", fontWeight: 500 }}>
+          <div className="freshness-subcard-footer">
+            <span>Substrates, spawn, soil</span>
+            <Link href="/data">
               Inspect stock →
             </Link>
           </div>
         </div>
 
         {/* Element 3: Dispatch */}
-        <div
-          style={{
-            border: "1px solid var(--color-border, #e2e8f0)",
-            borderRadius: "8px",
-            padding: "16px",
-            background: "var(--color-card-bg, #ffffff)",
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 600, fontSize: "13px" }}>
-              <Truck size={16} style={{ color: "#2b6cb0" }} />
+        <div className="freshness-subcard">
+          <div className="freshness-subcard-header">
+            <span className="freshness-subcard-title">
+              <Truck size={15} style={{ color: "#2b6cb0" }} />
               3. Dispatch &amp; Harvest
             </span>
             {getStatusBadge(twinFeed.freshness.dispatch.status)}
           </div>
-          <p style={{ fontSize: "20px", fontWeight: 700, margin: "6px 0", color: "#2b6cb0" }}>
+          <p className="freshness-subcard-value">
             {dispatchAwaitingKg.toLocaleString("en-IN")}{" "}
-            <small style={{ fontSize: "12px", fontWeight: 400 }}>kg awaiting dispatch</small>
+            <small>kg awaiting dispatch</small>
           </p>
-          <p style={{ fontSize: "11px", color: "var(--color-text-muted)", margin: "4px 0 10px 0" }}>
+          <p className="freshness-subcard-sublabel">
             Latest dispatch: <b>{formatTime(twinFeed.freshness.dispatch.last_updated)}</b>
           </p>
-          <div
-            style={{
-              borderTop: "1px solid var(--color-border, #edf2f7)",
-              paddingTop: "8px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>Fresh &amp; packed mushrooms</span>
-            <Link href="/data" style={{ fontSize: "11px", color: "var(--color-primary, #416f57)", fontWeight: 500 }}>
+          <div className="freshness-subcard-footer">
+            <span>Fresh &amp; packed mushrooms</span>
+            <Link href="/data">
               Inspect dispatch →
             </Link>
           </div>
@@ -495,10 +377,9 @@ export function DashboardOverview() {
       )}
 
       <div className="home-decision-grid">
-        <RoomConditionsWidget />
+        <RoomConditionsWidget number={1} />
+        <TwinFreshnessDashboard number={2} />
       </div>
-
-      <TwinFreshnessDashboard />
 
       <div className="traceability-footer">
         <ShieldAlert size={14} />

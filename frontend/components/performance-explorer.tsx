@@ -1,7 +1,8 @@
 "use client";
 
 import type { EChartsOption } from "echarts";
-import { CheckCircle2, Download, FileSearch, Info, Target } from "lucide-react";
+import { ArrowRight, CheckCircle2, Cpu, Download, FileSearch, Info, Loader2, Target } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { Chart } from "@/components/charts/chart";
@@ -216,15 +217,19 @@ function SuppliersView() {
 }
 
 export function PerformanceExplorer() {
-  const { intelligence, filters, state } = useFactory();
+  const { intelligence, filters, state, twinFeed, loading } = useFactory();
   const [activeTab, setActiveTab] = useState<Tab>("Cultivation");
-  const availableTabs = useMemo(() => tabs.filter((tab) => {
-    if (tab === "Cultivation" || tab === "Harvest") return intelligence.dataAvailability.production > 0;
-    if (tab === "Room downtime") return intelligence.dataAvailability.downtime > 0 || intelligence.totals.totalDowntime > 0;
-    if (tab === "Crop quality") return intelligence.dataAvailability.quality > 0;
-    if (tab === "Inventory") return intelligence.dataAvailability.inventory > 0;
-    return intelligence.dataAvailability.supplier > 0;
-  }), [intelligence]);
+  const hasTwin = Boolean(twinFeed.layout_id && twinFeed.machines && twinFeed.machines.length > 0);
+  const availableTabs = useMemo(() => {
+    if (!hasTwin) return [];
+    return tabs.filter((tab) => {
+      if (tab === "Cultivation" || tab === "Harvest") return intelligence.dataAvailability.production > 0;
+      if (tab === "Room downtime") return intelligence.dataAvailability.downtime > 0 || intelligence.totals.totalDowntime > 0;
+      if (tab === "Crop quality") return intelligence.dataAvailability.quality > 0;
+      if (tab === "Inventory") return intelligence.dataAvailability.inventory > 0;
+      return intelligence.dataAvailability.supplier > 0;
+    });
+  }, [hasTwin, intelligence]);
   const selectedTab = availableTabs.includes(activeTab) ? activeTab : availableTabs[0];
 
   useEffect(() => {
@@ -241,7 +246,40 @@ export function PerformanceExplorer() {
   }
 
   function exportData() {
-    downloadBlob(JSON.stringify({ factory: state.activeFactoryId, filters, module: selectedTab, intelligence }, null, 2), `musroom-${selectedTab?.toLowerCase().replaceAll(" ", "-") ?? "performance"}-${filters.to}.json`, "application/json");
+    if (!selectedTab) return;
+    downloadBlob(JSON.stringify({ factory: state.activeFactoryId, filters, module: selectedTab, intelligence }, null, 2), `musroom-${selectedTab.toLowerCase().replaceAll(" ", "-")}-${filters.to}.json`, "application/json");
+  }
+
+  if (loading) {
+    return (
+      <>
+        <header className="page-header">
+          <div><h1 className="typography-display">Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
+        </header>
+        <div className="performance-loading">
+          <Loader2 size={24} className="spin" style={{ color: "var(--accent, #416f57)" }} />
+          <p>Checking Digital Twin and telemetry stream...</p>
+        </div>
+      </>
+    );
+  }
+
+  if (!hasTwin) {
+    return (
+      <>
+        <header className="page-header">
+          <div><h1 className="typography-display">Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
+        </header>
+        <section className="panel performance-no-twin">
+          <Cpu size={32} style={{ color: "var(--accent, #416f57)", marginBottom: 6 }} />
+          <h2>Mushroom factory twin required</h2>
+          <p>The Digital Twin is the single canonical source of truth for your facility. Configure your factory digital twin and room assets to unlock cultivation performance, yields, and climate analytics.</p>
+          <Link href="/digital-twin" className="button button-accent" style={{ marginTop: 8 }}>
+            Configure Digital Twin <ArrowRight size={13} style={{ marginLeft: 4 }} />
+          </Link>
+        </section>
+      </>
+    );
   }
 
   return (

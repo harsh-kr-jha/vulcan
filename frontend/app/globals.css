@@ -5359,6 +5359,7 @@ a {
 
 .dashboard-start-state,
 .performance-no-data,
+.performance-no-twin,
 .positive-empty-state {
   align-items: center;
   display: flex;
@@ -5366,8 +5367,8 @@ a {
   gap: 7px;
   grid-column: 1 / -1;
   justify-content: center;
-  min-height: 260px;
-  padding: 32px;
+  min-height: 280px;
+  padding: 40px 32px;
   text-align: center;
 }
 
@@ -5385,13 +5386,45 @@ a {
 
 .dashboard-start-state svg,
 .performance-no-data svg,
+.performance-no-twin svg,
 .positive-empty-state svg { color: var(--green); }
 .dashboard-start-state h2,
 .performance-no-data h2,
+.performance-no-twin h2,
 .positive-empty-state h2 { font-size: 18px; margin: 5px 0 0; }
 .dashboard-start-state p,
 .performance-no-data p,
+.performance-no-twin p,
 .positive-empty-state p { color: var(--muted); font-size: 12px; line-height: 1.55; margin: 0 0 10px; max-width: 520px; }
+
+.performance-loading {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card, 12px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+  min-height: 280px;
+  padding: 40px 32px;
+  text-align: center;
+}
+
+.performance-loading p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
 
 .performance-tabs button { font-size: 12px; min-height: 42px; padding-left: 15px; padding-right: 15px; }
 

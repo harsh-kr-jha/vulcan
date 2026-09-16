@@ -190,7 +190,7 @@ function deserializeLayout(payload: LayoutApiPayload): FactoryLayout {
  * Requirements: 1.1, 1.4, 6.1, 9.3, 9.5, 11.1, 12.1, 13.1, 13.2, 13.3, 13.4, 13.7
  */
 export function FactoryTwinPage() {
-  const { state: factoryState, filters, hydrated } = useFactory();
+  const { state: factoryState, filters, hydrated, refreshTwinFeed } = useFactory();
   const {
     state: builderState,
     loadLayout,
@@ -456,20 +456,22 @@ export function FactoryTwinPage() {
       hasFetchedRef.current = false;
       setPageMode("empty");
       setDeleteStep("idle");
+      void refreshTwinFeed();
     } catch {
       setDeleteStep("idle");
     }
-  }, [builderState.layout.id, resetLayout]);
+  }, [builderState.layout.id, resetLayout, refreshTwinFeed]);
 
   // Save layout (Task 13.1)
   const handleSave = useCallback(async () => {
     try {
       await saveLayout();
       setPageMode("viewing");
+      void refreshTwinFeed();
     } catch {
       // Error is managed by builderState.saveError / saveError
     }
-  }, [saveLayout]);
+  }, [saveLayout, refreshTwinFeed]);
 
   // Cancel edit (Req 13.7)
   const handleCancel = useCallback(() => {

@@ -4,10 +4,12 @@ import { CalendarDays, RotateCcw } from "lucide-react";
 import { useFactory } from "@/lib/factory-context";
 
 export function CommandFilters({ compact = false }: { compact?: boolean }) {
-  const { state, filters, setFilters, setActiveFactory } = useFactory();
+  const { state, filters, setFilters, setActiveFactory, twinFeed } = useFactory();
   const lines = state.masters.lines.filter((item) => item.factoryId === filters.factoryId && item.active);
   const selectedLineId = lines.find((line) => line.name === filters.line)?.id;
-  const machines = state.masters.machines.filter((item) => item.factoryId === filters.factoryId && item.active && (!selectedLineId || item.parentId === selectedLineId));
+  const masterMachines = state.masters.machines.filter((item) => item.factoryId === filters.factoryId && item.active && (!selectedLineId || item.parentId === selectedLineId));
+  const twinMachines = (twinFeed?.machines || []).map((m) => ({ id: m.id, name: m.name, factoryId: filters.factoryId, active: true }));
+  const machines = masterMachines.length > 0 ? masterMachines : twinMachines;
   const skus = state.masters.skus.filter((item) => item.factoryId === filters.factoryId && item.active);
   const shifts = state.masters.shifts.filter((item) => item.factoryId === filters.factoryId && item.active);
   const update = (key: keyof typeof filters, value: string) => setFilters((current) => ({ ...current, [key]: value, ...(key === "line" ? { machine: "all" } : {}) }));

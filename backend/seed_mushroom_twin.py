@@ -88,6 +88,13 @@ def seed_twin():
                 ("co2_ppm", ParamDataType.NUMBER, []),
                 ("compost_temp", ParamDataType.NUMBER, []),
                 ("air_velocity", ParamDataType.NUMBER, []),
+                ("daily_yield_kg", ParamDataType.NUMBER, []),
+                ("planned_yield_kg", ParamDataType.NUMBER, []),
+                ("contamination_kg", ParamDataType.NUMBER, []),
+                ("substrate_dry_kg", ParamDataType.NUMBER, []),
+                ("growing_area_m2", ParamDataType.NUMBER, []),
+                ("water_litres", ParamDataType.NUMBER, []),
+                ("crop_age_days", ParamDataType.NUMBER, []),
                 ("active", ParamDataType.BOOLEAN, []),
             ],
             "live_values": {
@@ -97,6 +104,13 @@ def seed_twin():
                 "co2_ppm": 1150,
                 "compost_temp": 20.1,
                 "air_velocity": 0.25,
+                "daily_yield_kg": 465.0,
+                "planned_yield_kg": 480.0,
+                "contamination_kg": 15.0,
+                "substrate_dry_kg": 5200.0,
+                "growing_area_m2": 180.0,
+                "water_litres": 340.0,
+                "crop_age_days": 25.0,
                 "active": True,
             },
         },
@@ -118,6 +132,13 @@ def seed_twin():
                 ("co2_ppm", ParamDataType.NUMBER, []),
                 ("compost_temp", ParamDataType.NUMBER, []),
                 ("air_velocity", ParamDataType.NUMBER, []),
+                ("daily_yield_kg", ParamDataType.NUMBER, []),
+                ("planned_yield_kg", ParamDataType.NUMBER, []),
+                ("contamination_kg", ParamDataType.NUMBER, []),
+                ("substrate_dry_kg", ParamDataType.NUMBER, []),
+                ("growing_area_m2", ParamDataType.NUMBER, []),
+                ("water_litres", ParamDataType.NUMBER, []),
+                ("crop_age_days", ParamDataType.NUMBER, []),
                 ("active", ParamDataType.BOOLEAN, []),
             ],
             "live_values": {
@@ -127,6 +148,13 @@ def seed_twin():
                 "co2_ppm": 1280,
                 "compost_temp": 19.8,
                 "air_velocity": 0.22,
+                "daily_yield_kg": 382.0,
+                "planned_yield_kg": 390.0,
+                "contamination_kg": 12.0,
+                "substrate_dry_kg": 5200.0,
+                "growing_area_m2": 180.0,
+                "water_litres": 380.0,
+                "crop_age_days": 28.0,
                 "active": True,
             },
         },
@@ -148,6 +176,14 @@ def seed_twin():
                 ("co2_ppm", ParamDataType.NUMBER, []),
                 ("compost_temp", ParamDataType.NUMBER, []),
                 ("air_velocity", ParamDataType.NUMBER, []),
+                ("daily_yield_kg", ParamDataType.NUMBER, []),
+                ("planned_yield_kg", ParamDataType.NUMBER, []),
+                ("contamination_kg", ParamDataType.NUMBER, []),
+                ("substrate_dry_kg", ParamDataType.NUMBER, []),
+                ("growing_area_m2", ParamDataType.NUMBER, []),
+                ("water_litres", ParamDataType.NUMBER, []),
+                ("crop_age_days", ParamDataType.NUMBER, []),
+                ("downtime_minutes", ParamDataType.NUMBER, []),
                 ("active", ParamDataType.BOOLEAN, []),
             ],
             "live_values": {
@@ -157,6 +193,14 @@ def seed_twin():
                 "co2_ppm": 1420,
                 "compost_temp": 22.3,
                 "air_velocity": 0.18,
+                "daily_yield_kg": 295.0,
+                "planned_yield_kg": 310.0,
+                "contamination_kg": 10.0,
+                "substrate_dry_kg": 5200.0,
+                "growing_area_m2": 180.0,
+                "water_litres": 410.0,
+                "crop_age_days": 21.0,
+                "downtime_minutes": 45.0,
                 "active": True,
             },
         },
@@ -178,6 +222,10 @@ def seed_twin():
                 ("co2_ppm", ParamDataType.NUMBER, []),
                 ("compost_temp", ParamDataType.NUMBER, []),
                 ("air_velocity", ParamDataType.NUMBER, []),
+                ("substrate_dry_kg", ParamDataType.NUMBER, []),
+                ("growing_area_m2", ParamDataType.NUMBER, []),
+                ("water_litres", ParamDataType.NUMBER, []),
+                ("crop_age_days", ParamDataType.NUMBER, []),
                 ("active", ParamDataType.BOOLEAN, []),
             ],
             "live_values": {
@@ -187,6 +235,10 @@ def seed_twin():
                 "co2_ppm": 4200,
                 "compost_temp": 25.2,
                 "air_velocity": 0.15,
+                "substrate_dry_kg": 5200.0,
+                "growing_area_m2": 180.0,
+                "water_litres": 150.0,
+                "crop_age_days": 12.0,
                 "active": True,
             },
         },
@@ -371,27 +423,85 @@ def seed_twin():
                 order=p_idx + 1,
             )
 
-        # Create historical observations (8 observations over recent hours)
+        # Create historical observations (7 daily observations across past week + 2 intraday snapshots)
         base_vals = mc["live_values"]
-        for obs_i in range(8):
-            staggered_time = now - timedelta(hours=(7 - obs_i) * 0.5) - timedelta(minutes=5)
-            # Add slight realistic drift for history
+        is_room = "room" in mc["key"]
+        
+        for day_i in range(7):
+            day_time = (now - timedelta(days=6 - day_i)).replace(hour=10, minute=0, second=0, microsecond=0)
             obs_vals = dict(base_vals)
-            if "temperature" in obs_vals and isinstance(obs_vals["temperature"], (int, float)):
-                obs_vals["temperature"] = round(float(obs_vals["temperature"]) + (obs_i - 4) * 0.1, 1)
-            if "humidity" in obs_vals and isinstance(obs_vals["humidity"], (int, float)):
-                obs_vals["humidity"] = round(float(obs_vals["humidity"]) + (obs_i - 4) * 0.2, 1)
-            if "co2_ppm" in obs_vals and isinstance(obs_vals["co2_ppm"], (int, float)):
-                obs_vals["co2_ppm"] = int(obs_vals["co2_ppm"] + (obs_i - 4) * 15)
+            
+            # Add day-specific realistic values
+            if mc["key"] == "room_1":
+                obs_vals["daily_yield_kg"] = 450.0 + day_i * 5.0
+                obs_vals["planned_yield_kg"] = 480.0
+                obs_vals["contamination_kg"] = float(15 - (day_i % 3))
+                obs_vals["saleable_yield_kg"] = obs_vals["daily_yield_kg"] - obs_vals["contamination_kg"]
+                obs_vals["crop_age_days"] = 20 + day_i
+                obs_vals["temperature"] = round(18.0 + (day_i % 3) * 0.2, 1)
+                obs_vals["humidity"] = round(89.0 + (day_i % 3) * 0.4, 1)
+                obs_vals["co2_ppm"] = int(1120 + (day_i % 4) * 20)
+                obs_vals["active"] = True
+            elif mc["key"] == "room_2":
+                obs_vals["daily_yield_kg"] = 370.0 + day_i * 4.0
+                obs_vals["planned_yield_kg"] = 390.0
+                obs_vals["contamination_kg"] = float(12 - (day_i % 2))
+                obs_vals["saleable_yield_kg"] = obs_vals["daily_yield_kg"] - obs_vals["contamination_kg"]
+                obs_vals["crop_age_days"] = 24 + day_i
+                obs_vals["temperature"] = round(17.6 + (day_i % 3) * 0.2, 1)
+                obs_vals["humidity"] = round(90.5 + (day_i % 2) * 0.5, 1)
+                obs_vals["co2_ppm"] = int(1250 + (day_i % 3) * 25)
+                obs_vals["active"] = True
+            elif mc["key"] == "room_3":
+                obs_vals["daily_yield_kg"] = 280.0 + day_i * 3.0
+                obs_vals["planned_yield_kg"] = 310.0
+                obs_vals["contamination_kg"] = 10.0
+                obs_vals["saleable_yield_kg"] = obs_vals["daily_yield_kg"] - obs_vals["contamination_kg"]
+                obs_vals["crop_age_days"] = 18 + day_i
+                obs_vals["temperature"] = round(19.2 + (day_i % 3) * 0.2, 1)
+                obs_vals["humidity"] = round(86.0 + (day_i % 3) * 0.3, 1)
+                obs_vals["co2_ppm"] = int(1380 + (day_i % 4) * 20)
+                if day_i == 4:
+                    obs_vals["active"] = False
+                    obs_vals["downtime_minutes"] = 45.0
+                    obs_vals["downtime_reason"] = "Chiller compressor trip"
+                else:
+                    obs_vals["active"] = True
+                    obs_vals["downtime_minutes"] = 0.0
+            elif mc["key"] == "room_4":
+                obs_vals["daily_yield_kg"] = 0.0
+                obs_vals["planned_yield_kg"] = 0.0
+                obs_vals["saleable_yield_kg"] = 0.0
+                obs_vals["contamination_kg"] = 0.0
+                obs_vals["crop_age_days"] = 8 + day_i
+                obs_vals["temperature"] = round(23.8 + (day_i % 3) * 0.2, 1)
+                obs_vals["humidity"] = round(94.0 + (day_i % 2) * 0.4, 1)
+                obs_vals["co2_ppm"] = int(4100 + (day_i % 3) * 50)
+                obs_vals["active"] = True
+            else:
+                if "temperature" in obs_vals and isinstance(obs_vals["temperature"], (int, float)):
+                    obs_vals["temperature"] = round(float(obs_vals["temperature"]) + (day_i - 3) * 0.1, 1)
+                if "humidity" in obs_vals and isinstance(obs_vals["humidity"], (int, float)):
+                    obs_vals["humidity"] = round(float(obs_vals["humidity"]) + (day_i - 3) * 0.2, 1)
 
             obs = MachineObservation.objects.create(
                 tenant=tenant,
                 machine=machine,
-                values=obs_vals if obs_i < 7 else base_vals,
+                values=obs_vals,
                 submitted_by=admin_user,
             )
-            # Update submitted_at to staggered timestamp
-            MachineObservation.objects.filter(id=obs.id).update(submitted_at=staggered_time)
+            MachineObservation.objects.filter(id=obs.id).update(submitted_at=day_time)
+
+        # 2 Recent Intraday snapshots on today
+        for recent_i, recent_offset in enumerate([timedelta(hours=2), timedelta(minutes=15)]):
+            recent_time = now - recent_offset
+            obs = MachineObservation.objects.create(
+                tenant=tenant,
+                machine=machine,
+                values=base_vals,
+                submitted_by=admin_user,
+            )
+            MachineObservation.objects.filter(id=obs.id).update(submitted_at=recent_time)
 
     # 4. Create Material Flow Connections
     connections_data = [
@@ -631,57 +741,9 @@ def seed_twin():
             )
             row_counter += 1
 
-    # Production (harvest) records
-    prod_upload, _ = Upload.objects.get_or_create(
-        tenant=tenant,
-        factory=factory,
-        dataset_type="production",
-        original_filename="mushroom_harvest_log.csv",
-        defaults={
-            "file_type": "csv",
-            "uploaded_by": admin_user,
-            "template_code": "production",
-            "template_version": "1.0",
-            "record_count": 30,
-            "status": "COMPLETED",
-        },
-    )
-    StandardRecord.objects.filter(upload=prod_upload).delete()
-    prod_row = 1
-    for day_i in range(7):
-        current_date = start_date + timedelta(days=day_i)
-        harvests = [
-            ("Room 1", "SKU-BUTTON-A", 480, 465, 450, 15),
-            ("Room 2", "SKU-CREMINI", 390, 382, 370, 12),
-            ("Room 3", "SKU-PORTOBELLO", 310, 295, 285, 10),
-        ]
-        for r_name, sku_code, planned, actual, good, rej in harvests:
-            StandardRecord.objects.create(
-                tenant=tenant,
-                upload=prod_upload,
-                factory=factory,
-                dataset_type="production",
-                source_row=prod_row,
-                operational_date=current_date,
-                line="Growing Wing A",
-                machine=r_name,
-                sku=sku_code,
-                shift="Morning Shift",
-                values={
-                    "date": current_date.isoformat(),
-                    "line": "Growing Wing A",
-                    "machine": r_name,
-                    "sku": sku_code,
-                    "planned_quantity": planned,
-                    "actual_quantity": actual,
-                    "good_quantity": good,
-                    "rejected_quantity": rej,
-                    "unit": "kg",
-                },
-            )
-            prod_row += 1
-
-    print("Finished seeding Mushroom Farm Twin successfully!")
+    # Purge any legacy StandardRecord rows for this factory so that Digital Twin is 100% the ONLY data source!
+    deleted_records, _ = StandardRecord.objects.filter(factory=factory).delete()
+    print(f"Purged {deleted_records} legacy StandardRecords. Digital Twin is now the 100% single source of truth!")
 
 
 if __name__ == "__main__":

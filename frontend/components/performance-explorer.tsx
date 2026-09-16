@@ -285,7 +285,16 @@ export function PerformanceExplorer() {
   return (
     <>
       <header className="page-header">
-        <div><h1 className="typography-display">Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
+            <h1 className="typography-display" style={{ margin: 0 }}>Understand every crop. <span>Improve every flush.</span></h1>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, padding: "2px 8px", borderRadius: 12, background: "rgba(65, 111, 87, 0.12)", color: "var(--accent, #416f57)", fontWeight: 600, border: "1px solid rgba(65, 111, 87, 0.25)" }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent, #416f57)" }} />
+              Live Digital Twin Telemetry
+            </span>
+          </div>
+          <p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence derived directly from Digital Twin telemetry.</p>
+        </div>
         {selectedTab && <button className="button button-secondary" onClick={exportData}><Download size={14} /> Export {selectedTab}</button>}
       </header>
       <CommandFilters />

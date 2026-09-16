@@ -546,7 +546,6 @@ export function FactoryVisualization({
                 {(() => {
                   const nameLower = machine.name.toLowerCase();
                   const isPlatform = nameLower.includes("platform");
-                  const isPath = nameLower.includes("path") || nameLower.includes("corridor");
                   const isStrawManure = nameLower.includes("straw") && nameLower.includes("manure");
 
                   let nodeFill = STATUS_FILLS[status];
@@ -559,11 +558,6 @@ export function FactoryVisualization({
                     nodeStroke = isHovered ? "#ea580c" : "#6d3410";
                     nameFill = "#ffffff";
                     statusFill = "#fed7aa";
-                  } else if (isPath) {
-                    nodeFill = status === "down" ? "#dc2626" : status === "warning" ? "#d97706" : "#5820b8";
-                    nodeStroke = isHovered ? "#a855f7" : "#431499";
-                    nameFill = "#ffffff";
-                    statusFill = "#d8b4fe";
                   } else {
                     if (status === "running" || status === "no_data" || status === "idle") {
                       nodeFill = "#cce2fe";
@@ -587,37 +581,13 @@ export function FactoryVisualization({
                         style={{ transition: "stroke 0.15s, opacity 0.15s" }}
                       />
 
-                      {/* Path decoration: mint green arrows and right chevron touching Platform */}
-                      {isPath && (
-                        <g style={{ pointerEvents: "none" }}>
-                          <polygon
-                            points={`${machine.position.x + w - 0.15},${machine.position.y + h / 2} ${machine.position.x + w - 0.9},${machine.position.y + 0.5} ${machine.position.x + w - 0.9},${machine.position.y + h - 0.5}`}
-                            fill="#86efac"
-                            opacity={0.95}
-                          />
-                          {Array.from({ length: 9 }).map((_, arrIdx) => {
-                            const arrX = machine.position.x + 1.8 + arrIdx * 3.2;
-                            if (arrX > machine.position.x + w - 2.5) return null;
-                            if (arrIdx === 4) return null; // keep center for Path badge
-                            const arrY = machine.position.y + h / 2;
-                            return (
-                              <g key={`arr-${arrIdx}`} fill="#86efac" opacity={0.95}>
-                                <polygon points={`${arrX - 0.75},${arrY} ${arrX - 0.35},${arrY - 0.35} ${arrX - 0.35},${arrY + 0.35}`} />
-                                <rect x={arrX - 0.35} y={arrY - 0.1} width={0.7} height={0.2} rx={0.05} />
-                                <polygon points={`${arrX + 0.75},${arrY} ${arrX + 0.35},${arrY - 0.35} ${arrX + 0.35},${arrY + 0.35}`} />
-                              </g>
-                            );
-                          })}
-                        </g>
-                      )}
-
                       {/* Status indicator dot */}
                       <circle
                         cx={machine.position.x + w - 0.28}
                         cy={machine.position.y + 0.28}
                         r={0.12}
-                        fill={isPlatform || isPath ? "#86efac" : STATUS_STROKES[status]}
-                        stroke={isPlatform || isPath ? "#14532d" : "#ffffff"}
+                        fill={isPlatform ? "#86efac" : STATUS_STROKES[status]}
+                        stroke={isPlatform ? "#14532d" : "#ffffff"}
                         strokeWidth={0.04}
                       />
 
@@ -628,7 +598,7 @@ export function FactoryVisualization({
                             cx={machine.position.x + 0.28}
                             cy={machine.position.y + h - 0.28}
                             r={0.12}
-                            fill={isPlatform || isPath ? "#38bdf8" : "#2563eb"}
+                            fill={isPlatform ? "#38bdf8" : "#2563eb"}
                             stroke="#ffffff"
                             strokeWidth={0.04}
                           />
@@ -649,28 +619,6 @@ export function FactoryVisualization({
                           </text>
                           <text x={machine.position.x + w / 2} y={machine.position.y + h * 0.80} textAnchor="middle" fontSize={0.30} fontWeight={600} fill={nameFill}>
                             Inventory
-                          </text>
-                        </g>
-                      ) : isPath ? (
-                        <g clipPath={`url(#viz-clip-${machine.id})`} style={{ pointerEvents: "none", userSelect: "none" }}>
-                          <rect
-                            x={machine.position.x + w / 2 - 1.2}
-                            y={machine.position.y + h / 2 - 0.45}
-                            width={2.4}
-                            height={0.9}
-                            rx={0.2}
-                            fill="#86efac"
-                          />
-                          <text
-                            x={machine.position.x + w / 2}
-                            y={machine.position.y + h / 2 + 0.08}
-                            textAnchor="middle"
-                            dominantBaseline="middle"
-                            fontSize={0.42}
-                            fontWeight={700}
-                            fill="#064e3b"
-                          >
-                            Path
                           </text>
                         </g>
                       ) : (

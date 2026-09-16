@@ -1,10 +1,13 @@
 """Seed Mushroom Farm Digital Twin matching the layout sketch and comprehensive dummy data.
 
 Layout Schema:
-- Room 1, Room 2, Room 3, Room 4 (4 large growing rooms)
-- Straw + Chicken manure Inventory, Drying, Pasturizer (3 prep units)
-- Platform (large brown bottom-right block)
-- Path (purple corridor connecting rooms to platform)
+- Room 1, Room 2, Room 3, Room 4 (4 large growing rooms, seeded with spawn for growth)
+- Straw + Chicken manure Inventory (raw material store)
+- Platform (wetting and prep of manure and straw before processing)
+- Drying Room (resting/drying compost before pasteurisation)
+- Pasturizer (pasteurises substrate, then sent to rooms)
+
+Material Flow: Inventory → Platform (wet & prep) → Drying Room (rest compost) → Pasteurizer → Rooms (grow)
 """
 
 import os
@@ -275,29 +278,29 @@ def seed_twin():
         },
         {
             "key": "drying",
-            "name": "Drying",
+            "name": "Drying Room",
             "x": 39,
             "y": 1,
             "w": 4,
             "h": 4,
             "status": MachineOperationalStatus.RUNNING,
             "order": 6,
-            "inputs": [{"id": "fresh_culled", "label": "Fresh Culled Mushrooms", "unitType": "kg"}],
-            "outputs": [{"id": "dried_slices", "label": "Dried Mushroom Slices", "unitType": "kg"}],
+            "inputs": [{"id": "prepped_compost", "label": "Sacks of Manure & Straw (from Platform)", "unitType": "sacks"}],
+            "outputs": [{"id": "rested_compost", "label": "Rested Compost (ready for pasteurisation)", "unitType": "sacks"}],
             "params": [
-                ("dryer_temp", ParamDataType.NUMBER, []),
+                ("room_temp", ParamDataType.NUMBER, []),
                 ("air_circulation_pct", ParamDataType.NUMBER, []),
-                ("moisture_out", ParamDataType.NUMBER, []),
-                ("batch_weight_kg", ParamDataType.NUMBER, []),
-                ("cycle_time_hrs", ParamDataType.NUMBER, []),
+                ("compost_moisture_pct", ParamDataType.NUMBER, []),
+                ("sacks_in_room", ParamDataType.NUMBER, []),
+                ("rest_time_hrs", ParamDataType.NUMBER, []),
                 ("active", ParamDataType.BOOLEAN, []),
             ],
             "live_values": {
-                "dryer_temp": 58.5,
-                "air_circulation_pct": 75.0,
-                "moisture_out": 11.8,
-                "batch_weight_kg": 850,
-                "cycle_time_hrs": 6.5,
+                "room_temp": 42.0,
+                "air_circulation_pct": 60.0,
+                "compost_moisture_pct": 68.0,
+                "sacks_in_room": 120,
+                "rest_time_hrs": 18.0,
                 "active": True,
             },
         },
@@ -332,34 +335,6 @@ def seed_twin():
             },
         },
         {
-            "key": "path",
-            "name": "Path",
-            "x": 1,
-            "y": 8,
-            "w": 32,
-            "h": 4,
-            "status": MachineOperationalStatus.RUNNING,
-            "order": 8,
-            "inputs": [{"id": "room_crates", "label": "Harvest Crates in Transit", "unitType": "crates"}],
-            "outputs": [{"id": "platform_in", "label": "Dock Inflow", "unitType": "crates"}],
-            "params": [
-                ("ambient_temp", ParamDataType.NUMBER, []),
-                ("air_pressure_pa", ParamDataType.NUMBER, []),
-                ("traffic_status", ParamDataType.SELECTION, ["Clear", "Harvest Transfer", "Spawn Transit", "Substrate Loading"]),
-                ("forklift_active", ParamDataType.BOOLEAN, []),
-                ("sanitation_status", ParamDataType.SELECTION, ["Clean", "Sanitizing", "Pending"]),
-                ("active", ParamDataType.BOOLEAN, []),
-            ],
-            "live_values": {
-                "ambient_temp": 19.2,
-                "air_pressure_pa": 28.0,
-                "traffic_status": "Harvest Transfer",
-                "forklift_active": True,
-                "sanitation_status": "Clean",
-                "active": True,
-            },
-        },
-        {
             "key": "platform",
             "name": "Platform",
             "x": 33,
@@ -367,26 +342,26 @@ def seed_twin():
             "w": 15,
             "h": 8,
             "status": MachineOperationalStatus.RUNNING,
-            "order": 9,
+            "order": 8,
             "inputs": [
-                {"id": "packed_crates", "label": "Graded Cold Crates", "unitType": "crates"},
-                {"id": "dried_boxes", "label": "Cartons Dried Slices", "unitType": "cartons"},
+                {"id": "raw_straw", "label": "Sacks of Straw (from Inventory)", "unitType": "sacks"},
+                {"id": "raw_manure", "label": "Sacks of Manure (from Inventory)", "unitType": "sacks"},
             ],
-            "outputs": [{"id": "reefer_shipments", "label": "Reefer Pallets", "unitType": "pallets"}],
+            "outputs": [{"id": "prepped_mix", "label": "Wetted Manure & Straw Sacks (to Drying Room)", "unitType": "sacks"}],
             "params": [
                 ("platform_temp", ParamDataType.NUMBER, []),
-                ("dock_humidity", ParamDataType.NUMBER, []),
-                ("pallet_loading_bays", ParamDataType.NUMBER, []),
-                ("turnaround_time_mins", ParamDataType.NUMBER, []),
-                ("dispatch_readiness", ParamDataType.SELECTION, ["Ready", "Staging", "Inspecting"]),
+                ("platform_humidity", ParamDataType.NUMBER, []),
+                ("water_added_litres", ParamDataType.NUMBER, []),
+                ("sacks_being_prepped", ParamDataType.NUMBER, []),
+                ("prep_status", ParamDataType.SELECTION, ["Wetting", "Mixing", "Loading", "Idle"]),
                 ("active", ParamDataType.BOOLEAN, []),
             ],
             "live_values": {
-                "platform_temp": 8.5,
-                "dock_humidity": 78.0,
-                "pallet_loading_bays": 4,
-                "turnaround_time_mins": 22.5,
-                "dispatch_readiness": "Ready",
+                "platform_temp": 22.0,
+                "platform_humidity": 65.0,
+                "water_added_litres": 800,
+                "sacks_being_prepped": 80,
+                "prep_status": "Wetting",
                 "active": True,
             },
         },
@@ -504,20 +479,15 @@ def seed_twin():
             MachineObservation.objects.filter(id=obs.id).update(submitted_at=recent_time)
 
     # 4. Create Material Flow Connections
+    # Flow: Inventory → Platform (wet & prep) → Drying Room (rest compost) → Pasteurizer → Rooms (grow)
     connections_data = [
-        ("straw_manure", "platform", "Raw prep wetting to staging platform", "Conditioned Straw & Manure", Decimal("15.5")),
-        ("platform", "pasturizer", "Bulk transfer to pasteurization tunnel", "Phase I Substrate Mix", Decimal("14.0")),
-        ("pasturizer", "path", "Pasteurized compost out to transit path", "Phase II Clean Substrate", Decimal("12.5")),
-        ("path", "room_1", "Trays loaded into Room 1", "Cased Compost Trays", Decimal("80.0")),
-        ("path", "room_2", "Trays loaded into Room 2", "Cased Compost Trays", Decimal("80.0")),
-        ("path", "room_3", "Trays loaded into Room 3", "Spawned Substrate Trays", Decimal("80.0")),
-        ("path", "room_4", "Substrate filled into Room 4", "Phase II Bulk Compost", Decimal("12.0")),
-        ("room_1", "path", "Flush 1 Button harvest crates", "Fresh White Button", Decimal("450.0")),
-        ("room_2", "path", "Flush 2 Cremini harvest crates", "Fresh Brown Cremini", Decimal("380.0")),
-        ("room_3", "path", "Portobello harvest crates", "Fresh Jumbo Portobello", Decimal("290.0")),
-        ("path", "platform", "Central path delivery to cold dock platform", "Harvested Mushroom Crates", Decimal("1120.0")),
-        ("platform", "drying", "Oversized/cull mushroom delivery to dryer", "Cull Fresh Mushrooms", Decimal("220.0")),
-        ("drying", "platform", "Dried sliced product to dispatch platform", "Dried Sliced Mushrooms", Decimal("28.0")),
+        ("straw_manure", "platform", "Sacks of manure and straw sent to Platform for wetting", "Sacks of Manure & Straw", Decimal("150.0")),
+        ("platform", "drying", "Wetted sacks of manure sent to Drying Room to rest compost", "Wetted Manure Sacks", Decimal("140.0")),
+        ("drying", "pasturizer", "Rested compost sacks sent to Pasteurizer", "Rested Compost Sacks", Decimal("130.0")),
+        ("pasturizer", "room_1", "Pasteurized compost sacks sent to Room 1 with seeds for growth", "Pasteurized Compost Sacks", Decimal("80.0")),
+        ("pasturizer", "room_2", "Pasteurized compost sacks sent to Room 2 with seeds for growth", "Pasteurized Compost Sacks", Decimal("80.0")),
+        ("pasturizer", "room_3", "Pasteurized compost sacks sent to Room 3 with seeds for growth", "Pasteurized Compost Sacks", Decimal("80.0")),
+        ("pasturizer", "room_4", "Pasteurized compost sacks sent to Room 4 with seeds for growth", "Pasteurized Compost Sacks", Decimal("80.0")),
     ]
 
     for src_key, tgt_key, name, mat_type, qty in connections_data:
@@ -658,9 +628,8 @@ def seed_twin():
         ("ROOM-3", "Room 3"),
         ("ROOM-4", "Room 4"),
         ("STRAW-MANURE-INV", "Straw + Chicken manure Inventory"),
-        ("DRYING-UNIT", "Drying"),
+        ("DRYING-ROOM", "Drying Room"),
         ("PASTURIZER-01", "Pasturizer"),
-        ("PATH-01", "Path"),
         ("PLATFORM-01", "Platform"),
     ]
     for m_code, m_name in machine_masters:

@@ -90,8 +90,8 @@ def stream(tenant, factory):
     value = DataInputStream.objects.create(
         tenant=tenant,
         factory=factory,
-        name="Simulator",
-        base_url="http://simulator.test",
+        name="Telemetry gateway",
+        base_url="http://gateway.test",
     )
     DataStreamCredential.objects.create(
         tenant=tenant,

@@ -11,7 +11,6 @@ import {
   Plus,
   Power,
   RefreshCw,
-  RotateCcw,
   ShieldCheck,
   Square,
   Trash2,
@@ -26,7 +25,6 @@ const CONTROL_ICONS: Record<string, typeof Play> = {
   pause: Pause,
   resume: Play,
   stop: Square,
-  new_run: RotateCcw,
 };
 
 function relativeTime(value?: string | null) {
@@ -54,10 +52,6 @@ export function DataStreamsManager() {
   const [apiKey, setApiKey] = useState("");
   const [rotationStreamId, setRotationStreamId] = useState<string | null>(null);
   const [rotatedKey, setRotatedKey] = useState("");
-  const [seed, setSeed] = useState("42");
-  const [speed, setSpeed] = useState("1");
-  const [faultProbability, setFaultProbability] = useState("0.15");
-  const [coldStart, setColdStart] = useState(false);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
 
@@ -134,16 +128,7 @@ export function DataStreamsManager() {
     setBusy(actionKey);
     setError("");
     try {
-      const inputs = new Set(
-        stream.capabilities.controls?.find((control) => control.id === action)?.inputs ?? [],
-      );
       const payload: Record<string, string | number | boolean> = { channel_id: channelId };
-      if (inputs.has("seed")) payload.seed = Number(seed);
-      if (inputs.has("speed_factor")) payload.speed_factor = Number(speed);
-      if (inputs.has("fault_probability")) {
-        payload.fault_probability = Number(faultProbability);
-      }
-      if (inputs.has("cold_start")) payload.cold_start = coldStart;
       const result = await api.controlDataStream(stream.id, action, payload);
       setStreams((current) => current.map((item) => item.id === stream.id ? result.stream : item));
     } catch (cause) {
@@ -280,9 +265,6 @@ export function DataStreamsManager() {
         )}
         {streams.map((stream) => {
           const controls = stream.capabilities?.controls ?? [];
-          const supportsFaultProbability = controls.some((control) =>
-            control.inputs?.includes("fault_probability"),
-          );
           return (
             <article key={stream.id} className="border-b border-gray-100 p-4 last:border-0">
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -415,45 +397,6 @@ export function DataStreamsManager() {
 
                     {!!controls.length && stream.enabled && (
                       <div className="flex flex-wrap items-end gap-2">
-                        <label className="text-[11px] text-gray-500">
-                          Seed
-                          <input
-                            className="block w-16 rounded border px-2 py-1"
-                            value={seed}
-                            onChange={(event) => setSeed(event.target.value)}
-                          />
-                        </label>
-                        <label className="text-[11px] text-gray-500">
-                          Speed
-                          <input
-                            className="block w-16 rounded border px-2 py-1"
-                            value={speed}
-                            onChange={(event) => setSpeed(event.target.value)}
-                          />
-                        </label>
-                        {supportsFaultProbability && (
-                          <label className="text-[11px] text-gray-500">
-                            Fault trigger
-                          <input
-                              className="block w-20 rounded border px-2 py-1"
-                              type="number"
-                              min="0"
-                              max="1"
-                              step="0.01"
-                              value={faultProbability}
-                              title="Chance of scheduling a multi-cycle fault after the healthy cooldown"
-                              onChange={(event) => setFaultProbability(event.target.value)}
-                            />
-                          </label>
-                        )}
-                        <label className="flex items-center gap-1 pb-1 text-[11px] text-gray-500">
-                          <input
-                            type="checkbox"
-                            checked={coldStart}
-                            onChange={(event) => setColdStart(event.target.checked)}
-                          />
-                          Cold start
-                        </label>
                         {controls.map((item) => {
                           const Icon = CONTROL_ICONS[item.id] ?? Activity;
                           const key = `${item.id}-${stream.id}-${channel.external_id}`;

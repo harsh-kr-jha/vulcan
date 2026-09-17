@@ -743,8 +743,10 @@ function ProfileSection() {
 
   async function save(event: FormEvent) {
     event.preventDefault();
-    await updateCompany(company);
-    await updateFactory(factory.id, factory);
+    await Promise.all([
+      updateCompany(company),
+      updateFactory(factory.id, factory),
+    ]);
     setSaved(true);
     window.setTimeout(() => setSaved(false), 2500);
   }

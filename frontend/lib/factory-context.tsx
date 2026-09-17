@@ -71,8 +71,20 @@ export function FactoryProvider({ children }: { children: React.ReactNode }) {
   const mutate = useCallback(async (operation: () => Promise<unknown>) => { setError(""); try { await operation(); await refresh(); } catch (cause) { const message = cause instanceof Error ? cause.message : "The change could not be saved."; setError(message); throw cause; } }, [refresh]);
   const setActiveFactory = useCallback((factoryId: string) => { if (!factoryId || factoryId === filters.factoryId) return; requestSequence.current += 1; setLoading(true); setError(""); setState((current) => ({ ...current, activeFactoryId: factoryId, masters: emptyMasters, uploads: [], actions: [], targets: defaultTargets })); setIntelligence(emptyIntelligence); setTwinFeed(emptyTwinFeed); setFilters((current) => ({ ...current, factoryId, line: "all", machine: "all", sku: "all", shift: "all" })); }, [filters.factoryId]);
   const createFactory = useCallback(async (factory: Omit<FactoryConfig, "id" | "companyId">) => { const created = await api.createFactory(factory) as FactoryConfig; setFilters((current) => ({ ...current, factoryId: created.id, line: "all", machine: "all", sku: "all", shift: "all" })); }, []);
-  const updateFactory = useCallback((id: string, updates: Partial<FactoryConfig>) => mutate(() => api.updateFactory(id, updates)), [mutate]);
-  const updateCompany = useCallback((updates: Partial<FactoryState["company"]>) => mutate(() => api.updateConfiguration(activeFactoryId, updates)), [mutate, activeFactoryId]);
+  const updateFactory = useCallback((id: string, updates: Partial<FactoryConfig>) => {
+    setState((current) => ({
+      ...current,
+      factories: current.factories.map((f) => (f.id === id ? { ...f, ...updates } : f)),
+    }));
+    return mutate(() => api.updateFactory(id, updates));
+  }, [mutate]);
+  const updateCompany = useCallback((updates: Partial<FactoryState["company"]>) => {
+    setState((current) => ({
+      ...current,
+      company: { ...current.company, ...updates },
+    }));
+    return mutate(() => api.updateConfiguration(activeFactoryId, updates));
+  }, [mutate, activeFactoryId]);
   const upsertMaster = useCallback((collection: MasterCollection, item: Partial<MasterItem> & Pick<MasterItem, "name" | "code">) => mutate(() => item.id ? api.updateMaster(activeFactoryId, item.id, { ...item, kind: collection }) : api.createMaster(activeFactoryId, { ...item, kind: collection })), [mutate, activeFactoryId]);
   const removeMaster = useCallback((_: MasterCollection, id: string) => mutate(() => api.removeMaster(activeFactoryId, id)), [mutate, activeFactoryId]);
   const updateTargets = useCallback((targets: Partial<FactoryTargets>) => mutate(() => api.updateConfiguration(activeFactoryId, { targets })), [mutate, activeFactoryId]);

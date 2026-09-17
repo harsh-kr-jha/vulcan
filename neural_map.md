@@ -74,3 +74,6 @@ graph TD
 4. **Ergonomic Presentation**:
    - Tabular figures (`tnum`) across all metrics tables and cards.
    - Dual-layer semantic tokens ensuring WCAG AA (>= 4.5:1) text contrast.
+5. **State Synchronization & Cache Lifecycle**:
+   - Optimistic client updates for instant (0ms) UI reflection on factory/company settings changes.
+   - Versioned workspace snapshot caching with automatic tenant-level cache invalidation (`invalidate_workspace`) on mutations.

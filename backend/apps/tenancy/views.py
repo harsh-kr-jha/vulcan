@@ -239,6 +239,20 @@ class FactoryViewSet(viewsets.ModelViewSet):
         for factory_id in factory_ids:
             invalidate_workspace(factory_id)
 
+    def perform_update(self, serializer):
+        factory = serializer.save()
+        factory_ids = Factory.objects.filter(tenant=factory.tenant).values_list("id", flat=True)
+        for factory_id in factory_ids:
+            invalidate_workspace(factory_id)
+
+    def perform_destroy(self, instance):
+        tenant = instance.tenant
+        factory_id = instance.id
+        instance.delete()
+        factory_ids = list(Factory.objects.filter(tenant=tenant).values_list("id", flat=True)) + [factory_id]
+        for fid in factory_ids:
+            invalidate_workspace(fid)
+
 
 class FactoryMasterViewSet(viewsets.ModelViewSet):
     serializer_class = FactoryMasterSerializer

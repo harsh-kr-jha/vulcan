@@ -84,20 +84,31 @@ jobs:
 
       - name: Transfer deployment files
         env:
+          DEPLOY_PROFILE: ${{ vars.DEPLOY_PROFILE || '.' }}
           GCE_INSTANCE: ${{ vars.GCE_INSTANCE }}
           GCE_ZONE: ${{ vars.GCE_ZONE }}
           GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
         run: |
+          if [[ ! "$DEPLOY_PROFILE" =~ ^[A-Za-z0-9._/-]+$ ]] || [[ "$DEPLOY_PROFILE" == *..* ]]; then
+            echo "::error::Invalid DEPLOY_PROFILE"
+            exit 1
+          fi
+          for file in compose.yaml Caddyfile backup.sh deploy.sh; do
+            if [[ ! -f "deploy-files/${DEPLOY_PROFILE}/${file}" ]]; then
+              echo "::error::Missing deployment file: ${DEPLOY_PROFILE}/${file}"
+              exit 1
+            fi
+          done
           gcloud compute ssh "$GCE_INSTANCE" \
             --project "$GCP_PROJECT_ID" \
             --zone "$GCE_ZONE" \
             --tunnel-through-iap \
             --command 'install -d -m 0755 /tmp/tamaso-deploy'
           gcloud compute scp \
-            deploy-files/compose.yaml \
-            deploy-files/Caddyfile \
-            deploy-files/backup.sh \
-            deploy-files/deploy.sh \
+            "deploy-files/${DEPLOY_PROFILE}/compose.yaml" \
+            "deploy-files/${DEPLOY_PROFILE}/Caddyfile" \
+            "deploy-files/${DEPLOY_PROFILE}/backup.sh" \
+            "deploy-files/${DEPLOY_PROFILE}/deploy.sh" \
             "$GCE_INSTANCE:/tmp/tamaso-deploy/" \
             --project "$GCP_PROJECT_ID" \
             --zone "$GCE_ZONE" \

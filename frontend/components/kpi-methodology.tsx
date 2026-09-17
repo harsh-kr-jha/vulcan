@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { useFactory } from "@/lib/factory-context";
 import { formatDuration } from "@/lib/formatters";
+import { PortalOverlay } from "@/components/ui/portal-overlay";
 import type { CustomKpiDefinition, CustomKpiResult, CustomKpiVariable, FactoryTargets, Intelligence } from "@/lib/factory-domain";
 
 type Family = "Cultivation" | "Harvest" | "Quality" | "Environment" | "Loss" | "Supply" | "Governance";
@@ -60,7 +61,7 @@ function CustomKpiBuilder({ variables, onClose, onSave }: { variables: CustomKpi
     setSaving(true);
     try { await onSave({ ...form, id: crypto.randomUUID(), pinnedToHome: false }); onClose(); } finally { setSaving(false); }
   }
-  return <div className="modal-backdrop"><form className="upload-modal custom-kpi-dialog" onSubmit={submit}><div className="modal-header"><div><span className="modal-step">Custom KPI</span><h2>Build from approved variables</h2><p>Django saves and calculates this formula for the active mushroom factory and date filters.</p></div><button type="button" className="icon-button" onClick={onClose} aria-label="Close"><X size={18} /></button></div><div className="modal-body custom-kpi-form"><label className="full-field">KPI name<input value={form.name} maxLength={60} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Output per downtime minute" required /></label><label>First variable<VariableSelect variables={variables} value={form.variableA} onChange={(variableA) => setForm({ ...form, variableA })} /></label><label>Operation<select value={form.operation} onChange={(event) => setForm({ ...form, operation: event.target.value as CustomKpiDefinition["operation"] })}>{Object.entries(operatorLabels).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></label><label>Second variable<VariableSelect variables={variables} value={form.variableB} onChange={(variableB) => setForm({ ...form, variableB })} /></label><label>Result scale<select value={form.scale} onChange={(event) => setForm({ ...form, scale: Number(event.target.value) as 1 | 100 })}><option value={1}>Raw result</option><option value={100}>Multiply by 100</option></select></label><label>Decimal places<select value={form.decimals} onChange={(event) => setForm({ ...form, decimals: Number(event.target.value) as 0 | 1 | 2 | 3 })}><option value={0}>0</option><option value={1}>1</option><option value={2}>2</option><option value={3}>3</option></select></label><label>Display unit<input value={form.unit} maxLength={20} onChange={(event) => setForm({ ...form, unit: event.target.value })} placeholder="%, units/min, ₹/unit…" /></label><div className="custom-formula-preview full-field"><span>Formula preview</span><strong>{first?.label ?? "First variable"} {operatorLabels[form.operation].split(" ")[0]} {second?.label ?? "Second variable"}{form.scale === 100 ? " × 100" : ""}</strong><small>The result will be calculated server-side after saving.</small></div></div><div className="modal-footer"><button type="button" className="button button-secondary" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={saving}>{saving ? "Saving…" : "Save custom KPI"} <CheckCircle2 size={13} /></button></div></form></div>;
+  return <PortalOverlay isOpen onClose={onClose} ariaLabel="Custom KPI"><form className="upload-modal custom-kpi-dialog" onSubmit={submit}><div className="modal-header"><div><span className="modal-step">Custom KPI</span><h2>Build from approved variables</h2><p>Django saves and calculates this formula for the active mushroom factory and date filters.</p></div><button type="button" className="icon-button" onClick={onClose} aria-label="Close"><X size={18} /></button></div><div className="modal-body custom-kpi-form"><label className="full-field">KPI name<input value={form.name} maxLength={60} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder="Output per downtime minute" required /></label><label>First variable<VariableSelect variables={variables} value={form.variableA} onChange={(variableA) => setForm({ ...form, variableA })} /></label><label>Operation<select value={form.operation} onChange={(event) => setForm({ ...form, operation: event.target.value as CustomKpiDefinition["operation"] })}>{Object.entries(operatorLabels).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></label><label>Second variable<VariableSelect variables={variables} value={form.variableB} onChange={(variableB) => setForm({ ...form, variableB })} /></label><label>Result scale<select value={form.scale} onChange={(event) => setForm({ ...form, scale: Number(event.target.value) as 1 | 100 })}><option value={1}>Raw result</option><option value={100}>Multiply by 100</option></select></label><label>Decimal places<select value={form.decimals} onChange={(event) => setForm({ ...form, decimals: Number(event.target.value) as 0 | 1 | 2 | 3 })}><option value={0}>0</option><option value={1}>1</option><option value={2}>2</option><option value={3}>3</option></select></label><label>Display unit<input value={form.unit} maxLength={20} onChange={(event) => setForm({ ...form, unit: event.target.value })} placeholder="%, units/min, ₹/unit…" /></label><div className="custom-formula-preview full-field"><span>Formula preview</span><strong>{first?.label ?? "First variable"} {operatorLabels[form.operation].split(" ")[0]} {second?.label ?? "Second variable"}{form.scale === 100 ? " × 100" : ""}</strong><small>The result will be calculated server-side after saving.</small></div></div><div className="modal-footer"><button type="button" className="button button-secondary" onClick={onClose}>Cancel</button><button className="button button-primary" disabled={saving}>{saving ? "Saving…" : "Save custom KPI"} <CheckCircle2 size={13} /></button></div></form></PortalOverlay>;
 }
 
 export function KpiMethodology() {
@@ -69,9 +70,9 @@ export function KpiMethodology() {
   const [builderOpen, setBuilderOpen] = useState(false);
   const visibleMetrics = family === "All" ? metrics : metrics.filter((metric) => metric.family === family);
   const cultivationParts = [
-    { label: "Plan attainment", value: intelligence.mushroom.planAttainment, color: "var(--blue)" },
-    { label: "Saleable yield", value: intelligence.mushroom.saleableYield, color: "var(--green)" },
-    { label: "Climate compliance", value: intelligence.mushroom.environmentCompliance, color: "var(--amber)" },
+    { label: "Plan attainment", value: intelligence.mushroom.planAttainment, color: "var(--color-primary-soft, #8dccad)" },
+    { label: "Saleable yield", value: intelligence.mushroom.saleableYield, color: "var(--color-primary, #00a06c)" },
+    { label: "Climate compliance", value: intelligence.mushroom.environmentCompliance, color: "var(--color-warning-graphic, #8a6514)" },
   ];
   const customDefinitions = intelligence.customKpis.map(definitionOf);
   async function saveCustomKpi(item: CustomKpiDefinition) { await updateCustomKpis([...customDefinitions, item]); }
@@ -81,7 +82,7 @@ export function KpiMethodology() {
   return (
     <>
       <header className="page-header">
-        <div><p className="eyebrow">Deterministic Analytics</p><h1 className="typography-display">See how every number <span>becomes a decision.</span></h1><p className="page-subtitle typography-body">A plain-language map of approved inputs, Django calculations, assumptions and the current mushroom factory result.</p></div>
+        <div><h1 className="typography-display">See how every number <span>becomes a decision.</span></h1><p className="page-subtitle typography-body">A plain-language map of approved inputs, Django calculations, assumptions and the current mushroom factory result.</p></div>
         <button className="button button-accent" disabled={intelligence.customKpis.length >= 12} onClick={() => setBuilderOpen(true)}><Plus size={14} /> Add custom KPI</button>
       </header>
       <section className="panel methodology-flow">
@@ -90,7 +91,7 @@ export function KpiMethodology() {
         <div><CheckCircle2 size={18} /><span><strong>Operational answer</strong><small>Filtered to one mushroom factory</small></span></div>
       </section>
       <section className="panel oee-method-card">
-        <header><div><Gauge size={19} /><span><h2 className="typography-headline">Biological efficiency</h2><p className="typography-body">The core cultivation measure: fresh harvest returned by the dry substrate loaded.</p></span></div><strong>{(intelligence.mushroom?.biologicalEfficiency ?? 0).toFixed(1)}%</strong></header>
+        <header><div><Gauge size={19} /><span><h2 className="typography-headline">Biological efficiency</h2><p className="typography-body">The core cultivation measure: fresh harvest returned by the dry substrate loaded.</p></span></div><strong className="tnum">{intelligence.mushroom?.biologicalEfficiency != null ? `${intelligence.mushroom.biologicalEfficiency.toFixed(1)}%` : "N/A"}</strong></header>
         <div className="oee-equation">
           {cultivationParts.map((part) => <div className="oee-equation-part" key={part.label}><span>{part.label}</span><strong>{(part.value ?? 0).toFixed(1)}%</strong><i><b style={{ width: `${Math.min(part.value, 100)}%`, background: part.color }} /></i></div>)}
           <div className="oee-equation-result"><span>BE</span><strong>{(intelligence.mushroom?.biologicalEfficiency ?? 0).toFixed(1)}%</strong><small>Target {state.targets.biologicalEfficiency}%</small></div>

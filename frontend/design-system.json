@@ -32,6 +32,15 @@
     "errorSoft": "#ffdad6",
     "info": "#00a06c",
     "infoSoft": "#8dccad33",
+    "positiveGraphic": "#00a06c",
+    "positiveText": "#006a46",
+    "negativeGraphic": "#ba1a1a",
+    "negativeText": "#93000a",
+    "warningGraphic": "#8a6514",
+    "warningText": "#645f40",
+    "surfaceDark": "#121a14",
+    "surfaceDarkRaised": "#1e2621",
+    "surfaceDarkBorder": "#283e2e",
     "inverseSurface": "#1e2621",
     "inverseSurfaceRaised": "#28332c",
     "inverseInk": "#f4ebc3",
@@ -52,37 +61,41 @@
     "bodyMd": { "size": "0.9375rem", "weight": 400, "lineHeight": "1.45" },
     "labelMd": { "size": "0.75rem", "weight": 700, "lineHeight": "1.0", "letterSpacing": "0.04em" },
     "caption": { "size": "0.75rem", "weight": 700, "lineHeight": "1.0", "letterSpacing": "0.04em" },
-    "minimumReadable": "11px"
+    "minimumReadable": "12px"
   },
   "radii": {
+    "indicator": "4px",
+    "badge": "8px",
+    "input": "12px",
+    "chip": "14px",
+    "card": "20px",
+    "pill": "9999px",
     "small": "8px",
-    "control": "16px",
-    "medium": "24px",
-    "card": "32px",
-    "hero": "48px",
-    "pill": "6px"
+    "control": "12px",
+    "medium": "14px",
+    "hero": "20px"
   },
   "spacing": {
     "unit": "8px",
     "xs": "4px",
-    "small": "12px",
-    "medium": "24px",
-    "large": "48px",
-    "xl": "80px",
+    "small": "8px",
+    "medium": "16px",
+    "large": "24px",
+    "xl": "32px",
     "gutter": "24px",
     "mobileMargin": "16px",
     "desktopMargin": "40px"
   },
   "elevation": {
-    "card": "0px 4px 12px rgba(9, 30, 66, 0.08)",
-    "cardHover": "0px 16px 36px -6px rgba(9, 30, 66, 0.12)",
-    "floating": "0px 16px 40px rgba(9, 30, 66, 0.16)",
+    "card": "0px 4px 12px rgba(18, 26, 20, 0.06)",
+    "cardHover": "0px 16px 36px -6px rgba(18, 26, 20, 0.10)",
+    "floating": "0px 16px 40px rgba(18, 26, 20, 0.12)",
     "focus": "0 0 0 4px rgba(0, 160, 108, 0.10)"
   },
   "layout": {
-    "sidebarWidth": "260px",
-    "contentMaxWidth": "1600px",
-    "mobileBreakpoint": "600px",
+    "sidebarWidth": "320px",
+    "contentMaxWidth": "1400px",
+    "mobileBreakpoint": "640px",
     "desktopBreakpoint": "1024px"
   },
   "charts": {
@@ -96,6 +109,6 @@
     "tooltip": "#1e2621",
     "tooltipText": "#ffffff",
     "primaryArea": "rgba(0, 160, 108, 0.12)",
-    "labelSize": 11
+    "labelSize": 12
   }
 }

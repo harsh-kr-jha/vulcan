@@ -28,6 +28,8 @@ import { useEffect, useState } from "react";
 import { useFactory } from "@/lib/factory-context";
 import { VulcanLogo } from "@/components/vulcan-logo";
 
+import { PortalOverlay } from "@/components/ui/portal-overlay";
+
 const navGroups = [
   { label: "Workspace", items: [
     { href: "/", label: "Home", icon: LayoutDashboard },
@@ -111,13 +113,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   function toggleSidebar() {
     setSidebarMode((current) => {
-      const mobile = window.matchMedia("(max-width: 780px)").matches;
+      const mobile = window.matchMedia("(max-width: 1023px)").matches;
       const currentlyOpen = current === "open" || (current === "default" && !mobile);
       return currentlyOpen ? "closed" : "open";
     });
   }
   function closeSidebar() { setSidebarMode("closed"); }
-  function closeAfterNavigation() { if (window.matchMedia("(max-width: 780px)").matches) closeSidebar(); }
+  function closeAfterNavigation() { if (window.matchMedia("(max-width: 1023px)").matches) closeSidebar(); }
 
   function handleAlertStatus(id: string, status: "acknowledged" | "resolved" | "dismissed", title: string) {
     void updateAlertStatus(id, status);
@@ -206,19 +208,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main className="page-content">{children}</main>
     </div>
 
-    {notificationsOpen && (
+    <PortalOverlay
+      isOpen={notificationsOpen}
+      onClose={() => setNotificationsOpen(false)}
+      backdropClassName="modal-backdrop alert-dialog-backdrop"
+      ariaLabel="Active Factory Exceptions"
+    >
       <div
-        className="modal-backdrop alert-dialog-backdrop"
-        onClick={() => setNotificationsOpen(false)}
-        role="presentation"
+        className="alert-center-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="alert-dialog-title"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div
-          className="alert-center-dialog"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="alert-dialog-title"
-          onClick={(e) => e.stopPropagation()}
-        >
           <div className="alert-dialog-header">
             <div>
               <h2 id="alert-dialog-title" className="typography-headline">Active Factory Exceptions</h2>
@@ -429,7 +431,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </button>
           </div>
         </div>
-      </div>
-    )}
+    </PortalOverlay>
   </div>;
 }

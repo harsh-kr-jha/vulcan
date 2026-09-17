@@ -30,3 +30,4 @@ deploy/gce-customer/.env
 .DS_Store
 .idea/
 .vscode/
+brag-output/

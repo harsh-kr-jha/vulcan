@@ -851,7 +851,7 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
         </div>
 
         {/* Mini Navigation Hint */}
-        <div className="hidden sm:block absolute bottom-4 left-4 pointer-events-none text-[11px] text-gray-500 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded border border-gray-200 shadow-xs select-none">
+        <div className="hidden sm:block absolute bottom-4 left-4 pointer-events-none text-xs text-gray-500 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded border border-gray-200 shadow-xs select-none">
           Click machine for details • Scroll to zoom • Drag to pan • Right-click drag to place
         </div>
       </div>

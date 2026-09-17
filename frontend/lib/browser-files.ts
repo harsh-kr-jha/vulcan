@@ -110,7 +110,7 @@ export function exportToExcelXml(filename: string, worksheets: ExcelWorksheet[])
   <Style ss:ID="Header">
    <Alignment ss:Vertical="Center" ss:Horizontal="Center"/>
    <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#416F57"/>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#00A06C"/>
    </Borders>
    <Font ss:FontName="Segoe UI" ss:Size="10" ss:Color="#FFFFFF" ss:Bold="1"/>
    <Interior ss:Color="#107C41" ss:Pattern="Solid"/>

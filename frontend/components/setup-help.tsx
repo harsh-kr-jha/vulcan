@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, BookOpen, ChevronDown, Database, FileQuestion, Search, Settings2, UploadCloud } from "lucide-react";
+import { ArrowRight, BookOpen, ChevronDown, Database, FileQuestion, Search, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
@@ -93,7 +93,7 @@ export function SetupHelp() {
   return (
     <>
       <header className="page-header help-page-header">
-        <div><p className="eyebrow">Support &amp; Setup Docs</p><h1 className="typography-display">Find the answer. <span>Keep growing.</span></h1><p className="page-subtitle typography-body">Practical guides for the complete mushroom-farm data workflow.</p></div>
+        <div><h1 className="typography-display">Find the answer. <span>Keep growing.</span></h1><p className="page-subtitle typography-body">Practical guides for the complete mushroom-farm data workflow.</p></div>
       </header>
       <label className="help-search panel"><Search size={18} /><span className="sr-only">Search help</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search mapping, stale data, suppliers, rules…" />{query && <button type="button" onClick={() => setQuery("")}>Clear</button>}</label>
       <section className="help-quick-grid">

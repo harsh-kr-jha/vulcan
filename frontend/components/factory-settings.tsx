@@ -875,11 +875,11 @@ function TwinAssetsSynchronizer() {
   const [selectedQrMachine, setSelectedQrMachine] = useState<TwinFeedMachine | null>(null);
 
   return (
-    <section className="panel" style={{ border: "1px solid var(--color-primary, #416f57)", background: "rgba(65, 111, 87, 0.03)", marginBottom: "20px", padding: "18px" }}>
+    <section className="panel" style={{ border: "1px solid var(--color-primary, #00A06C)", background: "rgba(0, 160, 108, 0.05)", marginBottom: "20px", padding: "18px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px", flexWrap: "wrap", gap: "12px" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "50%", background: "var(--color-primary, #416f57)", color: "#fff" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "50%", background: "var(--color-primary, #00A06C)", color: "#fff" }}>
               <Layers size={13} />
             </span>
             <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 700 }}>Mushroom Factory Twin (Live Source of Truth)</h2>
@@ -895,17 +895,17 @@ function TwinAssetsSynchronizer() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px", marginBottom: "14px" }}>
         <div style={{ padding: "10px 12px", background: "var(--color-card-bg, #fff)", borderRadius: "6px", border: "1px solid var(--color-border, #e2e8f0)" }}>
-          <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>Configured Assets</span>
-          <p style={{ fontSize: "18px", fontWeight: 700, margin: "2px 0 0 0" }}>{twinFeed.machines.length}</p>
+          <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>Configured Assets</span>
+          <p style={{ fontSize: "18px", fontWeight: 700, margin: "2px 0 0 0" }} className="tnum">{twinFeed.machines.length}</p>
         </div>
         <div style={{ padding: "10px 12px", background: "var(--color-card-bg, #fff)", borderRadius: "6px", border: "1px solid var(--color-border, #e2e8f0)" }}>
-          <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>Reporting Telemetry</span>
-          <p style={{ fontSize: "18px", fontWeight: 700, margin: "2px 0 0 0", color: "#2b6cb0" }}>
+          <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>Reporting Telemetry</span>
+          <p style={{ fontSize: "18px", fontWeight: 700, margin: "2px 0 0 0", color: "#2b6cb0" }} className="tnum">
             {twinFeed.machines.filter((m) => m.status === "reporting").length}
           </p>
         </div>
         <div style={{ padding: "10px 12px", background: "var(--color-card-bg, #fff)", borderRadius: "6px", border: "1px solid var(--color-border, #e2e8f0)" }}>
-          <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>Data Ingestion</span>
+          <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>Data Ingestion</span>
           <p style={{ fontSize: "12px", fontWeight: 600, margin: "5px 0 0 0", display: "flex", alignItems: "center", gap: "4px" }}>
             <QrCode size={13} /> Attached QR Codes
           </p>
@@ -929,14 +929,14 @@ function TwinAssetsSynchronizer() {
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                 <strong style={{ fontSize: "12px" }}>{machine.name}</strong>
-                <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>
+                <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }} className="tnum">
                   {machine.observation_count} scans · {machine.parameters.length} parameters
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span
                   style={{
-                    fontSize: "10px",
+                    fontSize: "12px",
                     fontWeight: 600,
                     textTransform: "uppercase",
                     padding: "2px 7px",
@@ -950,7 +950,7 @@ function TwinAssetsSynchronizer() {
                 <button
                   type="button"
                   className="button button-secondary"
-                  style={{ fontSize: "11px", padding: "3px 8px" }}
+                  style={{ fontSize: "12px", padding: "4px 8px" }}
                   onClick={() => setSelectedQrMachine(machine)}
                 >
                   <QrCode size={12} /> View QR
@@ -1019,11 +1019,11 @@ function TwinMaterialsSynchronizer() {
   const awaiting = twinFeed.dispatch?.awaiting ?? {};
 
   return (
-    <section className="panel" style={{ border: "1px solid var(--color-primary, #416f57)", background: "rgba(65, 111, 87, 0.03)", marginBottom: "20px", padding: "18px" }}>
+    <section className="panel" style={{ border: "1px solid var(--color-primary, #00A06C)", background: "rgba(0, 160, 108, 0.05)", marginBottom: "20px", padding: "18px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px", flexWrap: "wrap", gap: "12px" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "50%", background: "var(--color-primary, #416f57)", color: "#fff" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", borderRadius: "50%", background: "var(--color-primary, #00A06C)", color: "#fff" }}>
               <Boxes size={13} />
             </span>
             <h2 style={{ margin: 0, fontSize: "15px", fontWeight: 700 }}>Mushroom Factory Twin Materials &amp; Dispatch</h2>
@@ -1058,7 +1058,7 @@ function TwinMaterialsSynchronizer() {
                     <div>
                       <strong>{mat.name}</strong>
                     </div>
-                    <span>
+                    <span className="tnum">
                       <b>{currentStock.toLocaleString("en-IN")}</b> {mat.unit}
                     </span>
                   </div>
@@ -1066,7 +1066,7 @@ function TwinMaterialsSynchronizer() {
               })}
             </div>
           ) : (
-            <p style={{ fontSize: "11px", color: "var(--color-text-muted)", margin: 0 }}>
+            <p style={{ fontSize: "12px", color: "var(--color-text-muted)", margin: 0 }}>
               No inventory configured on the twin layout yet.
             </p>
           )}
@@ -1087,7 +1087,7 @@ function TwinMaterialsSynchronizer() {
                     <div>
                       <strong>{prod.name}</strong>
                     </div>
-                    <span>
+                    <span className="tnum">
                       <b>{awaitingQty.toLocaleString("en-IN")}</b> {prod.unit} awaiting
                     </span>
                   </div>
@@ -1095,7 +1095,7 @@ function TwinMaterialsSynchronizer() {
               })}
             </div>
           ) : (
-            <p style={{ fontSize: "11px", color: "var(--color-text-muted)", margin: 0 }}>
+            <p style={{ fontSize: "12px", color: "var(--color-text-muted)", margin: 0 }}>
               No dispatch products configured on the twin layout yet.
             </p>
           )}
@@ -1138,7 +1138,6 @@ export function FactorySettings() {
     };
   }, [state]);
   const activeFactory = state.factories.find((factory) => factory.id === state.activeFactoryId);
-  const activeMachines = activeFactoryItems(state.masters.machines, state.activeFactoryId);
   const setupChecks = [
     Boolean(activeFactory?.name && activeFactory.code && activeFactory.location),
     Boolean(activeFactory?.details?.factoryType && activeFactory.details.productionUnit),
@@ -1155,7 +1154,6 @@ export function FactorySettings() {
     <>
       <header className="page-header">
         <div>
-          <p className="eyebrow">Facility Architecture</p>
           <h1 className="typography-display">Define <span>how the crop flows.</span></h1>
           <p className="page-subtitle typography-body">Farm context, cultivation stages, rooms, assets and harvest units—synchronized with Mushroom Factory Twin.</p>
         </div>

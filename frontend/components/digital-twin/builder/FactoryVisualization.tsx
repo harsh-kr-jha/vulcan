@@ -779,7 +779,7 @@ export function FactoryVisualization({
       </div>
 
       {/* Mini Navigation Hint */}
-      <div className="hidden sm:block absolute bottom-4 left-4 pointer-events-none text-[11px] text-gray-400 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded border border-gray-100 shadow-xs select-none">
+      <div className="hidden sm:block absolute bottom-4 left-4 pointer-events-none text-xs text-gray-500 bg-white/80 backdrop-blur-sm px-2.5 py-1 rounded border border-gray-100 shadow-xs select-none">
         Scroll to zoom • Drag to pan
       </div>
     </div>

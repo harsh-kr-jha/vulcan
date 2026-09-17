@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Chart } from "@/components/charts/chart";
 import { CommandFilters } from "@/components/command-filters";
+import { PortalOverlay } from "@/components/ui/portal-overlay";
 import { downloadBlob } from "@/lib/browser-files";
 import { formatDuration } from "@/lib/formatters";
 import { useFactory } from "@/lib/factory-context";
@@ -15,23 +16,23 @@ const tabs = ["Cultivation", "Harvest", "Room downtime", "Crop quality", "Invent
 type Tab = (typeof tabs)[number];
 
 const colors = {
-  green: "#416f57",
-  blue: "#577fbc",
-  amber: "#e2a040",
-  red: "#db6653",
-  line: "#e6e9e5",
-  text: "#68736d",
+  green: "#00a06c",
+  blue: "#8dccad",
+  amber: "#8a6514",
+  red: "#ba1a1a",
+  line: "#d8d2c8",
+  text: "#3d4a42",
 };
 const axis = {
   axisLine: { lineStyle: { color: colors.line } },
   axisTick: { show: false },
-  axisLabel: { color: colors.text, fontSize: 11 },
+  axisLabel: { color: colors.text, fontSize: 12 },
 };
 const tooltip = {
   trigger: "axis" as const,
-  backgroundColor: "#17211d",
+  backgroundColor: "#121a14",
   borderWidth: 0,
-  textStyle: { color: "#fff", fontSize: 11 },
+  textStyle: { color: "#fff", fontSize: 12 },
 };
 
 type MetricInfo = {
@@ -232,7 +233,7 @@ function MetricInfoModal({ metric, onClose }: { metric: ActiveMetricModal; onClo
   }, [onClose]);
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="metric-dialog-title">
+    <PortalOverlay isOpen onClose={onClose} ariaLabel={info.name}>
       <div className="upload-modal metric-info-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
@@ -249,7 +250,7 @@ function MetricInfoModal({ metric, onClose }: { metric: ActiveMetricModal; onClo
           <div className="metric-info-value-box">
             <div className="metric-info-val-left">
               <span>Current Value</span>
-              <strong>{metric.value}</strong>
+              <strong className="tnum">{metric.value}</strong>
             </div>
             {metric.detail && (
               <div className="metric-info-val-right">
@@ -260,7 +261,7 @@ function MetricInfoModal({ metric, onClose }: { metric: ActiveMetricModal; onClo
 
           <div className="metric-info-block">
             <span className="metric-info-block-label">
-              <Sigma size={13} style={{ color: "var(--green)" }} />
+              <Sigma size={13} style={{ color: "var(--color-primary, #00a06c)" }} />
               Formula
             </span>
             <div className="metric-info-formula-code">{info.formula}</div>
@@ -283,7 +284,7 @@ function MetricInfoModal({ metric, onClose }: { metric: ActiveMetricModal; onClo
           {info.benchmark && (
             <div className="metric-info-block">
               <span className="metric-info-block-label">Benchmark / Target</span>
-              <p className="metric-info-desc-text" style={{ color: "var(--green)", fontWeight: 600 }}>{info.benchmark}</p>
+              <p className="metric-info-desc-text" style={{ color: "var(--color-positive-text, #006a46)", fontWeight: 600 }}>{info.benchmark}</p>
             </div>
           )}
         </div>
@@ -297,7 +298,7 @@ function MetricInfoModal({ metric, onClose }: { metric: ActiveMetricModal; onClo
           </button>
         </div>
       </div>
-    </div>
+    </PortalOverlay>
   );
 }
 
@@ -395,7 +396,6 @@ function CultivationView({ onInfoClick }: { onInfoClick: (label: string, value: 
             <button
               type="button"
               className="metric-info-btn"
-              style={{ color: "rgba(255, 255, 255, 0.75)" }}
               aria-label="Methodology and formula for Biological efficiency"
               title="View Biological efficiency methodology"
               onClick={() => onInfoClick("Biological efficiency", `${(mushroom?.biologicalEfficiency ?? 0).toFixed(1)}%`, `${(mushroom?.totalHarvestKg ?? 0).toLocaleString("en-IN")} kg ÷ ${(mushroom?.drySubstrateKg ?? 0).toLocaleString("en-IN")} kg dry substrate`)}
@@ -403,8 +403,9 @@ function CultivationView({ onInfoClick }: { onInfoClick: (label: string, value: 
               <Info size={14} />
             </button>
           </div>
-          <p>{(mushroom?.totalHarvestKg ?? 0).toLocaleString("en-IN")} kg ÷ {(mushroom?.drySubstrateKg ?? 0).toLocaleString("en-IN")} kg dry substrate</p>
           <strong>{(mushroom?.biologicalEfficiency ?? 0).toFixed(1)}%</strong>
+          <p>{(mushroom?.totalHarvestKg ?? 0).toLocaleString("en-IN")} kg ÷ {(mushroom?.drySubstrateKg ?? 0).toLocaleString("en-IN")} kg dry substrate</p>
+          <i><b style={{ width: `${Math.min(mushroom?.biologicalEfficiency ?? 0, 100)}%`, background: colors.green }} /></i>
         </div>
       </section>
       <PerformancePanel title="Harvest trend" subtitle="Planned, harvested and saleable mushroom kg by day" option={option} />
@@ -621,10 +622,10 @@ export function PerformanceExplorer() {
     return (
       <>
         <header className="page-header">
-          <div><p className="eyebrow">Yield &amp; Performance</p><h1 className="typography-display">Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
+          <div><h1 className="typography-display">Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
         </header>
         <div className="performance-loading">
-          <Loader2 size={24} className="spin" style={{ color: "var(--accent, #416f57)" }} />
+          <Loader2 size={24} className="spin" style={{ color: "var(--color-primary, #00a06c)" }} />
           <p>Checking Digital Twin and telemetry stream...</p>
         </div>
       </>
@@ -635,10 +636,10 @@ export function PerformanceExplorer() {
     return (
       <>
         <header className="page-header">
-          <div><p className="eyebrow">Yield &amp; Performance</p><h1 className="typography-display">Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
+          <div><h1 className="typography-display">Understand every crop. <span>Improve every flush.</span></h1><p className="page-subtitle typography-body">Harvest, climate, crop quality, rooms and supply intelligence from approved farm records.</p></div>
         </header>
         <section className="panel performance-no-twin">
-          <Cpu size={32} style={{ color: "var(--accent, #416f57)", marginBottom: 6 }} />
+          <Cpu size={32} style={{ color: "var(--color-primary, #00a06c)", marginBottom: 6 }} />
           <h2>Mushroom factory twin required</h2>
           <p>The Digital Twin is the single canonical source of truth for your facility. Configure your factory digital twin and room assets to unlock cultivation performance, yields, and climate analytics.</p>
           <Link href="/digital-twin" className="button button-accent" style={{ marginTop: 8 }}>
@@ -653,11 +654,10 @@ export function PerformanceExplorer() {
     <>
       <header className="page-header">
         <div>
-          <p className="eyebrow">Yield &amp; Performance</p>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 4 }}>
             <h1 className="typography-display" style={{ margin: 0 }}>Understand every crop. <span>Improve every flush.</span></h1>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, padding: "2px 8px", borderRadius: 12, background: "rgba(65, 111, 87, 0.12)", color: "var(--accent, #416f57)", fontWeight: 600, border: "1px solid rgba(65, 111, 87, 0.25)" }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent, #416f57)" }} />
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, padding: "3px 10px", borderRadius: "var(--radius-badge, 8px)", background: "rgba(0, 160, 108, 0.12)", color: "var(--color-primary-dark, #006a46)", fontWeight: 600, border: "1px solid rgba(0, 160, 108, 0.25)" }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--color-primary, #00a06c)" }} />
               Live Digital Twin Telemetry
             </span>
           </div>

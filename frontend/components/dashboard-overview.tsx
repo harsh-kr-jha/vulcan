@@ -92,7 +92,7 @@ function TwinFreshnessDashboard({ number }: { number?: number }) {
         <div className="freshness-subcard">
           <div className="freshness-subcard-header">
             <span className="freshness-subcard-title">
-              <Wrench size={15} style={{ color: "var(--green, #416f57)" }} />
+              <Wrench size={15} style={{ color: "var(--color-primary, #00A06C)" }} />
               1. Machines &amp; Rooms
             </span>
             {getStatusBadge(twinFeed.freshness.machines.status)}
@@ -116,12 +116,12 @@ function TwinFreshnessDashboard({ number }: { number?: number }) {
         <div className="freshness-subcard">
           <div className="freshness-subcard-header">
             <span className="freshness-subcard-title">
-              <Boxes size={15} style={{ color: "#c05621" }} />
+              <Boxes size={15} style={{ color: "var(--color-warning-graphic, #8a6514)" }} />
               2. Materials Inventory
             </span>
             {getStatusBadge(twinFeed.freshness.inventory.status)}
           </div>
-          <p className="freshness-subcard-value">
+          <p className="freshness-subcard-value tnum">
             {invMaterialsCount}{" "}
             <small>materials tracked</small>
           </p>
@@ -140,12 +140,12 @@ function TwinFreshnessDashboard({ number }: { number?: number }) {
         <div className="freshness-subcard">
           <div className="freshness-subcard-header">
             <span className="freshness-subcard-title">
-              <Truck size={15} style={{ color: "#2b6cb0" }} />
+              <Truck size={15} style={{ color: "var(--color-primary, #00a06c)" }} />
               3. Dispatch &amp; Harvest
             </span>
             {getStatusBadge(twinFeed.freshness.dispatch.status)}
           </div>
-          <p className="freshness-subcard-value">
+          <p className="freshness-subcard-value tnum">
             {dispatchAwaitingKg.toLocaleString("en-IN")}{" "}
             <small>kg awaiting dispatch</small>
           </p>
@@ -351,7 +351,6 @@ export function DashboardOverview() {
     <>
       <header className="page-header command-centre-header">
         <div>
-          <p className="eyebrow">Cultivation Command Centre</p>
           <h1 className="typography-display">
             See every crop. <span>Improve every flush.</span>
           </h1>

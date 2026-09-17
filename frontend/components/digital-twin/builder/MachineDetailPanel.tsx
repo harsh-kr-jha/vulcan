@@ -210,7 +210,7 @@ export function MachineDetailPanel({
             <p className="text-xs font-medium text-gray-500">
               No telemetry received yet
             </p>
-            <p className="text-[11px] text-gray-400 mt-0.5">
+            <p className="text-xs text-gray-400 mt-0.5">
               Showing configured specifications. Scan QR to submit.
             </p>
           </div>
@@ -241,9 +241,9 @@ export function MachineDetailPanel({
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
                           <span className="font-medium text-gray-700 truncate">{io.label}</span>
-                          <span className="text-[10px] text-gray-400 font-mono">({io.unitType || "units"})</span>
+                          <span className="text-xs text-gray-500 font-mono">({io.unitType || "units"})</span>
                         </div>
-                        <span className="font-mono text-gray-900 font-medium ml-2 shrink-0">
+                        <span className="font-mono text-gray-900 font-medium ml-2 shrink-0 tnum">
                           {val !== undefined && val !== null ? `${val} ${io.unitType}` : "—"}
                         </span>
                       </div>
@@ -272,9 +272,9 @@ export function MachineDetailPanel({
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shrink-0" />
                           <span className="font-medium text-gray-700 truncate">{io.label}</span>
-                          <span className="text-[10px] text-gray-400 font-mono">({io.unitType || "units"})</span>
+                          <span className="text-xs text-gray-500 font-mono">({io.unitType || "units"})</span>
                         </div>
-                        <span className="font-mono text-gray-900 font-medium ml-2 shrink-0">
+                        <span className="font-mono text-gray-900 font-medium ml-2 shrink-0 tnum">
                           {val !== undefined && val !== null ? `${val} ${io.unitType}` : "—"}
                         </span>
                       </div>
@@ -306,14 +306,14 @@ export function MachineDetailPanel({
                       <span className="font-medium text-gray-700 truncate max-w-[120px]" title={param.key}>
                         {param.key}
                       </span>
-                      <span className="text-[9px] px-1 py-0.2 rounded bg-gray-200 text-gray-600 uppercase font-mono">
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-gray-200 text-gray-700 uppercase font-mono">
                         {param.dataType}
                       </span>
                       {param.required && (
-                        <span className="text-[9px] text-amber-600 font-medium" title="Required">*</span>
+                        <span className="text-xs text-amber-600 font-medium" title="Required">*</span>
                       )}
                     </div>
-                    <span className="font-mono text-gray-900 font-semibold">
+                    <span className="font-mono text-gray-900 font-semibold tnum">
                       {val !== undefined && val !== null ? String(val) : "—"}
                     </span>
                   </div>

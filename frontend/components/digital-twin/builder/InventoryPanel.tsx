@@ -447,7 +447,7 @@ function MaterialRow({
             className="w-full rounded border border-gray-300 px-2 py-1 text-xs focus:border-[var(--green)] focus:outline-none focus:ring-1 focus:ring-[var(--green)]"
           />
           {error && (
-            <p className="text-[10px] text-red-600" role="alert">
+            <p className="text-xs text-red-600" role="alert">
               {error}
             </p>
           )}

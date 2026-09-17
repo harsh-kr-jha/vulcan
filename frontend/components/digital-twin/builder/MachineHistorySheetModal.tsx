@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Copy, Download, FileSpreadsheet, Loader2, Search, X } from "lucide-react";
 import type { MachineParameter } from "@/lib/spatial-types";
 import { exportToCsv } from "@/lib/browser-files";
+import { PortalOverlay } from "@/components/ui/portal-overlay";
 
 export interface MachineHistorySheetModalProps {
   machineId: string;
@@ -35,15 +36,6 @@ export function MachineHistorySheetModal({
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [copied, setCopied] = useState(false);
-
-  // Close on Escape
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
 
   // Fetch full observation history
   useEffect(() => {
@@ -198,16 +190,17 @@ type SheetCellValue = string | number | boolean | null | undefined;
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Full history for ${machineName}`}
+    <PortalOverlay
+      isOpen={true}
+      onClose={onClose}
+      ariaLabel={`Full history for ${machineName}`}
+      backdropClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-150"
     >
       <div
         className="relative w-full max-w-6xl h-[88vh] bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden border border-gray-200"
-        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Full history for ${machineName}`}
       >
         {/* Modal Top Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3.5 border-b border-gray-200 bg-gray-50 shrink-0">
@@ -220,11 +213,11 @@ type SheetCellValue = string | number | boolean | null | undefined;
                 <h2 className="text-sm font-bold text-gray-900 truncate">
                   {machineName} · Historical Data Preview Sheet
                 </h2>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800">
+                <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800 tnum">
                   {observations.length} Records
                 </span>
               </div>
-              <p className="text-[11px] text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 mt-0.5">
                 Full telemetry timeline · {columns.length} columns · Single Source of Truth
               </p>
             </div>
@@ -240,7 +233,7 @@ type SheetCellValue = string | number | boolean | null | undefined;
                 placeholder="Search history..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-xs bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 w-48 text-gray-800 placeholder-gray-400"
+                className="pl-8 pr-3 py-1.5 text-xs bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 w-48 text-gray-800 placeholder-gray-400 min-h-[36px]"
               />
             </div>
 
@@ -249,10 +242,10 @@ type SheetCellValue = string | number | boolean | null | undefined;
               type="button"
               onClick={handleCopyTsv}
               disabled={filteredRows.length === 0}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-md transition-colors shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-md transition-colors shadow-xs min-h-[36px]"
               title="Copy rows as TSV for direct paste into Excel (Ctrl+V)"
             >
-              {copied ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+              {copied ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
               {copied ? "Copied to Clipboard!" : "Copy Table (TSV)"}
             </button>
 
@@ -261,9 +254,9 @@ type SheetCellValue = string | number | boolean | null | undefined;
               type="button"
               onClick={handleExportCsv}
               disabled={filteredRows.length === 0}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-700 hover:bg-emerald-800 text-white rounded-md transition-colors shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-emerald-700 hover:bg-emerald-800 text-white rounded-md transition-colors shadow-xs min-h-[36px]"
             >
-              <Download size={13} />
+              <Download size={14} />
               Export CSV
             </button>
 
@@ -271,10 +264,10 @@ type SheetCellValue = string | number | boolean | null | undefined;
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-md hover:bg-gray-200 text-gray-400 hover:text-gray-700 transition-colors ml-1"
+              className="min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-md hover:bg-gray-200 text-gray-400 hover:text-gray-700 transition-colors ml-1"
               aria-label="Close modal"
             >
-              <X size={18} />
+              <X size={20} />
             </button>
           </div>
         </div>
@@ -291,7 +284,7 @@ type SheetCellValue = string | number | boolean | null | undefined;
               <FileSpreadsheet size={32} className="text-gray-300" />
               <p className="text-sm font-medium text-gray-600">No observations logged yet</p>
               <p className="text-xs text-gray-400">
-                Scan this room's QR sticker or enter telemetry via the mobile entry portal to record data.
+                Scan this room&apos;s QR sticker or enter telemetry via the mobile entry portal to record data.
               </p>
             </div>
           ) : (
@@ -320,7 +313,7 @@ type SheetCellValue = string | number | boolean | null | undefined;
                         borderBottom: "1px solid #d4d4d4",
                         textAlign: "center",
                         color: "#666",
-                        fontSize: "11px",
+                        fontSize: "12px",
                       }}
                     >
                       <th
@@ -400,9 +393,10 @@ type SheetCellValue = string | number | boolean | null | undefined;
                             background: "#f8f9fa",
                             textAlign: "center",
                             color: "#718096",
-                            fontSize: "11px",
+                            fontSize: "12px",
                             fontWeight: 500,
                           }}
+                          className="tnum"
                         >
                           {rIdx + 1}
                         </td>
@@ -416,6 +410,7 @@ type SheetCellValue = string | number | boolean | null | undefined;
                               whiteSpace: "nowrap",
                               color: cell === "—" || cell === null ? "#a0aec0" : "#2d3748",
                             }}
+                            className={typeof cell === "number" ? "tnum" : undefined}
                           >
                             {typeof cell === "number" ? cell.toLocaleString("en-IN") : String(cell ?? "—")}
                           </td>
@@ -428,7 +423,7 @@ type SheetCellValue = string | number | boolean | null | undefined;
                           colSpan={columns.length + 1}
                           style={{ textAlign: "center", padding: "32px", color: "#a0aec0" }}
                         >
-                          No matching records found for "{searchQuery}".
+                          No matching records found for &quot;{searchQuery}&quot;.
                         </td>
                       </tr>
                     )}
@@ -440,19 +435,19 @@ type SheetCellValue = string | number | boolean | null | undefined;
         </div>
 
         {/* Modal Bottom Bar */}
-        <div className="flex items-center justify-between px-6 py-2.5 border-t border-gray-200 bg-gray-50 text-[11px] text-gray-500 shrink-0">
+        <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 shrink-0">
           <span>
             Showing {filteredRows.length} of {observations.length} records · Microsoft Excel Compatible
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium transition-colors"
+            className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium transition-colors min-h-[36px]"
           >
             Close
           </button>
         </div>
       </div>
-    </div>
+    </PortalOverlay>
   );
 }

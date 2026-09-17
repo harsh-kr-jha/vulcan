@@ -3,7 +3,6 @@
 import {
   Boxes,
   Check,
-  CheckCircle2,
   Clock,
   Copy,
   Database,
@@ -21,7 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { downloadBlob, exportToCsv, exportToExcelXml, type ExcelWorksheet } from "@/lib/browser-files";
+import { exportToCsv, exportToExcelXml, type ExcelWorksheet } from "@/lib/browser-files";
 import { useFactory } from "@/lib/factory-context";
 import type { TwinFeedMachine } from "@/lib/factory-domain";
 import { QrCodePreview } from "@/components/digital-twin/builder/QrCodePreview";
@@ -61,13 +60,13 @@ function SpreadsheetTable({
     <div style={{ border: "1px solid #d4d4d4", borderRadius: "6px", overflow: "hidden", background: "#ffffff", marginTop: "12px" }}>
       {onCopy && (
         <div style={{ padding: "8px 12px", background: "#f8faf9", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>
+          <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
             Spreadsheet view · {filteredRows.length} rows · {headers.length} columns
           </span>
           <button
             className="button button-secondary"
             onClick={onCopy}
-            style={{ fontSize: "11px", padding: "3px 8px", display: "flex", alignItems: "center", gap: "4px" }}
+            style={{ fontSize: "12px", padding: "4px 8px", display: "flex", alignItems: "center", gap: "4px" }}
             title="Copy rows and columns as TSV for direct paste into Excel (Ctrl+V)"
           >
             {copied ? <Check size={12} style={{ color: "#276749" }} /> : <Copy size={12} />}
@@ -79,7 +78,7 @@ function SpreadsheetTable({
         <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "12px", fontFamily: "Segoe UI, -apple-system, BlinkMacSystemFont, sans-serif" }}>
           <thead>
             {/* Excel Column Letters Row */}
-            <tr style={{ background: "#f3f3f3", borderBottom: "1px solid #d4d4d4", textAlign: "center", color: "#666", fontSize: "11px" }}>
+            <tr style={{ background: "#f3f3f3", borderBottom: "1px solid #d4d4d4", textAlign: "center", color: "#666", fontSize: "12px" }}>
               <th style={{ width: "45px", padding: "4px 8px", borderRight: "1px solid #d4d4d4", fontWeight: 600 }}>#</th>
               {headers.map((_, i) => (
                 <th key={i} style={{ padding: "4px 10px", borderRight: "1px solid #d4d4d4", fontWeight: 600, minWidth: "90px" }}>
@@ -103,12 +102,12 @@ function SpreadsheetTable({
             {filteredRows.map((row, rIdx) => (
               <tr key={rIdx} style={{ background: rIdx % 2 === 0 ? "#ffffff" : "#fbfcfe", borderBottom: "1px solid #e9ecef" }}>
                 {/* Row Index */}
-                <td style={{ padding: "6px 8px", borderRight: "1px solid #e2e8f0", background: "#f8f9fa", textAlign: "center", color: "#718096", fontSize: "11px", fontWeight: 500 }}>
+                <td style={{ padding: "6px 8px", borderRight: "1px solid #e2e8f0", background: "#f8f9fa", textAlign: "center", color: "#718096", fontSize: "12px", fontWeight: 500 }} className="tnum">
                   {rIdx + 1}
                 </td>
                 {/* Cells */}
                 {row.map((cell, cIdx) => (
-                  <td key={cIdx} style={{ padding: "6px 12px", borderRight: "1px solid #edf2f7", whiteSpace: "nowrap", color: cell === "—" || cell === null ? "#a0aec0" : "#2d3748" }}>
+                  <td key={cIdx} className={typeof cell === "number" ? "tnum" : undefined} style={{ padding: "6px 12px", borderRight: "1px solid #edf2f7", whiteSpace: "nowrap", color: cell === "—" || cell === null ? "#a0aec0" : "#2d3748" }}>
                     {typeof cell === "number" ? cell.toLocaleString("en-IN") : String(cell ?? "—")}
                   </td>
                 ))}
@@ -124,7 +123,7 @@ function SpreadsheetTable({
           </tbody>
         </table>
       </div>
-      <div style={{ padding: "8px 14px", background: "#f8faf9", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", fontSize: "11px", color: "#718096" }}>
+      <div style={{ padding: "8px 14px", background: "#f8faf9", borderTop: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", fontSize: "12px", color: "#718096" }}>
         <span>Showing {filteredRows.length} of {rows.length} rows</span>
         <span>Microsoft Excel Compatible · Single Source of Truth</span>
       </div>
@@ -372,17 +371,16 @@ export function FactoryDataView() {
   };
 
   const getFreshnessBadge = (status: "fresh" | "moderate" | "stale" | "no_data") => {
-    if (status === "fresh") return <span style={{ padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: 600, background: "rgba(65,111,87,0.15)", color: "#276749" }}>Live · Fresh</span>;
-    if (status === "moderate") return <span style={{ padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: 600, background: "rgba(221,107,32,0.15)", color: "#c05621" }}>Moderate (&lt;24h)</span>;
-    if (status === "stale") return <span style={{ padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: 600, background: "rgba(229,62,62,0.15)", color: "#c53030" }}>Needs update</span>;
-    return <span style={{ padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: 600, background: "rgba(113,128,150,0.15)", color: "#4a5568" }}>No data</span>;
+    if (status === "fresh") return <span style={{ padding: "2px 8px", borderRadius: "8px", fontSize: "12px", fontWeight: 600, background: "var(--color-positive-subtle, rgba(0, 160, 108, 0.12))", color: "var(--color-positive-text, #006A46)" }}>Live · Fresh</span>;
+    if (status === "moderate") return <span style={{ padding: "2px 8px", borderRadius: "8px", fontSize: "12px", fontWeight: 600, background: "var(--color-warning-subtle, rgba(244, 235, 195, 0.5))", color: "var(--color-warning-text, #645F40)" }}>Moderate (&lt;24h)</span>;
+    if (status === "stale") return <span style={{ padding: "2px 8px", borderRadius: "8px", fontSize: "12px", fontWeight: 600, background: "var(--color-negative-subtle, rgba(220, 38, 38, 0.1))", color: "var(--color-negative-text, #93000A)" }}>Needs update</span>;
+    return <span style={{ padding: "2px 8px", borderRadius: "8px", fontSize: "12px", fontWeight: 600, background: "rgba(113,128,150,0.15)", color: "var(--color-text-muted)" }}>No data</span>;
   };
 
   return (
     <>
       <header className="page-header command-centre-header">
         <div>
-          <p className="eyebrow">Twin Telemetry Stream</p>
           <h1 className="typography-display">Twin Data <span>&amp; Telemetry</span></h1>
           <p className="page-subtitle typography-body">
             {activeFactory?.name ?? "Mushroom Factory"} · Live data streams submitted via machine, inventory, and dispatch QR codes.
@@ -405,22 +403,22 @@ export function FactoryDataView() {
       <div className="answer-summary-strip home-summary-strip" style={{ gridTemplateColumns: "repeat(4, 1fr)", marginBottom: "20px" }}>
         <div>
           <span>Machines &amp; Rooms</span>
-          <strong>{twinFeed.freshness.machines.reporting_count} / {twinFeed.machines.length || "0"} reporting</strong>
+          <strong className="tnum">{twinFeed.freshness.machines.reporting_count} / {twinFeed.machines.length || "0"} reporting</strong>
           <small>{getFreshnessBadge(twinFeed.freshness.machines.status)} · {twinFeed.freshness.machines.last_updated ? new Date(twinFeed.freshness.machines.last_updated).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "none"}</small>
         </div>
         <div>
           <span>Materials Inventory</span>
-          <strong>{twinFeed.inventory ? Object.keys(twinFeed.inventory.stock).length : 0} items in stock</strong>
+          <strong className="tnum">{twinFeed.inventory ? Object.keys(twinFeed.inventory.stock).length : 0} items in stock</strong>
           <small>{getFreshnessBadge(twinFeed.freshness.inventory.status)} · {twinFeed.freshness.inventory.last_updated ? new Date(twinFeed.freshness.inventory.last_updated).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "no records"}</small>
         </div>
         <div>
           <span>Dispatch &amp; Harvest</span>
-          <strong>{twinFeed.dispatch ? Object.values(twinFeed.dispatch.awaiting).reduce((a, b) => a + b, 0).toLocaleString("en-IN") : 0} kg awaiting</strong>
+          <strong className="tnum">{twinFeed.dispatch ? Object.values(twinFeed.dispatch.awaiting).reduce((a, b) => a + b, 0).toLocaleString("en-IN") : 0} kg awaiting</strong>
           <small>{getFreshnessBadge(twinFeed.freshness.dispatch.status)} · {twinFeed.freshness.dispatch.last_updated ? new Date(twinFeed.freshness.dispatch.last_updated).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "no records"}</small>
         </div>
         <div>
           <span>QR Event Stream</span>
-          <strong>{twinFeed.recent_events.length} captured</strong>
+          <strong className="tnum">{twinFeed.recent_events.length} captured</strong>
           <small>Single source of truth via twin scans</small>
         </div>
       </div>
@@ -432,7 +430,7 @@ export function FactoryDataView() {
             className="button"
             onClick={() => setActiveTab("stream")}
             style={{
-              background: activeTab === "stream" ? "var(--color-primary, #416f57)" : "transparent",
+              background: activeTab === "stream" ? "var(--color-primary, #00A06C)" : "transparent",
               color: activeTab === "stream" ? "#fff" : "inherit",
               border: "none",
               borderRadius: "6px",
@@ -447,7 +445,7 @@ export function FactoryDataView() {
             className="button"
             onClick={() => setActiveTab("machines")}
             style={{
-              background: activeTab === "machines" ? "var(--color-primary, #416f57)" : "transparent",
+              background: activeTab === "machines" ? "var(--color-primary, #00A06C)" : "transparent",
               color: activeTab === "machines" ? "#fff" : "inherit",
               border: "none",
               borderRadius: "6px",
@@ -462,7 +460,7 @@ export function FactoryDataView() {
             className="button"
             onClick={() => setActiveTab("inventory")}
             style={{
-              background: activeTab === "inventory" ? "var(--color-primary, #416f57)" : "transparent",
+              background: activeTab === "inventory" ? "var(--color-primary, #00A06C)" : "transparent",
               color: activeTab === "inventory" ? "#fff" : "inherit",
               border: "none",
               borderRadius: "6px",
@@ -477,7 +475,7 @@ export function FactoryDataView() {
             className="button"
             onClick={() => setActiveTab("dispatch")}
             style={{
-              background: activeTab === "dispatch" ? "var(--color-primary, #416f57)" : "transparent",
+              background: activeTab === "dispatch" ? "var(--color-primary, #00A06C)" : "transparent",
               color: activeTab === "dispatch" ? "#fff" : "inherit",
               border: "none",
               borderRadius: "6px",
@@ -532,9 +530,9 @@ export function FactoryDataView() {
                       fontSize: "12px",
                       borderRadius: "14px",
                       border: "1px solid",
-                      borderColor: sourceFilter === source ? "var(--color-primary, #416f57)" : "var(--color-border, #e2e8f0)",
-                      background: sourceFilter === source ? "rgba(65,111,87,0.12)" : "transparent",
-                      color: sourceFilter === source ? "var(--color-primary, #416f57)" : "var(--color-text-muted)",
+                      borderColor: sourceFilter === source ? "var(--color-primary, #00A06C)" : "var(--color-border, #e2e8f0)",
+                      background: sourceFilter === source ? "var(--color-positive-subtle, rgba(0, 160, 108, 0.12))" : "transparent",
+                      color: sourceFilter === source ? "var(--color-primary, #00A06C)" : "var(--color-text-muted)",
                       cursor: "pointer",
                       textTransform: "capitalize",
                       fontWeight: sourceFilter === source ? 600 : 400,
@@ -593,13 +591,13 @@ export function FactoryDataView() {
                         justifyContent: "center",
                         background:
                           evt.source === "machine"
-                            ? "rgba(65,111,87,0.12)"
+                            ? "var(--color-positive-subtle, rgba(0, 160, 108, 0.12))"
                             : evt.source === "inventory"
                             ? "rgba(221,107,32,0.12)"
                             : "rgba(49,130,206,0.12)",
                         color:
                           evt.source === "machine"
-                            ? "#276749"
+                            ? "#006A46"
                             : evt.source === "inventory"
                             ? "#c05621"
                             : "#2b6cb0",
@@ -611,15 +609,15 @@ export function FactoryDataView() {
                       <strong style={{ fontSize: "13px", display: "block" }}>{evt.title}</strong>
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
                         {Object.entries(evt.details).slice(0, 5).map(([k, v]) => (
-                          <span key={k} style={{ fontSize: "11px", background: "rgba(0,0,0,0.04)", padding: "1px 6px", borderRadius: "3px" }}>
-                            <span style={{ color: "var(--color-text-muted)" }}>{k}:</span> <b>{String(v)}</b>
+                          <span key={k} style={{ fontSize: "12px", background: "rgba(0,0,0,0.04)", padding: "2px 8px", borderRadius: "4px" }}>
+                            <span style={{ color: "var(--color-text-muted)" }}>{k}:</span> <b className="tnum">{String(v)}</b>
                           </span>
                         ))}
                       </div>
                     </div>
                   </div>
                   <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                    <time style={{ fontSize: "11px", color: "var(--color-text-muted)", display: "block" }}>
+                    <time style={{ fontSize: "12px", color: "var(--color-text-muted)", display: "block" }} className="tnum">
                       {new Date(evt.submitted_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                     </time>
                     {evt.machine_id && (
@@ -629,19 +627,18 @@ export function FactoryDataView() {
                         style={{
                           fontSize: "12px",
                           fontWeight: 500,
-                          color: "var(--color-primary, #416f57)",
+                          color: "var(--color-primary, #00A06C)",
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "4px",
                           marginTop: "6px",
                           padding: "6px 10px",
                           borderRadius: "6px",
-                          border: "1px solid rgba(65, 111, 87, 0.2)",
-                          background: "rgba(65, 111, 87, 0.05)",
-                          minHeight: "36px",
+                          border: "1px solid rgba(0, 160, 108, 0.2)",
+                          background: "rgba(0, 160, 108, 0.05)",
                         }}
                       >
-                        Open form <ExternalLink size={12} />
+                        Enter Data <ExternalLink size={12} />
                       </Link>
                     )}
                   </div>
@@ -715,28 +712,28 @@ export function FactoryDataView() {
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                         <div>
                           <strong style={{ fontSize: "14px" }}>{machine.name}</strong>
-                          <small style={{ display: "block", color: "var(--color-text-muted)", fontSize: "11px" }}>
+                          <small style={{ display: "block", color: "var(--color-text-muted)", fontSize: "12px" }}>
                             Grid: ({machine.position.x}, {machine.position.y}) · {machine.parameters.length} params
                           </small>
                         </div>
                         <span
                           style={{
-                            fontSize: "10px",
-                            padding: "2px 6px",
-                            borderRadius: "4px",
+                            fontSize: "12px",
+                            padding: "2px 8px",
+                            borderRadius: "8px",
                             textTransform: "uppercase",
                             fontWeight: 600,
                             background:
                               machine.status === "reporting"
-                                ? "rgba(65,111,87,0.12)"
+                                ? "var(--color-positive-subtle, rgba(0, 160, 108, 0.12))"
                                 : machine.status === "warning"
-                                ? "rgba(221,107,32,0.12)"
+                                ? "var(--color-warning-subtle, rgba(244, 235, 195, 0.5))"
                                 : "rgba(113,128,150,0.12)",
                             color:
                               machine.status === "reporting"
-                                ? "#276749"
+                                ? "#006A46"
                                 : machine.status === "warning"
-                                ? "#c05621"
+                                ? "#645F40"
                                 : "#4a5568",
                           }}
                         >
@@ -745,22 +742,22 @@ export function FactoryDataView() {
                       </div>
 
                       <div style={{ margin: "12px 0", padding: "10px", background: "rgba(0,0,0,0.02)", borderRadius: "6px" }}>
-                        <span style={{ fontSize: "11px", color: "var(--color-text-muted)", display: "block", marginBottom: "4px" }}>
+                        <span style={{ fontSize: "12px", color: "var(--color-text-muted)", display: "block", marginBottom: "4px" }}>
                           Latest QR Telemetry:
                         </span>
                         {latest ? (
                           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
                             {Object.entries(latest.values).slice(0, 4).map(([k, v]) => (
-                              <div key={k} style={{ fontSize: "11px" }}>
-                                <span style={{ color: "var(--color-text-muted)" }}>{k}:</span> <b>{String(v)}</b>
+                              <div key={k} style={{ fontSize: "12px" }}>
+                                <span style={{ color: "var(--color-text-muted)" }}>{k}:</span> <b className="tnum">{String(v)}</b>
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>No observations submitted yet.</span>
+                          <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>No observations submitted yet.</span>
                         )}
                         {latest?.submitted_at && (
-                          <small style={{ display: "block", marginTop: "6px", color: "var(--color-text-muted)", fontSize: "10px" }}>
+                          <small style={{ display: "block", marginTop: "6px", color: "var(--color-text-muted)", fontSize: "12px" }}>
                             Reported: {new Date(latest.submitted_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })} ({machine.observation_count} total scans)
                           </small>
                         )}
@@ -772,13 +769,13 @@ export function FactoryDataView() {
                         href={`/digital-twin/entry/${machine.id}`}
                         target="_blank"
                         className="button button-primary"
-                        style={{ flex: 1, padding: "4px 8px", fontSize: "11px", justifyContent: "center" }}
+                        style={{ flex: 1, padding: "4px 8px", fontSize: "12px", justifyContent: "center" }}
                       >
-                        Enter Data <ExternalLink size={11} />
+                        Enter Data <ExternalLink size={12} />
                       </Link>
                       <button
                         className="button button-secondary"
-                        style={{ padding: "4px 8px", fontSize: "11px" }}
+                        style={{ padding: "4px 8px", fontSize: "12px" }}
                         onClick={() => setQrModalItem({ id: machine.id, name: machine.name, type: "machine" })}
                         title="View Scannable QR Code"
                       >
@@ -787,7 +784,7 @@ export function FactoryDataView() {
                       {machine.history.length > 0 && (
                         <button
                           className="button button-secondary"
-                          style={{ padding: "4px 8px", fontSize: "11px" }}
+                          style={{ padding: "4px 8px", fontSize: "12px" }}
                           onClick={() => setSelectedMachine(machine)}
                           title="View Submission History"
                         >
@@ -866,13 +863,13 @@ export function FactoryDataView() {
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <strong>{mat.name}</strong>
-                        <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>{mat.unit}</span>
+                        <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>{mat.unit}</span>
                       </div>
-                      <p style={{ fontSize: "20px", fontWeight: 700, margin: "8px 0 4px 0", color: "var(--color-primary, #416f57)" }}>
+                      <p style={{ fontSize: "20px", fontWeight: 700, margin: "8px 0 4px 0", color: "var(--color-primary, #00A06C)" }} className="tnum">
                         {currentStock.toLocaleString("en-IN")} <small style={{ fontSize: "12px", fontWeight: 400 }}>{mat.unit}</small>
                       </p>
                       <small style={{ color: "var(--color-text-muted)" }}>
-                        Initial allocation: {mat.quantity.toLocaleString("en-IN")} {mat.unit}
+                        Initial allocation: <span className="tnum">{mat.quantity.toLocaleString("en-IN")}</span> {mat.unit}
                       </small>
                     </div>
                   );
@@ -896,9 +893,9 @@ export function FactoryDataView() {
                       }}
                     >
                       <span>
-                        <b>{mat?.name ?? change.material_id}</b> · {change.direction === "inbound" ? "➕ Inbound receipt" : "➖ Outbound consumption"} of <b>{change.quantity}</b> {mat?.unit ?? "units"}
+                        <b>{mat?.name ?? change.material_id}</b> · {change.direction === "inbound" ? "➕ Inbound receipt" : "➖ Outbound consumption"} of <b className="tnum">{change.quantity}</b> {mat?.unit ?? "units"}
                       </span>
-                      <span style={{ color: "var(--color-text-muted)" }}>
+                      <span style={{ color: "var(--color-text-muted)" }} className="tnum">
                         {new Date(change.submitted_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
@@ -977,11 +974,11 @@ export function FactoryDataView() {
                       <div style={{ display: "flex", justifyContent: "space-between", marginTop: "12px" }}>
                         <div>
                           <small style={{ color: "var(--color-text-muted)", display: "block" }}>Awaiting Dispatch</small>
-                          <strong style={{ fontSize: "16px", color: "#c05621" }}>{awaiting.toLocaleString("en-IN")} {prod.unit}</strong>
+                          <strong style={{ fontSize: "16px", color: "#c05621" }} className="tnum">{awaiting.toLocaleString("en-IN")} {prod.unit}</strong>
                         </div>
                         <div>
                           <small style={{ color: "var(--color-text-muted)", display: "block" }}>Total Dispatched</small>
-                          <strong style={{ fontSize: "16px", color: "var(--color-primary, #416f57)" }}>{dispatched.toLocaleString("en-IN")} {prod.unit}</strong>
+                          <strong style={{ fontSize: "16px", color: "var(--color-primary, #00A06C)" }} className="tnum">{dispatched.toLocaleString("en-IN")} {prod.unit}</strong>
                         </div>
                       </div>
                     </div>

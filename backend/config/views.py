@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from apps.streams.pipeline import pipeline_status
 from django.db import connection
 from django.http import JsonResponse
 from django.utils import timezone
@@ -16,6 +17,7 @@ class HealthView(View):
             {
                 "status": "ok",
                 "database": "connected",
+                "telemetry": pipeline_status(),
                 "timestamp": timezone.now().isoformat(),
             }
         )

@@ -1,6 +1,8 @@
 import base64
 import json
+import logging
 
+from django.conf import settings
 from django.db.models import Count, Max, Min, ProtectedError, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -13,6 +15,7 @@ from rest_framework.views import APIView
 
 from apps.common.permissions import CanOperateUploads, factories_for_request, tenant_for_request
 from apps.spatial.models import SpatialMachine
+from apps.streams.clickhouse import ClickHouseTelemetryStore
 from apps.streams.client import StreamClientError, request_json, valid_control_action
 from apps.streams.models import (
     DataInputStream,
@@ -26,6 +29,8 @@ from apps.streams.serializers import (
     MachineTelemetrySerializer,
 )
 from apps.streams.services import bind_machine, discover_stream, refresh_binding_schema
+
+logger = logging.getLogger(__name__)
 
 
 class DataInputStreamViewSet(viewsets.ModelViewSet):
@@ -163,6 +168,27 @@ class MachineTelemetryView(APIView):
             layout__factory__in=factories_for_request(request),
         )
         limit = min(500, max(1, int(request.query_params.get("limit", "50"))))
+        if settings.TELEMETRY_HOT_STORAGE_ENABLED:
+            try:
+                results = ClickHouseTelemetryStore().latest_for_machine(
+                    tenant_id=machine.tenant_id, machine_id=machine.id, limit=limit
+                )
+                pairs = {(row["run_id"], row["cycle_id"]) for row in results}
+                outcomes = {
+                    (outcome.run_id, outcome.cycle_id): MachineCycleOutcomeSerializer(outcome).data
+                    for outcome in MachineCycleOutcome.objects.filter(
+                        machine=machine,
+                        run_id__in={pair[0] for pair in pairs},
+                        cycle_id__in={pair[1] for pair in pairs},
+                    ).select_related("overridden_by")
+                }
+                for row in results:
+                    row["outcome"] = outcomes.get((row["run_id"], row["cycle_id"]))
+                return Response({"results": results, "source": "clickhouse"})
+            except Exception as exc:
+                # Hot storage is an acceleration tier. PostgreSQL remains a safe
+                # fallback while ClickHouse is unavailable or catching up.
+                logger.warning("ClickHouse telemetry read failed; using PostgreSQL: %s", exc)
         samples = list(MachineTelemetrySample.objects.filter(machine=machine)[:limit])
         run_ids = {sample.run_id for sample in samples if sample.run_id}
         cycle_ids = {sample.cycle_id for sample in samples if sample.cycle_id}
@@ -173,7 +199,7 @@ class MachineTelemetryView(APIView):
             ).select_related("overridden_by")
         }
         serializer = MachineTelemetrySerializer(samples, many=True, context={"outcomes": outcomes})
-        return Response({"results": serializer.data})
+        return Response({"results": serializer.data, "source": "postgres"})
 
 
 class MachineCycleOutcomeView(APIView):

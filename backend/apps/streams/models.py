@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import RegexValidator
 from django.db import models
 
 from apps.common.models import TenantScopedModel, UUIDModel
@@ -178,3 +179,72 @@ class MachineCycleOutcome(UUIDModel, TenantScopedModel):
             )
         ]
         indexes = [models.Index(fields=["tenant", "machine", "run_id", "cycle_id"])]
+
+
+class DatasetLevel(models.TextChoices):
+    MACHINE = "machine", "Machine"
+    MACHINE_FAMILY = "machine-family", "Machine family"
+    LINE = "line", "Production line"
+
+
+class DatasetExportStatus(models.TextChoices):
+    PENDING = "pending", "Generating"
+    READY = "ready", "Ready"
+    FAILED = "failed", "Failed"
+
+
+class TrainingDatasetExport(UUIDModel, TenantScopedModel):
+    """Auditable pointer to an immutable training dataset in blob storage."""
+
+    factory = models.ForeignKey(
+        "tenancy.Factory", on_delete=models.PROTECT, related_name="training_dataset_exports"
+    )
+    machine = models.ForeignKey(
+        "spatial.SpatialMachine",
+        on_delete=models.PROTECT,
+        related_name="training_dataset_exports",
+        help_text="The selected machine, family, or line used to define this dataset.",
+    )
+    level = models.CharField(max_length=20, choices=DatasetLevel.choices)
+    version = models.CharField(
+        max_length=80,
+        validators=[
+            RegexValidator(
+                regex=r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$",
+                message="Use semantic versioning, for example 1.0.0.",
+            )
+        ],
+    )
+    target_key = models.CharField(max_length=100)
+    target_label = models.CharField(max_length=180)
+    status = models.CharField(
+        max_length=20, choices=DatasetExportStatus.choices, default=DatasetExportStatus.PENDING
+    )
+    row_count = models.PositiveBigIntegerField(default=0)
+    features = models.JSONField(default=list, blank=True)
+    data_key = models.CharField(max_length=500, blank=True)
+    manifest_key = models.CharField(max_length=500, blank=True)
+    checksum = models.CharField(max_length=64, blank=True)
+    error = models.TextField(blank=True)
+    generated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="generated_training_datasets",
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "factory", "level", "target_key", "version"],
+                name="unique_training_dataset_scope_version",
+            )
+        ]
+        indexes = [models.Index(fields=["tenant", "factory", "status"])]
+        verbose_name = "training dataset"
+        verbose_name_plural = "training datasets"
+
+    def __str__(self) -> str:
+        return f"{self.target_label} · {self.level} · v{self.version}"

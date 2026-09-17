@@ -325,6 +325,57 @@ CELERY_TASK_ROUTES = {
 DATA_STREAM_CREDENTIAL_KEY = os.getenv("DATA_STREAM_CREDENTIAL_KEY", SECRET_KEY)
 DATA_STREAM_POLL_SECONDS = max(1, int(os.getenv("DATA_STREAM_POLL_SECONDS", "5")))
 DATA_STREAM_RETENTION_DAYS = max(1, int(os.getenv("DATA_STREAM_RETENTION_DAYS", "30")))
+STREAM_INGESTION_ENABLED = environment_boolean("STREAM_INGESTION_ENABLED", default=True)
+TELEMETRY_ALLOW_SIMULATED_INPUTS = environment_boolean(
+    "TELEMETRY_ALLOW_SIMULATED_INPUTS", default=DEBUG
+)
+TELEMETRY_HOT_STORAGE_ENABLED = environment_boolean(
+    "TELEMETRY_HOT_STORAGE_ENABLED", default=False
+)
+TELEMETRY_ARCHIVE_ENABLED = environment_boolean("TELEMETRY_ARCHIVE_ENABLED", default=DEBUG)
+ML_DATASETS_ENABLED = environment_boolean("ML_DATASETS_ENABLED", default=DEBUG)
+
+# Telemetry object storage. Development uses the filesystem. Production can
+# switch to any private S3-compatible service without changing pipeline code.
+TELEMETRY_STORAGE_BACKEND = os.getenv("TELEMETRY_STORAGE_BACKEND", "filesystem")
+TELEMETRY_STORAGE_ROOT = os.getenv(
+    "TELEMETRY_STORAGE_ROOT", str(REPOSITORY_ROOT / ".data" / "telemetry")
+)
+TELEMETRY_STORAGE_BUCKET = os.getenv("TELEMETRY_STORAGE_BUCKET", "")
+TELEMETRY_STORAGE_PREFIX = os.getenv("TELEMETRY_STORAGE_PREFIX", "telemetry")
+TELEMETRY_STORAGE_ENDPOINT_URL = os.getenv("TELEMETRY_STORAGE_ENDPOINT_URL")
+TELEMETRY_STORAGE_SSE = os.getenv("TELEMETRY_STORAGE_SSE", "AES256")
+TELEMETRY_STORAGE_KMS_KEY_ID = os.getenv("TELEMETRY_STORAGE_KMS_KEY_ID", "")
+TELEMETRY_LOCAL_FILE_MODE = int(os.getenv("TELEMETRY_LOCAL_FILE_MODE", "0o600"), 8)
+TELEMETRY_BUFFER_DIR = os.getenv(
+    "TELEMETRY_BUFFER_DIR", str(REPOSITORY_ROOT / ".data" / "telemetry-buffer")
+)
+TELEMETRY_PIPELINE_RETRIES = max(0, int(os.getenv("TELEMETRY_PIPELINE_RETRIES", "3")))
+TELEMETRY_PIPELINE_RETRY_SECONDS = max(
+    0.0, float(os.getenv("TELEMETRY_PIPELINE_RETRY_SECONDS", "0.25"))
+)
+
+# ClickHouse is deliberately optional. Compose enables it for the local
+# telemetry profile; web workers and archival remain usable without it.
+CLICKHOUSE_URL = os.getenv("CLICKHOUSE_URL", "http://127.0.0.1:8123")
+CLICKHOUSE_DATABASE = os.getenv("CLICKHOUSE_DATABASE", "vulcan")
+CLICKHOUSE_USER = os.getenv("CLICKHOUSE_USER", "vulcan_ingest")
+CLICKHOUSE_PASSWORD = os.getenv("CLICKHOUSE_PASSWORD", "")
+CLICKHOUSE_VERIFY_TLS = environment_boolean("CLICKHOUSE_VERIFY_TLS", default=True)
+CLICKHOUSE_RETENTION_DAYS = max(1, int(os.getenv("CLICKHOUSE_RETENTION_DAYS", "30")))
+CLICKHOUSE_CONNECT_TIMEOUT_SECONDS = max(
+    1, int(os.getenv("CLICKHOUSE_CONNECT_TIMEOUT_SECONDS", "5"))
+)
+
+if TELEMETRY_STORAGE_BACKEND not in {"filesystem", "s3"}:
+    raise ImproperlyConfigured("TELEMETRY_STORAGE_BACKEND must be 'filesystem' or 's3'.")
+if TELEMETRY_STORAGE_BACKEND == "s3" and not TELEMETRY_STORAGE_BUCKET:
+    raise ImproperlyConfigured("TELEMETRY_STORAGE_BUCKET is required for S3 telemetry storage.")
+if not DEBUG and TELEMETRY_HOT_STORAGE_ENABLED:
+    if not CLICKHOUSE_PASSWORD:
+        raise ImproperlyConfigured("CLICKHOUSE_PASSWORD is required when hot storage is enabled.")
+    if urlsplit(CLICKHOUSE_URL).scheme != "https":
+        raise ImproperlyConfigured("Production ClickHouse connections must use HTTPS.")
 
 AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")
 AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "")

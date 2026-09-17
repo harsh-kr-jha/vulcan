@@ -3,6 +3,7 @@ import uuid
 from datetime import timedelta
 from urllib.parse import quote
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
@@ -45,6 +46,8 @@ def discover_stream(stream: DataInputStream):
     manifest = request_json(stream, "/v1/manifest")
     if manifest.get("protocol") != "http-pull-v1":
         raise StreamClientError("The source does not implement http-pull-v1.")
+    if manifest.get("simulated") is True and not settings.TELEMETRY_ALLOW_SIMULATED_INPUTS:
+        raise StreamClientError("Simulated stream inputs are disabled in this deployment.")
     raw_channels = manifest.get("channels")
     if not isinstance(raw_channels, list):
         raise StreamClientError("The source manifest has no channel list.")
@@ -380,6 +383,7 @@ def poll_binding(binding: MachineStreamBinding):
     samples = []
     outcomes = []
     batch_sequences: dict[str, int] = {}
+    batch_event_ids = set()
     last_sequences = {
         item["run_id"]: item["maximum"]
         for item in (
@@ -394,6 +398,9 @@ def poll_binding(binding: MachineStreamBinding):
     }
     for reading in readings:
         event_id, observed_at, sequence_no, values = _validate_reading(reading, fields)
+        if event_id in batch_event_ids:
+            continue
+        batch_event_ids.add(event_id)
         run_id = str(reading.get("run_id", ""))
         previous_sequence = batch_sequences.get(run_id)
         if previous_sequence is not None and sequence_no < previous_sequence:
@@ -457,10 +464,18 @@ def poll_binding(binding: MachineStreamBinding):
                 }
             )
     now = timezone.now()
+    existing_event_ids = set(
+        MachineTelemetrySample.objects.filter(
+            event_id__in=[sample.event_id for sample in samples]
+        ).values_list("event_id", flat=True)
+    )
+    persisted_samples = [
+        sample for sample in samples if sample.event_id not in existing_event_ids
+    ]
     with transaction.atomic():
-        MachineTelemetrySample.objects.bulk_create(samples, ignore_conflicts=True)
-        if samples:
-            latest_sample = max(samples, key=lambda item: item.observed_at)
+        MachineTelemetrySample.objects.bulk_create(persisted_samples, ignore_conflicts=True)
+        if persisted_samples:
+            latest_sample = max(persisted_samples, key=lambda item: item.observed_at)
             update_machine_current_state(
                 machine=binding.machine,
                 observed_at=latest_sample.observed_at,
@@ -516,7 +531,12 @@ def poll_binding(binding: MachineStreamBinding):
         stream.status = StreamStatus.CONNECTED
         stream.last_error = ""
         stream.save(update_fields=["last_success_at", "status", "last_error", "updated_at"])
-    return len(samples)
+    # PostgreSQL is the ingestion control plane. Optional data-plane failures
+    # are retried and durably spooled without rolling back accepted samples.
+    from apps.streams.pipeline import ingest_samples
+
+    ingest_samples(persisted_samples)
+    return len(persisted_samples)
 
 
 def refresh_binding_schema(binding, *, accept_incompatible=False):

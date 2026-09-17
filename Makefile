@@ -13,7 +13,7 @@
 #   make test      — run Python tests
 #   make lint      — run all linters
 
-.PHONY: setup postgres-setup migrate-sqlite dev backend frontend seed reset test lint migrate superuser info
+.PHONY: setup postgres-setup migrate-sqlite dev backend frontend seed reset test lint migrate superuser info clickhouse-init telemetry-status telemetry-flush backup-local
 
 BRANCH := $(shell git branch --show-current 2>/dev/null || echo "default")
 DB_NAME := $(subst /,-,$(BRANCH))
@@ -66,6 +66,19 @@ backend: ## Run backend only (admin panel at /admin/)
 
 frontend: ## Run frontend only
 	npm run dev
+
+clickhouse-init: ## Create local ClickHouse telemetry tables and rollups
+	.venv/bin/python backend/manage.py init_clickhouse
+
+telemetry-status: ## Show telemetry pipeline switches and retry-buffer pressure
+	.venv/bin/python backend/manage.py telemetry_pipeline_status
+
+telemetry-flush: ## Retry buffered telemetry writes
+	.venv/bin/python backend/manage.py flush_telemetry_buffer
+
+backup-local: ## Write a local PostgreSQL dump under .data/backups
+	@mkdir -p .data/backups
+	docker compose --profile tools run --rm postgres-backup
 
 migrate: ## Apply database migrations
 	.venv/bin/python backend/manage.py migrate

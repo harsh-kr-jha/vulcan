@@ -48,6 +48,11 @@ Vulcan does not create or emit telemetry. PLC gateways, test harnesses and any s
 are independently developed and deployed. They connect through the same `http-pull-v1` contract;
 the platform does not depend on their implementation, runtime or data-generation libraries.
 
+Local development may accept a source manifest marked `"simulated": true`. This is only an input
+classification—the simulator itself remains outside this repository—and is controlled by
+`TELEMETRY_ALLOW_SIMULATED_INPUTS`. Accepted samples can be tiered into ClickHouse and Parquet as
+described in [Telemetry storage](telemetry-storage.md).
+
 The last reading of a completed cycle may carry an `outcome` metadata object. Vulcan stores the
 source result as cycle-level ground truth and retains any subsequent human-reviewed effective
 label with reviewer and review time. Outcome fields are audit metadata and never inference inputs.

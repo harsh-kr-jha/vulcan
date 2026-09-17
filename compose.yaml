@@ -3,6 +3,24 @@
 name: vulcan
 
 services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.8-alpine
+    environment:
+      CLICKHOUSE_DB: vulcan
+      CLICKHOUSE_USER: vulcan_ingest
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-vulcan-local-secret}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    ports:
+      - "127.0.0.1:8123:8123"
+      - "127.0.0.1:9009:9000"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- --user=vulcan_ingest --password=$${CLICKHOUSE_PASSWORD} http://127.0.0.1:8123/ping | grep -q Ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   postgres:
     image: postgres:17-alpine
     environment:
@@ -16,6 +34,23 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  postgres-backup:
+    image: postgres:17-alpine
+    profiles: ["tools"]
+    environment:
+      PGPASSWORD: vulcan
+    volumes:
+      - ./.data/backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        pg_dump --host postgres --username vulcan --dbname vulcan --format custom
+        --file "/backups/vulcan-$$(date -u +%Y%m%dT%H%M%SZ).dump"
 
   redis:
     image: redis:8-alpine
@@ -60,8 +95,11 @@ services:
     environment:
       DJANGO_DATABASE_URL: postgresql://vulcan:vulcan@postgres:5432/vulcan
       ML_MODEL_DIR: /app/models
+      TELEMETRY_STORAGE_BACKEND: filesystem
+      TELEMETRY_STORAGE_ROOT: /app/.data/telemetry
     volumes:
       - ./models:/app/models:ro
+      - ./.data:/app/.data
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -96,10 +134,24 @@ services:
     env_file: backend/.env
     environment:
       DJANGO_DATABASE_URL: postgresql://vulcan:vulcan@postgres:5432/vulcan
+      STREAM_INGESTION_ENABLED: ${STREAM_INGESTION_ENABLED:-true}
+      TELEMETRY_HOT_STORAGE_ENABLED: ${TELEMETRY_HOT_STORAGE_ENABLED:-true}
+      TELEMETRY_ARCHIVE_ENABLED: ${TELEMETRY_ARCHIVE_ENABLED:-true}
+      TELEMETRY_ALLOW_SIMULATED_INPUTS: ${TELEMETRY_ALLOW_SIMULATED_INPUTS:-true}
+      TELEMETRY_STORAGE_BACKEND: filesystem
+      TELEMETRY_STORAGE_ROOT: /app/.data/telemetry
+      TELEMETRY_BUFFER_DIR: /app/.data/telemetry-buffer
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_USER: vulcan_ingest
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-vulcan-local-secret}
     depends_on:
       backend:
         condition: service_started
-    command: python manage.py poll_data_streams
+      clickhouse:
+        condition: service_healthy
+    volumes:
+      - ./.data:/app/.data
+    command: sh -c "python manage.py init_clickhouse && python manage.py poll_data_streams"
     working_dir: /app/backend
 
   ml-observer:
@@ -139,3 +191,4 @@ volumes:
   postgres-data:
   redis-data:
   minio-data:
+  clickhouse-data:

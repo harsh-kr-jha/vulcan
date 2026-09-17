@@ -1,7 +1,9 @@
 # Machine prediction and observation
 
 Vulcan observes machine telemetry and performs inference only. It does not train, tune, evaluate,
-queue, promote or store training datasets for models. Training happens in a separate system.
+queue or promote models. Training happens in a separate system. Vulcan can generate immutable,
+versioned Parquet datasets at machine, machine-family and line scope for that external workflow;
+see [Telemetry storage](telemetry-storage.md).
 
 The `ml-observer` process consumes durable telemetry, maintains per-cycle feature prefixes and
 range health, and invokes a compatible externally supplied model at the configured checkpoint.

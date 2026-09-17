@@ -15,6 +15,9 @@ os.environ.update(
         "LOGIN_IP_RATE": "10/15m",
         "LOGIN_ACCOUNT_RATE": "5/15m",
         "DATA_STREAM_CREDENTIAL_KEY": "test-only-data-stream-key",
+        "TELEMETRY_HOT_STORAGE_ENABLED": "false",
+        "TELEMETRY_ARCHIVE_ENABLED": "false",
+        "ML_DATASETS_ENABLED": "false",
     }
 )
 

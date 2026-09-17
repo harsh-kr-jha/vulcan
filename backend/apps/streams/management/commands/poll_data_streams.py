@@ -9,6 +9,7 @@ from django.db.utils import OperationalError, ProgrammingError
 from django.utils import timezone
 
 from apps.streams.models import BindingStatus, MachineStreamBinding, MachineTelemetrySample
+from apps.streams.pipeline import flush_buffer
 from apps.streams.services import mark_poll_failure, poll_binding
 
 
@@ -19,7 +20,11 @@ class Command(BaseCommand):
         parser.add_argument("--once", action="store_true")
 
     def handle(self, *args, **options):
+        if not settings.STREAM_INGESTION_ENABLED:
+            self.stdout.write("Stream ingestion is disabled.")
+            return
         last_pruned_at = 0.0
+        last_buffer_flush_at = 0.0
         while True:
             close_old_connections()
             try:
@@ -27,6 +32,9 @@ class Command(BaseCommand):
                     cutoff = timezone.now() - timedelta(days=settings.DATA_STREAM_RETENTION_DAYS)
                     MachineTelemetrySample.objects.filter(received_at__lt=cutoff).delete()
                     last_pruned_at = time.monotonic()
+                if time.monotonic() - last_buffer_flush_at >= 30:
+                    flush_buffer(limit=100)
+                    last_buffer_flush_at = time.monotonic()
                 due = list(
                     MachineStreamBinding.objects.filter(
                         channel__stream__enabled=True,

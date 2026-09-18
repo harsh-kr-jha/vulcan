@@ -10,6 +10,18 @@ python backend/manage.py sync_models
 The observer also refreshes this registry once a minute. Model binaries are intentionally ignored
 by Git; manifests may be committed for deployment auditability.
 
+## Admin upload
+
+When Django Admin is enabled, open **ML → Prediction models** and select **Upload model ZIP**.
+Choose the machine and one of its existing production profiles, then supply the model name,
+semantic version, stage, threshold, optional metrics and a ZIP containing exactly one trusted
+`.joblib` pipeline. Vulcan derives the tenant/factory/machine/SKU path, generates the manifest,
+calculates SHA-256, refuses to overwrite an existing version and synchronizes the registry.
+
+For `ML_MODEL_SOURCE=local`, the backend model volume must be writable; the `ml-observer` volume
+should remain read-only. For `ML_MODEL_SOURCE=s3`, the backend identity needs write/list/read/delete
+permissions on the configured private prefix while the observer only needs read/list access.
+
 ## Required naming
 
 ```text

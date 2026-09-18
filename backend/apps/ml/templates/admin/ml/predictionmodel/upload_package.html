@@ -1,0 +1,45 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; <a href="{% url 'admin:ml_predictionmodel_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  &rsaquo; Upload model ZIP
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <p>
+    Select the machine and one of its existing production profiles. Vulcan will generate the
+    manifest, calculate SHA-256, place the model in its canonical tenant/factory/machine/SKU path,
+    and synchronize the prediction registry.
+  </p>
+  <p class="help">
+    Only upload trusted externally trained models. Joblib uses Python pickle and can execute code
+    when the observer loads it.
+  </p>
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
+    <fieldset class="module aligned">
+      {% for field in form %}
+        <div class="form-row{% if field.errors %} errors{% endif %}">
+          {{ field.errors }}
+          <div>
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </fieldset>
+    <div class="submit-row">
+      <input type="submit" value="Upload and synchronize" class="default">
+      <a href="{% url 'admin:ml_predictionmodel_changelist' %}" class="closelink">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

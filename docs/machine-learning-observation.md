@@ -18,7 +18,14 @@ nomenclature, manifest schema and selection rules.
 
 Run `python backend/manage.py sync_models` for an immediate refresh. The observer refreshes the
 registry every minute. The status API and UI expose the model name, semantic version, runtime,
-source and active state. There is no model upload or training API.
+source and active state.
+
+Administrators can upload a model without constructing paths or manifests manually from
+**Admin → ML → Prediction models → Upload model ZIP**. The form selects a machine and an existing
+production profile, accepts model/version/stage/threshold/metrics, and requires a ZIP containing
+exactly one trusted `.joblib` pipeline. Vulcan generates the canonical manifest, verifies the
+package, prevents immutable-version replacement and synchronizes the registry. This is an
+operator-only Django Admin workflow, not a public model or training API.
 
 Production can use the identical hierarchy in a private S3-compatible bucket by setting
 `ML_MODEL_SOURCE=s3`, `ML_MODEL_BUCKET` and `ML_MODEL_PREFIX`. Database rows contain metadata,

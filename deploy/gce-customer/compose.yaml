@@ -85,7 +85,9 @@ services:
       - "8000"
     volumes:
       - /var/lib/tamaso/${CUSTOMER_ID}/data:/data
-      - /var/lib/tamaso/${CUSTOMER_ID}/models:/models:ro
+      # The backend writes only validated admin uploads. The inference observer
+      # mounts the same registry read-only below.
+      - /var/lib/tamaso/${CUSTOMER_ID}/models:/models
       - /var/lib/tamaso/${CUSTOMER_ID}/backups:/backups
       - /var/lib/tamaso/${CUSTOMER_ID}/static:/static
     healthcheck:

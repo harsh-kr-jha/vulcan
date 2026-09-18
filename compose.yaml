@@ -98,7 +98,7 @@ services:
       TELEMETRY_STORAGE_BACKEND: filesystem
       TELEMETRY_STORAGE_ROOT: /app/.data/telemetry
     volumes:
-      - ./models:/app/models:ro
+      - ./models:/app/models
       - ./.data:/app/.data
     ports:
       - "127.0.0.1:8000:8000"

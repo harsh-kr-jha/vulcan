@@ -8,12 +8,14 @@ import hashlib
 import io
 import json
 import re
+import shutil
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path, PurePosixPath
 
 import boto3
 import joblib
+from botocore.exceptions import ClientError
 from django.conf import settings
 from django.db import transaction
 from django.utils.text import slugify
@@ -53,6 +55,40 @@ class LocalModelRepository:
             raise ValueError("Model artifact escapes ML_MODEL_DIR.")
         return path.read_bytes()
 
+    def put_package(self, parent_key, artifact_data, manifest_data):
+        relative = _safe_relative_key(parent_key)
+        target = self.root.joinpath(*relative.parts).resolve()
+        if not target.is_relative_to(self.root):
+            raise ValueError("Model package escapes ML_MODEL_DIR.")
+        if target.exists():
+            raise ValueError("That immutable model version already exists.")
+        try:
+            target.mkdir(mode=0o700, parents=True)
+            artifact = target / "model.joblib"
+            artifact_tmp = target / ".model.joblib.tmp"
+            manifest = target / "manifest.json"
+            manifest_tmp = target / ".manifest.json.tmp"
+            artifact_tmp.write_bytes(artifact_data)
+            artifact_tmp.chmod(0o400)
+            artifact_tmp.replace(artifact)
+            manifest_tmp.write_bytes(manifest_data)
+            manifest_tmp.chmod(0o400)
+            # Publish the manifest last so registry scans never see a partial package.
+            manifest_tmp.replace(manifest)
+        except Exception:
+            if target.exists():
+                shutil.rmtree(target)
+            raise
+        return relative.joinpath("manifest.json").as_posix()
+
+    def delete_package(self, parent_key):
+        relative = _safe_relative_key(parent_key)
+        target = self.root.joinpath(*relative.parts).resolve()
+        if not target.is_relative_to(self.root):
+            raise ValueError("Model package escapes ML_MODEL_DIR.")
+        if target.exists():
+            shutil.rmtree(target)
+
 
 class S3ModelRepository:
     scheme = "s3"
@@ -79,6 +115,57 @@ class S3ModelRepository:
 
     def read(self, key):
         return self.client.get_object(Bucket=self.bucket, Key=key)["Body"].read()
+
+    def _upload_key(self, key):
+        relative = _safe_relative_key(key).as_posix()
+        return f"{self.prefix}/{relative}" if self.prefix else relative
+
+    def put_package(self, parent_key, artifact_data, manifest_data):
+        artifact_key = self._upload_key(f"{parent_key}/model.joblib")
+        manifest_key = self._upload_key(f"{parent_key}/manifest.json")
+        for key in (artifact_key, manifest_key):
+            try:
+                self.client.head_object(Bucket=self.bucket, Key=key)
+            except ClientError as exc:
+                if exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode") != 404:
+                    raise
+            else:
+                raise ValueError("That immutable model version already exists.")
+        written = []
+        try:
+            self.client.put_object(
+                Bucket=self.bucket,
+                Key=artifact_key,
+                Body=artifact_data,
+                ContentType="application/octet-stream",
+            )
+            written.append(artifact_key)
+            # Publish the manifest last so registry scans never see a partial package.
+            self.client.put_object(
+                Bucket=self.bucket,
+                Key=manifest_key,
+                Body=manifest_data,
+                ContentType="application/json",
+            )
+            written.append(manifest_key)
+        except Exception:
+            if written:
+                self.client.delete_objects(
+                    Bucket=self.bucket,
+                    Delete={"Objects": [{"Key": key} for key in written]},
+                )
+            raise
+        return manifest_key
+
+    def delete_package(self, parent_key):
+        keys = [
+            self._upload_key(f"{parent_key}/model.joblib"),
+            self._upload_key(f"{parent_key}/manifest.json"),
+        ]
+        self.client.delete_objects(
+            Bucket=self.bucket,
+            Delete={"Objects": [{"Key": key} for key in keys]},
+        )
 
 
 def repository():

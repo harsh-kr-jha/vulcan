@@ -1,6 +1,8 @@
 import hashlib
+import io
 import json
 import uuid
+import zipfile
 from datetime import timedelta
 
 import pytest
@@ -9,6 +11,7 @@ from apps.ml.models import FeatureSnapshot, MachineCycle, ObservationConfig, Pro
 from apps.spatial.models import FactoryLayout, MachineParameter, SpatialMachine
 from apps.streams.models import MachineTelemetrySample
 from apps.tenancy.models import FactoryMaster
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 
 pytestmark = pytest.mark.django_db
@@ -249,6 +252,66 @@ def test_registry_rejects_artifact_checksum_mismatch(setup_ml, settings, tmp_pat
 
     with pytest.raises(ValueError, match="Checksum mismatch"):
         sync_models()
+
+
+def model_zip():
+    import joblib
+
+    artifact = io.BytesIO()
+    joblib.dump(FailurePipeline(), artifact)
+    package = io.BytesIO()
+    with zipfile.ZipFile(package, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("export/model.joblib", artifact.getvalue())
+    return SimpleUploadedFile("quality-risk.zip", package.getvalue(), "application/zip")
+
+
+def test_admin_upload_installs_canonical_production_package(setup_ml, settings, tmp_path):
+    from apps.ml.uploads import install_uploaded_model
+
+    machine, profile, _ = setup_ml
+    settings.ML_MODEL_SOURCE = "local"
+    settings.ML_MODEL_DIR = str(tmp_path)
+    model = install_uploaded_model(
+        profile=profile,
+        name="quality-risk",
+        version="3.1.0",
+        stage="production",
+        threshold=0.65,
+        metrics={"balanced_accuracy": 0.92},
+        upload=model_zip(),
+    )
+
+    expected = tmp_path / "vulcan" / "pnq-01" / "test-machine" / "t1"
+    expected = expected / "quality-risk" / "v3.1.0"
+    manifest = json.loads((expected / "manifest.json").read_text())
+    assert (expected / "model.joblib").is_file()
+    assert manifest["machine"] == {
+        "tenant": machine.tenant.slug,
+        "factory": machine.layout.factory.code,
+        "code": machine.code,
+    }
+    assert manifest["profile"]["contract"] == profile.contract
+    assert manifest["sha256"] == model.checksum
+    assert model.active is True
+
+
+def test_admin_upload_rejects_duplicate_immutable_version(setup_ml, settings, tmp_path):
+    from apps.ml.uploads import install_uploaded_model
+
+    _, profile, _ = setup_ml
+    settings.ML_MODEL_SOURCE = "local"
+    settings.ML_MODEL_DIR = str(tmp_path)
+    arguments = {
+        "profile": profile,
+        "name": "quality-risk",
+        "version": "1.0.0",
+        "stage": "available",
+        "threshold": 0.5,
+        "metrics": {},
+    }
+    install_uploaded_model(**arguments, upload=model_zip())
+    with pytest.raises(ValueError, match="already exists"):
+        install_uploaded_model(**arguments, upload=model_zip())
 
 
 def test_delayed_quality_channel_keeps_human_override(setup_ml, user, monkeypatch, factory):

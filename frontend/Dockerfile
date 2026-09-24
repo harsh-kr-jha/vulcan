@@ -21,6 +21,7 @@ COPY --chown=node:node package.json package-lock.json ./
 COPY --chown=node:node frontend/package.json ./frontend/package.json
 COPY --chown=node:node platform.json ./platform.json
 COPY --chown=node:node --from=builder /app/frontend/.next ./frontend/.next
+COPY --chown=node:node --from=builder /app/frontend/public ./frontend/public
 USER node
 EXPOSE 3000
 CMD ["npm", "run", "start", "--workspace", "frontend"]

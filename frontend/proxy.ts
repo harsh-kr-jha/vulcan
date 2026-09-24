@@ -6,7 +6,9 @@ function contentSecurityPolicy(nonce: string): string {
   const development = process.env.NODE_ENV === "development";
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${development ? " 'unsafe-eval'" : ""}`,
+    // Draco compiles its decoder inside a blob worker. Allow WebAssembly
+    // compilation without granting production scripts the broader `unsafe-eval`.
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval'${development ? " 'unsafe-eval'" : ""}`,
     // The existing dashboard uses React style attributes. Script execution is
     // still nonce-bound; removing this style exception is tracked separately.
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",

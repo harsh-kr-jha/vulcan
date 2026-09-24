@@ -1,3 +1,4 @@
+import math
 import re
 from datetime import date
 
@@ -34,7 +35,9 @@ def validate_status_visualization(value):
     defaults = default_status_visualization()
     unknown = set(value) - set(defaults)
     if unknown:
-        raise serializers.ValidationError(f"Unknown status visualization setting: {sorted(unknown)[0]}.")
+        raise serializers.ValidationError(
+            f"Unknown status visualization setting: {sorted(unknown)[0]}."
+        )
     merged = {**defaults, **value}
     for key, item in merged.items():
         if isinstance(item, bool) or not isinstance(item, (int, float)):
@@ -42,7 +45,9 @@ def validate_status_visualization(value):
     if merged["recentMinutes"] < 1 or merged["persistentMinutes"] <= merged["recentMinutes"]:
         raise serializers.ValidationError("Persistent minutes must be greater than recent minutes.")
     if not 0 <= merged["outOfRangeConfirmationSeconds"] <= 3600:
-        raise serializers.ValidationError("Out-of-range confirmation must be between 0 and 3600 seconds.")
+        raise serializers.ValidationError(
+            "Out-of-range confirmation must be between 0 and 3600 seconds."
+        )
     if not 5 <= merged["rejectWindowCycles"] <= 100:
         raise serializers.ValidationError("Reject window must contain between 5 and 100 cycles.")
     if not 1 <= merged["rejectMinimumCycles"] <= merged["rejectWindowCycles"]:
@@ -400,8 +405,87 @@ class MachineConnectionSerializer(serializers.ModelSerializer):
             "quantity_per_cycle",
             "input_spec",
             "output_spec",
+            "connection_type",
+            "direction",
+            "geometry",
+            "visual_style",
         ]
         read_only_fields = ["id"]
+
+    def validate_connection_type(self, value):
+        allowed = {
+            "conveyor",
+            "assembly_line",
+            "pipe",
+            "pickup_drop",
+            "material_transfer",
+            "inspection_transfer",
+            "forklift_route",
+            "utility_line",
+        }
+        if value not in allowed:
+            raise serializers.ValidationError("Choose a supported factory connector type.")
+        return value
+
+    def validate_direction(self, value):
+        if value not in {"forward", "reverse", "bidirectional", "none"}:
+            raise serializers.ValidationError("Choose forward, reverse, bidirectional or none.")
+        return value
+
+    def validate_geometry(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Connector geometry must be an object.")
+        allowed = {
+            "sourceOffsetX",
+            "sourceOffsetY",
+            "targetOffsetX",
+            "targetOffsetY",
+            "elevation",
+            "diameter",
+            "curvature",
+        }
+        if set(value) - allowed:
+            raise serializers.ValidationError("Connector geometry contains unsupported properties.")
+        normalized = {}
+        for key, raw in value.items():
+            if isinstance(raw, bool):
+                raise serializers.ValidationError(f"{key} must be numeric.")
+            try:
+                normalized[key] = float(raw)
+            except (TypeError, ValueError) as exc:
+                raise serializers.ValidationError(f"{key} must be numeric.") from exc
+            if not math.isfinite(normalized[key]):
+                raise serializers.ValidationError(f"{key} must be finite.")
+        if not 0 <= normalized.get("elevation", 0.08) <= 100:
+            raise serializers.ValidationError("Connector elevation must be between 0 and 100.")
+        if not 0.01 <= normalized.get("diameter", 0.12) <= 10:
+            raise serializers.ValidationError("Connector diameter must be between 0.01 and 10.")
+        if not -100 <= normalized.get("curvature", 0) <= 100:
+            raise serializers.ValidationError("Connector curvature must be between -100 and 100.")
+        return normalized
+
+    def validate_visual_style(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Connector visual style must be an object.")
+        if set(value) - {"color", "opacity", "dashed"}:
+            raise serializers.ValidationError(
+                "Connector visual style contains unsupported properties."
+            )
+        color = value.get("color", "#64748B")
+        if not isinstance(color, str) or not HEX_COLOR_REGEX.match(color):
+            raise serializers.ValidationError("Connector color must be a six digit hex color.")
+        opacity = value.get("opacity", 1)
+        if (
+            isinstance(opacity, bool)
+            or not isinstance(opacity, (int, float))
+            or not math.isfinite(opacity)
+            or not 0.1 <= opacity <= 1
+        ):
+            raise serializers.ValidationError("Connector opacity must be between 0.1 and 1.")
+        dashed = value.get("dashed", False)
+        if not isinstance(dashed, bool):
+            raise serializers.ValidationError("Connector dashed must be true or false.")
+        return {"color": color.upper(), "opacity": float(opacity), "dashed": dashed}
 
 
 class InventoryConfigurationSerializer(serializers.ModelSerializer):

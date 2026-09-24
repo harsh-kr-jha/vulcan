@@ -405,10 +405,14 @@ export function FactoryTwinPage() {
 
     let cancelled = false;
 
+    let timer: number | null = null;
+    let consecutiveFailures = 0;
+
     async function fetchLiveMachines() {
       try {
         const payload = await api.liveDashboard(factoryId, analyticsMachineId);
         if (!cancelled) {
+          consecutiveFailures = 0;
           setLiveMachines(payload.machines);
           setLiveCurrent(
             analyticsMachineId && payload.current?.id === analyticsMachineId
@@ -418,13 +422,21 @@ export function FactoryTwinPage() {
         }
       } catch {
         // Keep the last good state visible during transient failures.
+        consecutiveFailures += 1;
+      } finally {
+        if (!cancelled) {
+          // Avoid overlapping requests and back off while the backend is unavailable.
+          const delay = Math.min(60_000, 5_000 * 2 ** Math.min(consecutiveFailures, 4));
+          timer = window.setTimeout(() => void fetchLiveMachines(), delay);
+        }
       }
     }
 
     void fetchLiveMachines();
-    const interval = window.setInterval(() => void fetchLiveMachines(), 5_000);
-
-    return () => { cancelled = true; window.clearInterval(interval); };
+    return () => {
+      cancelled = true;
+      if (timer !== null) window.clearTimeout(timer);
+    };
   }, [pageMode, factoryId, analyticsMachineId]);
 
   // -------------------------------------------------------------------------

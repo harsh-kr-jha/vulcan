@@ -1,8 +1,7 @@
 import "server-only";
 
-import { existsSync, readFileSync } from "fs";
-import { resolve } from "path";
 import type { PlatformConfig } from "@/lib/variant";
+import platformConfig from "../../platform.json";
 
 const FALLBACK: PlatformConfig = {
   id: "platform-core",
@@ -21,28 +20,8 @@ const FALLBACK: PlatformConfig = {
   features: {},
 };
 
-/**
- * Load platform configuration from platform.json at the repository root.
- *
- * Checks both process.cwd() and one directory up (handles npm workspace
- * invocation where cwd may be the frontend/ subdirectory).
- */
 export function getPlatformConfig(): PlatformConfig {
-  const candidates = [
-    resolve(process.cwd(), "platform.json"),
-    resolve(process.cwd(), "..", "platform.json"),
-  ];
-
-  for (const path of candidates) {
-    if (existsSync(path)) {
-      try {
-        const raw = readFileSync(path, "utf-8");
-        return JSON.parse(raw) as PlatformConfig;
-      } catch {
-        continue;
-      }
-    }
-  }
-
-  return FALLBACK;
+  return platformConfig && typeof platformConfig === "object"
+    ? platformConfig as PlatformConfig
+    : FALLBACK;
 }

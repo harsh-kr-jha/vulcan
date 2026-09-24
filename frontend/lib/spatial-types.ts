@@ -155,6 +155,40 @@ export interface ConnectionLine {
   inputSpec?: string;
   outputSpec?: string;
   distance?: number; // computed from grid positions
+  type?: ConnectorType;
+  direction?: ConnectorDirection;
+  geometry?: ConnectorGeometry;
+  visual?: ConnectorVisual;
+}
+
+export type ConnectorType =
+  | "conveyor"
+  | "assembly_line"
+  | "pipe"
+  | "pickup_drop"
+  | "material_transfer"
+  | "inspection_transfer"
+  | "forklift_route"
+  | "utility_line";
+
+export type ConnectorDirection = "forward" | "reverse" | "bidirectional" | "none";
+
+export interface ConnectorGeometry {
+  /** Ground-plane offsets from the automatically resolved machine-edge anchors. */
+  sourceOffsetX: number;
+  sourceOffsetY: number;
+  targetOffsetX: number;
+  targetOffsetY: number;
+  elevation: number;
+  diameter: number;
+  /** Signed ground-plane bow. Zero is a straight route. */
+  curvature: number;
+}
+
+export interface ConnectorVisual {
+  color: string;
+  opacity: number;
+  dashed: boolean;
 }
 
 export interface InventoryMaterial {

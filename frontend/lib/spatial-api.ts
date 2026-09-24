@@ -1,4 +1,4 @@
-import type { FactoryLayout } from "./spatial-types";
+import type { ConnectorDirection, ConnectorGeometry, ConnectorType, ConnectorVisual, FactoryLayout } from "./spatial-types";
 
 export interface LayoutApiPayload {
   id: string;
@@ -28,7 +28,7 @@ export interface LayoutApiPayload {
     status?: string;
   }>;
   unplaced_machines?: LayoutApiPayload["machines"];
-  connections: Array<{ id: string; source: string; target: string; name?: string; description?: string; material_type?: string; quantity_per_cycle?: number; input_spec?: string; output_spec?: string }>;
+  connections: Array<{ id: string; source: string; target: string; name?: string; description?: string; material_type?: string; quantity_per_cycle?: number; input_spec?: string; output_spec?: string; connection_type?: ConnectorType; direction?: ConnectorDirection; geometry?: Partial<ConnectorGeometry>; visual_style?: Partial<ConnectorVisual> }>;
   inventory_config?: { storage_capacity: number; capacity_unit: string; materials: Array<{ id: string; name: string; unit: string; quantity: number }> };
   dispatch_config?: { products: Array<{ id: string; name: string; unit: string }> };
   saved_at?: string;
@@ -63,7 +63,7 @@ export function deserializeLayout(payload: LayoutApiPayload): FactoryLayout {
       streamBinding: m.stream_binding ? { id: m.stream_binding.id, streamId: m.stream_binding.stream_id, channelId: m.stream_binding.channel_id, channelName: m.stream_binding.channel_name, status: m.stream_binding.status, lastReceivedAt: m.stream_binding.last_received_at, lastError: m.stream_binding.last_error } : null,
       status: m.status as FactoryLayout["machines"][number]["status"],
     })),
-    connections: payload.connections.map((c) => ({ id: c.id, sourceId: c.source, targetId: c.target, name: c.name, description: c.description, materialType: c.material_type, quantityPerCycle: c.quantity_per_cycle, inputSpec: c.input_spec, outputSpec: c.output_spec })),
+    connections: payload.connections.map((c) => ({ id: c.id, sourceId: c.source, targetId: c.target, name: c.name, description: c.description, materialType: c.material_type, quantityPerCycle: c.quantity_per_cycle, inputSpec: c.input_spec, outputSpec: c.output_spec, type: c.connection_type ?? "material_transfer", direction: c.direction ?? "forward", geometry: c.geometry as ConnectorGeometry | undefined, visual: c.visual_style as ConnectorVisual | undefined })),
     inventory: payload.inventory_config ? { storageCapacity: payload.inventory_config.storage_capacity, capacityUnit: payload.inventory_config.capacity_unit as "kilograms" | "litres" | "meters" | "units", materials: payload.inventory_config.materials.map((m) => ({ ...m, unit: m.unit as "kilograms" | "litres" | "meters" | "units" })) } : undefined,
     dispatch: payload.dispatch_config ? { products: payload.dispatch_config.products.map((p) => ({ ...p, unit: p.unit as "meters" | "litres" | "units" | "kilograms", awaitingQuantity: 0 })) } : undefined,
     savedAt: payload.saved_at,
@@ -85,7 +85,7 @@ export function serializeLayout(layout: FactoryLayout): object {
       custom_kpis: m.customKpis.map((k) => ({ id: k.id, name: k.name, display_unit: k.displayUnit, formula: k.formula, is_enabled: k.isEnabled ?? true, disabled_reason: k.disabledReason ?? "" })),
       data_stream_id: m.dataStreamId !== undefined ? m.dataStreamId : (m.streamBinding?.streamId ?? null), data_stream_channel_id: m.dataStreamChannelId !== undefined ? m.dataStreamChannelId : (m.streamBinding?.channelId ?? null), status: m.status,
     })),
-    connections: layout.connections.map((c) => ({ id: c.id, source: c.sourceId, target: c.targetId, name: c.name, description: c.description, material_type: c.materialType, quantity_per_cycle: c.quantityPerCycle, input_spec: c.inputSpec, output_spec: c.outputSpec })),
+    connections: layout.connections.map((c) => ({ id: c.id, source: c.sourceId, target: c.targetId, name: c.name, description: c.description, material_type: c.materialType, quantity_per_cycle: c.quantityPerCycle, input_spec: c.inputSpec, output_spec: c.outputSpec, connection_type: c.type ?? "material_transfer", direction: c.direction ?? "forward", geometry: c.geometry ?? {}, visual_style: c.visual ?? {} })),
     ...(layout.inventory && { inventory_config: { storage_capacity: layout.inventory.storageCapacity, capacity_unit: layout.inventory.capacityUnit, materials: layout.inventory.materials } }),
     ...(layout.dispatch && { dispatch_config: { products: layout.dispatch.products.map(({ id, name, unit }) => ({ id, name, unit })) } }),
   };

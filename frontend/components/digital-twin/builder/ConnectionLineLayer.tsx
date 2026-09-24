@@ -2,7 +2,9 @@
 
 import { useCallback, useState } from "react";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
-import type { ConnectionLine, GridPosition, MachineNode } from "@/lib/spatial-types";
+import type { ConnectionLine, MachineNode } from "@/lib/spatial-types";
+import { connectorCurve, resolveConnectorConfig } from "@/lib/connector-geometry";
+import type { SceneMachine } from "@/lib/spatial-scene";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -28,16 +30,6 @@ const CONNECTION_SELECTED_STROKE_WIDTH = 0.12;
 // ---------------------------------------------------------------------------
 
 /**
- * Returns the center of a grid cell (offset by 0.5 in both axes).
- */
-function getMachineCenter(machine: MachineNode): { cx: number; cy: number } {
-  const rotated = machine.rotation === 90 || machine.rotation === 270;
-  const w = rotated ? (machine.size?.height ?? 1) : (machine.size?.width ?? 1);
-  const h = rotated ? (machine.size?.width ?? 1) : (machine.size?.height ?? 1);
-  return { cx: machine.position.x + w / 2, cy: machine.position.y + h / 2 };
-}
-
-/**
  * Builds a lookup map from machine ID to MachineNode for fast access.
  */
 function buildMachineMap(machines: MachineNode[]): Map<string, MachineNode> {
@@ -53,22 +45,6 @@ function buildMachineMap(machines: MachineNode[]): Map<string, MachineNode> {
  * that is `offset` units before the target center.
  * This allows the arrowhead to appear at the edge of the target cell.
  */
-function computeArrowEnd(
-  source: { cx: number; cy: number },
-  target: { cx: number; cy: number },
-  offset: number
-): { x: number; y: number } {
-  const dx = target.cx - source.cx;
-  const dy = target.cy - source.cy;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  if (dist === 0) return { x: target.cx, y: target.cy };
-  const ratio = (dist - offset) / dist;
-  return {
-    x: source.cx + dx * ratio,
-    y: source.cy + dy * ratio,
-  };
-}
-
 // ---------------------------------------------------------------------------
 // ArrowMarkerDefs – SVG marker definitions for arrowheads
 // ---------------------------------------------------------------------------
@@ -126,25 +102,38 @@ function ConnectionPath({
   onSelect,
 }: ConnectionPathProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const source = getMachineCenter(sourceMachine);
-  const target = getMachineCenter(targetMachine);
-
-  // Offset the endpoint slightly so the arrowhead appears before the target center
-  const arrowEnd = computeArrowEnd(source, target, 0.35);
+  const toSceneMachine = (machine: MachineNode): SceneMachine => {
+    const rotated = machine.rotation === 90 || machine.rotation === 270;
+    const rawWidth = machine.size?.width ?? 1;
+    const rawDepth = machine.size?.height ?? 1;
+    return {
+      id: machine.id, name: machine.name, x: machine.position.x, y: machine.position.y,
+      width: rotated ? rawDepth : rawWidth, depth: rotated ? rawWidth : rawDepth,
+      height: machine.visualHeight ?? 1, rotation: machine.rotation ?? 0,
+      representation: machine.representation ?? "block", blockColor: machine.blockColor ?? "#DBEAFE",
+      modelAsset: machine.modelAsset, modelTransform: machine.modelTransform ?? { elevation: 0, scale: 1, rotationY: 0 },
+      status: machine.status ?? "no_data", alertCount: 0, alertSeverity: null, attentionReasons: [],
+    };
+  };
+  const curve = connectorCurve(connection, toSceneMachine(sourceMachine), toSceneMachine(targetMachine));
+  const pathPoints = curve.getPoints(24);
+  const pathData = pathPoints.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.z}`).join(" ");
+  const resolved = resolveConnectorConfig(connection);
 
   const strokeColor = isSelected
     ? CONNECTION_SELECTED_COLOR
     : isHovered
       ? CONNECTION_SELECTED_COLOR
-      : CONNECTION_COLOR;
+      : resolved.visual.color;
   const strokeWidth = isSelected || isHovered
     ? CONNECTION_SELECTED_STROKE_WIDTH
     : CONNECTION_STROKE_WIDTH;
   const markerId = isSelected ? ARROW_MARKER_SELECTED_ID : ARROW_MARKER_ID;
 
   // Midpoint for the edit icon
-  const midX = (source.cx + arrowEnd.x) / 2;
-  const midY = (source.cy + arrowEnd.y) / 2;
+  const midpoint = curve.getPointAt(0.5);
+  const midX = midpoint.x;
+  const midY = midpoint.z;
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -178,11 +167,9 @@ function ConnectionPath({
     >
       {/* Invisible wider path for easier click/hover targeting */}
       {isEditMode && (
-        <line
-          x1={source.cx}
-          y1={source.cy}
-          x2={arrowEnd.x}
-          y2={arrowEnd.y}
+        <path
+          d={pathData}
+          fill="none"
           stroke="transparent"
           strokeWidth={strokeWidth * 8}
           style={{ cursor: "pointer", pointerEvents: "stroke" }}
@@ -190,15 +177,16 @@ function ConnectionPath({
         />
       )}
       {/* Visible connection line */}
-      <line
-        x1={source.cx}
-        y1={source.cy}
-        x2={arrowEnd.x}
-        y2={arrowEnd.y}
+      <path
+        d={pathData}
+        fill="none"
         stroke={strokeColor}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
-        markerEnd={`url(#${markerId})`}
+        strokeDasharray={resolved.visual.dashed ? `${strokeWidth * 4} ${strokeWidth * 3}` : undefined}
+        opacity={resolved.visual.opacity}
+        markerStart={connection.direction === "reverse" || connection.direction === "bidirectional" ? `url(#${markerId})` : undefined}
+        markerEnd={!connection.direction || connection.direction === "forward" || connection.direction === "bidirectional" ? `url(#${markerId})` : undefined}
         style={{
           cursor: isEditMode ? "pointer" : "default",
           pointerEvents: isEditMode ? "stroke" : "none",
@@ -207,7 +195,7 @@ function ConnectionPath({
         onContextMenu={handleClick}
       >
         <title>{tooltipText}</title>
-      </line>
+      </path>
       {/* Edit icon on hover (pencil icon at midpoint) — left-click opens config */}
       {isEditMode && (isHovered || isSelected) && (
         <g

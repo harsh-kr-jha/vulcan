@@ -190,6 +190,7 @@ export function ConnectionDrawer({ svgRef, viewBox }: ConnectionDrawerProps) {
           id: generateConnectionId(),
           sourceId: state.selectedMachineId!,
           targetId: targetId,
+          direction: "forward",
           distance: sourceMachine
             ? calculateConnectionDistance(
                 sourceMachine.position,

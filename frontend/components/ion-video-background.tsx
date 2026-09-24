@@ -99,7 +99,7 @@ function CrossfadeVideos() {
           autoPlay={index === 0}
           muted
           playsInline
-          preload="auto"
+          preload={index === 0 ? "auto" : "metadata"}
           onError={() => setFailed(true)}
           onTimeUpdate={() => void startDissolve(index)}
           onTransitionEnd={(event) => {

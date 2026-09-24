@@ -13,7 +13,9 @@ function contentSecurityPolicy(nonce: string): string {
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob:",
     `media-src 'self' ${SUPABASE_MEDIA_ORIGIN}`,
-    "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+    // GLTFLoader resolves embedded GLB textures through fetch(). Restrict the
+    // exception to self-contained data URLs; remote connection origins remain denied.
+    "connect-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com",
     "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",

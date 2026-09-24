@@ -3,7 +3,7 @@
 import { Activity, AlertTriangle, ArrowRight, BrainCircuit, CheckCircle2, Clock3, Factory, Gauge, MapPinOff, Radio, RefreshCw, Settings2, ShieldAlert, Target, TrendingDown, Unplug, Workflow, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api } from "@/lib/api-client";
+import { api, ApiError } from "@/lib/api-client";
 import { Chart } from "@/components/charts/chart";
 import type { EChartsOption } from "echarts";
 import type { LiveDashboardPayload, LiveMachineState, LiveVariable, MachineHistory } from "@/lib/factory-domain";
@@ -144,27 +144,40 @@ export function DashboardOverview() {
   }, [customFrom, customTo, rangeKey]);
 
   const load = useCallback(async (signal?: AbortSignal) => {
-    if (!factoryId) return;
+    if (!factoryId) return false;
     setRefreshing(true);
     try {
       let next: LiveDashboardPayload;
       const preferred = selected || window.localStorage.getItem(`vulcan:dashboard-machine:${factoryId}`);
       try { next = await api.liveDashboard(factoryId, preferred, signal, historyRange() ?? undefined); }
-      catch (cause) { if (preferred) next = await api.liveDashboard(factoryId, null, signal, historyRange() ?? undefined); else throw cause; }
+      catch (cause) {
+        // Retry without the selected machine only when that selection is stale.
+        // Retrying every server failure doubles backend load during an outage.
+        if (preferred && cause instanceof ApiError && cause.status === 404) next = await api.liveDashboard(factoryId, null, signal, historyRange() ?? undefined);
+        else throw cause;
+      }
       setPayload(next);
       if (next.selectedMachineId) setSelections((current) => ({ ...current, [factoryId]: next.selectedMachineId as string }));
       if (next.selectedMachineId) window.localStorage.setItem(`vulcan:dashboard-machine:${factoryId}`, next.selectedMachineId);
-      setError(""); setLastSuccess(new Date());
+      setError(""); setLastSuccess(new Date()); return true;
     } catch (cause) {
       if (!(cause instanceof DOMException && cause.name === "AbortError")) setError(cause instanceof Error ? cause.message : "Live machine data is unavailable.");
+      return false;
     } finally { if (!signal?.aborted) setRefreshing(false); }
   }, [factoryId, historyRange, selected]);
 
   useEffect(() => {
     const controller = new AbortController();
-    const initial = window.setTimeout(() => void load(controller.signal), 0);
-    const poller = window.setInterval(() => void load(controller.signal), 5000);
-    return () => { controller.abort(); window.clearTimeout(initial); window.clearInterval(poller); };
+    let timer: number | null = null;
+    let failures = 0;
+    const poll = async () => {
+      const succeeded = await load(controller.signal);
+      if (controller.signal.aborted) return;
+      failures = succeeded ? 0 : failures + 1;
+      timer = window.setTimeout(poll, Math.min(60_000, 5_000 * 2 ** Math.min(failures, 4)));
+    };
+    timer = window.setTimeout(() => void poll(), 0);
+    return () => { controller.abort(); if (timer !== null) window.clearTimeout(timer); };
   }, [load]);
 
   const unplaced = useMemo(() => payload?.machines.filter((machine) => !machine.placed).length ?? 0, [payload]);

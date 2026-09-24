@@ -5,6 +5,7 @@ import { normalizeFactoryScene, projectIsometric } from "@/lib/spatial-scene";
 import type { FactoryLayout } from "@/lib/spatial-types";
 import type { LiveMachineSummary } from "@/lib/factory-domain";
 import { resolveMachineVisualStatus } from "@/lib/machine-visual-status";
+import { connectorCurve, resolveConnectorConfig } from "@/lib/connector-geometry";
 
 function points(items: Array<{ x: number; y: number }>) {
   return items.map((p) => `${p.x},${p.y}`).join(" ");
@@ -20,6 +21,7 @@ export function IsometricFactoryView({ layout, liveMachines, selectedMachineId, 
 
   return <div className="h-full w-full overflow-hidden bg-slate-50">
     <svg className="h-full w-full" viewBox={`${minX} ${minY} ${viewWidth} ${viewHeight}`} role="img" aria-label="Isometric factory map">
+      <defs><marker id="isometric-connector-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="context-stroke" /></marker></defs>
       <polygon points={points(floorCorners)} fill="#f8fafc" stroke="#94a3b8" strokeWidth="0.12" />
       {showZones && scene.zones.map((zone) => {
         const p = [projectIsometric(zone.position.x, zone.position.y), projectIsometric(zone.position.x + zone.size.width, zone.position.y), projectIsometric(zone.position.x + zone.size.width, zone.position.y + zone.size.height), projectIsometric(zone.position.x, zone.position.y + zone.size.height)];
@@ -29,9 +31,12 @@ export function IsometricFactoryView({ layout, liveMachines, selectedMachineId, 
       {showConnections && scene.connections.map((connection) => {
         const source = machines.get(connection.sourceId); const target = machines.get(connection.targetId);
         if (!source || !target) return null;
-        const a = projectIsometric(source.x + source.width / 2, source.y + source.depth / 2, source.height + 0.15);
-        const b = projectIsometric(target.x + target.width / 2, target.y + target.depth / 2, target.height + 0.15);
-        return <line key={connection.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#64748b" strokeWidth="0.12" strokeDasharray="0.35 0.2" />;
+        const curve = connectorCurve(connection, source, target);
+        const config = resolveConnectorConfig(connection);
+        const route = curve.getPoints(28).map((point) => projectIsometric(point.x, point.z, point.y));
+        const markerStart = connection.direction === "reverse" || connection.direction === "bidirectional" ? "url(#isometric-connector-arrow)" : undefined;
+        const markerEnd = !connection.direction || connection.direction === "forward" || connection.direction === "bidirectional" ? "url(#isometric-connector-arrow)" : undefined;
+        return <polyline key={connection.id} points={points(route)} fill="none" stroke={config.visual.color} strokeOpacity={config.visual.opacity} strokeWidth={Math.max(0.1, config.geometry.diameter * 0.7)} strokeLinecap="round" strokeDasharray={config.visual.dashed ? "0.35 0.22" : undefined} markerStart={markerStart} markerEnd={markerEnd} />;
       })}
       {[...scene.machines].sort((a, b) => (a.x + a.y) - (b.x + b.y)).map((machine) => {
         const a = projectIsometric(machine.x, machine.y); const b = projectIsometric(machine.x + machine.width, machine.y); const c = projectIsometric(machine.x + machine.width, machine.y + machine.depth);

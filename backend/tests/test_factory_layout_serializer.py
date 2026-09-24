@@ -143,6 +143,10 @@ class TestFactoryLayoutSerializerCreate:
                 "description": "Parts transfer",
                 "material_type": "Steel Parts",
                 "quantity_per_cycle": "15.50",
+                "connection_type": "conveyor",
+                "direction": "bidirectional",
+                "geometry": {"elevation": 0.25, "diameter": 0.18, "curvature": 0},
+                "visual_style": {"color": "#475569", "opacity": 0.9, "dashed": False},
             }
         ]
         serializer = FactoryLayoutSerializer(data=layout_payload)
@@ -155,6 +159,9 @@ class TestFactoryLayoutSerializerCreate:
         assert conn.name == "CNC to Laser"
         assert conn.source.name == "CNC Machine"
         assert conn.target.name == "Laser Cutter"
+        assert conn.connection_type == "conveyor"
+        assert conn.direction == "bidirectional"
+        assert conn.geometry["elevation"] == 0.25
 
     def test_create_layout_with_inventory_config(self, tenant, factory, layout_payload):
         layout_payload["inventory_config"] = {

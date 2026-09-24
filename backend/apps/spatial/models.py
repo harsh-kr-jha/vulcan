@@ -319,6 +319,10 @@ class MachineConnection(UUIDModel, TenantScopedModel):
     quantity_per_cycle = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     input_spec = models.CharField(max_length=200, blank=True)
     output_spec = models.CharField(max_length=200, blank=True)
+    connection_type = models.CharField(max_length=32, default="material_transfer")
+    direction = models.CharField(max_length=16, default="forward")
+    geometry = models.JSONField(default=dict, blank=True)
+    visual_style = models.JSONField(default=dict, blank=True)
 
     class Meta:
         indexes = [

@@ -16,6 +16,7 @@ import type { FactoryLayout } from "@/lib/spatial-types";
 import type { ScreenAnchor } from "@/lib/spatial-overlay";
 import { resolveMachineVisualStatus } from "@/lib/machine-visual-status";
 import type { MachineIssueType } from "@/lib/factory-domain";
+import { buildConnectorObject } from "@/lib/connector-geometry";
 
 interface Props {
   layout: FactoryLayout;
@@ -137,7 +138,7 @@ function disposeMaterial(material: THREE.Material) {
 
 function disposeScene(root: THREE.Object3D) {
   root.traverse((object) => {
-    if (!(object instanceof THREE.Mesh)) return;
+    if (!(object instanceof THREE.Mesh) && !(object instanceof THREE.Line) && !(object instanceof THREE.LineSegments)) return;
     object.geometry.dispose();
     const materials = Array.isArray(object.material) ? object.material : [object.material];
     materials.forEach(disposeMaterial);
@@ -313,7 +314,15 @@ export default function ThreeFactoryView({
   const geometryKey = useMemo(() => JSON.stringify({
     floor: layout.floor,
     zones: layout.zones,
-    connections: layout.connections,
+    connections: layout.connections.map((connection) => [
+      connection.id,
+      connection.sourceId,
+      connection.targetId,
+      connection.type,
+      connection.direction,
+      connection.geometry,
+      connection.visual,
+    ]),
     shell: layout.modelAsset ? [layout.modelAsset.checksumSha256, layout.modelTransform] : null,
     machines: layout.machines.map((machine) => [
       machine.id,
@@ -510,13 +519,7 @@ export default function ThreeFactoryView({
         const source = byId.get(connection.sourceId);
         const target = byId.get(connection.targetId);
         if (!source || !target) return;
-        const a = canonicalToThree(source.x + source.width / 2, source.y + source.depth / 2, source.height + 0.15);
-        const b = canonicalToThree(target.x + target.width / 2, target.y + target.depth / 2, target.height + 0.15);
-        const geometry = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(a.x, a.y, a.z),
-          new THREE.Vector3(b.x, b.y, b.z),
-        ]);
-        connectionGroup.add(new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0x64748b })));
+        connectionGroup.add(buildConnectorObject(connection, source, target));
       });
     }
 

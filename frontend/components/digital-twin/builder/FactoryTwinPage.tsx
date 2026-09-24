@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Factory, Loader2, MapPinOff, Maximize2, Minimize2, Pencil, Save, Workflow, X } from "lucide-react";
+import { Factory, Layers3, Loader2, MapPinOff, Maximize2, Minimize2, Pencil, Save, Workflow, X } from "lucide-react";
 import { useFactory } from "@/lib/factory-context";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
 import type {
@@ -9,18 +9,23 @@ import type {
   GridPosition,
   MachineNode,
 } from "@/lib/spatial-types";
+import { deserializeLayout, type LayoutApiPayload } from "@/lib/spatial-api";
+import { api } from "@/lib/api-client";
+import type { LiveMachineCurrent, LiveMachineSummary } from "@/lib/factory-domain";
 
 import { FloorCanvas } from "./FloorCanvas";
 import { MachineNodeLayer } from "./MachineNodeLayer";
 import { ConnectionLineLayer } from "./ConnectionLineLayer";
 import { FactoryBuilderDialog } from "./FactoryBuilderDialog";
-import { FactoryVisualization } from "./FactoryVisualization";
+import { SpatialVisualization } from "./SpatialVisualization";
 import { InventoryPanel } from "./InventoryPanel";
 import { DispatchPanel } from "./DispatchPanel";
 import { MachineConfigPanel } from "./MachineConfigPanel";
 import { ConnectionConfigPanel } from "./ConnectionConfigPanel";
 import { MachineAnalyticsPanel } from "./MachineAnalyticsPanel";
 import { ProductionStructureManager } from "@/components/factory-settings";
+import { ZoneLayer } from "./ZoneLayer";
+import { SpatialSettingsPanel } from "./SpatialSettingsPanel";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -28,7 +33,7 @@ import { ProductionStructureManager } from "@/components/factory-settings";
 
 type PageMode = "loading" | "empty" | "viewing" | "editing";
 
-interface LayoutApiPayload {
+interface LegacyLayoutApiPayload {
   id: string;
   factory: string;
   floor_width: number;
@@ -97,7 +102,7 @@ interface LayoutApiPayload {
 
 const API_SPATIAL = "/api/backend/api/spatial";
 
-function deserializeLayout(payload: LayoutApiPayload): FactoryLayout {
+function legacyDeserializeLayout(payload: LegacyLayoutApiPayload): FactoryLayout {
   return {
     id: payload.id,
     factoryId: payload.factory,
@@ -106,6 +111,7 @@ function deserializeLayout(payload: LayoutApiPayload): FactoryLayout {
       height: payload.floor_height,
       unit: payload.unit_system as "feet" | "meters",
     },
+    zones: [],
     machines: payload.machines.map((m) => ({
       id: m.id,
       code: m.code,
@@ -222,6 +228,7 @@ export function FactoryTwinPage() {
     cancelEdit,
     enterEditMode,
     placeMachine,
+    configureZones,
     restoreDraft,
     saving,
     saveError,
@@ -233,6 +240,8 @@ export function FactoryTwinPage() {
   const [showBuilderDialog, setShowBuilderDialog] = useState(false);
   const [isImmersive, setIsImmersive] = useState(false);
   const [showStructure, setShowStructure] = useState(false);
+  const [showSpatialSettings, setShowSpatialSettings] = useState(false);
+  const [placementTarget, setPlacementTarget] = useState<"machine" | "zone">("machine");
   const [unplacedMachines, setUnplacedMachines] = useState<LayoutApiPayload["machines"]>([]);
 
   // Panel state
@@ -241,12 +250,14 @@ export function FactoryTwinPage() {
   const [configConnectionId, setConfigConnectionId] = useState<string | null>(
     null
   );
+  const [analyticsMachineId, setAnalyticsMachineId] = useState<string | null>(null);
+  const [analyticsDetailsOpen, setAnalyticsDetailsOpen] = useState(false);
 
 
-  // Live data for view mode (observations per machine)
-  const [machineObservations, setMachineObservations] = useState<
-    Record<string, { values: Record<string, unknown>; submittedAt?: string }>
-  >({});
+  // Statuses poll as one factory summary; detailed observations load on selection.
+  const machineObservations: Record<string, { values: Record<string, unknown>; submittedAt?: string }> = {};
+  const [liveMachines, setLiveMachines] = useState<LiveMachineSummary[]>([]);
+  const [liveCurrent, setLiveCurrent] = useState<LiveMachineCurrent | null>(null);
 
   // Get the active factory ID
   const factoryId =
@@ -385,56 +396,36 @@ export function FactoryTwinPage() {
   ]);
 
   // -------------------------------------------------------------------------
-  // Fetch live observation data when in viewing mode (polls every 10s)
+  // Fetch the shared live summary once for the factory; details load on selection.
   // -------------------------------------------------------------------------
 
   useEffect(() => {
     if (pageMode !== "viewing") return;
-    if (builderState.layout.machines.length === 0) return;
+    if (!factoryId) return;
 
     let cancelled = false;
 
-    async function fetchObservations() {
-      const obsMap: Record<string, { values: Record<string, unknown>; submittedAt?: string }> = {};
-
-      // Fetch latest observation for each machine in parallel
-      const fetches = builderState.layout.machines.map(async (machine) => {
-        try {
-          let response = await fetch(
-            `/api/backend/api/data-streams/machines/${machine.id}/telemetry/?limit=1`,
-            { headers: { Accept: "application/json" }, credentials: "same-origin" }
+    async function fetchLiveMachines() {
+      try {
+        const payload = await api.liveDashboard(factoryId, analyticsMachineId);
+        if (!cancelled) {
+          setLiveMachines(payload.machines);
+          setLiveCurrent(
+            analyticsMachineId && payload.current?.id === analyticsMachineId
+              ? payload.current
+              : null,
           );
-          if (!response.ok) return;
-          let data = await response.json();
-          let results = Array.isArray(data) ? data : data.results ?? [];
-          if (results.length === 0) {
-            response = await fetch(`${API_SPATIAL}/machines/${machine.id}/observations/?limit=1`, { headers: { Accept: "application/json" }, credentials: "same-origin" });
-            if (!response.ok) return;
-            data = await response.json();
-            results = Array.isArray(data) ? data : data.results ?? [];
-          }
-          if (results.length > 0) {
-            obsMap[machine.id] = {
-              values: results[0].values ?? {},
-              submittedAt: results[0].observed_at ?? results[0].submitted_at,
-            };
-          }
-        } catch {
-          // ignore per-machine fetch errors
         }
-      });
-
-      await Promise.all(fetches);
-      if (!cancelled) {
-        setMachineObservations(obsMap);
+      } catch {
+        // Keep the last good state visible during transient failures.
       }
     }
 
-    fetchObservations();
-    const interval = setInterval(fetchObservations, 10_000);
+    void fetchLiveMachines();
+    const interval = window.setInterval(() => void fetchLiveMachines(), 5_000);
 
-    return () => { cancelled = true; clearInterval(interval); };
-  }, [pageMode, builderState.layout.machines]);
+    return () => { cancelled = true; window.clearInterval(interval); };
+  }, [pageMode, factoryId, analyticsMachineId]);
 
   // -------------------------------------------------------------------------
   // Handlers
@@ -480,6 +471,13 @@ export function FactoryTwinPage() {
   // Area selected via right-click drag -> create machine and open config panel
   const handleAreaSelected = useCallback(
     (position: GridPosition, size: { width: number; height: number }) => {
+      if (placementTarget === "zone") {
+        const nextIndex = builderState.layout.zones.length + 1;
+        configureZones([...builderState.layout.zones, { id: crypto.randomUUID(), name: `Zone ${nextIndex}`, type: "operational", color: "#DBEAFE", position, size, displayOrder: nextIndex }]);
+        setPlacementTarget("machine");
+        setShowSpatialSettings(true);
+        return;
+      }
       const id = crypto.randomUUID();
       const newMachine: MachineNode = {
         id,
@@ -498,12 +496,15 @@ export function FactoryTwinPage() {
           },
         ],
         customKpis: [],
+        representation: "block",
+        blockColor: "#DBEAFE",
+        modelTransform: { elevation: 0, scale: 1, rotationY: 0 },
       };
       placeMachine(newMachine);
       setConfigMachineId(id);
       setConfigMachineIsNew(true);
     },
-    [placeMachine]
+    [placeMachine, placementTarget, builderState.layout.zones, configureZones]
   );
 
   // Tap existing machine -> open config panel in edit mode
@@ -545,14 +546,18 @@ export function FactoryTwinPage() {
   }, []);
 
   // Machine click in visualization -> open analytics panel
-  const [analyticsMachineId, setAnalyticsMachineId] = useState<string | null>(null);
-
   const handleVisualizationMachineClick = useCallback((machineId: string) => {
-    setAnalyticsMachineId(machineId);
+    setAnalyticsMachineId(machineId || null);
+    setAnalyticsDetailsOpen(false);
   }, []);
 
   const handleCloseAnalytics = useCallback(() => {
     setAnalyticsMachineId(null);
+    setAnalyticsDetailsOpen(false);
+  }, []);
+
+  const handleOpenAnalyticsDetails = useCallback(() => {
+    setAnalyticsDetailsOpen(true);
   }, []);
 
   // Close config panels
@@ -734,10 +739,14 @@ export function FactoryTwinPage() {
 
           {/* Main visualization area */}
           <main className="flex-1 overflow-hidden min-h-0 min-w-0">
-            <FactoryVisualization
+            <SpatialVisualization
               layout={builderState.layout}
               observations={machineObservations}
+              liveMachines={liveMachines}
+              liveCurrent={liveCurrent}
+              selectedMachineId={analyticsDetailsOpen ? null : analyticsMachineId}
               onMachineClick={handleVisualizationMachineClick}
+              onOpenDetails={handleOpenAnalyticsDetails}
             />
           </main>
 
@@ -747,10 +756,11 @@ export function FactoryTwinPage() {
           </aside>
 
           {/* Machine Analytics Panel (slide-over, view mode) */}
-          {analyticsMachineId && (
+          {analyticsMachineId && analyticsDetailsOpen && (
             <MachineAnalyticsPanel
               machineId={analyticsMachineId}
               machines={builderState.layout.machines}
+              liveMachine={liveMachines.find((machine) => machine.id === analyticsMachineId)}
               onClose={handleCloseAnalytics}
             />
           )}
@@ -783,6 +793,7 @@ export function FactoryTwinPage() {
 
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => setShowStructure(true)} className="button button-secondary"><Workflow className="h-4 w-4" /> Structure</button>
+          <button type="button" onClick={() => setShowSpatialSettings(true)} className="button button-secondary"><Layers3 className="h-4 w-4" /> Spatial</button>
           {/* Save error banner */}
           {saveError && (
             <span className="text-xs text-red-600 mr-2" role="alert">
@@ -831,7 +842,7 @@ export function FactoryTwinPage() {
       </div>
 
       {/* Three-column layout: Inventory | FloorCanvas | Dispatch */}
-      <div className="flex flex-1 overflow-hidden min-h-0">
+      <div className="relative flex flex-1 overflow-hidden min-h-0">
         {/* Inventory Panel (left) */}
         <aside className="w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3">
           <InventoryPanel />
@@ -840,6 +851,7 @@ export function FactoryTwinPage() {
         {/* Main canvas area */}
         <main className="flex-1 overflow-hidden min-h-0 min-w-0">
           <FloorCanvas onAreaSelected={handleAreaSelected}>
+            <ZoneLayer />
             <ConnectionLineLayer
               onSelectConnection={handleConnectionCompleted}
             />
@@ -877,6 +889,8 @@ export function FactoryTwinPage() {
           onClose={handleCloseConnectionConfig}
         />
       )}
+      {placementTarget === "zone" && <div className="absolute left-1/2 top-16 z-30 -translate-x-1/2 rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-lg">Right-drag an empty floor area to create a zone · <button className="underline" onClick={() => setPlacementTarget("machine")}>Cancel</button></div>}
+      {showSpatialSettings && <SpatialSettingsPanel onClose={() => setShowSpatialSettings(false)} onStartZone={() => { setPlacementTarget("zone"); setShowSpatialSettings(false); }} />}
       {showStructure && <div className="fixed inset-0 z-50 overflow-y-auto bg-black/30 p-6" onClick={() => setShowStructure(false)}><div className="mx-auto max-w-4xl space-y-4 rounded-2xl bg-gray-50 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}><div className="flex items-center justify-between"><div><h2 className="font-semibold text-gray-900">Lexicon production structure</h2><p className="text-sm text-gray-500">Lines and ordered processes used by every machine.</p></div><button className="icon-button" onClick={() => setShowStructure(false)}><X size={18} /></button></div><ProductionStructureManager /></div></div>}
     </div>
   );

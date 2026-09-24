@@ -229,6 +229,9 @@ class MachineCycleOutcomeView(APIView):
                 "updated_at",
             ]
         )
+        from apps.ml.worker import update_reject_issue
+
+        update_reject_issue(outcome.machine, outcome.overridden_at)
         return Response(MachineCycleOutcomeSerializer(outcome).data)
 
 

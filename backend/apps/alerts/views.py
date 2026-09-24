@@ -33,6 +33,10 @@ class AlertViewSet(
             queryset = queryset.filter(status=status_value)
         if severity := self.request.query_params.get("severity"):
             queryset = queryset.filter(severity=severity)
+        if factory_id := self.request.query_params.get("factory"):
+            queryset = queryset.filter(factory_id=factory_id)
+        if machine_id := self.request.query_params.get("machine"):
+            queryset = queryset.filter(machine_id=machine_id)
         return queryset
 
     def perform_update(self, serializer):

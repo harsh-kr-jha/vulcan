@@ -5,6 +5,11 @@ import math
 from django.db import transaction
 
 from apps.ml.models import FeatureSnapshot, MachineCycle, ObservationConfig, PredictionModel
+from apps.spatial.models import MachineOperationalIssue
+from apps.spatial.operational_status import (
+    status_visualization_config,
+    update_operational_issue,
+)
 
 
 def field_contract(fields):
@@ -173,6 +178,16 @@ def observe(sample):
         and phase_counts[phase] == profile.checkpoint_second,
         violations=violations,
     )
+    active_violations = sorted(key for key, active in violations.items() if active)
+    visualization = status_visualization_config(sample.machine)
+    update_operational_issue(
+        machine=sample.machine,
+        issue_type=MachineOperationalIssue.IssueType.OUT_OF_RANGE,
+        detected=bool(active_violations),
+        observed_at=sample.observed_at,
+        confirmation_seconds=visualization["outOfRangeConfirmationSeconds"],
+        evidence={"parameters": active_violations, "count": len(active_violations)},
+    )
     if config.stale_reason.lower() == "database is locked":
         config.stale_reason = ""
         config.save(update_fields=["stale_reason"])
@@ -195,9 +210,26 @@ def observe(sample):
             snapshot.threshold = model.threshold
             snapshot.predicted_label = "failure" if probability >= model.threshold else "good"
             snapshot.save()
+            update_operational_issue(
+                machine=sample.machine,
+                issue_type=MachineOperationalIssue.IssueType.PREDICTED_FAILURE,
+                detected=snapshot.predicted_label == "failure",
+                observed_at=sample.observed_at,
+                evidence={
+                    "failureProbability": probability,
+                    "threshold": model.threshold,
+                },
+            )
             if config.stale_reason:
                 config.stale_reason = ""
                 config.save(update_fields=["stale_reason"])
         except Exception as exc:
             config.stale_reason = f"Model unavailable: {exc}"[:500]
             config.save(update_fields=["stale_reason"])
+    else:
+        update_operational_issue(
+            machine=sample.machine,
+            issue_type=MachineOperationalIssue.IssueType.PREDICTED_FAILURE,
+            detected=False,
+            observed_at=sample.observed_at,
+        )

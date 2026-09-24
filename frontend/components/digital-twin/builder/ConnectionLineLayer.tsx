@@ -30,10 +30,11 @@ const CONNECTION_SELECTED_STROKE_WIDTH = 0.12;
 /**
  * Returns the center of a grid cell (offset by 0.5 in both axes).
  */
-function getMachineCenter(position: GridPosition, size?: { width: number; height: number }): { cx: number; cy: number } {
-  const w = size?.width ?? 1;
-  const h = size?.height ?? 1;
-  return { cx: position.x + w / 2, cy: position.y + h / 2 };
+function getMachineCenter(machine: MachineNode): { cx: number; cy: number } {
+  const rotated = machine.rotation === 90 || machine.rotation === 270;
+  const w = rotated ? (machine.size?.height ?? 1) : (machine.size?.width ?? 1);
+  const h = rotated ? (machine.size?.width ?? 1) : (machine.size?.height ?? 1);
+  return { cx: machine.position.x + w / 2, cy: machine.position.y + h / 2 };
 }
 
 /**
@@ -125,8 +126,8 @@ function ConnectionPath({
   onSelect,
 }: ConnectionPathProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const source = getMachineCenter(sourceMachine.position, sourceMachine.size);
-  const target = getMachineCenter(targetMachine.position, targetMachine.size);
+  const source = getMachineCenter(sourceMachine);
+  const target = getMachineCenter(targetMachine);
 
   // Offset the endpoint slightly so the arrowhead appears before the target center
   const arrowEnd = computeArrowEnd(source, target, 0.35);

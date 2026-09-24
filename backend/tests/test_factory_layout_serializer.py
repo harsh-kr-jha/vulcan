@@ -13,12 +13,13 @@ import uuid
 
 import pytest
 from apps.spatial.models import (
+    FactoryZone,
     InventoryConfiguration,
     MachineConnection,
     SpatialMachine,
 )
 from apps.spatial.serializers import FactoryLayoutSerializer
-from apps.tenancy.models import Company, Factory, Tenant
+from apps.tenancy.models import Company, Factory, FactoryMaster, Tenant
 
 pytestmark = pytest.mark.django_db
 
@@ -88,9 +89,7 @@ def machines_payload(machine_a_id, machine_b_id):
                     "name": "Efficiency",
                     "display_unit": "%",
                     "formula": {
-                        "operations": [
-                            {"operator": "divide", "parameterKey": "temperature"}
-                        ]
+                        "operations": [{"operator": "divide", "parameterKey": "temperature"}]
                     },
                 }
             ],
@@ -111,9 +110,7 @@ def machines_payload(machine_a_id, machine_b_id):
 class TestFactoryLayoutSerializerCreate:
     """Tests for nested create via FactoryLayoutSerializer."""
 
-    def test_create_layout_with_machines(
-        self, tenant, factory, layout_payload, machines_payload
-    ):
+    def test_create_layout_with_machines(self, tenant, factory, layout_payload, machines_payload):
         layout_payload["machines"] = machines_payload
         serializer = FactoryLayoutSerializer(data=layout_payload)
         assert serializer.is_valid(), serializer.errors
@@ -163,9 +160,7 @@ class TestFactoryLayoutSerializerCreate:
         layout_payload["inventory_config"] = {
             "storage_capacity": 5000,
             "capacity_unit": "kg",
-            "materials": [
-                {"id": "m1", "name": "Steel Rod", "unit": "kg", "quantity": 100}
-            ],
+            "materials": [{"id": "m1", "name": "Steel Rod", "unit": "kg", "quantity": 100}],
         }
         serializer = FactoryLayoutSerializer(data=layout_payload)
         assert serializer.is_valid(), serializer.errors
@@ -202,9 +197,7 @@ class TestFactoryLayoutSerializerCreate:
         assert layout.machines.count() == 0
         assert layout.connections.count() == 0
 
-    def test_create_preserves_machine_parameters_order(
-        self, tenant, factory, layout_payload
-    ):
+    def test_create_preserves_machine_parameters_order(self, tenant, factory, layout_payload):
         mid = str(uuid.uuid4())
         layout_payload["machines"] = [
             {
@@ -234,9 +227,25 @@ class TestFactoryLayoutSerializerCreate:
 class TestFactoryLayoutSerializerValidation:
     """Tests for validation logic."""
 
-    def test_rejects_machine_position_outside_floor_width(
-        self, factory, layout_payload
-    ):
+    def test_validates_status_visualization_bands(self, layout_payload):
+        layout_payload["status_visualization"] = {
+            "recentMinutes": 30,
+            "persistentMinutes": 5,
+        }
+        serializer = FactoryLayoutSerializer(data=layout_payload)
+        assert not serializer.is_valid()
+        assert "status_visualization" in serializer.errors
+
+    def test_accepts_status_visualization_defaults_override(self, layout_payload):
+        layout_payload["status_visualization"] = {
+            "recentMinutes": 10,
+            "persistentMinutes": 60,
+        }
+        serializer = FactoryLayoutSerializer(data=layout_payload)
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["status_visualization"]["rejectWindowCycles"] == 20
+
+    def test_rejects_machine_position_outside_floor_width(self, factory, layout_payload):
         layout_payload["machines"] = [
             {
                 "name": "Out of bounds",
@@ -250,9 +259,7 @@ class TestFactoryLayoutSerializerValidation:
         assert not serializer.is_valid()
         assert "machines" in serializer.errors
 
-    def test_rejects_machine_position_outside_floor_height(
-        self, factory, layout_payload
-    ):
+    def test_rejects_machine_position_outside_floor_height(self, factory, layout_payload):
         layout_payload["machines"] = [
             {
                 "name": "Out of bounds",
@@ -380,15 +387,11 @@ class TestFactoryLayoutSerializerValidation:
                 "outputs": [],
             },
         ]
-        layout_payload["connections"] = [
-            {"source": id_a, "target": id_b, "name": "A to B"}
-        ]
+        layout_payload["connections"] = [{"source": id_a, "target": id_b, "name": "A to B"}]
         serializer = FactoryLayoutSerializer(data=layout_payload)
         assert serializer.is_valid(), serializer.errors
 
-    def test_accepts_multiple_connections_between_same_machines(
-        self, factory, layout_payload
-    ):
+    def test_accepts_multiple_connections_between_same_machines(self, factory, layout_payload):
         id_a = str(uuid.uuid4())
         id_b = str(uuid.uuid4())
         layout_payload["machines"] = [
@@ -426,9 +429,7 @@ class TestFactoryLayoutSerializerUpdate:
         layout = serializer.save(tenant=tenant)
 
         update_data = {"floor_width": "200.0", "floor_height": "100.0"}
-        update_serializer = FactoryLayoutSerializer(
-            layout, data=update_data, partial=True
-        )
+        update_serializer = FactoryLayoutSerializer(layout, data=update_data, partial=True)
         assert update_serializer.is_valid(), update_serializer.errors
         updated = update_serializer.save()
 
@@ -477,9 +478,7 @@ class TestFactoryLayoutSerializerUpdate:
                 }
             ]
         }
-        update_serializer = FactoryLayoutSerializer(
-            layout, data=update_data, partial=True
-        )
+        update_serializer = FactoryLayoutSerializer(layout, data=update_data, partial=True)
         assert update_serializer.is_valid(), update_serializer.errors
         updated = update_serializer.save()
 
@@ -510,9 +509,7 @@ class TestFactoryLayoutSerializerUpdate:
                 "outputs": [],
             },
         ]
-        layout_payload["connections"] = [
-            {"source": id_a, "target": id_b, "name": "Old Connection"}
-        ]
+        layout_payload["connections"] = [{"source": id_a, "target": id_b, "name": "Old Connection"}]
         serializer = FactoryLayoutSerializer(data=layout_payload)
         serializer.is_valid(raise_exception=True)
         layout = serializer.save(tenant=tenant)
@@ -545,9 +542,7 @@ class TestFactoryLayoutSerializerUpdate:
                 {"source": new_b, "target": new_a, "name": "Return"},
             ],
         }
-        update_serializer = FactoryLayoutSerializer(
-            layout, data=update_data, partial=True
-        )
+        update_serializer = FactoryLayoutSerializer(layout, data=update_data, partial=True)
         assert update_serializer.is_valid(), update_serializer.errors
         updated = update_serializer.save()
 
@@ -568,14 +563,10 @@ class TestFactoryLayoutSerializerUpdate:
             "inventory_config": {
                 "storage_capacity": 5000,
                 "capacity_unit": "litres",
-                "materials": [
-                    {"id": "m1", "name": "Water", "unit": "litres", "quantity": 500}
-                ],
+                "materials": [{"id": "m1", "name": "Water", "unit": "litres", "quantity": 500}],
             }
         }
-        update_serializer = FactoryLayoutSerializer(
-            layout, data=update_data, partial=True
-        )
+        update_serializer = FactoryLayoutSerializer(layout, data=update_data, partial=True)
         assert update_serializer.is_valid(), update_serializer.errors
         updated = update_serializer.save()
 
@@ -593,14 +584,10 @@ class TestFactoryLayoutSerializerUpdate:
             "inventory_config": {
                 "storage_capacity": 2000,
                 "capacity_unit": "units",
-                "materials": [
-                    {"id": "m1", "name": "Bolts", "unit": "units", "quantity": 100}
-                ],
+                "materials": [{"id": "m1", "name": "Bolts", "unit": "units", "quantity": 100}],
             }
         }
-        update_serializer = FactoryLayoutSerializer(
-            layout, data=update_data, partial=True
-        )
+        update_serializer = FactoryLayoutSerializer(layout, data=update_data, partial=True)
         assert update_serializer.is_valid(), update_serializer.errors
         updated = update_serializer.save()
 
@@ -624,12 +611,92 @@ class TestFactoryLayoutSerializerUpdate:
                 ],
             }
         }
-        update_serializer = FactoryLayoutSerializer(
-            layout, data=update_data, partial=True
-        )
+        update_serializer = FactoryLayoutSerializer(layout, data=update_data, partial=True)
         assert update_serializer.is_valid(), update_serializer.errors
         updated = update_serializer.save()
 
         disp = updated.dispatch_config
         assert len(disp.products) == 2
         assert disp.products[0]["name"] == "New Product"
+
+
+class TestSpatialVisualizationFields:
+    def test_zones_and_machine_visuals_round_trip(
+        self, tenant, factory, layout_payload, machine_a_id
+    ):
+        line = FactoryMaster.objects.create(
+            tenant=tenant, factory=factory, kind="lines", name="Assembly", code="ASM"
+        )
+        layout_payload.update(
+            {
+                "model_transform": {
+                    "offsetX": 2,
+                    "offsetY": 3,
+                    "elevation": 0,
+                    "scale": 1,
+                    "rotationY": 90,
+                },
+                "zones": [
+                    {
+                        "id": str(uuid.uuid4()),
+                        "name": "Safety",
+                        "zone_type": "safety",
+                        "color": "#FDE68A",
+                        "position_x": 1,
+                        "position_y": 2,
+                        "width": 12,
+                        "height": 8,
+                        "display_order": 0,
+                        "line_id": str(line.id),
+                    }
+                ],
+                "machines": [
+                    {
+                        "id": machine_a_id,
+                        "name": "Press",
+                        "position_x": 20,
+                        "position_y": 10,
+                        "size_width": 3,
+                        "size_height": 2,
+                        "visual_height": 2.5,
+                        "rotation_degrees": 90,
+                        "inputs": [],
+                        "outputs": [],
+                        "parameters": [],
+                        "custom_kpis": [],
+                    }
+                ],
+            }
+        )
+        serializer = FactoryLayoutSerializer(data=layout_payload)
+        assert serializer.is_valid(), serializer.errors
+        layout = serializer.save(tenant=tenant)
+        assert FactoryZone.objects.get(layout=layout).line == line
+        assert layout.machines.get().visual_height == 2.5
+        assert FactoryLayoutSerializer(layout).data["zones"][0]["name"] == "Safety"
+
+    def test_rejects_zone_outside_floor(self, layout_payload):
+        layout_payload["zones"] = [
+            {
+                "name": "Outside",
+                "zone_type": "safety",
+                "color": "#FF0000",
+                "position_x": 95,
+                "position_y": 1,
+                "width": 10,
+                "height": 2,
+                "display_order": 0,
+            }
+        ]
+        serializer = FactoryLayoutSerializer(data=layout_payload)
+        assert not serializer.is_valid()
+        assert "zones" in serializer.errors
+
+    def test_rejects_overlapping_machine_footprints(self, layout_payload):
+        layout_payload["machines"] = [
+            {"name": "A", "position_x": 1, "position_y": 1, "size_width": 3, "size_height": 3},
+            {"name": "B", "position_x": 2, "position_y": 2, "size_width": 2, "size_height": 2},
+        ]
+        serializer = FactoryLayoutSerializer(data=layout_payload)
+        assert not serializer.is_valid()
+        assert "machines" in serializer.errors

@@ -8,18 +8,91 @@ from apps.spatial.models import (
     DispatchConfiguration,
     DispatchEvent,
     FactoryLayout,
+    FactoryModelAsset,
+    FactoryZone,
     InventoryChange,
     InventoryConfiguration,
     MachineConnection,
     MachineCustomKpi,
+    MachineImageAsset,
+    MachineModelAsset,
     MachineObservation,
     MachineParameter,
     ParamDataType,
     SpatialMachine,
+    default_status_visualization,
 )
 from apps.tenancy.models import FactoryMaster
 
 PARAM_KEY_REGEX = re.compile(r"^[a-zA-Z0-9_]+$")
+HEX_COLOR_REGEX = re.compile(r"^#[0-9a-fA-F]{6}$")
+
+
+def validate_status_visualization(value):
+    if not isinstance(value, dict):
+        raise serializers.ValidationError("Status visualization settings must be an object.")
+    defaults = default_status_visualization()
+    unknown = set(value) - set(defaults)
+    if unknown:
+        raise serializers.ValidationError(f"Unknown status visualization setting: {sorted(unknown)[0]}.")
+    merged = {**defaults, **value}
+    for key, item in merged.items():
+        if isinstance(item, bool) or not isinstance(item, (int, float)):
+            raise serializers.ValidationError(f"{key} must be a number.")
+    if merged["recentMinutes"] < 1 or merged["persistentMinutes"] <= merged["recentMinutes"]:
+        raise serializers.ValidationError("Persistent minutes must be greater than recent minutes.")
+    if not 0 <= merged["outOfRangeConfirmationSeconds"] <= 3600:
+        raise serializers.ValidationError("Out-of-range confirmation must be between 0 and 3600 seconds.")
+    if not 5 <= merged["rejectWindowCycles"] <= 100:
+        raise serializers.ValidationError("Reject window must contain between 5 and 100 cycles.")
+    if not 1 <= merged["rejectMinimumCycles"] <= merged["rejectWindowCycles"]:
+        raise serializers.ValidationError("Reject minimum must fit inside the reject window.")
+    return merged
+
+
+def validate_model_transform(value):
+    if not isinstance(value, dict):
+        raise serializers.ValidationError("Model transform must be an object.")
+    allowed = {"elevation", "scale", "rotationY"}
+    if set(value) - allowed:
+        raise serializers.ValidationError("Use elevation, scale and rotationY only.")
+    normalized = {"elevation": 0.0, "scale": 1.0, "rotationY": 0.0}
+    for key, raw in value.items():
+        try:
+            normalized[key] = float(raw)
+        except (TypeError, ValueError) as exc:
+            raise serializers.ValidationError(f"{key} must be numeric.") from exc
+    if not 0.01 <= normalized["scale"] <= 100:
+        raise serializers.ValidationError("Model scale must be between 0.01 and 100.")
+    if not -1000 <= normalized["elevation"] <= 1000:
+        raise serializers.ValidationError("Model elevation is outside the supported range.")
+    if not -3600 <= normalized["rotationY"] <= 3600:
+        raise serializers.ValidationError("Model rotation is outside the supported range.")
+    return normalized
+
+
+class MachineModelAssetSerializer(serializers.ModelSerializer):
+    download_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MachineModelAsset
+        fields = ["id", "filename", "size_bytes", "checksum_sha256", "download_url"]
+
+    def get_download_url(self, obj):
+        version = obj.checksum_sha256[:12]
+        return f"/api/backend/api/spatial/machines/{obj.machine_id}/model/?v={version}"
+
+
+class MachineImageAssetSerializer(serializers.ModelSerializer):
+    download_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MachineImageAsset
+        fields = ["id", "filename", "content_type", "size_bytes", "checksum_sha256", "download_url"]
+
+    def get_download_url(self, obj):
+        version = obj.checksum_sha256[:12]
+        return f"/api/backend/api/spatial/machines/{obj.machine_id}/image/?v={version}"
 
 
 class MachineParameterSerializer(serializers.ModelSerializer):
@@ -167,6 +240,8 @@ class SpatialMachineSerializer(serializers.ModelSerializer):
     )
     process = serializers.SerializerMethodField()
     line = serializers.SerializerMethodField()
+    model_asset = MachineModelAssetSerializer(read_only=True)
+    image_asset = MachineImageAssetSerializer(read_only=True)
 
     class Meta:
         model = SpatialMachine
@@ -181,6 +256,13 @@ class SpatialMachineSerializer(serializers.ModelSerializer):
             "position_y",
             "size_width",
             "size_height",
+            "visual_height",
+            "rotation_degrees",
+            "representation",
+            "block_color",
+            "model_transform",
+            "model_asset",
+            "image_asset",
             "inputs",
             "outputs",
             "status",
@@ -223,7 +305,83 @@ class SpatialMachineSerializer(serializers.ModelSerializer):
         process = attrs.get("process", getattr(self.instance, "process", None))
         if process and process.kind != FactoryMaster.Kind.PROCESS:
             raise serializers.ValidationError({"process_id": "Choose a manufacturing process."})
+        if attrs.get("rotation_degrees", getattr(self.instance, "rotation_degrees", 0)) not in {
+            0,
+            90,
+            180,
+            270,
+        }:
+            raise serializers.ValidationError(
+                {"rotation_degrees": "Use 0, 90, 180 or 270 degrees."}
+            )
+        if attrs.get("visual_height", getattr(self.instance, "visual_height", 1)) <= 0:
+            raise serializers.ValidationError(
+                {"visual_height": "Height must be greater than zero."}
+            )
+        color = attrs.get("block_color", getattr(self.instance, "block_color", "#DBEAFE"))
+        if not HEX_COLOR_REGEX.match(color):
+            raise serializers.ValidationError(
+                {"block_color": "Use a six digit hex color such as #DBEAFE."}
+            )
+        attrs["block_color"] = color.upper()
+        if "model_transform" in attrs:
+            attrs["model_transform"] = validate_model_transform(attrs["model_transform"])
         return attrs
+
+
+class FactoryZoneSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(required=False)
+    line_id = serializers.PrimaryKeyRelatedField(
+        source="line", queryset=FactoryMaster.objects.all(), required=False, allow_null=True
+    )
+    line = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FactoryZone
+        fields = [
+            "id",
+            "name",
+            "zone_type",
+            "color",
+            "position_x",
+            "position_y",
+            "width",
+            "height",
+            "display_order",
+            "line_id",
+            "line",
+        ]
+
+    def get_line(self, obj):
+        if not obj.line_id:
+            return None
+        return {"id": str(obj.line_id), "name": obj.line.name, "code": obj.line.code}
+
+    def validate_color(self, value):
+        if not re.match(r"^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$", value):
+            raise serializers.ValidationError("Use a six or eight digit hex color.")
+        return value.upper()
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if attrs.get("width", 0) <= 0 or attrs.get("height", 0) <= 0:
+            raise serializers.ValidationError("Zone width and height must be greater than zero.")
+        line = attrs.get("line")
+        if line and line.kind != FactoryMaster.Kind.LINE:
+            raise serializers.ValidationError({"line_id": "Choose a production line."})
+        return attrs
+
+
+class FactoryModelAssetSerializer(serializers.ModelSerializer):
+    download_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FactoryModelAsset
+        fields = ["id", "filename", "size_bytes", "checksum_sha256", "download_url"]
+
+    def get_download_url(self, obj):
+        version = obj.checksum_sha256[:12]
+        return f"/api/backend/api/spatial/layouts/{obj.layout_id}/model/?v={version}"
 
 
 class MachineConnectionSerializer(serializers.ModelSerializer):
@@ -265,6 +423,11 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
     connections = MachineConnectionSerializer(many=True, required=False, default=[])
     inventory_config = InventoryConfigurationSerializer(required=False, allow_null=True)
     dispatch_config = DispatchConfigurationSerializer(required=False, allow_null=True)
+    zones = FactoryZoneSerializer(many=True, required=False, default=[])
+    model_asset = FactoryModelAssetSerializer(read_only=True)
+    status_visualization = serializers.JSONField(
+        required=False, validators=[validate_status_visualization]
+    )
 
     class Meta:
         model = FactoryLayout
@@ -275,8 +438,12 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
             "floor_height",
             "unit_system",
             "is_active",
+            "model_transform",
+            "status_visualization",
             "machines",
             "connections",
+            "zones",
+            "model_asset",
             "inventory_config",
             "dispatch_config",
         ]
@@ -311,10 +478,15 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         """Validate machine positions within floor bounds and connection references."""
+        if "status_visualization" in attrs:
+            attrs["status_visualization"] = validate_status_visualization(
+                attrs["status_visualization"]
+            )
         floor_width = attrs.get("floor_width", getattr(self.instance, "floor_width", None))
         floor_height = attrs.get("floor_height", getattr(self.instance, "floor_height", None))
         machines_data = attrs.get("machines", [])
         connections_data = attrs.get("connections", [])
+        zones_data = attrs.get("zones", [])
 
         # Validate machine positions are within floor bounds
         if floor_width is not None and floor_height is not None:
@@ -327,7 +499,17 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                     )
                 if pos_x is None:
                     continue
-                if pos_x >= int(floor_width) or pos_y >= int(floor_height):
+                size_width = machine_data.get("size_width", 1)
+                size_height = machine_data.get("size_height", 1)
+                rotation = machine_data.get("rotation_degrees", 0)
+                footprint_width, footprint_height = (
+                    (size_height, size_width)
+                    if rotation in {90, 270}
+                    else (size_width, size_height)
+                )
+                if pos_x + footprint_width > float(floor_width) or pos_y + footprint_height > float(
+                    floor_height
+                ):
                     raise serializers.ValidationError(
                         {
                             "machines": (
@@ -337,8 +519,20 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                         }
                     )
 
+            for zone in zones_data:
+                if (
+                    zone.get("position_x", 0) < 0
+                    or zone.get("position_y", 0) < 0
+                    or zone.get("position_x", 0) + zone.get("width", 0) > floor_width
+                    or zone.get("position_y", 0) + zone.get("height", 0) > floor_height
+                ):
+                    raise serializers.ValidationError(
+                        {"zones": "Every zone must fit inside the floor."}
+                    )
+
         # Validate duplicate positions
         positions = set()
+        footprints = []
         for machine_data in machines_data:
             pos = (machine_data.get("position_x"), machine_data.get("position_y"))
             if pos[0] is None or pos[1] is None:
@@ -353,6 +547,22 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
                     }
                 )
             positions.add(pos)
+            width = machine_data.get("size_width", 1)
+            height = machine_data.get("size_height", 1)
+            if machine_data.get("rotation_degrees", 0) in {90, 270}:
+                width, height = height, width
+            rect = (pos[0], pos[1], pos[0] + width, pos[1] + height)
+            if any(
+                rect[0] < other[2]
+                and rect[2] > other[0]
+                and rect[1] < other[3]
+                and rect[3] > other[1]
+                for other in footprints
+            ):
+                raise serializers.ValidationError(
+                    {"machines": "Machine footprints cannot overlap."}
+                )
+            footprints.append(rect)
 
         factory = attrs.get("factory", getattr(self.instance, "factory", None))
         for machine_data in machines_data:
@@ -362,6 +572,12 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
             ):
                 raise serializers.ValidationError(
                     {"machines": "Every assigned process must belong to this factory."}
+                )
+        for zone in zones_data:
+            line = zone.get("line")
+            if line and (line.factory_id != factory.id or line.kind != FactoryMaster.Kind.LINE):
+                raise serializers.ValidationError(
+                    {"zones": "Every zone line must belong to this factory."}
                 )
 
         # Validate connection source/target references
@@ -451,11 +667,15 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
         """Create a full layout with nested machines, connections, inventory, dispatch."""
         machines_data = validated_data.pop("machines", [])
         connections_data = validated_data.pop("connections", [])
+        zones_data = validated_data.pop("zones", [])
         inventory_data = validated_data.pop("inventory_config", None)
         dispatch_data = validated_data.pop("dispatch_config", None)
 
         layout = FactoryLayout.objects.create(**validated_data)
         tenant = validated_data.get("tenant")
+        for zone_data in zones_data:
+            zone_data.pop("id", None)
+            FactoryZone.objects.create(layout=layout, tenant=tenant, **zone_data)
 
         # Create machines with their nested parameters and KPIs
         machine_id_map = {}  # maps client-provided UUIDs to created machine objects
@@ -538,6 +758,7 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
         """
         machines_data = validated_data.pop("machines", None)
         connections_data = validated_data.pop("connections", None)
+        zones_data = validated_data.pop("zones", None)
         inventory_data = validated_data.pop("inventory_config", None)
         dispatch_data = validated_data.pop("dispatch_config", None)
 
@@ -547,6 +768,12 @@ class FactoryLayoutSerializer(serializers.ModelSerializer):
         instance.save()
 
         tenant = instance.tenant
+
+        if zones_data is not None:
+            instance.zones.all().delete()
+            for zone_data in zones_data:
+                zone_data.pop("id", None)
+                FactoryZone.objects.create(layout=instance, tenant=tenant, **zone_data)
 
         # Merge machines if provided (preserves observations)
         if machines_data is not None:

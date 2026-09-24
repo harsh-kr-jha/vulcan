@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   FactoryLayout,
   MachineNode,
-  MachineStatus,
 } from "@/lib/spatial-types";
+import type { LiveMachineSummary } from "@/lib/factory-domain";
+import type { ScreenAnchor } from "@/lib/spatial-overlay";
+import { resolveMachineVisualStatus } from "@/lib/machine-visual-status";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -17,6 +19,9 @@ interface FactoryVisualizationProps {
   observations?: Record<string, ObservationData>;
   onMachineHover?: (machineId: string | null) => void;
   onMachineClick?: (machineId: string) => void;
+  liveMachines?: LiveMachineSummary[];
+  selectedMachineId?: string | null;
+  onSelectedAnchorChange?: (anchor: ScreenAnchor) => void;
 }
 
 export interface ObservationData {
@@ -28,29 +33,14 @@ export interface ObservationData {
 // Constants
 // ---------------------------------------------------------------------------
 
-/** Status-based fill colors for machine rectangles (top-view) */
-const STATUS_FILLS: Record<MachineStatus, string> = {
-  running: "#bbf7d0",  // green-200
-  warning: "#fde68a",  // amber-200
-  down: "#fecaca",     // red-200
-  idle: "#e5e7eb",     // gray-200
-  no_data: "#f3f4f6",  // gray-100
-};
-
-const STATUS_STROKES: Record<MachineStatus, string> = {
-  running: "#16a34a",  // green-600
-  warning: "#d97706",  // amber-600
-  down: "#dc2626",     // red-600
-  idle: "#6b7280",     // gray-500
-  no_data: "#9ca3af",  // gray-400
-};
-
-const STATUS_LABELS: Record<MachineStatus, string> = {
+const STATUS_LABELS: Record<string, string> = {
   running: "Running",
   warning: "Warning",
   down: "Down",
   idle: "Idle",
   no_data: "No Data",
+  degraded: "Degraded",
+  stale: "Stale",
 };
 
 // ---------------------------------------------------------------------------
@@ -97,11 +87,15 @@ export function FactoryVisualization({
   observations,
   onMachineHover,
   onMachineClick,
+  liveMachines = [],
+  selectedMachineId,
+  onSelectedAnchorChange,
 }: FactoryVisualizationProps) {
   const [hoveredMachineId, setHoveredMachineId] = useState<string | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
   const { floor, machines, connections } = layout;
+  const liveMap = useMemo(() => new Map(liveMachines.map((machine) => [machine.id, machine])), [liveMachines]);
 
   // SVG viewBox is derived directly from the saved floor dimensions.
   const viewBoxWidth = floor.width;
@@ -139,6 +133,7 @@ export function FactoryVisualization({
     [floor.height, floor.width, minimumViewportSize, viewBoxHeight, viewBoxState, viewBoxWidth]
   );
   const svgRef = useRef<SVGSVGElement>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
   const viewBoxRef = useRef(viewBox);
   const panStart = useRef<{ x: number; y: number; vbX: number; vbY: number } | null>(null);
   const didPanRef = useRef(false);
@@ -261,6 +256,39 @@ export function FactoryVisualization({
 
   const viewBoxString = `${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`;
 
+  const updateSelectedAnchor = useCallback(() => {
+    const svg = svgRef.current;
+    const host = hostRef.current;
+    const machine = machines.find((item) => item.id === selectedMachineId);
+    const matrix = svg?.getScreenCTM();
+    if (!svg || !host || !machine || !matrix || !onSelectedAnchorChange) {
+      onSelectedAnchorChange?.({ x: 0, y: 0, visible: false });
+      return;
+    }
+    const rotated = machine.rotation === 90 || machine.rotation === 270;
+    const width = rotated ? (machine.size?.height ?? 1) : (machine.size?.width ?? 1);
+    const point = new DOMPoint(machine.position.x + width / 2, machine.position.y)
+      .matrixTransform(matrix);
+    const bounds = host.getBoundingClientRect();
+    const x = point.x - bounds.left;
+    const y = point.y - bounds.top;
+    onSelectedAnchorChange({
+      x,
+      y,
+      visible: x >= 0 && y >= 0 && x <= bounds.width && y <= bounds.height,
+    });
+  }, [machines, onSelectedAnchorChange, selectedMachineId]);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(updateSelectedAnchor);
+    const observer = new ResizeObserver(updateSelectedAnchor);
+    if (hostRef.current) observer.observe(hostRef.current);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [onSelectedAnchorChange, updateSelectedAnchor, viewBoxString]);
+
   // Machine lookup map
   const machineMap = useMemo(() => {
     const map = new Map<string, MachineNode>();
@@ -299,7 +327,7 @@ export function FactoryVisualization({
   );
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+    <div ref={hostRef} className="relative w-full h-full overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <svg
         ref={svgRef}
         className="absolute inset-4 w-[calc(100%-2rem)] h-[calc(100%-2rem)] select-none"
@@ -316,6 +344,9 @@ export function FactoryVisualization({
       >
           {/* Defs: arrow markers, shadows */}
           <defs>
+            <pattern id="floor-grid" width="1" height="1" patternUnits="userSpaceOnUse">
+              <path d="M 1 0 L 0 0 0 1" fill="none" stroke="#e2e8f0" strokeWidth="0.03" />
+            </pattern>
             <marker
               id="viz-arrow"
               viewBox="0 0 10 10"
@@ -338,33 +369,16 @@ export function FactoryVisualization({
             y={0}
             width={floor.width}
             height={floor.height}
-            fill="#f8fafc"
+            fill="url(#floor-grid)"
             stroke="#cbd5e1"
             strokeWidth={0.06}
             rx={0.15}
           />
-          {/* Grid lines */}
-          {Array.from({ length: floor.width + 1 }, (_, i) => (
-            <line
-              key={`v-${i}`}
-              x1={i}
-              y1={0}
-              x2={i}
-              y2={floor.height}
-              stroke="#e2e8f0"
-              strokeWidth={0.03}
-            />
-          ))}
-          {Array.from({ length: floor.height + 1 }, (_, i) => (
-            <line
-              key={`h-${i}`}
-              x1={0}
-              y1={i}
-              x2={floor.width}
-              y2={i}
-              stroke="#e2e8f0"
-              strokeWidth={0.03}
-            />
+          {(layout.zones ?? []).map((zone) => (
+            <g key={zone.id} pointerEvents="none">
+              <rect x={zone.position.x} y={zone.position.y} width={zone.size.width} height={zone.size.height} rx={0.18} fill={zone.color} fillOpacity={0.28} stroke={zone.color} strokeWidth={0.08} strokeDasharray="0.25 0.12" />
+              <text x={zone.position.x + 0.25} y={zone.position.y + 0.5} fontSize={0.34} fontWeight={700} fill="#334155">{zone.name}{zone.line?.name ? ` · ${zone.line.name}` : ""}</text>
+            </g>
           ))}
 
           {/* Connection lines (rendered behind machines) */}
@@ -373,10 +387,12 @@ export function FactoryVisualization({
             const tgt = machineMap.get(conn.targetId);
             if (!src || !tgt) return null;
 
-            const srcW = src.size?.width ?? 1;
-            const srcH = src.size?.height ?? 1;
-            const tgtW = tgt.size?.width ?? 1;
-            const tgtH = tgt.size?.height ?? 1;
+            const srcRotated = src.rotation === 90 || src.rotation === 270;
+            const tgtRotated = tgt.rotation === 90 || tgt.rotation === 270;
+            const srcW = srcRotated ? (src.size?.height ?? 1) : (src.size?.width ?? 1);
+            const srcH = srcRotated ? (src.size?.width ?? 1) : (src.size?.height ?? 1);
+            const tgtW = tgtRotated ? (tgt.size?.height ?? 1) : (tgt.size?.width ?? 1);
+            const tgtH = tgtRotated ? (tgt.size?.width ?? 1) : (tgt.size?.height ?? 1);
 
             const srcCenter = { x: src.position.x + srcW / 2, y: src.position.y + srcH / 2 };
             const tgtCenter = { x: tgt.position.x + tgtW / 2, y: tgt.position.y + tgtH / 2 };
@@ -422,10 +438,11 @@ export function FactoryVisualization({
 
           {/* Machine rectangles */}
           {machines.map((machine) => {
+            const live = liveMap.get(machine.id);
             const obsData = observations?.[machine.id];
             const hasData = !!obsData;
             // Derive status from the 'active' boolean parameter in observations
-            let status: MachineStatus = machine.status ?? "no_data";
+            let status: string = live?.state ?? machine.status ?? "no_data";
             if (hasData) {
               const activeValue = obsData.values["active"];
               if (activeValue === true || activeValue === "true") {
@@ -436,9 +453,19 @@ export function FactoryVisualization({
                 status = "running";
               }
             }
-            const w = machine.size?.width ?? 1;
-            const h = machine.size?.height ?? 1;
+            const visual = resolveMachineVisualStatus(
+              live ?? {
+                state: status as LiveMachineSummary["state"],
+                operatingState: status === "idle" || status === "down" ? "inactive" : "running",
+                issues: [],
+              },
+              layout.statusVisualization,
+            );
+            const rotated = machine.rotation === 90 || machine.rotation === 270;
+            const w = rotated ? (machine.size?.height ?? 1) : (machine.size?.width ?? 1);
+            const h = rotated ? (machine.size?.width ?? 1) : (machine.size?.height ?? 1);
             const isHovered = hoveredMachineId === machine.id;
+            const isSelected = selectedMachineId === machine.id;
             const fontSize = Math.min(w, h) * 0.3;
 
             return (
@@ -471,7 +498,7 @@ export function FactoryVisualization({
                 }}
                 tabIndex={0}
                 role="button"
-                aria-label={`Machine: ${machine.name}, Status: ${STATUS_LABELS[status]}`}
+                aria-label={`Machine: ${machine.name}, Status: ${visual.label}${visual.segments.length ? `, ${visual.segments.map((item) => item.label).join(", ")}` : ""}`}
               >
                 {/* Clip path to prevent text overflow */}
                 <defs>
@@ -491,9 +518,9 @@ export function FactoryVisualization({
                   width={w - 0.1}
                   height={h - 0.1}
                   rx={0.12}
-                  fill={STATUS_FILLS[status]}
-                  stroke={isHovered ? "#2563eb" : STATUS_STROKES[status]}
-                  strokeWidth={isHovered ? 0.1 : 0.06}
+                  fill={visual.bodyColor}
+                  stroke={isHovered || isSelected ? "#2563eb" : visual.bodyColor}
+                  strokeWidth={isHovered || isSelected ? 0.12 : 0.06}
                   filter="url(#machine-shadow)"
                   style={{ transition: "stroke 0.15s, stroke-width 0.15s" }}
                 />
@@ -502,8 +529,17 @@ export function FactoryVisualization({
                   cx={machine.position.x + w - 0.25}
                   cy={machine.position.y + 0.25}
                   r={0.12}
-                  fill={STATUS_STROKES[status]}
+                  fill={visual.bodyColor}
                 />
+                {visual.segments.map((segment, index) => (
+                  <circle key={segment.type} cx={machine.position.x + 0.25 + index * 0.24} cy={machine.position.y + h - 0.23} r={0.09} fill={segment.color} stroke="#fff" strokeWidth={0.025} />
+                ))}
+                {!!live?.alertCount && (
+                  <g style={{ pointerEvents: "none" }}>
+                    <circle cx={machine.position.x + 0.28} cy={machine.position.y + 0.28} r={0.2} fill="#dc2626" />
+                    <text x={machine.position.x + 0.28} y={machine.position.y + 0.29} textAnchor="middle" dominantBaseline="middle" fontSize={0.22} fontWeight={800} fill="white">{Math.min(live.alertCount, 9)}</text>
+                  </g>
+                )}
                 {/* Data indicator (bottom-left corner) */}
                 {hasData && (
                   <g style={{ pointerEvents: "none" }}>
@@ -523,7 +559,7 @@ export function FactoryVisualization({
                   dominantBaseline="middle"
                   fontSize={fontSize}
                   fontWeight={600}
-                  fill="#1e293b"
+                  fill={visual.textColor}
                   clipPath={`url(#viz-clip-${machine.id})`}
                   style={{ pointerEvents: "none", userSelect: "none" }}
                 >
@@ -543,11 +579,11 @@ export function FactoryVisualization({
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fontSize={fontSize * 0.65}
-                  fill={STATUS_STROKES[status]}
+                  fill={visual.textColor}
                   clipPath={`url(#viz-clip-${machine.id})`}
                   style={{ pointerEvents: "none", userSelect: "none" }}
                 >
-                  {STATUS_LABELS[status]}
+                  {visual.label}
                 </text>
               </g>
             );

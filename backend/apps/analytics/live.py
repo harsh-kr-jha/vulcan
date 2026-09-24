@@ -1,7 +1,10 @@
 from datetime import timedelta
 
 from django.utils import timezone
+from django.db.models import F, Window, prefetch_related_objects
+from django.db.models.functions import RowNumber
 
+from apps.alerts.models import Alert
 from apps.ml.models import MachineCycle, ObservationConfig, PredictionModel
 
 STATE_PRIORITY = {
@@ -20,15 +23,6 @@ def _related(machine, name):
         return getattr(machine, name)
     except Exception:
         return None
-
-
-def _latest_cycle(machine):
-    return (
-        MachineCycle.objects.filter(machine=machine)
-        .prefetch_related("snapshots")
-        .order_by("-started_at")
-        .first()
-    )
 
 
 def _prediction(cycle):
@@ -54,11 +48,7 @@ def _explicit_state(machine, values):
         if parameter.is_active and parameter.semantic in {"status", "state"}
     } | {"status", "machine_status", "operating_status"}
     raw = next(
-        (
-            value
-            for key in status_keys
-            if (value := values.get(key)) is not None and value != ""
-        ),
+        (value for key in status_keys if (value := values.get(key)) is not None and value != ""),
         "",
     )
     value = str(raw).strip().casefold()
@@ -84,7 +74,6 @@ def machine_live_state(machine, now=None, cycle=None):
     poll_seconds = binding.channel.stream.poll_interval_seconds if binding else 10
     if now - current.observed_at > timedelta(seconds=max(3 * poll_seconds, 30)):
         return "stale"
-    cycle = cycle if cycle is not None else _latest_cycle(machine)
     prediction = _prediction(cycle)
     if cycle and any(bool(value) for value in (cycle.violations or {}).values()):
         return "warning"
@@ -96,6 +85,38 @@ def machine_live_state(machine, now=None, cycle=None):
 def _identity(machine, state, current):
     process = machine.process
     line = process.parent if process and process.parent_id else None
+    reasons = []
+    if state == "down":
+        reasons.append("Machine reported a stopped or fault state")
+    elif state == "warning":
+        reasons.append("An operating value or prediction needs attention")
+    elif state == "degraded":
+        reasons.append("The connected data stream is degraded")
+    elif state == "stale":
+        reasons.append("Live data is stale")
+    operating_state = (
+        "unknown"
+        if state in {"stale", "no_data", "degraded"}
+        else "inactive"
+        if current and current.operating_state == "inactive"
+        else "running"
+    )
+    issue_labels = {
+        "out_of_range": "Out-of-range parameters",
+        "predicted_failure": "Predicted failure",
+        "high_rejects": "High rejects",
+    }
+    issues = [
+        {
+            "type": issue.issue_type,
+            "label": issue_labels[issue.issue_type],
+            "activeSince": issue.active_since,
+            "evidence": issue.evidence,
+        }
+        for issue in machine.operational_issues.all()
+        if issue.active and issue.active_since
+    ]
+    reasons.extend(issue["label"] for issue in issues)
     return {
         "id": str(machine.id),
         "name": machine.name,
@@ -105,7 +126,15 @@ def _identity(machine, state, current):
         else None,
         "line": {"id": str(line.id), "name": line.name, "code": line.code} if line else None,
         "state": state,
-        "attention": state in {"down", "warning", "degraded", "stale"},
+        "attention": state in {"down", "warning", "degraded", "stale"} or bool(issues),
+        "attentionReasons": reasons,
+        "operatingState": operating_state,
+        "inactiveSince": current.operating_state_since
+        if operating_state == "inactive" and current
+        else None,
+        "issues": issues,
+        "alertCount": 0,
+        "highestAlertSeverity": None,
         "lastObservedAt": current.observed_at if current else None,
         "placed": machine.position_x is not None and machine.position_y is not None,
     }
@@ -172,18 +201,46 @@ def build_live_dashboard(factory, requested_machine_id=None):
     machines = list(
         factory.spatial_layout.machines.filter(is_active=True)
         .select_related("process__parent", "current_state", "stream_binding__channel__stream")
-        .prefetch_related("parameters")
+        .prefetch_related("parameters", "operational_issues")
         .order_by("display_order", "name")
     )
-    summaries, cycles = [], {}
-    for machine in machines:
-        cycle = _latest_cycle(machine)
-        cycles[machine.id] = cycle
-        summaries.append(
-            _identity(
-                machine, machine_live_state(machine, now, cycle), _related(machine, "current_state")
-            )
+    active_alerts = Alert.objects.filter(
+        factory=factory, machine__isnull=False, status__in=["new", "acknowledged"]
+    ).values_list("machine_id", "severity")
+    alert_map = {}
+    severity_rank = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+    for machine_id, severity in active_alerts:
+        entry = alert_map.setdefault(str(machine_id), {"count": 0, "severity": None})
+        entry["count"] += 1
+        if entry["severity"] is None or severity_rank.get(severity, 99) < severity_rank.get(
+            entry["severity"], 99
+        ):
+            entry["severity"] = severity
+    latest_cycles = MachineCycle.objects.filter(
+        tenant=factory.tenant, machine__layout__factory=factory
+    ).annotate(
+        machine_rank=Window(
+            expression=RowNumber(),
+            partition_by=[F("machine_id")],
+            order_by=F("started_at").desc(),
         )
+    ).filter(machine_rank=1)
+    cycles = {cycle.machine_id: cycle for cycle in latest_cycles}
+    summaries = []
+    for machine in machines:
+        cycle = cycles.get(machine.id)
+        summary = _identity(
+            machine, machine_live_state(machine, now, cycle), _related(machine, "current_state")
+        )
+        alert_summary = alert_map.get(str(machine.id))
+        if alert_summary:
+            summary["alertCount"] = alert_summary["count"]
+            summary["highestAlertSeverity"] = alert_summary["severity"]
+            summary["attention"] = True
+            summary["attentionReasons"].append(
+                f"{alert_summary['count']} active alert{'s' if alert_summary['count'] != 1 else ''}"
+            )
+        summaries.append(summary)
     by_id = {item["id"]: item for item in summaries}
     if requested_machine_id:
         if str(requested_machine_id) not in by_id:
@@ -205,7 +262,9 @@ def build_live_dashboard(factory, requested_machine_id=None):
     if selected:
         current = _related(selected, "current_state")
         binding = _related(selected, "stream_binding")
-        cycle = cycles[selected.id]
+        cycle = cycles.get(selected.id)
+        if cycle:
+            prefetch_related_objects([cycle], "snapshots")
         prediction = _prediction(cycle)
         violations = (cycle.violations or {}) if cycle else {}
         values = (current.values or {}) if current else {}

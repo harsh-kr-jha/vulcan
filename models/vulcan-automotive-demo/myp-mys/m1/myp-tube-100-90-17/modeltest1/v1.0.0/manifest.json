@@ -1,0 +1,23 @@
+{
+  "artifact": "model.joblib",
+  "machine": {
+    "code": "M1",
+    "factory": "MYP-MYS",
+    "tenant": "vulcan-automotive-demo"
+  },
+  "metrics": {},
+  "name": "modeltest1",
+  "profile": {
+    "checkpoint_phase": "cutting",
+    "checkpoint_second": 3,
+    "contract": "c8eed420351181a1c0b26845ae5d2929651943fc5f95c25fbf927a443d6f32a6",
+    "sku": "MYP-TUBE-100-90-17",
+    "version": 2
+  },
+  "runtime": "sklearn-joblib",
+  "schema_version": 1,
+  "sha256": "16c6a866ee9848bab56f2e3958613543cf563761d70b83be5487249af1c54891",
+  "stage": "available",
+  "threshold": 0.5,
+  "version": "1.0.0"
+}

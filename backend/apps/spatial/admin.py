@@ -4,6 +4,8 @@ from apps.spatial.models import (
     DispatchConfiguration,
     DispatchEvent,
     FactoryLayout,
+    FactoryModelAsset,
+    FactoryZone,
     InventoryChange,
     InventoryConfiguration,
     MachineConnection,
@@ -28,12 +30,18 @@ class MachineConnectionInline(admin.TabularInline):
     readonly_fields = ("id",)
 
 
+class FactoryZoneInline(admin.TabularInline):
+    model = FactoryZone
+    extra = 0
+    fields = ("name", "zone_type", "line", "position_x", "position_y", "width", "height")
+
+
 @admin.register(FactoryLayout)
 class FactoryLayoutAdmin(admin.ModelAdmin):
     list_display = ("factory", "floor_width", "floor_height", "unit_system", "is_active")
     list_filter = ("unit_system", "is_active")
     search_fields = ("factory__name",)
-    inlines = [SpatialMachineInline, MachineConnectionInline]
+    inlines = [FactoryZoneInline, SpatialMachineInline, MachineConnectionInline]
 
 
 class MachineParameterInline(admin.TabularInline):
@@ -60,6 +68,12 @@ class SpatialMachineAdmin(admin.ModelAdmin):
 class MachineConnectionAdmin(admin.ModelAdmin):
     list_display = ("source", "target", "name", "material_type")
     search_fields = ("name", "source__name", "target__name")
+
+
+@admin.register(FactoryModelAsset)
+class FactoryModelAssetAdmin(admin.ModelAdmin):
+    list_display = ("layout", "filename", "size_bytes", "updated_at")
+    readonly_fields = ("storage_key", "checksum_sha256", "size_bytes")
 
 
 @admin.register(MachineObservation)

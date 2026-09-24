@@ -45,7 +45,7 @@ export interface ActionItem { id: string; alertId: string; title: string; owner:
 export interface UploadDataset { id: string; factoryId: string; filename: string; datasetType: DatasetType; source: DataSource; importedAt: string; status: string; acceptedRows: number; warningRows: number; rejectedRows: number; dataQualityScore: number; omittedFields: string[] }
 export interface FactoryState { company: Company; factories: FactoryConfig[]; activeFactoryId: string; masters: FactoryMasters; uploads: UploadDataset[]; actions: ActionItem[]; targets: FactoryTargets }
 export interface DashboardFilters { from: string; to: string; factoryId: string; line: string; machine: string; sku: string; shift: string }
-export interface IntelligenceAlert { id: string; title: string; description: string; asset: string; severity: "critical" | "high" | "medium" | "low"; status: "new" | "acknowledged" | "resolved" | "dismissed"; occurredAt: string; relativeTime: string; recommendation: string; threshold: string; observed: string; ruleVersion: string; evidence: string[] }
+export interface IntelligenceAlert { id: string; title: string; description: string; asset: string; severity: "critical" | "high" | "medium" | "low"; status: "new" | "acknowledged" | "resolved" | "dismissed"; occurredAt: string; relativeTime: string; recommendation: string; threshold: string; observed: string; ruleVersion: string; evidence: string[]; machineId?: string | null; lineId?: string | null }
 export interface CustomKpiVariable { key: string; label: string; dataset: string; sourceUnit: string; value: number }
 export interface CustomKpiDefinition { id: string; name: string; variableA: string; operation: "add" | "subtract" | "multiply" | "divide"; variableB: string; scale: 1 | 100; decimals: 0 | 1 | 2 | 3; unit: string; pinnedToHome: boolean }
 export interface CustomKpiResult extends CustomKpiDefinition { value: number | null; status: "ready" | "unavailable"; formulaLabel: string; datasets: string[] }
@@ -94,11 +94,22 @@ export interface ImportPreview { upload: UploadDataset; headers: string[]; rows:
 export interface WorkspacePayload { state: FactoryState; intelligence: Intelligence }
 
 export type LiveMachineState = "down" | "warning" | "degraded" | "stale" | "running" | "idle" | "no_data";
+export type MachineIssueType = "out_of_range" | "predicted_failure" | "high_rejects";
+export interface LiveMachineIssue {
+  type: MachineIssueType;
+  label: string;
+  activeSince: string;
+  evidence: Record<string, unknown>;
+}
 export interface LiveMachineSummary {
   id: string; name: string; code: string; state: LiveMachineState; attention: boolean;
+  attentionReasons: string[]; alertCount: number; highestAlertSeverity: "critical" | "high" | "medium" | "low" | null;
   lastObservedAt: string | null; placed: boolean;
   process: { id: string; name: string; code: string } | null;
   line: { id: string; name: string; code: string } | null;
+  operatingState: "running" | "inactive" | "unknown";
+  inactiveSince: string | null;
+  issues: LiveMachineIssue[];
 }
 export interface LiveVariable { key: string; label: string; value: unknown; unit: string; semantic: string; abnormal: boolean; order: number }
 export interface LiveMachineCurrent extends LiveMachineSummary {

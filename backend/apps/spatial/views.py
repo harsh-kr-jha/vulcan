@@ -1,24 +1,36 @@
+import hashlib
+
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from apps.common.permissions import CanManageFactory, factories_for_request, tenant_for_request
 from apps.spatial.models import (
     DispatchConfiguration,
     DispatchEvent,
     FactoryLayout,
+    FactoryModelAsset,
     InventoryChange,
     InventoryConfiguration,
+    MachineImageAsset,
+    MachineModelAsset,
     MachineObservation,
     SpatialMachine,
 )
 from apps.spatial.serializers import (
     DispatchEventSerializer,
     FactoryLayoutSerializer,
+    FactoryModelAssetSerializer,
     InventoryChangeSerializer,
     MachineEntrySchemaSerializer,
+    MachineImageAssetSerializer,
+    MachineModelAssetSerializer,
     MachineObservationSerializer,
 )
 from apps.spatial.services import update_machine_current_state
+from apps.streams.storage import tenant_storage
 
 
 class FactoryLayoutListCreateView(generics.ListCreateAPIView):
@@ -27,23 +39,32 @@ class FactoryLayoutListCreateView(generics.ListCreateAPIView):
     serializer_class = FactoryLayoutSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_permissions(self):
+        return [CanManageFactory()] if self.request.method == "POST" else [IsAuthenticated()]
+
     def get_queryset(self):
-        tenant = self.request.user.memberships.first().tenant
-        queryset = FactoryLayout.objects.filter(tenant=tenant, is_active=True)
+        tenant = tenant_for_request(self.request)
+        queryset = FactoryLayout.objects.filter(
+            tenant=tenant, factory__in=factories_for_request(self.request), is_active=True
+        )
         factory_id = self.request.query_params.get("factory")
         if factory_id:
             queryset = queryset.filter(factory_id=factory_id)
         return queryset.select_related("factory").prefetch_related(
             "machines__parameters",
             "machines__custom_kpis",
+            "machines__model_asset",
+            "machines__image_asset",
             "machines__stream_binding__channel__stream",
             "connections",
+            "zones__line",
+            "model_asset",
             "inventory_config",
             "dispatch_config",
         )
 
     def perform_create(self, serializer):
-        tenant = self.request.user.memberships.first().tenant
+        tenant = tenant_for_request(self.request)
         serializer.save(tenant=tenant)
 
 
@@ -53,16 +74,29 @@ class FactoryLayoutDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = FactoryLayoutSerializer
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        tenant = self.request.user.memberships.first().tenant
+    def get_permissions(self):
         return (
-            FactoryLayout.objects.filter(tenant=tenant)
+            [CanManageFactory()]
+            if self.request.method in {"PUT", "PATCH", "DELETE"}
+            else [IsAuthenticated()]
+        )
+
+    def get_queryset(self):
+        tenant = tenant_for_request(self.request)
+        return (
+            FactoryLayout.objects.filter(
+                tenant=tenant, factory__in=factories_for_request(self.request)
+            )
             .select_related("factory")
             .prefetch_related(
                 "machines__parameters",
                 "machines__custom_kpis",
+                "machines__model_asset",
+                "machines__image_asset",
                 "machines__stream_binding__channel__stream",
                 "connections",
+                "zones__line",
+                "model_asset",
                 "inventory_config",
                 "dispatch_config",
             )
@@ -73,6 +107,208 @@ class FactoryLayoutDetailView(generics.RetrieveUpdateDestroyAPIView):
             {"detail": "Factory layouts are retained for operational history."},
             status=status.HTTP_405_METHOD_NOT_ALLOWED,
         )
+
+
+class FactoryModelAssetView(generics.GenericAPIView):
+    """Upload or stream the optional low-poly GLB shell for one layout."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = FactoryModelAssetSerializer
+    MAX_BYTES = 15 * 1024 * 1024
+
+    def get_permissions(self):
+        return [CanManageFactory()] if self.request.method == "POST" else [IsAuthenticated()]
+
+    def _layout(self):
+        return get_object_or_404(
+            FactoryLayout.objects.filter(
+                tenant=tenant_for_request(self.request),
+                factory__in=factories_for_request(self.request),
+            ),
+            pk=self.kwargs["layout_id"],
+        )
+
+    def get(self, request, *args, **kwargs):
+        layout = self._layout()
+        asset = get_object_or_404(FactoryModelAsset, layout=layout)
+        etag = f'"{asset.checksum_sha256}"'
+        if request.headers.get("If-None-Match") == etag:
+            return HttpResponse(status=304)
+        try:
+            payload = tenant_storage(layout.tenant_id).get(asset.storage_key)
+        except (FileNotFoundError, ValueError):
+            return Response({"detail": "The model asset is unavailable."}, status=404)
+        response = HttpResponse(payload, content_type="model/gltf-binary")
+        response["Content-Disposition"] = f'inline; filename="{asset.filename}"'
+        response["Content-Length"] = str(len(payload))
+        response["Cache-Control"] = "private, max-age=3600"
+        response["ETag"] = etag
+        return response
+
+    def post(self, request, *args, **kwargs):
+        layout = self._layout()
+        upload = request.FILES.get("file")
+        if not upload:
+            return Response({"file": "Choose a .glb file."}, status=400)
+        if not upload.name.lower().endswith(".glb"):
+            return Response({"file": "Only binary .glb files are supported."}, status=400)
+        if upload.size > self.MAX_BYTES:
+            return Response({"file": "GLB files must be 15 MB or smaller."}, status=400)
+        payload = upload.read()
+        if len(payload) < 12 or payload[:4] != b"glTF":
+            return Response({"file": "The file is not a valid binary glTF container."}, status=400)
+        digest = hashlib.sha256(payload).hexdigest()
+        key = f"spatial/models/{layout.id}/{digest}.glb"
+        tenant_storage(layout.tenant_id).put(key, payload, content_type="model/gltf-binary")
+        asset, _ = FactoryModelAsset.objects.update_or_create(
+            layout=layout,
+            defaults={
+                "tenant": layout.tenant,
+                "filename": upload.name[:240],
+                "storage_key": key,
+                "content_type": "model/gltf-binary",
+                "size_bytes": len(payload),
+                "checksum_sha256": digest,
+            },
+        )
+        return Response(self.get_serializer(asset).data, status=201)
+
+
+class MachineModelAssetView(generics.GenericAPIView):
+    """Upload or stream one low-poly GLB representation for a machine."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = MachineModelAssetSerializer
+    MAX_BYTES = 8 * 1024 * 1024
+
+    def get_permissions(self):
+        return [CanManageFactory()] if self.request.method == "POST" else [IsAuthenticated()]
+
+    def _machine(self):
+        return get_object_or_404(
+            SpatialMachine.objects.select_related("layout").filter(
+                tenant=tenant_for_request(self.request),
+                layout__factory__in=factories_for_request(self.request),
+                is_active=True,
+            ),
+            pk=self.kwargs["machine_id"],
+        )
+
+    def get(self, request, *args, **kwargs):
+        machine = self._machine()
+        asset = get_object_or_404(MachineModelAsset, machine=machine)
+        etag = f'"{asset.checksum_sha256}"'
+        if request.headers.get("If-None-Match") == etag:
+            return HttpResponse(status=304)
+        try:
+            payload = tenant_storage(machine.tenant_id).get(asset.storage_key)
+        except (FileNotFoundError, ValueError):
+            return Response({"detail": "The machine model is unavailable."}, status=404)
+        response = HttpResponse(payload, content_type="model/gltf-binary")
+        response["Content-Disposition"] = f'inline; filename="{asset.filename}"'
+        response["Content-Length"] = str(len(payload))
+        response["Cache-Control"] = "private, max-age=3600"
+        response["ETag"] = etag
+        return response
+
+    def post(self, request, *args, **kwargs):
+        machine = self._machine()
+        upload = request.FILES.get("file")
+        if not upload:
+            return Response({"file": "Choose a .glb file."}, status=400)
+        if not upload.name.lower().endswith(".glb"):
+            return Response({"file": "Only binary .glb files are supported."}, status=400)
+        if upload.size > self.MAX_BYTES:
+            return Response({"file": "Machine GLB files must be 8 MB or smaller."}, status=400)
+        payload = upload.read()
+        if len(payload) < 12 or payload[:4] != b"glTF":
+            return Response({"file": "The file is not a valid binary glTF container."}, status=400)
+        digest = hashlib.sha256(payload).hexdigest()
+        key = f"spatial/machines/{machine.id}/{digest}.glb"
+        tenant_storage(machine.tenant_id).put(key, payload, content_type="model/gltf-binary")
+        asset, _ = MachineModelAsset.objects.update_or_create(
+            machine=machine,
+            defaults={
+                "tenant": machine.tenant,
+                "filename": upload.name[:240],
+                "storage_key": key,
+                "content_type": "model/gltf-binary",
+                "size_bytes": len(payload),
+                "checksum_sha256": digest,
+            },
+        )
+        return Response(self.get_serializer(asset).data, status=201)
+
+
+class MachineImageAssetView(generics.GenericAPIView):
+    """Upload or stream the compact image shown in a machine map popup."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = MachineImageAssetSerializer
+    MAX_BYTES = 2 * 1024 * 1024
+
+    def get_permissions(self):
+        return [CanManageFactory()] if self.request.method == "POST" else [IsAuthenticated()]
+
+    def _machine(self):
+        return get_object_or_404(
+            SpatialMachine.objects.select_related("layout").filter(
+                tenant=tenant_for_request(self.request),
+                layout__factory__in=factories_for_request(self.request),
+                is_active=True,
+            ),
+            pk=self.kwargs["machine_id"],
+        )
+
+    def get(self, request, *args, **kwargs):
+        machine = self._machine()
+        asset = get_object_or_404(MachineImageAsset, machine=machine)
+        etag = f'"{asset.checksum_sha256}"'
+        if request.headers.get("If-None-Match") == etag:
+            return HttpResponse(status=304)
+        try:
+            payload = tenant_storage(machine.tenant_id).get(asset.storage_key)
+        except (FileNotFoundError, ValueError):
+            return Response({"detail": "The machine image is unavailable."}, status=404)
+        response = HttpResponse(payload, content_type=asset.content_type)
+        response["Content-Length"] = str(len(payload))
+        response["Cache-Control"] = "private, max-age=3600"
+        response["ETag"] = etag
+        return response
+
+    def post(self, request, *args, **kwargs):
+        machine = self._machine()
+        upload = request.FILES.get("file")
+        if not upload:
+            return Response({"file": "Choose a PNG, JPEG or WebP image."}, status=400)
+        if upload.size > self.MAX_BYTES:
+            return Response({"file": "Machine images must be 2 MB or smaller."}, status=400)
+        payload = upload.read()
+        if payload.startswith(b"\x89PNG\r\n\x1a\n"):
+            content_type, extension = "image/png", "png"
+        elif payload.startswith(b"\xff\xd8\xff"):
+            content_type, extension = "image/jpeg", "jpg"
+        elif len(payload) >= 12 and payload[:4] == b"RIFF" and payload[8:12] == b"WEBP":
+            content_type, extension = "image/webp", "webp"
+        else:
+            return Response(
+                {"file": "The file is not a valid PNG, JPEG or WebP image."}, status=400
+            )
+        digest = hashlib.sha256(payload).hexdigest()
+        key = f"spatial/machines/{machine.id}/images/{digest}.{extension}"
+        tenant_storage(machine.tenant_id).put(key, payload, content_type=content_type)
+        asset, _ = MachineImageAsset.objects.update_or_create(
+            machine=machine,
+            defaults={
+                "tenant": machine.tenant,
+                "filename": upload.name[:240],
+                "storage_key": key,
+                "content_type": content_type,
+                "size_bytes": len(payload),
+                "checksum_sha256": digest,
+            },
+        )
+        return Response(self.get_serializer(asset).data, status=201)
 
 
 class MachineEntrySchemaView(generics.RetrieveAPIView):

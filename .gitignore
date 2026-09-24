@@ -6,6 +6,7 @@ out/
 coverage/
 npm-debug.log*
 *.tsbuildinfo
+frontend/public/vendor/three-draco/
 
 # Python
 __pycache__/

@@ -1,13 +1,13 @@
 "use client";
 
-import { Plus, Trash2, X } from "lucide-react";
+import { Box, Cuboid, Plus, Trash2, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
 import { useFactory } from "@/lib/factory-context";
-import { api } from "@/lib/api-client";
+import { api, getCsrfToken } from "@/lib/api-client";
 import type { DataInputStream } from "@/lib/data-stream-types";
 import { validateMachineName, validateIOSpec } from "@/lib/spatial-validators";
-import type { IOSpec, MachineParameter, CustomKpi } from "@/lib/spatial-types";
+import type { IOSpec, MachineParameter, CustomKpi, FactoryModelAsset, MachineModelTransform } from "@/lib/spatial-types";
 import { ParametersSection } from "./ParametersSection";
 import { KpiSection } from "./KpiSection";
 import { QrCodePreview } from "./QrCodePreview";
@@ -49,6 +49,14 @@ export function MachineConfigPanel({
   const [name, setName] = useState(existingMachine?.name ?? "");
   const [code, setCode] = useState(existingMachine?.code ?? "");
   const [processId, setProcessId] = useState(existingMachine?.processId ?? "");
+  const [visualHeight, setVisualHeight] = useState(existingMachine?.visualHeight ?? 1);
+  const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(existingMachine?.rotation ?? 0);
+  const [representation, setRepresentation] = useState<"block" | "glb">(existingMachine?.representation ?? "block");
+  const [blockColor, setBlockColor] = useState(existingMachine?.blockColor ?? "#DBEAFE");
+  const [modelAsset, setModelAsset] = useState<FactoryModelAsset | null>(existingMachine?.modelAsset ?? null);
+  const [modelTransform, setModelTransform] = useState<MachineModelTransform>(existingMachine?.modelTransform ?? { elevation: 0, scale: 1, rotationY: 0 });
+  const [modelUploading, setModelUploading] = useState(false);
+  const [modelError, setModelError] = useState("");
   const [inputs, setInputs] = useState<IOSpecDraft[]>(
     existingMachine?.inputs.map((io) => ({ id: io.id, label: io.label, unitType: io.unitType })) ?? []
   );
@@ -136,6 +144,12 @@ export function MachineConfigPanel({
       name: name.trim(),
       code: code.trim().toUpperCase(),
       processId: processId || null,
+      visualHeight,
+      rotation,
+      representation,
+      blockColor,
+      modelAsset,
+      modelTransform,
       inputs: configuredInputs,
       outputs: configuredOutputs,
       parameters,
@@ -145,7 +159,36 @@ export function MachineConfigPanel({
     });
 
     onClose();
-  }, [isFormValid, inputs, outputs, name, code, processId, parameters, customKpis, dataStreamId, channelId, machineId, configureMachine, onClose]);
+  }, [isFormValid, inputs, outputs, name, code, processId, visualHeight, rotation, representation, blockColor, modelAsset, modelTransform, parameters, customKpis, dataStreamId, channelId, machineId, configureMachine, onClose]);
+
+  function updateModelTransform(key: keyof MachineModelTransform, value: number) {
+    setModelTransform((current) => ({ ...current, [key]: Number.isFinite(value) ? value : 0 }));
+  }
+
+  async function uploadMachineModel(file?: File) {
+    if (!file || isNew) return;
+    setModelUploading(true);
+    setModelError("");
+    try {
+      const data = new FormData();
+      data.append("file", file);
+      const response = await fetch(`/api/backend/api/spatial/machines/${machineId}/model/`, {
+        method: "POST",
+        headers: { "X-CSRFToken": await getCsrfToken() },
+        credentials: "same-origin",
+        body: data,
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.file ?? body.detail ?? "Upload failed.");
+      const asset = { id: body.id, filename: body.filename, sizeBytes: body.size_bytes, checksumSha256: body.checksum_sha256, downloadUrl: body.download_url } as FactoryModelAsset;
+      setModelAsset(asset);
+      setRepresentation("glb");
+    } catch (cause) {
+      setModelError(cause instanceof Error ? cause.message : "Upload failed.");
+    } finally {
+      setModelUploading(false);
+    }
+  }
 
   const handleCancel = useCallback(() => {
     if (isNew) {
@@ -237,6 +280,29 @@ export function MachineConfigPanel({
               {name.trim().length}/50 characters
             </span>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="builder-dialog-field"><label className="builder-dialog-label" htmlFor="machine-height">Visual height</label><input id="machine-height" type="number" min="0.25" max="100" step="0.25" className="builder-dialog-input" value={visualHeight} onChange={(event) => setVisualHeight(Math.max(0.25, Number(event.target.value)))} /></div>
+            <div className="builder-dialog-field"><label className="builder-dialog-label" htmlFor="machine-rotation">Rotation</label><select id="machine-rotation" className="builder-dialog-input" value={rotation} onChange={(event) => setRotation(Number(event.target.value) as 0 | 90 | 180 | 270)}><option value={0}>0°</option><option value={90}>90°</option><option value={180}>180°</option><option value={270}>270°</option></select></div>
+          </div>
+
+          <fieldset className="machine-config-io-section">
+            <legend className="builder-dialog-label">Machine appearance</legend>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" className={`button ${representation === "block" ? "button-primary" : "button-secondary"}`} onClick={() => setRepresentation("block")}><Box size={14} /> Block</button>
+              <button type="button" className={`button ${representation === "glb" ? "button-primary" : "button-secondary"}`} disabled={!modelAsset} onClick={() => setRepresentation("glb")}><Cuboid size={14} /> GLB model</button>
+            </div>
+            {representation === "block" ? (
+              <label className="builder-dialog-label mt-3 flex items-center justify-between">Block color<input type="color" value={blockColor} onChange={(event) => setBlockColor(event.target.value.toUpperCase())} className="h-9 w-14 rounded border border-slate-200 bg-white p-1" /></label>
+            ) : null}
+            <div className="mt-3 rounded-lg border border-slate-200 p-3">
+              {modelAsset && <div className="mb-2 text-xs text-slate-600"><strong className="block text-slate-900">{modelAsset.filename}</strong>{(modelAsset.sizeBytes / 1024 / 1024).toFixed(1)} MB</div>}
+              <label className={`button button-secondary inline-flex cursor-pointer ${isNew || modelUploading ? "pointer-events-none opacity-50" : ""}`}><Upload size={13} />{modelUploading ? "Uploading…" : modelAsset ? "Replace GLB" : "Attach GLB"}<input className="hidden" type="file" accept=".glb,model/gltf-binary" onChange={(event) => void uploadMachineModel(event.target.files?.[0])} /></label>
+              {isNew && <p className="mt-2 text-xs text-amber-700">Save the layout once, then edit this machine to attach its GLB.</p>}
+              {modelError && <p className="mt-2 text-xs text-red-600">{modelError}</p>}
+              {modelAsset && <div className="mt-3 grid grid-cols-3 gap-2">{([['scale','Scale',0.01,0.05],['rotationY','Model rotation',undefined,5],['elevation','Elevation',undefined,0.1]] as const).map(([key,label,min,step]) => <label key={key} className="text-[11px] text-slate-600">{label}<input className="builder-dialog-input mt-1" type="number" min={min} step={step} value={modelTransform[key]} onChange={(event) => updateModelTransform(key, Number(event.target.value))} /></label>)}</div>}
+              <p className="mt-2 text-[11px] text-slate-500">GLBs render only in 3D. The block footprint remains in 2D and is always used for selection and live status.</p>
+            </div>
+          </fieldset>
 
           <div className="builder-dialog-field">
             <label className="builder-dialog-label" htmlFor="machine-code">Machine code</label>

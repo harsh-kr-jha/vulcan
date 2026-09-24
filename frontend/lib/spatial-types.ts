@@ -16,6 +16,50 @@ export interface GridPosition {
   y: number; // row index (0-based)
 }
 
+export interface EntitySummary {
+  id: string;
+  name: string;
+  code: string;
+}
+
+export interface FactoryZone {
+  id: string;
+  name: string;
+  type: string;
+  color: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  displayOrder: number;
+  lineId?: string | null;
+  line?: EntitySummary | null;
+}
+
+export interface FactoryModelAsset {
+  id: string;
+  filename: string;
+  sizeBytes: number;
+  checksumSha256: string;
+  downloadUrl: string;
+}
+
+export interface MachineImageAsset extends FactoryModelAsset {
+  contentType: "image/png" | "image/jpeg" | "image/webp";
+}
+
+export interface ModelTransform {
+  offsetX: number;
+  offsetY: number;
+  elevation: number;
+  scale: number;
+  rotationY: number;
+}
+
+export interface MachineModelTransform {
+  elevation: number;
+  scale: number;
+  rotationY: number;
+}
+
 export interface MachineParameter {
   id: string;
   key: string; // 1–64 chars, alphanumeric + underscore
@@ -70,9 +114,18 @@ export interface MachineNode {
   id: string;
   code?: string;
   processId?: string | null;
+  process?: EntitySummary | null;
+  line?: EntitySummary | null;
   name: string; // 1–50 chars
   position: GridPosition;
   size?: { width: number; height: number }; // tiles occupied (e.g. 2×3)
+  visualHeight?: number;
+  rotation?: 0 | 90 | 180 | 270;
+  representation?: "block" | "glb";
+  blockColor?: string;
+  modelAsset?: FactoryModelAsset | null;
+  imageAsset?: MachineImageAsset | null;
+  modelTransform?: MachineModelTransform;
   inputs: IOSpec[]; // 0–10
   outputs: IOSpec[]; // 0–10
   parameters: MachineParameter[]; // 0–50
@@ -81,6 +134,14 @@ export interface MachineNode {
   dataStreamId?: string | null;
   dataStreamChannelId?: string | null;
   streamBinding?: StreamBindingSummary | null;
+}
+
+export interface StatusVisualizationConfig {
+  recentMinutes: number;
+  persistentMinutes: number;
+  outOfRangeConfirmationSeconds: number;
+  rejectWindowCycles: number;
+  rejectMinimumCycles: number;
 }
 
 export interface ConnectionLine {
@@ -126,6 +187,10 @@ export interface FactoryLayout {
   floor: FloorDimensions;
   machines: MachineNode[];
   connections: ConnectionLine[];
+  zones: FactoryZone[];
+  modelAsset?: FactoryModelAsset | null;
+  modelTransform?: ModelTransform;
+  statusVisualization?: StatusVisualizationConfig;
   inventory?: InventoryConfig;
   dispatch?: DispatchConfig;
   savedAt?: string;

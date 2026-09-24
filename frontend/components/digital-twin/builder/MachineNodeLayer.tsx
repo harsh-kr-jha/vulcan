@@ -72,9 +72,10 @@ function SingleMachineNode({
   );
 
   const { x, y } = machine.position;
-  const machineWidth = machine.size?.width ?? 1;
-  const machineHeight = machine.size?.height ?? 1;
-  const fill = isSelected ? MACHINE_FILL_SELECTED : MACHINE_FILL;
+  const rotated = machine.rotation === 90 || machine.rotation === 270;
+  const machineWidth = rotated ? (machine.size?.height ?? 1) : (machine.size?.width ?? 1);
+  const machineHeight = rotated ? (machine.size?.width ?? 1) : (machine.size?.height ?? 1);
+  const fill = isSelected ? MACHINE_FILL_SELECTED : (machine.blockColor ?? MACHINE_FILL);
   const stroke = isSelected ? MACHINE_STROKE_SELECTED : MACHINE_STROKE;
 
   // Font size scales with machine size

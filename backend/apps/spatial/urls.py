@@ -5,9 +5,12 @@ from apps.spatial.views import (
     DispatchEventCreateView,
     FactoryLayoutDetailView,
     FactoryLayoutListCreateView,
+    FactoryModelAssetView,
     InventoryChangeCreateView,
     InventoryDetailView,
     MachineEntrySchemaView,
+    MachineImageAssetView,
+    MachineModelAssetView,
     MachineObservationListCreateView,
 )
 
@@ -23,6 +26,21 @@ urlpatterns = [
         "layouts/<uuid:pk>/",
         FactoryLayoutDetailView.as_view(),
         name="layout-detail",
+    ),
+    path(
+        "layouts/<uuid:layout_id>/model/",
+        FactoryModelAssetView.as_view(),
+        name="layout-model",
+    ),
+    path(
+        "machines/<uuid:machine_id>/image/",
+        MachineImageAssetView.as_view(),
+        name="machine-image",
+    ),
+    path(
+        "machines/<uuid:machine_id>/model/",
+        MachineModelAssetView.as_view(),
+        name="machine-model",
     ),
     path(
         "machines/<uuid:pk>/entry-schema/",

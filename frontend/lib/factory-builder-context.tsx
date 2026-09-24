@@ -17,11 +17,16 @@ import type {
   ConnectionLine,
   DispatchConfig,
   FactoryLayout,
+  FactoryModelAsset,
+  FactoryZone,
   FloorDimensions,
   GridPosition,
   InventoryConfig,
   MachineNode,
+  ModelTransform,
+  StatusVisualizationConfig,
 } from "./spatial-types";
+import { deserializeLayout, serializeLayout, type LayoutApiPayload } from "./spatial-api";
 
 // ---------------------------------------------------------------------------
 // Action types for the builder reducer
@@ -41,6 +46,10 @@ type BuilderAction =
   | { type: "REMOVE_CONNECTION"; id: string }
   | { type: "CONFIGURE_INVENTORY"; config: InventoryConfig }
   | { type: "CONFIGURE_DISPATCH"; config: DispatchConfig }
+  | { type: "CONFIGURE_ZONES"; zones: FactoryZone[] }
+  | { type: "CONFIGURE_MODEL_TRANSFORM"; transform: ModelTransform }
+  | { type: "CONFIGURE_MODEL_ASSET"; asset: FactoryModelAsset | null }
+  | { type: "CONFIGURE_STATUS_VISUALIZATION"; config: StatusVisualizationConfig }
   | { type: "SET_MODE"; mode: BuilderMode }
   | { type: "ENTER_EDIT_MODE" }
   | { type: "SAVE_SUCCESS"; layout: FactoryLayout }
@@ -59,6 +68,7 @@ function createInitialState(): BuilderState {
       floor: { width: 0, height: 0, unit: "meters" },
       machines: [],
       connections: [],
+      zones: [],
     },
     mode: "idle",
     selectedMachineId: null,
@@ -83,6 +93,7 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
           floor: action.dimensions,
           machines: [],
           connections: [],
+          zones: [],
           inventory: undefined,
           dispatch: undefined,
         },
@@ -148,7 +159,22 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
       };
     }
 
-    case "MOVE_MACHINE":
+    case "MOVE_MACHINE": {
+      const moving = state.layout.machines.find((machine) => machine.id === action.id);
+      if (!moving) return state;
+      const rotated = moving.rotation === 90 || moving.rotation === 270;
+      const width = rotated ? (moving.size?.height ?? 1) : (moving.size?.width ?? 1);
+      const height = rotated ? (moving.size?.width ?? 1) : (moving.size?.height ?? 1);
+      const next = { left: action.newPosition.x, top: action.newPosition.y, right: action.newPosition.x + width, bottom: action.newPosition.y + height };
+      if (next.left < 0 || next.top < 0 || next.right > state.layout.floor.width || next.bottom > state.layout.floor.height) return state;
+      const overlaps = state.layout.machines.some((machine) => {
+        if (machine.id === action.id) return false;
+        const otherRotated = machine.rotation === 90 || machine.rotation === 270;
+        const otherWidth = otherRotated ? (machine.size?.height ?? 1) : (machine.size?.width ?? 1);
+        const otherHeight = otherRotated ? (machine.size?.width ?? 1) : (machine.size?.height ?? 1);
+        return next.left < machine.position.x + otherWidth && next.right > machine.position.x && next.top < machine.position.y + otherHeight && next.bottom > machine.position.y;
+      });
+      if (overlaps) return state;
       return {
         ...state,
         layout: {
@@ -159,6 +185,7 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
         },
         isDirty: true,
       };
+    }
 
     case "START_CONNECTION":
       return {
@@ -234,6 +261,18 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
         isDirty: true,
       };
 
+    case "CONFIGURE_ZONES":
+      return { ...state, layout: { ...state.layout, zones: action.zones }, isDirty: true };
+
+    case "CONFIGURE_MODEL_TRANSFORM":
+      return { ...state, layout: { ...state.layout, modelTransform: action.transform }, isDirty: true };
+
+    case "CONFIGURE_MODEL_ASSET":
+      return { ...state, layout: { ...state.layout, modelAsset: action.asset } };
+
+    case "CONFIGURE_STATUS_VISUALIZATION":
+      return { ...state, layout: { ...state.layout, statusVisualization: action.config }, isDirty: true };
+
     case "SET_MODE":
       return {
         ...state,
@@ -304,6 +343,10 @@ export interface FactoryBuilderContextValue {
   // Inventory/Dispatch
   configureInventory: (config: InventoryConfig) => void;
   configureDispatch: (config: DispatchConfig) => void;
+  configureZones: (zones: FactoryZone[]) => void;
+  configureModelTransform: (transform: ModelTransform) => void;
+  configureModelAsset: (asset: FactoryModelAsset | null) => void;
+  configureStatusVisualization: (config: StatusVisualizationConfig) => void;
   // Persistence
   saveLayout: () => Promise<void>;
   cancelEdit: () => void;
@@ -327,7 +370,7 @@ const FactoryBuilderContext = createContext<FactoryBuilderContextValue | null>(n
 
 const API_SPATIAL = "/api/backend/api/spatial";
 
-interface LayoutApiPayload {
+interface LegacyLayoutApiPayload {
   id: string;
   factory: string;
   floor_width: number;
@@ -395,7 +438,7 @@ interface LayoutApiPayload {
   saved_at?: string;
 }
 
-function serializeLayout(layout: FactoryLayout): object {
+function legacySerializeLayout(layout: FactoryLayout): object {
   return {
     factory: layout.factoryId,
     floor_width: layout.floor.width,
@@ -474,7 +517,7 @@ function serializeLayout(layout: FactoryLayout): object {
   };
 }
 
-function deserializeLayout(payload: LayoutApiPayload): FactoryLayout {
+function legacyDeserializeLayout(payload: LegacyLayoutApiPayload): FactoryLayout {
   return {
     id: payload.id,
     factoryId: payload.factory,
@@ -483,6 +526,7 @@ function deserializeLayout(payload: LayoutApiPayload): FactoryLayout {
       height: payload.floor_height,
       unit: payload.unit_system as "feet" | "meters",
     },
+    zones: [],
     machines: payload.machines.map((m) => ({
       id: m.id,
       code: m.code,
@@ -625,7 +669,24 @@ function loadDraftFromLocalStorage(): { layout: FactoryLayout; isEditingExisting
       localStorage.removeItem(LS_DRAFT_KEY);
       return null;
     }
-    return { layout: parsed.layout, isEditingExisting: parsed.isEditingExisting };
+    return {
+      layout: {
+        ...parsed.layout,
+        zones: parsed.layout.zones ?? [],
+        modelTransform: parsed.layout.modelTransform ?? {
+          offsetX: 0, offsetY: 0, elevation: 0, scale: 1, rotationY: 0,
+        },
+        machines: (parsed.layout.machines ?? []).map((machine) => ({
+          ...machine,
+          visualHeight: machine.visualHeight ?? 1,
+          rotation: machine.rotation ?? 0,
+          representation: machine.representation ?? "block",
+          blockColor: machine.blockColor ?? "#DBEAFE",
+          modelTransform: machine.modelTransform ?? { elevation: 0, scale: 1, rotationY: 0 },
+        })),
+      },
+      isEditingExisting: parsed.isEditingExisting,
+    };
   } catch {
     localStorage.removeItem(LS_DRAFT_KEY);
     return null;
@@ -736,6 +797,22 @@ export function FactoryBuilderProvider({ children }: { children: React.ReactNode
     dispatch({ type: "CONFIGURE_DISPATCH", config });
   }, []);
 
+  const configureZones = useCallback((zones: FactoryZone[]) => {
+    dispatch({ type: "CONFIGURE_ZONES", zones });
+  }, []);
+
+  const configureModelTransform = useCallback((transform: ModelTransform) => {
+    dispatch({ type: "CONFIGURE_MODEL_TRANSFORM", transform });
+  }, []);
+
+  const configureModelAsset = useCallback((asset: FactoryModelAsset | null) => {
+    dispatch({ type: "CONFIGURE_MODEL_ASSET", asset });
+  }, []);
+
+  const configureStatusVisualization = useCallback((config: StatusVisualizationConfig) => {
+    dispatch({ type: "CONFIGURE_STATUS_VISUALIZATION", config });
+  }, []);
+
   // Persistence: save layout to backend API
   const saveLayout = useCallback(async () => {
     // Guard: factoryId must be a valid UUID for new layouts
@@ -823,8 +900,9 @@ export function FactoryBuilderProvider({ children }: { children: React.ReactNode
   const isPositionOccupied = useCallback(
     (position: GridPosition): boolean => {
       return state.layout.machines.some((m) => {
-        const w = m.size?.width ?? 1;
-        const h = m.size?.height ?? 1;
+        const rotated = m.rotation === 90 || m.rotation === 270;
+        const w = rotated ? (m.size?.height ?? 1) : (m.size?.width ?? 1);
+        const h = rotated ? (m.size?.width ?? 1) : (m.size?.height ?? 1);
         return (
           position.x >= m.position.x &&
           position.x < m.position.x + w &&
@@ -863,6 +941,10 @@ export function FactoryBuilderProvider({ children }: { children: React.ReactNode
       removeConnection,
       configureInventory,
       configureDispatch,
+      configureZones,
+      configureModelTransform,
+      configureModelAsset,
+      configureStatusVisualization,
       saveLayout,
       cancelEdit,
       enterEditMode,
@@ -888,6 +970,10 @@ export function FactoryBuilderProvider({ children }: { children: React.ReactNode
       removeConnection,
       configureInventory,
       configureDispatch,
+      configureZones,
+      configureModelTransform,
+      configureModelAsset,
+      configureStatusVisualization,
       saveLayout,
       cancelEdit,
       enterEditMode,

@@ -1,11 +1,13 @@
 from datetime import timedelta
 
 import pytest
+from apps.alerts.models import Alert, AlertRule
 from apps.ml.models import MachineCycle
 from apps.spatial.models import (
     FactoryLayout,
     MachineCurrentState,
     MachineParameter,
+    MachineOperationalIssue,
     SpatialMachine,
 )
 from apps.spatial.services import update_machine_current_state
@@ -120,3 +122,74 @@ def test_inactive_machine_is_not_exposed(api_client, tenant, factory, layout):
     response = api_client.get(f"/api/dashboard/live/?factory={factory.id}")
     assert response.status_code == 200
     assert response.data["machines"] == []
+
+
+def test_live_dashboard_includes_machine_alert_summary(api_client, tenant, factory, layout):
+    machine = SpatialMachine.objects.create(
+        tenant=tenant, layout=layout, name="Press", code="PRESS", position_x=1, position_y=1
+    )
+    rule = AlertRule.objects.create(
+        tenant=tenant,
+        name="Pressure",
+        code="pressure",
+        version="v1",
+        metric="pressure",
+        operator=">",
+        threshold=10,
+        time_window="live",
+        grouping_dimension="machine",
+        severity="high",
+        recommendation_template="Inspect pressure",
+    )
+    Alert.objects.create(
+        tenant=tenant,
+        factory=factory,
+        machine=machine,
+        rule=rule,
+        title="High pressure",
+        explanation="Pressure is high",
+        recommendation="Inspect",
+        severity="high",
+        observed_value="12",
+        threshold_display="10",
+        evaluation_start=timezone.now(),
+        evaluation_end=timezone.now(),
+    )
+    response = api_client.get(f"/api/dashboard/live/?factory={factory.id}")
+    summary = response.data["machines"][0]
+    assert summary["alertCount"] == 1
+    assert summary["highestAlertSeverity"] == "high"
+    assert summary["attention"] is True
+
+
+def test_live_dashboard_includes_duration_aware_issue_state(api_client, tenant, factory, layout):
+    machine = SpatialMachine.objects.create(
+        tenant=tenant, layout=layout, name="Press", code="PRESS", position_x=1, position_y=1
+    )
+    observed = timezone.now()
+    MachineCurrentState.objects.create(
+        tenant=tenant,
+        machine=machine,
+        observed_at=observed,
+        source="stream",
+        source_record_id=machine.id,
+        values={"machine_status": "running"},
+        operating_state="running",
+        operating_state_since=observed,
+    )
+    MachineOperationalIssue.objects.create(
+        tenant=tenant,
+        machine=machine,
+        issue_type="out_of_range",
+        active=True,
+        candidate_since=observed - timedelta(minutes=8),
+        active_since=observed - timedelta(minutes=8),
+        last_evaluated_at=observed,
+        evidence={"parameters": ["temperature"], "count": 1},
+    )
+    response = api_client.get(f"/api/dashboard/live/?factory={factory.id}")
+    summary = response.data["machines"][0]
+    assert summary["operatingState"] == "running"
+    assert summary["issues"][0]["type"] == "out_of_range"
+    assert summary["issues"][0]["evidence"]["count"] == 1
+    assert summary["attention"] is True

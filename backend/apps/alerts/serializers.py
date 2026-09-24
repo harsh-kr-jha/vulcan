@@ -12,6 +12,8 @@ class AlertSerializer(serializers.ModelSerializer):
     threshold = serializers.CharField(source="threshold_display", read_only=True)
     observed = serializers.CharField(source="observed_value", read_only=True)
     ruleVersion = serializers.CharField(source="rule.version", read_only=True)
+    machineId = serializers.UUIDField(source="machine_id", read_only=True)
+    lineId = serializers.UUIDField(source="line_id", read_only=True)
 
     class Meta:
         model = Alert
@@ -28,6 +30,8 @@ class AlertSerializer(serializers.ModelSerializer):
             "threshold",
             "observed",
             "ruleVersion",
+            "machineId",
+            "lineId",
         ]
         read_only_fields = [field for field in fields if field != "status"]
 

@@ -5,6 +5,7 @@ import { X, Activity, BarChart3, ChevronDown, Clock, Maximize2 } from "lucide-re
 import { api } from "@/lib/api-client";
 import type { MachineCycleHistory, MachineCycleOutcome } from "@/lib/data-stream-types";
 import type { MachineNode, MachineStatus } from "@/lib/spatial-types";
+import type { IntelligenceAlert, LiveMachineSummary } from "@/lib/factory-domain";
 import { QrCodePreview } from "./QrCodePreview";
 import { MachineMLSummary } from "@/components/machine-ml";
 
@@ -16,6 +17,7 @@ export interface MachineAnalyticsPanelProps {
   machineId: string;
   machines: MachineNode[];
   onClose: () => void;
+  liveMachine?: LiveMachineSummary;
 }
 
 interface ObservationRow {
@@ -62,6 +64,7 @@ export function MachineAnalyticsPanel({
   machineId,
   machines,
   onClose,
+  liveMachine,
 }: MachineAnalyticsPanelProps) {
   const machine = machines.find((m) => m.id === machineId);
   const [observations, setObservations] = useState<ObservationRow[]>([]);
@@ -69,6 +72,8 @@ export function MachineAnalyticsPanel({
   const [showFullHistory, setShowFullHistory] = useState(false);
   const [savingOutcome, setSavingOutcome] = useState("");
   const [outcomeError, setOutcomeError] = useState("");
+  const [expanded, setExpanded] = useState(false);
+  const [alerts, setAlerts] = useState<IntelligenceAlert[]>([]);
 
   async function updateOutcome(
     outcome: MachineCycleOutcome,
@@ -134,6 +139,15 @@ export function MachineAnalyticsPanel({
     return () => { cancelled = true; };
   }, [machineId]);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/backend/api/alerts/?machine=${machineId}`, { headers: { Accept: "application/json" }, credentials: "same-origin" })
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((payload) => { if (!cancelled) setAlerts((Array.isArray(payload) ? payload : payload.results ?? []).filter((alert: IntelligenceAlert) => alert.status === "new" || alert.status === "acknowledged")); })
+      .catch(() => { if (!cancelled) setAlerts([]); });
+    return () => { cancelled = true; };
+  }, [machineId]);
+
   // Close on Escape
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -146,7 +160,7 @@ export function MachineAnalyticsPanel({
     return null;
   }
 
-  const status: MachineStatus = machine.status ?? "no_data";
+  const status: MachineStatus = (liveMachine?.state === "degraded" || liveMachine?.state === "stale" ? "warning" : liveMachine?.state) ?? machine.status ?? "no_data";
   const badge = STATUS_BADGE[status];
   const latestObs = observations.length > 0 ? observations[0] : null;
 
@@ -161,7 +175,7 @@ export function MachineAnalyticsPanel({
 
   return (
     <div
-      className="absolute right-0 top-0 bottom-0 w-96 max-w-[calc(100%-3rem)] bg-white shadow-2xl border-l border-gray-200 z-30 flex flex-col overflow-hidden animate-in slide-in-from-right duration-200"
+      className={`absolute right-0 top-0 bottom-0 bg-white shadow-2xl border-l border-gray-200 z-30 flex flex-col overflow-hidden animate-in slide-in-from-right duration-200 ${expanded ? "left-0 w-full" : "w-96 max-w-[calc(100%-3rem)]"}`}
       role="dialog"
       aria-label={`Analytics for ${machine.name}`}
       aria-modal="false"
@@ -187,17 +201,19 @@ export function MachineAnalyticsPanel({
             </span>
           </div>
         </div>
-        <button
+        <div className="ml-3 flex items-center gap-2"><button type="button" className="button button-secondary" onClick={() => setExpanded((value) => !value)}><Maximize2 size={13} />{expanded ? "Inspector" : "Open details"}</button><button
           onClick={onClose}
-          className="ml-3 p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+          className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
           aria-label="Close analytics panel"
         >
           <X size={18} />
-        </button>
+        </button></div>
       </div>
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+        {!!liveMachine?.attentionReasons.length && <section className="rounded-xl border border-amber-200 bg-amber-50 p-3"><h3 className="text-xs font-semibold uppercase tracking-wide text-amber-900">Needs attention</h3>{liveMachine.attentionReasons.map((reason) => <p key={reason} className="mt-1 text-sm text-amber-800">{reason}</p>)}</section>}
+        {alerts.length > 0 && <section><h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Active alerts ({alerts.length})</h3><div className="space-y-2">{alerts.map((alert) => <article key={alert.id} className="rounded-xl border border-red-100 bg-red-50/60 p-3"><div className="flex items-center justify-between gap-3"><strong className="text-sm text-slate-900">{alert.title}</strong><span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase text-red-700">{alert.severity}</span></div><p className="mt-1 text-xs text-slate-600">{alert.description}</p><p className="mt-2 text-xs font-medium text-slate-800">{alert.observed} · threshold {alert.threshold}</p></article>)}</div></section>}
         <MachineMLSummary machineId={machineId} />
         {/* Parameters with last 3 history entries */}
         {machine.parameters.length > 0 && (

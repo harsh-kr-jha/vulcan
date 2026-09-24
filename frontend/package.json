@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/sync-three-draco.mjs",
     "dev": "next dev --webpack",
+    "prebuild": "node scripts/sync-three-draco.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -17,7 +19,8 @@
     "next": "^16.2.12",
     "qrcode": "^1.5.4",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
@@ -26,6 +29,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.180.0",
     "eslint": "^9.30.0",
     "eslint-config-next": "^16.2.12",
     "fast-check": "^4.9.0",

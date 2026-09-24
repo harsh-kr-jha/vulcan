@@ -16,6 +16,39 @@ from apps.ml.models import (
 )
 from apps.streams.client import request_json
 from apps.streams.models import MachineCycleOutcome, MachineTelemetrySample
+from apps.spatial.models import MachineOperationalIssue
+from apps.spatial.operational_status import (
+    status_visualization_config,
+    update_operational_issue,
+)
+
+
+def update_reject_issue(machine, observed_at):
+    visualization = status_visualization_config(machine)
+    window_size = int(visualization["rejectWindowCycles"])
+    minimum = int(visualization["rejectMinimumCycles"])
+    outcomes = list(
+        MachineCycleOutcome.objects.filter(machine=machine)
+        .order_by("-created_at")
+        .values_list("effective_label", flat=True)[:window_size]
+    )
+    rejected = sum(label == "failure" for label in outcomes)
+    rate = (100 * rejected / len(outcomes)) if outcomes else 0
+    target = float(
+        machine.layout.factory.configuration.get("targets", {}).get("rejectionRate", 2)
+    )
+    update_operational_issue(
+        machine=machine,
+        issue_type=MachineOperationalIssue.IssueType.HIGH_REJECTS,
+        detected=len(outcomes) >= minimum and rate > target,
+        observed_at=observed_at,
+        evidence={
+            "rejectRate": round(rate, 2),
+            "targetRate": target,
+            "rejected": rejected,
+            "sampleSize": len(outcomes),
+        },
+    )
 
 
 def poll_outcomes(binding):
@@ -26,6 +59,7 @@ def poll_outcomes(binding):
     )
     fields = binding.channel.schema.get("fields", [])
     key = next(f["key"] for f in fields if f.get("semantic") == "quality_outcome")
+    latest_change = None
     with transaction.atomic():
         for reading in payload.get("readings", []):
             label = reading.get("values", {}).get(key)
@@ -45,6 +79,7 @@ def poll_outcomes(binding):
             )
             if not new_event:
                 continue
+            latest_change = max(latest_change, observed_at) if latest_change else observed_at
             outcome, created = MachineCycleOutcome.objects.get_or_create(
                 machine=binding.machine,
                 run_id=reading["run_id"],
@@ -69,12 +104,14 @@ def poll_outcomes(binding):
         binding.cursor = str(payload.get("next_cursor", binding.cursor))
         binding.last_error = ""
         binding.save()
+        if latest_change:
+            update_reject_issue(binding.machine, latest_change)
 
 
 def process_pending(limit=500):
     for sample in (
         MachineTelemetrySample.objects.filter(observation_processed=False)
-        .select_related("machine", "tenant")
+        .select_related("machine__layout__factory", "tenant")
         .order_by("received_at", "sequence_no")[:limit]
     ):
         try:
@@ -99,7 +136,7 @@ def process_pending(limit=500):
                 stale_reason=str(exc)[:500]
             )
     for binding in OutcomeBinding.objects.filter(channel__stream__enabled=True).select_related(
-        "channel__stream__credential", "machine"
+        "channel__stream__credential", "machine__layout__factory"
     ):
         try:
             poll_outcomes(binding)

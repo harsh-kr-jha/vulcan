@@ -9,6 +9,16 @@ class UnitSystem(models.TextChoices):
     METERS = "meters", "Meters"
 
 
+def default_status_visualization():
+    return {
+        "recentMinutes": 5,
+        "persistentMinutes": 30,
+        "outOfRangeConfirmationSeconds": 60,
+        "rejectWindowCycles": 20,
+        "rejectMinimumCycles": 10,
+    }
+
+
 class MachineOperationalStatus(models.TextChoices):
     RUNNING = "running", "Running"
     WARNING = "warning", "Warning"
@@ -35,6 +45,8 @@ class FactoryLayout(UUIDModel, TenantScopedModel):
         max_length=10, choices=UnitSystem.choices, default=UnitSystem.METERS
     )
     is_active = models.BooleanField(default=True)
+    model_transform = models.JSONField(default=dict, blank=True)
+    status_visualization = models.JSONField(default=default_status_visualization, blank=True)
 
     class Meta:
         indexes = [
@@ -65,6 +77,15 @@ class SpatialMachine(UUIDModel, TenantScopedModel):
     position_y = models.PositiveIntegerField(null=True, blank=True)  # grid row
     size_width = models.PositiveIntegerField(default=1)  # tiles wide
     size_height = models.PositiveIntegerField(default=1)  # tiles tall
+    visual_height = models.DecimalField(max_digits=6, decimal_places=2, default=1)
+    rotation_degrees = models.PositiveSmallIntegerField(default=0)
+    representation = models.CharField(
+        max_length=10,
+        choices=(("block", "Block"), ("glb", "GLB model")),
+        default="block",
+    )
+    block_color = models.CharField(max_length=7, default="#DBEAFE")
+    model_transform = models.JSONField(default=dict, blank=True)
     inputs = models.JSONField(default=list, blank=True)  # [{id, label, unitType}]
     outputs = models.JSONField(default=list, blank=True)  # [{id, label, unitType}]
     status = models.CharField(
@@ -101,6 +122,71 @@ class SpatialMachine(UUIDModel, TenantScopedModel):
         return f"{self.name} @ {placement}"
 
 
+class FactoryZone(UUIDModel, TenantScopedModel):
+    """Editable rectangular overlay such as a work cell or safety zone."""
+
+    layout = models.ForeignKey(FactoryLayout, on_delete=models.CASCADE, related_name="zones")
+    name = models.CharField(max_length=80)
+    zone_type = models.CharField(max_length=40, default="operational")
+    color = models.CharField(max_length=9, default="#DBEAFE")
+    position_x = models.DecimalField(max_digits=7, decimal_places=1)
+    position_y = models.DecimalField(max_digits=7, decimal_places=1)
+    width = models.DecimalField(max_digits=7, decimal_places=1)
+    height = models.DecimalField(max_digits=7, decimal_places=1)
+    display_order = models.PositiveIntegerField(default=0)
+    line = models.ForeignKey(
+        "tenancy.FactoryMaster",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="factory_zones",
+        limit_choices_to={"kind": "lines"},
+    )
+
+    class Meta:
+        ordering = ["display_order", "name"]
+        indexes = [models.Index(fields=["tenant", "layout"])]
+
+
+class FactoryModelAsset(UUIDModel, TenantScopedModel):
+    """Tenant-scoped pointer to an optional GLB factory shell."""
+
+    layout = models.OneToOneField(
+        FactoryLayout, on_delete=models.CASCADE, related_name="model_asset"
+    )
+    filename = models.CharField(max_length=240)
+    storage_key = models.CharField(max_length=600)
+    content_type = models.CharField(max_length=80, default="model/gltf-binary")
+    size_bytes = models.PositiveBigIntegerField()
+    checksum_sha256 = models.CharField(max_length=64)
+
+
+class MachineModelAsset(UUIDModel, TenantScopedModel):
+    """A low-poly GLB attached to one canonical machine."""
+
+    machine = models.OneToOneField(
+        SpatialMachine, on_delete=models.CASCADE, related_name="model_asset"
+    )
+    filename = models.CharField(max_length=240)
+    storage_key = models.CharField(max_length=600)
+    content_type = models.CharField(max_length=80, default="model/gltf-binary")
+    size_bytes = models.PositiveBigIntegerField()
+    checksum_sha256 = models.CharField(max_length=64)
+
+
+class MachineImageAsset(UUIDModel, TenantScopedModel):
+    """Small operator-facing image displayed in the spatial machine popup."""
+
+    machine = models.OneToOneField(
+        SpatialMachine, on_delete=models.CASCADE, related_name="image_asset"
+    )
+    filename = models.CharField(max_length=240)
+    storage_key = models.CharField(max_length=600)
+    content_type = models.CharField(max_length=40)
+    size_bytes = models.PositiveBigIntegerField()
+    checksum_sha256 = models.CharField(max_length=64)
+
+
 class MachineCurrentState(UUIDModel, TenantScopedModel):
     """Latest accepted observation for a machine; raw source records remain immutable."""
 
@@ -121,9 +207,46 @@ class MachineCurrentState(UUIDModel, TenantScopedModel):
     cycle_phase = models.CharField(max_length=40, blank=True)
     recipe_id = models.CharField(max_length=100, blank=True)
     values = models.JSONField(default=dict)
+    operating_state = models.CharField(
+        max_length=12,
+        choices=(("running", "Running"), ("inactive", "Inactive"), ("unknown", "Unknown")),
+        default="unknown",
+    )
+    operating_state_since = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         indexes = [models.Index(fields=["tenant", "-observed_at"])]
+
+
+class MachineOperationalIssue(UUIDModel, TenantScopedModel):
+    """Materialized live issue state; read cheaply by the factory dashboard poll."""
+
+    class IssueType(models.TextChoices):
+        OUT_OF_RANGE = "out_of_range", "Out of range"
+        PREDICTED_FAILURE = "predicted_failure", "Predicted failure"
+        HIGH_REJECTS = "high_rejects", "High rejects"
+
+    machine = models.ForeignKey(
+        SpatialMachine, on_delete=models.CASCADE, related_name="operational_issues"
+    )
+    issue_type = models.CharField(max_length=24, choices=IssueType.choices)
+    active = models.BooleanField(default=False)
+    candidate_since = models.DateTimeField(null=True, blank=True)
+    active_since = models.DateTimeField(null=True, blank=True)
+    last_evaluated_at = models.DateTimeField(null=True, blank=True)
+    evidence = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["machine", "issue_type"], name="unique_machine_operational_issue"
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=["tenant", "machine", "active"], name="spatial_mac_tenant__issue_idx"
+            )
+        ]
 
 
 class MachineParameter(UUIDModel):

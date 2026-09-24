@@ -1,16 +1,18 @@
 from datetime import timedelta
+from uuid import uuid4
 
 import pytest
 from apps.alerts.models import Alert, AlertRule
-from apps.ml.models import MachineCycle
+from apps.ml.models import FeatureSnapshot, MachineCycle, PredictionModel, ProductionProfile
 from apps.spatial.models import (
     FactoryLayout,
     MachineCurrentState,
-    MachineParameter,
     MachineOperationalIssue,
+    MachineParameter,
     SpatialMachine,
 )
 from apps.spatial.services import update_machine_current_state
+from apps.streams.models import MachineCycleOutcome
 from apps.tenancy.models import FactoryMaster
 from django.utils import timezone
 
@@ -193,3 +195,88 @@ def test_live_dashboard_includes_duration_aware_issue_state(api_client, tenant, 
     assert summary["issues"][0]["type"] == "out_of_range"
     assert summary["issues"][0]["evidence"]["count"] == 1
     assert summary["attention"] is True
+
+
+def test_live_dashboard_summarises_prediction_outcomes(api_client, tenant, factory, layout):
+    machine = SpatialMachine.objects.create(
+        tenant=tenant, layout=layout, name="Splicer", code="SP-1", position_x=1, position_y=1
+    )
+    sku = FactoryMaster.objects.create(
+        tenant=tenant, factory=factory, kind="skus", name="Tube", code="TUBE"
+    )
+    profile = ProductionProfile.objects.create(
+        tenant=tenant,
+        machine=machine,
+        sku=sku,
+        version=1,
+        ranges=[],
+        checkpoint_phase="splice",
+        checkpoint_second=1,
+        fields=[],
+        contract="test-contract",
+    )
+    model = PredictionModel.objects.create(
+        tenant=tenant,
+        profile=profile,
+        name="splice-quality",
+        version="1.0.0",
+        metrics={"accuracy": 0.95},
+        active=True,
+    )
+    observed = timezone.now() - timedelta(hours=1)
+    cases = [
+        ("failure", "failure"),
+        ("failure", "good"),
+        ("good", "failure"),
+        ("good", "good"),
+    ]
+    for index, (predicted, actual) in enumerate(cases):
+        cycle = MachineCycle.objects.create(
+            tenant=tenant,
+            machine=machine,
+            profile=profile,
+            run_id="run-1",
+            cycle_id=f"cycle-{index}",
+            started_at=observed + timedelta(minutes=index),
+            completed=True,
+            violations={"temperature": index == 0},
+        )
+        FeatureSnapshot.objects.create(
+            tenant=tenant,
+            cycle=cycle,
+            event_id=uuid4(),
+            observed_at=cycle.started_at,
+            sequence_no=1,
+            checkpoint=True,
+            model=model,
+            predicted_label=predicted,
+            failure_probability=0.8 if predicted == "failure" else 0.2,
+            threshold=0.5,
+        )
+        MachineCycleOutcome.objects.create(
+            tenant=tenant,
+            machine=machine,
+            run_id="run-1",
+            cycle_id=f"cycle-{index}",
+            effective_label=actual,
+            source_label=actual,
+            failure_mode="Weak splice" if actual == "failure" else "",
+        )
+
+    response = api_client.get(f"/api/dashboard/live/?factory={factory.id}")
+
+    assert response.status_code == 200
+    history = response.data["current"]["history"]
+    assert history["summary"]["totalTubes"] == 4
+    assert history["summary"]["rejectedTubes"] == 2
+    assert history["summary"]["rejectionRate"] == 50
+    assert history["summary"]["outsideRange"] == 1
+    assert history["summary"]["predictedFailures"] == 2
+    assert history["summary"]["accuracy"] == 50
+    assert history["confusionMatrix"] == {
+        "truePositive": 1,
+        "trueNegative": 1,
+        "falsePositive": 1,
+        "falseNegative": 1,
+    }
+    assert history["failureModes"] == [{"label": "Weak splice", "count": 2}]

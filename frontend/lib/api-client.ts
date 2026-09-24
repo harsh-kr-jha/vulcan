@@ -183,9 +183,10 @@ export const api = {
     me: () => request<AuthUser>("/auth/me/"),
   },
   workspace: (filters: DashboardFilters) => request<WorkspacePayload>(`/workspace/?${filterQuery(filters)}`),
-  liveDashboard: (factory: string, machine?: string | null, signal?: AbortSignal) => {
+  liveDashboard: (factory: string, machine?: string | null, signal?: AbortSignal, range?: { from: string; to: string }) => {
     const query = new URLSearchParams({ factory });
     if (machine) query.set("machine", machine);
+    if (range) { query.set("from", range.from); query.set("to", range.to); }
     return request<LiveDashboardPayload>(`/dashboard/live/?${query}`, { signal });
   },
   machineDataSummary: (factory: string, machine?: string) => {

@@ -1,10 +1,12 @@
 "use client";
 
-import { Activity, AlertTriangle, ArrowRight, BrainCircuit, Clock3, Factory, Gauge, MapPinOff, Radio, RefreshCw, Settings2, Unplug, Workflow } from "lucide-react";
+import { Activity, AlertTriangle, ArrowRight, BrainCircuit, CheckCircle2, Clock3, Factory, Gauge, MapPinOff, Radio, RefreshCw, Settings2, ShieldAlert, Target, TrendingDown, Unplug, Workflow, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api-client";
-import type { LiveDashboardPayload, LiveMachineState, LiveVariable } from "@/lib/factory-domain";
+import { Chart } from "@/components/charts/chart";
+import type { EChartsOption } from "echarts";
+import type { LiveDashboardPayload, LiveMachineState, LiveVariable, MachineHistory } from "@/lib/factory-domain";
 import { useFactory } from "@/lib/factory-context";
 
 const labels: Record<LiveMachineState, string> = { down: "Down", warning: "Needs attention", degraded: "Stream degraded", stale: "Data stale", running: "Running", idle: "Idle", no_data: "No data" };
@@ -38,6 +40,82 @@ function EmptyDashboard({ layoutExists }: { layoutExists: boolean }) {
   return <section className="panel live-empty-state"><Factory size={34} /><h2>{layoutExists ? "No active machines yet" : "Build this factory in Lexicon"}</h2><p>{layoutExists ? "Add or reactivate a machine in Lexicon to begin monitoring live operations." : "Lexicon is now the source of truth for machines, processes, streams and the factory floor."}</p><Link className="button button-primary" href="/digital-twin">Open Lexicon <ArrowRight size={13} /></Link></section>;
 }
 
+type HistoryRangeKey = "24h" | "7d" | "30d" | "90d" | "custom";
+
+function compactNumber(value: number) {
+  return new Intl.NumberFormat("en-IN", { notation: value >= 10_000 ? "compact" : "standard", maximumFractionDigits: 1 }).format(value);
+}
+
+function HistoricalPerformance({ history, rangeKey, onRangeKey, customFrom, customTo, onCustomFrom, onCustomTo }: {
+  history: MachineHistory;
+  rangeKey: HistoryRangeKey;
+  onRangeKey: (value: HistoryRangeKey) => void;
+  customFrom: string;
+  customTo: string;
+  onCustomFrom: (value: string) => void;
+  onCustomTo: (value: string) => void;
+}) {
+  const { summary, confusionMatrix: matrix } = history;
+  const accuracyTone = summary.accuracy === null ? "neutral" : summary.accuracy >= 90 ? "good" : summary.accuracy >= 80 ? "warn" : "bad";
+  const dates = history.timeline.map((item) => new Date(item.at).toLocaleString("en-IN", history.timeline.length > 36 ? { day: "numeric", month: "short" } : { hour: "numeric", day: "numeric" }));
+  const chartText = { color: "#66736e", fontFamily: "inherit", fontSize: 10 };
+  const axis = { axisLine: { lineStyle: { color: "#dde4e0" } }, axisTick: { show: false }, axisLabel: chartText, splitLine: { lineStyle: { color: "#edf1ef" } } };
+  const productionOption: EChartsOption = {
+    color: ["#147a4b", "#d94d3f"], tooltip: { trigger: "axis" }, legend: { bottom: 0, textStyle: chartText },
+    grid: { left: 42, right: 12, top: 18, bottom: 44 }, xAxis: { type: "category", data: dates, ...axis }, yAxis: { type: "value", minInterval: 1, ...axis },
+    series: [
+      { name: "Tubes produced", type: "bar", data: history.timeline.map((item) => item.produced), barMaxWidth: 22, itemStyle: { borderRadius: [4, 4, 0, 0] } },
+      { name: "Actual rejects", type: "line", smooth: true, symbolSize: 6, data: history.timeline.map((item) => item.rejected) },
+    ],
+  };
+  const predictionOption: EChartsOption = {
+    color: ["#8459c8", "#d94d3f"], tooltip: { trigger: "axis" }, legend: { bottom: 0, textStyle: chartText },
+    grid: { left: 42, right: 12, top: 18, bottom: 44 }, xAxis: { type: "category", data: dates, ...axis }, yAxis: { type: "value", minInterval: 1, ...axis },
+    series: [
+      { name: "Predicted failures", type: "line", smooth: true, areaStyle: { opacity: .1 }, data: history.timeline.map((item) => item.predictedFailures) },
+      { name: "Actual failures", type: "line", smooth: true, data: history.timeline.map((item) => item.rejected) },
+    ],
+  };
+  const accuracyOption: EChartsOption = {
+    color: ["#147a4b"], tooltip: { trigger: "axis", valueFormatter: (value: unknown) => `${Number(value).toFixed(1)}%` },
+    grid: { left: 42, right: 12, top: 20, bottom: 28 }, xAxis: { type: "category", data: dates, ...axis }, yAxis: { type: "value", min: 0, max: 100, axisLabel: { ...chartText, formatter: "{value}%" }, splitLine: axis.splitLine },
+    series: [{ name: "Accuracy", type: "line", connectNulls: true, smooth: true, symbolSize: 6, areaStyle: { opacity: .09 }, markLine: { silent: true, symbol: "none", data: [{ yAxis: 80, name: "Retrain threshold" }], label: { formatter: "80% threshold" }, lineStyle: { color: "#d99a25", type: "dashed" } }, data: history.timeline.map((item) => item.accuracy) }],
+  };
+  const failureModeOption: EChartsOption = {
+    color: ["#cf5f4f"], tooltip: { trigger: "axis" }, grid: { left: 90, right: 20, top: 10, bottom: 24 },
+    xAxis: { type: "value", minInterval: 1, ...axis }, yAxis: { type: "category", data: history.failureModes.slice(0, 6).map((item) => item.label), axisLabel: { ...chartText, width: 78, overflow: "truncate" }, axisLine: { show: false }, axisTick: { show: false } },
+    series: [{ type: "bar", data: history.failureModes.slice(0, 6).map((item) => item.count), barMaxWidth: 18, itemStyle: { borderRadius: [0, 4, 4, 0] } }],
+  };
+  const topTrend = history.parameterTrends.slice(0, 4);
+  const parameterOption: EChartsOption = {
+    tooltip: { trigger: "axis" }, legend: { bottom: 0, type: "scroll", textStyle: chartText },
+    grid: { left: 45, right: 16, top: 20, bottom: 48 }, xAxis: { type: "time", ...axis }, yAxis: { type: "value", scale: true, ...axis },
+    series: topTrend.map((trend) => ({ name: `${trend.label}${trend.unit ? ` (${trend.unit})` : ""}`, type: "line", showSymbol: false, smooth: true, data: trend.points.map((point) => [point.at, point.value]), markArea: trend.min != null && trend.max != null ? { silent: true, itemStyle: { color: "rgba(35, 155, 91, .06)" }, data: [[{ yAxis: trend.min }, { yAxis: trend.max }]] } : undefined })),
+  };
+
+  return <section className="live-history">
+    <header className="live-history-header"><div><p>Production & model history</p><h2>Is the splicing process staying healthy?</h2><span>Verified outcomes are compared against the model checkpoint prediction.</span></div><div className="live-range-control" aria-label="Historical time range">{(["24h", "7d", "30d", "90d"] as HistoryRangeKey[]).map((value) => <button type="button" key={value} className={rangeKey === value ? "active" : ""} onClick={() => onRangeKey(value)}>{value}</button>)}<button type="button" className={rangeKey === "custom" ? "active" : ""} onClick={() => onRangeKey("custom")}>Custom</button></div></header>
+    {rangeKey === "custom" && <div className="live-custom-range"><label>From<input type="date" value={customFrom} max={customTo} onChange={(event) => onCustomFrom(event.target.value)} /></label><span>to</span><label>To<input type="date" value={customTo} min={customFrom} onChange={(event) => onCustomTo(event.target.value)} /></label></div>}
+    {history.modelAlert.active && <div className="live-model-alert" role="alert"><ShieldAlert size={22} /><div><strong>{history.modelAlert.title}</strong><p>{history.modelAlert.message} Observed accuracy is {summary.accuracy?.toFixed(1)}%{summary.accuracyDrop != null ? `, down ${summary.accuracyDrop.toFixed(1)} points from baseline` : ""}.</p></div><Link href="/digital-twin">Review model</Link></div>}
+    <div className="live-kpi-strip">
+      <article><span>Total tubes</span><strong>{compactNumber(summary.totalTubes)}</strong><small>completed cycles</small></article>
+      <article className={summary.rejectionRate > 5 ? "bad" : ""}><span>Rejection rate</span><strong>{summary.rejectionRate.toFixed(1)}%</strong><small>{summary.rejectedTubes} rejected</small></article>
+      <article className={summary.outsideRange ? "warn" : ""}><span>Outside range</span><strong>{compactNumber(summary.outsideRange)}</strong><small>cycles with violations</small></article>
+      <article><span>ML predicted fail</span><strong>{compactNumber(summary.predictedFailures)}</strong><small>checkpoint predictions</small></article>
+      <article className={accuracyTone}><span>Current accuracy</span><strong>{summary.accuracy == null ? "—" : `${summary.accuracy.toFixed(1)}%`}</strong><small>{summary.labelledPredictions} verified predictions</small></article>
+      <article className={summary.pendingOutcomes ? "neutral" : "good"}><span>Awaiting outcome</span><strong>{compactNumber(summary.pendingOutcomes)}</strong><small>tubes to verify</small></article>
+    </div>
+    {!summary.totalTubes ? <div className="panel live-history-empty"><Activity size={25} /><strong>No production cycles in this range</strong><span>Choose a wider time range or confirm that this machine is sending cycle identifiers.</span></div> : <>
+      <div className="live-chart-grid"><article className="panel live-chart-card wide"><header><div><p>Production & quality</p><h3>Output against actual rejects</h3></div><span>{summary.acceptedTubes} accepted</span></header><Chart option={productionOption} height={270} /></article>
+      <article className="panel live-chart-card"><header><div><p>Prediction alignment</p><h3>Predicted vs actual failures</h3></div><Target size={18} /></header><Chart option={predictionOption} height={270} /></article></div>
+      <div className="live-diagnostic-grid"><article className="panel live-matrix-card"><header><div><p>Prediction outcomes</p><h3>Where the model gets it right—and wrong</h3></div></header><div className="live-confusion-matrix"><div className="correct"><CheckCircle2 size={15} /><span>True positive<strong>{matrix.truePositive}</strong><small>fail predicted · failed</small></span></div><div className="false"><AlertTriangle size={15} /><span>False positive<strong>{matrix.falsePositive}</strong><small>fail predicted · good</small></span></div><div className="false"><XCircle size={15} /><span>False negative<strong>{matrix.falseNegative}</strong><small>good predicted · failed</small></span></div><div className="correct"><CheckCircle2 size={15} /><span>True negative<strong>{matrix.trueNegative}</strong><small>good predicted · good</small></span></div></div></article>
+      <article className="panel live-chart-card"><header><div><p>Model stability</p><h3>Accuracy over time</h3></div><TrendingDown size={18} /></header><Chart option={accuracyOption} height={250} /></article>
+      <article className="panel live-chart-card"><header><div><p>Failure diagnosis</p><h3>Top recorded failure modes</h3></div></header>{history.failureModes.length ? <Chart option={failureModeOption} height={250} /> : <div className="live-mini-empty">No failure modes recorded</div>}</article></div>
+      <article className="panel live-chart-card live-parameter-card"><header><div><p>Process signals</p><h3>Parameter trends & operating bands</h3></div><span>{topTrend.length} signals shown</span></header>{topTrend.length ? <Chart option={parameterOption} height={310} /> : <div className="live-mini-empty">No numeric telemetry was recorded in this range.</div>}</article>
+    </>}
+  </section>;
+}
+
 export function DashboardOverview() {
   const { state, filters } = useFactory();
   const factoryId = filters.factoryId || state.activeFactoryId;
@@ -48,6 +126,22 @@ export function DashboardOverview() {
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(true);
   const [lastSuccess, setLastSuccess] = useState<Date | null>(null);
+  const [rangeKey, setRangeKey] = useState<HistoryRangeKey>("7d");
+  const today = new Date().toISOString().slice(0, 10);
+  const [customFrom, setCustomFrom] = useState(() => { const date = new Date(); date.setDate(date.getDate() - 6); return date.toISOString().slice(0, 10); });
+  const [customTo, setCustomTo] = useState(today);
+  const historyRange = useCallback(() => {
+    const end = new Date();
+    if (rangeKey === "custom") {
+      const from = new Date(`${customFrom}T00:00:00`);
+      const to = new Date(`${customTo}T23:59:59.999`);
+      if (!customFrom || !customTo || Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || from >= to) return null;
+      return { from: from.toISOString(), to: to.toISOString() };
+    }
+    const durations: Record<Exclude<HistoryRangeKey, "custom">, number> = { "24h": 1, "7d": 7, "30d": 30, "90d": 90 };
+    const start = new Date(end.getTime() - durations[rangeKey] * 86_400_000);
+    return { from: start.toISOString(), to: end.toISOString() };
+  }, [customFrom, customTo, rangeKey]);
 
   const load = useCallback(async (signal?: AbortSignal) => {
     if (!factoryId) return;
@@ -55,8 +149,8 @@ export function DashboardOverview() {
     try {
       let next: LiveDashboardPayload;
       const preferred = selected || window.localStorage.getItem(`vulcan:dashboard-machine:${factoryId}`);
-      try { next = await api.liveDashboard(factoryId, preferred, signal); }
-      catch (cause) { if (preferred) next = await api.liveDashboard(factoryId, null, signal); else throw cause; }
+      try { next = await api.liveDashboard(factoryId, preferred, signal, historyRange() ?? undefined); }
+      catch (cause) { if (preferred) next = await api.liveDashboard(factoryId, null, signal, historyRange() ?? undefined); else throw cause; }
       setPayload(next);
       if (next.selectedMachineId) setSelections((current) => ({ ...current, [factoryId]: next.selectedMachineId as string }));
       if (next.selectedMachineId) window.localStorage.setItem(`vulcan:dashboard-machine:${factoryId}`, next.selectedMachineId);
@@ -64,7 +158,7 @@ export function DashboardOverview() {
     } catch (cause) {
       if (!(cause instanceof DOMException && cause.name === "AbortError")) setError(cause instanceof Error ? cause.message : "Live machine data is unavailable.");
     } finally { if (!signal?.aborted) setRefreshing(false); }
-  }, [factoryId, selected]);
+  }, [factoryId, historyRange, selected]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -92,6 +186,7 @@ export function DashboardOverview() {
         <div className="live-overview-grid"><section className="panel live-values-panel"><header><div><p>Current readings</p><h3>{abnormalCount ? `${abnormalCount} variable${abnormalCount === 1 ? "" : "s"} need attention` : "Key operating variables"}</h3></div><Gauge size={19} /></header>{current.highlightedVariables.length ? <div className="live-variable-grid">{current.highlightedVariables.map((variable) => <article className={variable.abnormal ? "abnormal" : ""} key={variable.key}><span>{variable.abnormal && <AlertTriangle size={13} />}{variable.label}</span><strong>{displayValue(variable)} {variable.unit && <small>{variable.unit}</small>}</strong><em>{variable.semantic.replaceAll("_", " ")}</em></article>)}</div> : <div className="live-inline-empty">Waiting for parameter values from this machine.</div>}{current.variables.length > current.highlightedVariables.length && <details className="live-all-readings"><summary>All readings ({current.variables.length})</summary><div>{current.variables.map((variable) => <p key={variable.key}><span>{variable.label}</span><strong>{displayValue(variable)} {variable.unit}</strong></p>)}</div></details>}</section>
           <section className="panel live-ml-panel"><header><div><p>Machine intelligence</p><h3>{!current.ml.enabled ? "ML observation is off" : current.ml.active ? "Active model" : "Waiting for an external model"}</h3></div><BrainCircuit size={20} /></header>{!current.ml.enabled ? <div className="live-inline-empty">Enable observation for this machine to score completed cycles.</div> : <><div className={`live-prediction ${prediction?.label === "failure" ? "failure" : ""}`}><span>Latest prediction</span><strong>{prediction?.label ? prediction.label.replaceAll("_", " ") : "Waiting for prediction"}</strong>{prediction?.failureProbability !== null && prediction?.failureProbability !== undefined && <small>{(prediction.failureProbability * 100).toFixed(1)}% failure probability</small>}</div><div className="live-ml-facts"><p><span>Cycle health</span><strong>{current.ml.health === null ? "—" : `${current.ml.health.toFixed(1)}%`}</strong></p><p><span>Range checks</span><strong>{abnormalCount ? `${abnormalCount} outside range` : "All okay"}</strong></p></div></>}<Link className="button button-secondary" href={`/digital-twin/ml/${current.id}`}>Open ML workspace <ArrowRight size={12} /></Link></section>
         </div>
+        <HistoricalPerformance history={current.history} rangeKey={rangeKey} onRangeKey={setRangeKey} customFrom={customFrom} customTo={customTo} onCustomFrom={setCustomFrom} onCustomTo={setCustomTo} />
       </main>}
     </div>}
   </>;

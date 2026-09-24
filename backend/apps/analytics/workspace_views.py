@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -43,9 +44,25 @@ class LiveDashboardView(APIView):
 
     def get(self, request):
         factory = resolve_factory(request)
+        history_from = parse_datetime(request.query_params.get("from", ""))
+        history_to = parse_datetime(request.query_params.get("to", ""))
+        if bool(history_from) != bool(history_to):
+            return Response(
+                {"detail": "Choose both a start and end for the history range."}, status=400
+            )
+        if history_from and history_to:
+            if history_from >= history_to:
+                return Response({"detail": "The history start must be before its end."}, status=400)
+            if history_to - history_from > timedelta(days=93):
+                return Response({"detail": "History ranges are limited to 93 days."}, status=400)
         try:
             return Response(
-                build_live_dashboard(factory, request.query_params.get("machine"))
+                build_live_dashboard(
+                    factory,
+                    request.query_params.get("machine"),
+                    history_from,
+                    history_to,
+                )
             )
         except ObjectDoesNotExist:
             return Response(

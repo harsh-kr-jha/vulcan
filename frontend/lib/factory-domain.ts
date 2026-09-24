@@ -112,12 +112,26 @@ export interface LiveMachineSummary {
   issues: LiveMachineIssue[];
 }
 export interface LiveVariable { key: string; label: string; value: unknown; unit: string; semantic: string; abnormal: boolean; order: number }
+export interface MachineHistory {
+  range: { from: string; to: string };
+  summary: {
+    totalTubes: number; acceptedTubes: number; rejectedTubes: number; rejectionRate: number;
+    outsideRange: number; predictedFailures: number; labelledPredictions: number; pendingOutcomes: number;
+    accuracy: number | null; baselineAccuracy: number | null; accuracyDrop: number | null;
+  };
+  confusionMatrix: { truePositive: number; trueNegative: number; falsePositive: number; falseNegative: number };
+  timeline: { at: string; produced: number; rejected: number; predictedFailures: number; correct: number; labelled: number; accuracy: number | null }[];
+  parameterTrends: { key: string; label: string; unit: string; min: number | null; max: number | null; points: { at: string; value: number }[] }[];
+  failureModes: { label: string; count: number }[];
+  modelAlert: { active: boolean; title: string; message: string };
+}
 export interface LiveMachineCurrent extends LiveMachineSummary {
   source: "stream" | "manual" | null; observedAt: string | null;
   activity: { runId: string; cycleId: string; cycleNumber: number | null; phase: string; recipeId: string };
   highlightedVariables: LiveVariable[]; variables: LiveVariable[]; violations: Record<string, boolean>;
   stream: { name: string; channel: string; status: string; lastReceivedAt: string | null; lastError: string } | null;
   ml: { enabled: boolean; active: boolean; health: number | null; prediction: { modelId: string; observedAt: string; failureProbability: number | null; label: string; threshold: number | null } | null };
+  history: MachineHistory;
 }
 export interface LiveDashboardPayload { factoryId: string; layoutExists: boolean; machines: LiveMachineSummary[]; selectedMachineId: string | null; current: LiveMachineCurrent | null; generatedAt: string }
 

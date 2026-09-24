@@ -1,11 +1,13 @@
+from collections import defaultdict
 from datetime import timedelta
 
-from django.utils import timezone
-from django.db.models import F, Window, prefetch_related_objects
+from django.db.models import F, Q, Window, prefetch_related_objects
 from django.db.models.functions import RowNumber
+from django.utils import timezone
 
 from apps.alerts.models import Alert
-from apps.ml.models import MachineCycle, ObservationConfig, PredictionModel
+from apps.ml.models import FeatureSnapshot, MachineCycle, ObservationConfig, PredictionModel
+from apps.streams.models import MachineCycleOutcome, MachineTelemetrySample
 
 STATE_PRIORITY = {
     "down": 0,
@@ -196,7 +198,205 @@ def _variable_payload(machine, values, violations):
     return highlighted, variables
 
 
-def build_live_dashboard(factory, requested_machine_id=None):
+def _history_bucket(observed_at, span):
+    local = timezone.localtime(observed_at)
+    if span <= timedelta(days=2):
+        return local.replace(minute=0, second=0, microsecond=0)
+    return local.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def _historical_performance(machine, start, end):
+    """Return bounded, cycle-level production and model evidence for the dashboard."""
+    cycles = list(
+        MachineCycle.objects.filter(machine=machine, started_at__gte=start, started_at__lte=end)
+        .select_related("profile")
+        .order_by("started_at")
+    )
+    cycle_keys = {(cycle.run_id, cycle.cycle_id) for cycle in cycles}
+    outcomes = {
+        (item.run_id, item.cycle_id): item
+        for item in MachineCycleOutcome.objects.filter(
+            machine=machine, created_at__gte=start, created_at__lte=end
+        )
+    }
+    # An outcome can arrive just outside the requested period, so include matches for
+    # the cycles already selected without changing which production belongs to the range.
+    if cycle_keys:
+        pair_filter = Q()
+        for run_id, cycle_id in cycle_keys:
+            pair_filter |= Q(run_id=run_id, cycle_id=cycle_id)
+        outcomes.update(
+            {
+                (item.run_id, item.cycle_id): item
+                for item in MachineCycleOutcome.objects.filter(machine=machine).filter(pair_filter)
+            }
+        )
+    cycle_ids = [cycle.id for cycle in cycles]
+    predictions = {}
+    if cycle_ids:
+        for snapshot in (
+            FeatureSnapshot.objects.filter(cycle_id__in=cycle_ids, model__isnull=False)
+            .select_related("model")
+            .order_by("cycle_id", "sequence_no")
+        ):
+            # Prefer the declared checkpoint. If it is absent, retain the latest score.
+            current = predictions.get(snapshot.cycle_id)
+            if snapshot.checkpoint or current is None or not current.checkpoint:
+                predictions[snapshot.cycle_id] = snapshot
+
+    matrix = {"truePositive": 0, "trueNegative": 0, "falsePositive": 0, "falseNegative": 0}
+    predicted_failures = actual_failures = out_of_range = labelled_predictions = correct = 0
+    failure_modes = defaultdict(int)
+    bucket_rows = defaultdict(
+        lambda: {
+            "produced": 0,
+            "rejected": 0,
+            "predictedFailures": 0,
+            "correct": 0,
+            "labelled": 0,
+        }
+    )
+    span = end - start
+    for cycle in cycles:
+        bucket = bucket_rows[_history_bucket(cycle.started_at, span)]
+        bucket["produced"] += 1
+        if any(bool(value) for value in (cycle.violations or {}).values()):
+            out_of_range += 1
+        outcome = outcomes.get((cycle.run_id, cycle.cycle_id))
+        actual = outcome.effective_label if outcome else None
+        if actual == "failure":
+            actual_failures += 1
+            bucket["rejected"] += 1
+            failure_modes[outcome.failure_mode or "Unspecified"] += 1
+        prediction = predictions.get(cycle.id)
+        predicted = prediction.predicted_label if prediction else None
+        if predicted == "failure":
+            predicted_failures += 1
+            bucket["predictedFailures"] += 1
+        if predicted in {"good", "failure"} and actual in {"good", "failure"}:
+            labelled_predictions += 1
+            bucket["labelled"] += 1
+            is_correct = predicted == actual
+            correct += int(is_correct)
+            bucket["correct"] += int(is_correct)
+            if predicted == "failure" and actual == "failure":
+                matrix["truePositive"] += 1
+            elif predicted == "good" and actual == "good":
+                matrix["trueNegative"] += 1
+            elif predicted == "failure":
+                matrix["falsePositive"] += 1
+            else:
+                matrix["falseNegative"] += 1
+
+    accuracy = (correct / labelled_predictions * 100) if labelled_predictions else None
+    model = next((item.model for item in predictions.values() if item.model_id), None)
+    baseline_value = (model.metrics or {}).get("accuracy") if model else None
+    if baseline_value is None and model:
+        baseline_value = (model.metrics or {}).get("balanced_accuracy")
+    baseline = (
+        float(baseline_value) * 100
+        if isinstance(baseline_value, (int, float)) and baseline_value <= 1
+        else baseline_value
+    )
+    accuracy_drop = (
+        float(baseline) - accuracy
+        if accuracy is not None and isinstance(baseline, (int, float))
+        else None
+    )
+    needs_retraining = bool(
+        labelled_predictions >= 10
+        and accuracy is not None
+        and (accuracy < 80 or (accuracy_drop is not None and accuracy_drop >= 10))
+    )
+
+    timeline = [
+        {
+            "at": at,
+            **row,
+            "accuracy": row["correct"] / row["labelled"] * 100 if row["labelled"] else None,
+        }
+        for at, row in sorted(bucket_rows.items())
+    ]
+
+    definitions = {
+        parameter.key: parameter
+        for parameter in machine.parameters.filter(is_active=True, data_type="number")
+    }
+    samples = list(
+        MachineTelemetrySample.objects.filter(
+            machine=machine, observed_at__gte=start, observed_at__lte=end
+        ).order_by("observed_at")[:6000]
+    )
+    stride = max(1, len(samples) // 180)
+    sampled = samples[::stride]
+    active_profile = (
+        ObservationConfig.objects.filter(machine=machine).select_related("active_profile").first()
+    )
+    profile_ranges = (
+        active_profile.active_profile.ranges or []
+        if active_profile and active_profile.active_profile
+        else []
+    )
+    range_map = {
+        item.get("key"): item
+        for item in profile_ranges
+        if isinstance(item, dict) and item.get("key")
+    }
+    parameter_trends = []
+    for key, definition in definitions.items():
+        points = [
+            {"at": sample.observed_at, "value": sample.values.get(key)}
+            for sample in sampled
+            if isinstance(sample.values.get(key), (int, float))
+            and not isinstance(sample.values.get(key), bool)
+        ]
+        if points:
+            limits = range_map.get(key, {})
+            parameter_trends.append(
+                {
+                    "key": key,
+                    "label": definition.label or key.replace("_", " ").title(),
+                    "unit": definition.unit,
+                    "min": limits.get("min"),
+                    "max": limits.get("max"),
+                    "points": points,
+                }
+            )
+
+    known_outcomes = sum(1 for cycle in cycles if (cycle.run_id, cycle.cycle_id) in outcomes)
+    return {
+        "range": {"from": start, "to": end},
+        "summary": {
+            "totalTubes": len(cycles),
+            "acceptedTubes": max(0, known_outcomes - actual_failures),
+            "rejectedTubes": actual_failures,
+            "rejectionRate": actual_failures / known_outcomes * 100 if known_outcomes else 0,
+            "outsideRange": out_of_range,
+            "predictedFailures": predicted_failures,
+            "labelledPredictions": labelled_predictions,
+            "pendingOutcomes": max(0, len(cycles) - known_outcomes),
+            "accuracy": accuracy,
+            "baselineAccuracy": baseline,
+            "accuracyDrop": accuracy_drop,
+        },
+        "confusionMatrix": matrix,
+        "timeline": timeline,
+        "parameterTrends": parameter_trends,
+        "failureModes": [
+            {"label": label, "count": count}
+            for label, count in sorted(
+                failure_modes.items(), key=lambda item: item[1], reverse=True
+            )
+        ],
+        "modelAlert": {
+            "active": needs_retraining,
+            "title": "Model accuracy has dropped",
+            "message": "Retrain and recalibrate this model using recent verified tube outcomes.",
+        },
+    }
+
+
+def build_live_dashboard(factory, requested_machine_id=None, history_from=None, history_to=None):
     now = timezone.now()
     machines = list(
         factory.spatial_layout.machines.filter(is_active=True)
@@ -216,15 +416,17 @@ def build_live_dashboard(factory, requested_machine_id=None):
             entry["severity"], 99
         ):
             entry["severity"] = severity
-    latest_cycles = MachineCycle.objects.filter(
-        tenant=factory.tenant, machine__layout__factory=factory
-    ).annotate(
-        machine_rank=Window(
-            expression=RowNumber(),
-            partition_by=[F("machine_id")],
-            order_by=F("started_at").desc(),
+    latest_cycles = (
+        MachineCycle.objects.filter(tenant=factory.tenant, machine__layout__factory=factory)
+        .annotate(
+            machine_rank=Window(
+                expression=RowNumber(),
+                partition_by=[F("machine_id")],
+                order_by=F("started_at").desc(),
+            )
         )
-    ).filter(machine_rank=1)
+        .filter(machine_rank=1)
+    )
     cycles = {cycle.machine_id: cycle for cycle in latest_cycles}
     summaries = []
     for machine in machines:
@@ -315,6 +517,11 @@ def build_live_dashboard(factory, requested_machine_id=None):
                 "health": cycle.health if cycle else None,
                 "prediction": prediction,
             },
+            "history": _historical_performance(
+                selected,
+                history_from or now - timedelta(days=7),
+                history_to or now,
+            ),
         }
     return {
         "factoryId": str(factory.id),

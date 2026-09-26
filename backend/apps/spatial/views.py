@@ -117,7 +117,11 @@ class FactoryModelAssetView(generics.GenericAPIView):
     MAX_BYTES = 15 * 1024 * 1024
 
     def get_permissions(self):
-        return [CanManageFactory()] if self.request.method == "POST" else [IsAuthenticated()]
+        return (
+            [CanManageFactory()]
+            if self.request.method in {"POST", "DELETE"}
+            else [IsAuthenticated()]
+        )
 
     def _layout(self):
         return get_object_or_404(
@@ -173,6 +177,13 @@ class FactoryModelAssetView(generics.GenericAPIView):
         )
         return Response(self.get_serializer(asset).data, status=201)
 
+    def delete(self, request, *args, **kwargs):
+        layout = self._layout()
+        asset = get_object_or_404(FactoryModelAsset, layout=layout)
+        tenant_storage(layout.tenant_id).delete(asset.storage_key)
+        asset.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class MachineModelAssetView(generics.GenericAPIView):
     """Upload or stream one low-poly GLB representation for a machine."""
@@ -182,7 +193,11 @@ class MachineModelAssetView(generics.GenericAPIView):
     MAX_BYTES = 8 * 1024 * 1024
 
     def get_permissions(self):
-        return [CanManageFactory()] if self.request.method == "POST" else [IsAuthenticated()]
+        return (
+            [CanManageFactory()]
+            if self.request.method in {"POST", "DELETE"}
+            else [IsAuthenticated()]
+        )
 
     def _machine(self):
         return get_object_or_404(
@@ -238,6 +253,13 @@ class MachineModelAssetView(generics.GenericAPIView):
             },
         )
         return Response(self.get_serializer(asset).data, status=201)
+
+    def delete(self, request, *args, **kwargs):
+        machine = self._machine()
+        asset = get_object_or_404(MachineModelAsset, machine=machine)
+        tenant_storage(machine.tenant_id).delete(asset.storage_key)
+        asset.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class MachineImageAssetView(generics.GenericAPIView):

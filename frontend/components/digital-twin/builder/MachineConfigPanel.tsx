@@ -60,6 +60,8 @@ export function MachineConfigPanel({
   const [modelAsset, setModelAsset] = useState<FactoryModelAsset | null>(existingMachine?.modelAsset ?? null);
   const [modelTransform, setModelTransform] = useState<MachineModelTransform>(existingMachine?.modelTransform ?? { elevation: 0, scale: 1, rotationY: 0 });
   const [modelUploading, setModelUploading] = useState(false);
+  const [modelDeleting, setModelDeleting] = useState(false);
+  const [modelDeleteConfirm, setModelDeleteConfirm] = useState(false);
   const [modelError, setModelError] = useState("");
   const [inputs, setInputs] = useState<IOSpecDraft[]>(
     existingMachine?.inputs.map((io) => ({ id: io.id, label: io.label, unitType: io.unitType })) ?? []
@@ -199,10 +201,34 @@ export function MachineConfigPanel({
       const asset = { id: body.id, filename: body.filename, sizeBytes: body.size_bytes, checksumSha256: body.checksum_sha256, downloadUrl: body.download_url } as FactoryModelAsset;
       setModelAsset(asset);
       setRepresentation("glb");
+      setModelDeleteConfirm(false);
     } catch (cause) {
       setModelError(cause instanceof Error ? cause.message : "Upload failed.");
     } finally {
       setModelUploading(false);
+    }
+  }
+
+  async function deleteMachineModel() {
+    if (isNew || !modelAsset) return;
+    setModelDeleting(true);
+    setModelError("");
+    try {
+      const response = await fetch(`/api/backend/api/spatial/machines/${machineId}/model/`, {
+        method: "DELETE",
+        headers: { "X-CSRFToken": await getCsrfToken() },
+        credentials: "same-origin",
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.detail ?? "Delete failed.");
+      setModelAsset(null);
+      setRepresentation("block");
+      setModelDeleteConfirm(false);
+      configureMachine(machineId, { modelAsset: null, representation: "block" });
+    } catch (cause) {
+      setModelError(cause instanceof Error ? cause.message : "Delete failed.");
+    } finally {
+      setModelDeleting(false);
     }
   }
 
@@ -311,8 +337,8 @@ export function MachineConfigPanel({
               <label className="builder-dialog-label mt-3 flex items-center justify-between">Block color<input type="color" value={blockColor} onChange={(event) => setBlockColor(event.target.value.toUpperCase())} className="h-9 w-14 rounded border border-slate-200 bg-white p-1" /></label>
             ) : null}
             <div className="mt-3 rounded-lg border border-slate-200 p-3">
-              {modelAsset && <div className="mb-2 text-xs text-slate-600"><strong className="block text-slate-900">{modelAsset.filename}</strong>{(modelAsset.sizeBytes / 1024 / 1024).toFixed(1)} MB</div>}
-              <label className={`button button-secondary inline-flex cursor-pointer ${isNew || modelUploading ? "pointer-events-none opacity-50" : ""}`}><Upload size={13} />{modelUploading ? "Uploading…" : modelAsset ? "Replace GLB" : "Attach GLB"}<input className="hidden" type="file" accept=".glb,model/gltf-binary" onChange={(event) => void uploadMachineModel(event.target.files?.[0])} /></label>
+              {modelAsset && <div className="mb-3 text-xs text-slate-600"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><strong className="block truncate text-slate-900">{modelAsset.filename}</strong>{(modelAsset.sizeBytes / 1024 / 1024).toFixed(1)} MB</div>{!modelDeleteConfirm && <button type="button" className="inline-flex shrink-0 items-center gap-1 font-semibold text-red-600 hover:text-red-700" onClick={() => setModelDeleteConfirm(true)} disabled={modelDeleting}><Trash2 size={13} /> Delete GLB</button>}</div>{modelDeleteConfirm && <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-200 pt-3"><span className="mr-auto text-slate-600">Remove this model?</span><button type="button" className="button button-secondary" onClick={() => setModelDeleteConfirm(false)} disabled={modelDeleting}>Cancel</button><button type="button" className="button button-danger" onClick={() => void deleteMachineModel()} disabled={modelDeleting}><Trash2 size={13} />{modelDeleting ? "Deleting…" : "Delete"}</button></div>}</div>}
+              <label className={`button button-secondary inline-flex cursor-pointer ${isNew || modelUploading || modelDeleting ? "pointer-events-none opacity-50" : ""}`}><Upload size={13} />{modelUploading ? "Uploading…" : modelAsset ? "Replace GLB" : "Attach GLB"}<input className="hidden" type="file" accept=".glb,model/gltf-binary" onChange={(event) => void uploadMachineModel(event.target.files?.[0])} /></label>
               {isNew && <p className="mt-2 text-xs text-amber-700">Save the layout once, then edit this machine to attach its GLB.</p>}
               {modelError && <p className="mt-2 text-xs text-red-600">{modelError}</p>}
               {modelAsset && <div className="mt-3 grid grid-cols-3 gap-2">{([['scale','Scale',0.01,0.05],['rotationY','Model rotation',undefined,5],['elevation','Elevation',undefined,0.1]] as const).map(([key,label,min,step]) => <label key={key} className="text-[11px] text-slate-600">{label}<input className="builder-dialog-input mt-1" type="number" min={min} step={step} value={modelTransform[key]} onChange={(event) => updateModelTransform(key, Number(event.target.value))} /></label>)}</div>}

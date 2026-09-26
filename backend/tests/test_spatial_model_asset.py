@@ -45,6 +45,13 @@ def test_upload_and_download_factory_model(api_client, tenant, factory, tmp_path
         downloaded = api_client.get(url)
         assert downloaded.status_code == 200
         assert downloaded.content.startswith(b"glTF")
+        storage_key = FactoryModelAsset.objects.get(layout=layout).storage_key
+        stored_file = tmp_path / "tenants" / str(tenant.id) / storage_key
+        assert stored_file.exists()
+        deleted = api_client.delete(url)
+        assert deleted.status_code == 204
+        assert not FactoryModelAsset.objects.filter(layout=layout).exists()
+        assert not stored_file.exists()
 
 
 def test_rejects_non_glb_model(api_client, tenant, factory, tmp_path):
@@ -83,6 +90,13 @@ def test_upload_and_download_machine_model(api_client, tenant, factory, tmp_path
         assert downloaded.status_code == 200
         assert downloaded["ETag"]
         assert downloaded.content.startswith(b"glTF")
+        storage_key = MachineModelAsset.objects.get(machine=machine).storage_key
+        stored_file = tmp_path / "tenants" / str(tenant.id) / storage_key
+        assert stored_file.exists()
+        deleted = api_client.delete(url)
+        assert deleted.status_code == 204
+        assert not MachineModelAsset.objects.filter(machine=machine).exists()
+        assert not stored_file.exists()
 
 
 def test_machine_visual_fields_are_serialized(api_client, tenant, factory):

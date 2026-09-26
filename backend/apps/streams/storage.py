@@ -28,6 +28,9 @@ class BlobStorage(ABC):
     def get(self, key: str) -> bytes: ...
 
     @abstractmethod
+    def delete(self, key: str) -> None: ...
+
+    @abstractmethod
     def exists(self, key: str) -> bool: ...
 
     @abstractmethod
@@ -56,6 +59,9 @@ class FileSystemStorage(BlobStorage):
 
     def get(self, key: str) -> bytes:
         return self._path(key).read_bytes()
+
+    def delete(self, key: str) -> None:
+        self._path(key).unlink(missing_ok=True)
 
     def exists(self, key: str) -> bool:
         return self._path(key).is_file()
@@ -101,6 +107,9 @@ class S3Storage(BlobStorage):
     def get(self, key: str) -> bytes:
         return self.client.get_object(Bucket=self.bucket, Key=self._key(key))["Body"].read()
 
+    def delete(self, key: str) -> None:
+        self.client.delete_object(Bucket=self.bucket, Key=self._key(key))
+
     def exists(self, key: str) -> bool:
         try:
             self.client.head_object(Bucket=self.bucket, Key=self._key(key))
@@ -134,6 +143,9 @@ class TenantStorage:
 
     def get(self, key: str) -> bytes:
         return self.backend.get(self._key(key))
+
+    def delete(self, key: str) -> None:
+        self.backend.delete(self._key(key))
 
     def exists(self, key: str) -> bool:
         return self.backend.exists(self._key(key))

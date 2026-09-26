@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { normalizeFactoryScene, projectIsometric } from "@/lib/spatial-scene";
 import type { FactoryLayout } from "@/lib/spatial-types";
 import type { LiveMachineSummary } from "@/lib/factory-domain";
@@ -12,6 +12,7 @@ function points(items: Array<{ x: number; y: number }>) {
 }
 
 export function IsometricFactoryView({ layout, liveMachines, selectedMachineId, onMachineClick, showZones, showConnections }: { layout: FactoryLayout; liveMachines: LiveMachineSummary[]; selectedMachineId: string | null; onMachineClick: (id: string) => void; showZones: boolean; showConnections: boolean }) {
+  const [focusedMachineId, setFocusedMachineId] = useState<string | null>(null);
   const scene = useMemo(() => normalizeFactoryScene(layout, liveMachines), [layout, liveMachines]);
   const floorCorners = [projectIsometric(0, 0), projectIsometric(scene.width, 0), projectIsometric(scene.width, scene.height), projectIsometric(0, scene.height)];
   const xs = floorCorners.map((p) => p.x); const ys = floorCorners.map((p) => p.y);
@@ -41,11 +42,11 @@ export function IsometricFactoryView({ layout, liveMachines, selectedMachineId, 
       {[...scene.machines].sort((a, b) => (a.x + a.y) - (b.x + b.y)).map((machine) => {
         const a = projectIsometric(machine.x, machine.y); const b = projectIsometric(machine.x + machine.width, machine.y); const c = projectIsometric(machine.x + machine.width, machine.y + machine.depth);
         const at = projectIsometric(machine.x, machine.y, machine.height); const bt = projectIsometric(machine.x + machine.width, machine.y, machine.height); const ct = projectIsometric(machine.x + machine.width, machine.y + machine.depth, machine.height); const dt = projectIsometric(machine.x, machine.y + machine.depth, machine.height);
-        const visual = resolveMachineVisualStatus(machine.live, layout.statusVisualization); const color = visual.bodyColor; const statusColor = visual.bodyColor; const selected = selectedMachineId === machine.id;
-        return <g key={machine.id} role="button" tabIndex={0} aria-label={`${machine.name}, ${visual.label}`} className="cursor-pointer" onClick={() => onMachineClick(machine.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onMachineClick(machine.id); }}>
+        const visual = resolveMachineVisualStatus(machine.live, layout.statusVisualization); const color = visual.bodyColor; const statusColor = visual.bodyColor; const selected = selectedMachineId === machine.id; const focused = focusedMachineId === machine.id;
+        return <g key={machine.id} role="button" tabIndex={0} aria-label={`${machine.name}, ${visual.label}`} className="cursor-pointer" style={{ outline: "none" }} onFocus={() => setFocusedMachineId(machine.id)} onBlur={() => setFocusedMachineId(null)} onClick={() => onMachineClick(machine.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") onMachineClick(machine.id); }}>
           <polygon points={points([a, b, bt, at])} fill={color} fillOpacity="0.62" stroke="#334155" strokeWidth="0.08" />
           <polygon points={points([b, c, ct, bt])} fill={color} fillOpacity="0.45" stroke="#334155" strokeWidth="0.08" />
-          <polygon points={points([at, bt, ct, dt])} fill={color} stroke={selected ? "#2563eb" : statusColor} strokeWidth={selected ? "0.24" : "0.14"} />
+          <polygon points={points([at, bt, ct, dt])} fill={color} stroke={selected ? "#334155" : focused ? "#64748b" : statusColor} strokeWidth={selected ? "0.16" : focused ? "0.14" : "0.1"} />
           <text x={(at.x + ct.x) / 2} y={(at.y + ct.y) / 2} textAnchor="middle" dominantBaseline="middle" fontSize="0.58" fontWeight="700" fill={visual.textColor}>{machine.name.slice(0, 18)}</text>
           {visual.segments.map((segment, index) => <circle key={segment.type} cx={at.x + 0.28 + index * 0.32} cy={at.y - 0.28} r="0.13" fill={segment.color} stroke="white" strokeWidth="0.035" />)}
           {machine.alertCount > 0 && <><circle cx={at.x + 0.3} cy={at.y - 0.3} r="0.38" fill="#dc2626" /><text x={at.x + 0.3} y={at.y - 0.3} textAnchor="middle" dominantBaseline="middle" fontSize="0.38" fill="white" fontWeight="800">{Math.min(machine.alertCount, 9)}</text></>}

@@ -537,9 +537,16 @@ export default function ThreeFactoryView({
       });
     }
 
+    const selectionGeometry = new THREE.BufferGeometry();
+    selectionGeometry.setAttribute("position", new THREE.Float32BufferAttribute([
+      -0.5, 0, -0.5, -0.3, 0, -0.5, -0.5, 0, -0.5, -0.5, 0, -0.3,
+       0.5, 0, -0.5,  0.3, 0, -0.5,  0.5, 0, -0.5,  0.5, 0, -0.3,
+       0.5, 0,  0.5,  0.3, 0,  0.5,  0.5, 0,  0.5,  0.5, 0,  0.3,
+      -0.5, 0,  0.5, -0.3, 0,  0.5, -0.5, 0,  0.5, -0.5, 0,  0.3,
+    ], 3));
     const selection = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)),
-      new THREE.LineBasicMaterial({ color: 0x2563eb }),
+      selectionGeometry,
+      new THREE.LineBasicMaterial({ color: 0x334155, transparent: true, opacity: 0.85 }),
     );
     selection.visible = false;
     selectionRef.current = selection;
@@ -832,8 +839,8 @@ export default function ThreeFactoryView({
     const placement = selectedMachineId ? placementsRef.current.get(selectedMachineId) : undefined;
     if (selection && placement) {
       selection.visible = true;
-      selection.position.set(placement.x, placement.height / 2, placement.z);
-      selection.scale.set(placement.width + 0.12, placement.height + 0.12, placement.depth + 0.12);
+      selection.position.set(placement.x, 0.075, placement.z);
+      selection.scale.set(placement.width + 0.08, 1, placement.depth + 0.08);
       fitSelectionRef.current = () => {
         const bounds = new THREE.Box3().setFromCenterAndSize(
           new THREE.Vector3(placement.x, placement.height / 2, placement.z),

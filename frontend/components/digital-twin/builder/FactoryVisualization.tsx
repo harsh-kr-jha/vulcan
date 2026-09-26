@@ -92,6 +92,7 @@ export function FactoryVisualization({
   onSelectedAnchorChange,
 }: FactoryVisualizationProps) {
   const [hoveredMachineId, setHoveredMachineId] = useState<string | null>(null);
+  const [focusedMachineId, setFocusedMachineId] = useState<string | null>(null);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
   const { floor, machines, connections } = layout;
@@ -464,7 +465,7 @@ export function FactoryVisualization({
             const rotated = machine.rotation === 90 || machine.rotation === 270;
             const w = rotated ? (machine.size?.height ?? 1) : (machine.size?.width ?? 1);
             const h = rotated ? (machine.size?.width ?? 1) : (machine.size?.height ?? 1);
-            const isHovered = hoveredMachineId === machine.id;
+            const isHovered = hoveredMachineId === machine.id || focusedMachineId === machine.id;
             const isSelected = selectedMachineId === machine.id;
             const fontSize = Math.min(w, h) * 0.3;
 
@@ -475,6 +476,8 @@ export function FactoryVisualization({
                 onMouseEnter={(e) => handleMachineEnter(machine.id, e)}
                 onMouseMove={handleMachineMove}
                 onMouseLeave={handleMachineLeave}
+                onFocus={() => setFocusedMachineId(machine.id)}
+                onBlur={() => setFocusedMachineId(null)}
                 onClick={(event) => {
                   event.stopPropagation();
                   setHoveredMachineId(null);
@@ -498,6 +501,7 @@ export function FactoryVisualization({
                 }}
                 tabIndex={0}
                 role="button"
+                style={{ outline: "none" }}
                 aria-label={`Machine: ${machine.name}, Status: ${visual.label}${visual.segments.length ? `, ${visual.segments.map((item) => item.label).join(", ")}` : ""}`}
               >
                 {/* Clip path to prevent text overflow */}
@@ -519,8 +523,8 @@ export function FactoryVisualization({
                   height={h - 0.1}
                   rx={0.12}
                   fill={visual.bodyColor}
-                  stroke={isHovered || isSelected ? "#2563eb" : visual.bodyColor}
-                  strokeWidth={isHovered || isSelected ? 0.12 : 0.06}
+                  stroke={isSelected ? "#334155" : isHovered ? "#64748b" : visual.bodyColor}
+                  strokeWidth={isSelected ? 0.1 : isHovered ? 0.08 : 0.06}
                   filter="url(#machine-shadow)"
                   style={{ transition: "stroke 0.15s, stroke-width 0.15s" }}
                 />

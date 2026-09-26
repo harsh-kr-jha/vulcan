@@ -32,6 +32,7 @@ import { SpatialSettingsPanel } from "./SpatialSettingsPanel";
 // ---------------------------------------------------------------------------
 
 type PageMode = "loading" | "empty" | "viewing" | "editing";
+type MachinePlacementAction = { type: "move" | "duplicate"; sourceId: string };
 
 interface LegacyLayoutApiPayload {
   id: string;
@@ -228,6 +229,7 @@ export function FactoryTwinPage() {
     cancelEdit,
     enterEditMode,
     placeMachine,
+    moveMachine,
     configureZones,
     restoreDraft,
     saving,
@@ -242,6 +244,8 @@ export function FactoryTwinPage() {
   const [showStructure, setShowStructure] = useState(false);
   const [showSpatialSettings, setShowSpatialSettings] = useState(false);
   const [placementTarget, setPlacementTarget] = useState<"machine" | "zone">("machine");
+  const [machinePlacement, setMachinePlacement] = useState<MachinePlacementAction | null>(null);
+  const [placementError, setPlacementError] = useState("");
   const [unplacedMachines, setUnplacedMachines] = useState<LayoutApiPayload["machines"]>([]);
 
   // Panel state
@@ -471,6 +475,8 @@ export function FactoryTwinPage() {
 
   // Cancel edit (Req 13.7)
   const handleCancel = useCallback(() => {
+    setMachinePlacement(null);
+    setPlacementError("");
     cancelEdit();
     // If we had a saved layout, go back to viewing; otherwise go to empty
     if (builderState.isEditingExisting) {
@@ -483,6 +489,74 @@ export function FactoryTwinPage() {
   // Area selected via right-click drag -> create machine and open config panel
   const handleAreaSelected = useCallback(
     (position: GridPosition, size: { width: number; height: number }) => {
+      if (machinePlacement) {
+        const source = builderState.layout.machines.find((machine) => machine.id === machinePlacement.sourceId);
+        if (!source) {
+          setMachinePlacement(null);
+          setPlacementError("That machine is no longer available.");
+          return;
+        }
+
+        const rotated = source.rotation === 90 || source.rotation === 270;
+        const width = rotated ? (source.size?.height ?? 1) : (source.size?.width ?? 1);
+        const height = rotated ? (source.size?.width ?? 1) : (source.size?.height ?? 1);
+        const target = { left: position.x, top: position.y, right: position.x + width, bottom: position.y + height };
+        const outsideFloor = target.right > builderState.layout.floor.width || target.bottom > builderState.layout.floor.height;
+        const overlaps = builderState.layout.machines.some((machine) => {
+          if (machinePlacement.type === "move" && machine.id === source.id) return false;
+          const otherRotated = machine.rotation === 90 || machine.rotation === 270;
+          const otherWidth = otherRotated ? (machine.size?.height ?? 1) : (machine.size?.width ?? 1);
+          const otherHeight = otherRotated ? (machine.size?.width ?? 1) : (machine.size?.height ?? 1);
+          return target.left < machine.position.x + otherWidth && target.right > machine.position.x && target.top < machine.position.y + otherHeight && target.bottom > machine.position.y;
+        });
+        if (outsideFloor || overlaps) {
+          setPlacementError(outsideFloor ? "The machine does not fit inside the floor at that position." : "The machine would overlap another machine. Choose a clear position.");
+          return;
+        }
+
+        if (machinePlacement.type === "move") {
+          moveMachine(source.id, position);
+          setMachinePlacement(null);
+          setPlacementError("");
+          return;
+        }
+
+        const existingNames = new Set(builderState.layout.machines.map((machine) => machine.name.toLowerCase()));
+        let copyNumber = 1;
+        let copyName = `${source.name.slice(0, 45)} copy`;
+        while (existingNames.has(copyName.toLowerCase())) {
+          copyNumber += 1;
+          const suffix = ` copy ${copyNumber}`;
+          copyName = `${source.name.slice(0, Math.max(0, 50 - suffix.length))}${suffix}`;
+        }
+        const id = crypto.randomUUID();
+        const duplicate: MachineNode = {
+          ...source,
+          id,
+          name: copyName,
+          code: "",
+          position,
+          size: source.size ? { ...source.size } : undefined,
+          inputs: source.inputs.map((item) => ({ ...item, id: crypto.randomUUID() })),
+          outputs: source.outputs.map((item) => ({ ...item, id: crypto.randomUUID() })),
+          parameters: source.parameters.map((item) => ({ ...item, id: crypto.randomUUID(), options: item.options ? [...item.options] : undefined })),
+          customKpis: source.customKpis.map((item) => ({ ...item, id: crypto.randomUUID(), formula: { ...item.formula, operations: item.formula.operations.map((operation) => ({ ...operation })) } })),
+          representation: source.modelAsset ? "block" : source.representation,
+          modelAsset: null,
+          imageAsset: null,
+          modelTransform: source.modelTransform ? { ...source.modelTransform } : undefined,
+          dataStreamId: null,
+          dataStreamChannelId: null,
+          streamBinding: null,
+          status: "no_data",
+        };
+        placeMachine(duplicate);
+        setMachinePlacement(null);
+        setPlacementError("");
+        setConfigMachineId(id);
+        setConfigMachineIsNew(true);
+        return;
+      }
       if (placementTarget === "zone") {
         const nextIndex = builderState.layout.zones.length + 1;
         configureZones([...builderState.layout.zones, { id: crypto.randomUUID(), name: `Zone ${nextIndex}`, type: "operational", color: "#DBEAFE", position, size, displayOrder: nextIndex }]);
@@ -516,12 +590,23 @@ export function FactoryTwinPage() {
       setConfigMachineId(id);
       setConfigMachineIsNew(true);
     },
-    [placeMachine, placementTarget, builderState.layout.zones, configureZones]
+    [machinePlacement, builderState.layout, moveMachine, placeMachine, placementTarget, configureZones]
   );
 
   // Tap existing machine -> open config panel in edit mode
   const handleMachineSelect = useCallback((machineId: string) => {
+    if (machinePlacement) {
+      setPlacementError("Choose a clear floor position, or cancel placement.");
+      return;
+    }
     setConfigMachineId(machineId);
+    setConfigMachineIsNew(false);
+  }, [machinePlacement]);
+
+  const handleMachinePlacementRequest = useCallback((type: MachinePlacementAction["type"], sourceId: string) => {
+    setMachinePlacement({ type, sourceId });
+    setPlacementError("");
+    setConfigMachineId(null);
     setConfigMachineIsNew(false);
   }, []);
 
@@ -585,12 +670,12 @@ export function FactoryTwinPage() {
     prevConfigMachineIdRef.current = configMachineId;
 
     // Panel just closed AND layout is dirty AND it's an existing layout AND not already saving
-    if (wasConfigure && configMachineId === null && builderState.isDirty && builderState.layout.id && !saving) {
+    if (wasConfigure && configMachineId === null && !machinePlacement && builderState.isDirty && builderState.layout.id && !saving) {
       saveLayout().catch(() => {
         // Error surfaced via builder context saveError
       });
     }
-  }, [configMachineId, builderState.isDirty, builderState.layout.id, saving, saveLayout]);
+  }, [configMachineId, machinePlacement, builderState.isDirty, builderState.layout.id, saving, saveLayout]);
 
   const handleCloseConnectionConfig = useCallback(() => {
     setConfigConnectionId(null);
@@ -891,6 +976,8 @@ export function FactoryTwinPage() {
           machineId={configMachineId}
           isNew={configMachineIsNew}
           onClose={handleCloseMachineConfig}
+          onMove={(machineId) => handleMachinePlacementRequest("move", machineId)}
+          onDuplicate={(machineId) => handleMachinePlacementRequest("duplicate", machineId)}
         />
       )}
 
@@ -902,6 +989,7 @@ export function FactoryTwinPage() {
         />
       )}
       {placementTarget === "zone" && <div className="absolute left-1/2 top-16 z-30 -translate-x-1/2 rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-lg">Right-drag an empty floor area to create a zone · <button className="underline" onClick={() => setPlacementTarget("machine")}>Cancel</button></div>}
+      {machinePlacement && <div role="status" className="absolute left-1/2 top-16 z-30 max-w-lg -translate-x-1/2 rounded-xl bg-blue-600 px-4 py-2 text-center text-xs font-semibold text-white shadow-lg"><span>{machinePlacement.type === "move" ? "Right-click the new top-left position for this machine." : "Right-click where the duplicate should be placed."}</span>{placementError && <span className="mt-1 block text-blue-100">{placementError}</span>} <button className="ml-1 underline" onClick={() => { setMachinePlacement(null); setPlacementError(""); }}>Cancel</button></div>}
       {showSpatialSettings && <SpatialSettingsPanel onClose={() => setShowSpatialSettings(false)} onStartZone={() => { setPlacementTarget("zone"); setShowSpatialSettings(false); }} />}
       {showStructure && <div className="fixed inset-0 z-50 overflow-y-auto bg-black/30 p-6" onClick={() => setShowStructure(false)}><div className="mx-auto max-w-4xl space-y-4 rounded-2xl bg-gray-50 p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}><div className="flex items-center justify-between"><div><h2 className="font-semibold text-gray-900">Lexicon production structure</h2><p className="text-sm text-gray-500">Lines and ordered processes used by every machine.</p></div><button className="icon-button" onClick={() => setShowStructure(false)}><X size={18} /></button></div><ProductionStructureManager /></div></div>}
     </div>

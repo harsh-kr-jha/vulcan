@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Cuboid, Plus, Trash2, Upload, X } from "lucide-react";
+import { Box, Copy, Cuboid, Move, Plus, Trash2, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
 import { useFactory } from "@/lib/factory-context";
@@ -16,6 +16,8 @@ export interface MachineConfigPanelProps {
   machineId: string;
   isNew: boolean; // true if just placed, false if editing existing
   onClose: () => void;
+  onMove: (machineId: string) => void;
+  onDuplicate: (machineId: string) => void;
 }
 
 interface IOSpecDraft {
@@ -40,6 +42,8 @@ export function MachineConfigPanel({
   machineId,
   isNew,
   onClose,
+  onMove,
+  onDuplicate,
 }: MachineConfigPanelProps) {
   const { state, configureMachine, removeMachine } = useFactoryBuilder();
   const { state: factoryState } = useFactory();
@@ -125,7 +129,7 @@ export function MachineConfigPanel({
   const isFormValid = isNameValid && inputsValid && outputsValid && (!dataStreamId || !!channelId);
 
   // Actions
-  const handleConfirm = useCallback(() => {
+  const saveConfiguration = useCallback(() => {
     if (!isFormValid) return;
 
     const configuredInputs: IOSpec[] = inputs.map((io) => ({
@@ -157,9 +161,21 @@ export function MachineConfigPanel({
       dataStreamId: dataStreamId || null,
       dataStreamChannelId: channelId || null,
     });
+  }, [isFormValid, inputs, outputs, name, code, processId, visualHeight, rotation, representation, blockColor, modelAsset, modelTransform, parameters, customKpis, dataStreamId, channelId, machineId, configureMachine]);
+
+  const handleConfirm = useCallback(() => {
+    if (!isFormValid) return;
+    saveConfiguration();
 
     onClose();
-  }, [isFormValid, inputs, outputs, name, code, processId, visualHeight, rotation, representation, blockColor, modelAsset, modelTransform, parameters, customKpis, dataStreamId, channelId, machineId, configureMachine, onClose]);
+  }, [isFormValid, saveConfiguration, onClose]);
+
+  const handlePlacementAction = useCallback((action: "move" | "duplicate") => {
+    if (!isFormValid) return;
+    saveConfiguration();
+    if (action === "move") onMove(machineId);
+    else onDuplicate(machineId);
+  }, [isFormValid, saveConfiguration, onMove, onDuplicate, machineId]);
 
   function updateModelTransform(key: keyof MachineModelTransform, value: number) {
     setModelTransform((current) => ({ ...current, [key]: Number.isFinite(value) ? value : 0 }));
@@ -399,7 +415,25 @@ export function MachineConfigPanel({
         <div className="machine-config-footer">
           {/* Delete button (only for existing machines, with double confirmation) */}
           {!isNew && (
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
+              <button
+                className="button button-secondary"
+                onClick={() => handlePlacementAction("move")}
+                disabled={!isFormValid}
+                type="button"
+              >
+                <Move size={14} />
+                Move
+              </button>
+              <button
+                className="button button-secondary"
+                onClick={() => handlePlacementAction("duplicate")}
+                disabled={!isFormValid}
+                type="button"
+              >
+                <Copy size={14} />
+                Duplicate
+              </button>
               {deleteStep === "idle" && (
                 <button
                   className="button button-danger"

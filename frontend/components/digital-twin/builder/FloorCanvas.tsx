@@ -52,7 +52,6 @@ const MIN_VIEWPORT_CELLS = 1;
 /** Colors for cell hover highlighting */
 const HOVER_COLOR_UNOCCUPIED = "rgba(59, 130, 246, 0.25)"; // Blue
 const HOVER_COLOR_OCCUPIED = "rgba(239, 68, 68, 0.35)"; // Red
-const FLASH_COLOR_OCCUPIED = "rgba(239, 68, 68, 0.6)"; // Brighter red for flash
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -202,22 +201,20 @@ function GridLayer({ floor, viewBox }: GridLayerProps) {
 
 interface InteractionLayerProps {
   floor: FloorDimensions;
-  viewBox: ViewBox;
   svgRef: React.RefObject<SVGSVGElement | null>;
   isEditMode: boolean;
   /** Called with position and size when user finishes drag-selecting cells */
   onAreaSelected?: (position: GridPosition, size: { width: number; height: number }) => void;
 }
 
-function InteractionLayer({ floor, viewBox, svgRef, isEditMode, onAreaSelected }: InteractionLayerProps) {
+function InteractionLayer({ floor, svgRef, isEditMode, onAreaSelected }: InteractionLayerProps) {
   const { isPositionOccupied } = useFactoryBuilder();
   const [hoveredCell, setHoveredCell] = useState<GridPosition | null>(null);
-  const [flashCell, setFlashCell] = useState<GridPosition | null>(null);
-  const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Right-click drag selection state
   const [dragStart, setDragStart] = useState<GridPosition | null>(null);
   const [dragEnd, setDragEnd] = useState<GridPosition | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const isDraggingRight = useRef(false);
 
   /**
@@ -285,7 +282,9 @@ function InteractionLayer({ floor, viewBox, svgRef, isEditMode, onAreaSelected }
       }
 
       e.preventDefault();
+      e.currentTarget.setPointerCapture(e.pointerId);
       isDraggingRight.current = true;
+      setIsDragging(true);
       setDragStart(cell);
       setDragEnd(cell);
     },
@@ -299,6 +298,10 @@ function InteractionLayer({ floor, viewBox, svgRef, isEditMode, onAreaSelected }
       if (e.button !== 2) return;
 
       isDraggingRight.current = false;
+      setIsDragging(false);
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
 
       if (dragStart && dragEnd && onAreaSelected) {
         // Compute top-left corner and size from start/end
@@ -340,7 +343,7 @@ function InteractionLayer({ floor, viewBox, svgRef, isEditMode, onAreaSelected }
 
   // Determine highlight color for hovered cell
   let hoverFill: string | null = null;
-  if (hoveredCell && !isDraggingRight.current) {
+  if (hoveredCell && !isDragging) {
     hoverFill = isPositionOccupied(hoveredCell) ? HOVER_COLOR_OCCUPIED : HOVER_COLOR_UNOCCUPIED;
   }
 
@@ -364,7 +367,7 @@ function InteractionLayer({ floor, viewBox, svgRef, isEditMode, onAreaSelected }
       />
 
       {/* Hover highlight (single cell, only when not dragging) */}
-      {hoveredCell && hoverFill && !isDraggingRight.current && (
+      {hoveredCell && hoverFill && !isDragging && (
         <rect
           x={hoveredCell.x}
           y={hoveredCell.y}
@@ -396,28 +399,6 @@ function InteractionLayer({ floor, viewBox, svgRef, isEditMode, onAreaSelected }
         />
       )}
 
-      {/* Flash indicator for occupied cell click */}
-      {flashCell && (
-        <rect
-          x={flashCell.x}
-          y={flashCell.y}
-          width={1}
-          height={1}
-          fill={FLASH_COLOR_OCCUPIED}
-          stroke="#dc2626"
-          strokeWidth={2}
-          vectorEffect="non-scaling-stroke"
-          rx={0.05}
-          style={{ pointerEvents: "none" }}
-        >
-          <animate
-            attributeName="opacity"
-            values="1;0"
-            dur="0.4s"
-            fill="freeze"
-          />
-        </rect>
-      )}
     </g>
   );
 }
@@ -509,9 +490,12 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
 
   // Zoom handler — attached as native event to bypass React's passive wheel listener
   const viewBoxRef = useRef(viewBox);
-  viewBoxRef.current = viewBox;
   const clampViewBoxRef = useRef(clampViewBox);
-  clampViewBoxRef.current = clampViewBox;
+
+  useEffect(() => {
+    viewBoxRef.current = viewBox;
+    clampViewBoxRef.current = clampViewBox;
+  }, [viewBox, clampViewBox]);
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -678,7 +662,6 @@ export function FloorCanvas({ children, onAreaSelected }: FloorCanvasProps) {
           {/* Interaction layer: cursor highlighting and drag-select (edit mode) */}
           <InteractionLayer
             floor={floor}
-            viewBox={viewBox}
             svgRef={svgRef}
             isEditMode={isEditMode}
             onAreaSelected={onAreaSelected}

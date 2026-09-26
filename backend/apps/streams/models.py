@@ -134,6 +134,17 @@ class MachineTelemetrySample(UUIDModel, TenantScopedModel):
         indexes = [
             models.Index(fields=["tenant", "machine", "-observed_at"]),
             models.Index(fields=["machine", "cycle_id", "observed_at"]),
+            models.Index(
+                fields=[
+                    "machine",
+                    "stream",
+                    "channel_external_id",
+                    "run_id",
+                    "-sequence_no",
+                ],
+                name="streams_tel_poll_seq_idx",
+            ),
+            models.Index(fields=["received_at"], name="streams_tel_received_idx"),
         ]
 
 

@@ -380,22 +380,9 @@ def poll_binding(binding: MachineStreamBinding):
     if response_schema != channel.schema_version:
         return refresh_binding_schema(binding)
     fields = schema_fields(channel.schema)
-    samples = []
-    outcomes = []
+    validated_readings = []
     batch_sequences: dict[str, int] = {}
     batch_event_ids = set()
-    last_sequences = {
-        item["run_id"]: item["maximum"]
-        for item in (
-            MachineTelemetrySample.objects.filter(
-                machine=binding.machine,
-                stream=channel.stream,
-                channel_external_id=channel.external_id,
-            )
-            .values("run_id")
-            .annotate(maximum=Max("sequence_no"))
-        )
-    }
     for reading in readings:
         event_id, observed_at, sequence_no, values = _validate_reading(reading, fields)
         if event_id in batch_event_ids:
@@ -411,11 +398,54 @@ def poll_binding(binding: MachineStreamBinding):
             # opaque cursor so one bad replay cannot permanently block a channel.
             continue
         batch_sequences[run_id] = sequence_no
+        validated_readings.append((reading, event_id, observed_at, sequence_no, values, run_id))
+
+    # Sequence validation used to aggregate every run ever stored for this
+    # machine on every poll, including empty polls. As telemetry accumulated,
+    # that turned a constant-rate polling loop into a recurring table scan.
+    # Only runs in the current page can affect validation for this page.
+    run_ids = {item[5] for item in validated_readings}
+    last_sequences = {}
+    existing_event_ids = set()
+    if validated_readings:
+        history = MachineTelemetrySample.objects.filter(
+            machine=binding.machine,
+            stream=channel.stream,
+            channel_external_id=channel.external_id,
+        )
+        if len(run_ids) == 1:
+            # The normal case is one active run per page. An equality predicate
+            # lets PostgreSQL answer MAX from the first entry in the descending
+            # sequence index instead of scanning that run's history.
+            run_id = next(iter(run_ids))
+            maximum = history.filter(run_id=run_id).aggregate(maximum=Max("sequence_no"))[
+                "maximum"
+            ]
+            if maximum is not None:
+                last_sequences[run_id] = maximum
+        else:
+            last_sequences = {
+                item["run_id"]: item["maximum"]
+                for item in (
+                    history.filter(run_id__in=run_ids)
+                    .values("run_id")
+                    .annotate(maximum=Max("sequence_no"))
+                )
+            }
+        existing_event_ids = set(
+            MachineTelemetrySample.objects.filter(event_id__in=batch_event_ids).values_list(
+                "event_id", flat=True
+            )
+        )
+
+    samples = []
+    outcomes = []
+    for reading, event_id, observed_at, sequence_no, values, run_id in validated_readings:
         last_sequence = last_sequences.get(run_id)
         if last_sequence is not None and sequence_no == last_sequence:
             continue
         if last_sequence is not None and sequence_no < last_sequence:
-            if MachineTelemetrySample.objects.filter(event_id=event_id).exists():
+            if event_id in existing_event_ids:
                 continue
             raise StreamClientError("The stream returned an out-of-order reading.")
         samples.append(
@@ -464,11 +494,6 @@ def poll_binding(binding: MachineStreamBinding):
                 }
             )
     now = timezone.now()
-    existing_event_ids = set(
-        MachineTelemetrySample.objects.filter(
-            event_id__in=[sample.event_id for sample in samples]
-        ).values_list("event_id", flat=True)
-    )
     persisted_samples = [
         sample for sample in samples if sample.event_id not in existing_event_ids
     ]

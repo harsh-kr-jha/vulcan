@@ -29,7 +29,7 @@ from apps.streams.services import (
     poll_binding,
     refresh_binding_schema,
 )
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, connection, transaction
 from django.utils import timezone
 
 pytestmark = pytest.mark.django_db
@@ -580,6 +580,81 @@ def test_replayed_sequence_does_not_block_cursor(monkeypatch, machine, channel):
     assert MachineTelemetrySample.objects.filter(event_id=first_id).exists()
     assert not MachineTelemetrySample.objects.filter(event_id=replay_id).exists()
     assert MachineTelemetrySample.objects.filter(event_id=next_id).exists()
+
+
+def test_empty_poll_does_not_scan_telemetry_history(monkeypatch, machine, channel):
+    binding = bind_machine(machine, channel)
+    monkeypatch.setattr(
+        "apps.streams.services.request_json",
+        lambda *args, **kwargs: {
+            "schema_version": "1",
+            "next_cursor": "10",
+            "readings": [],
+        },
+    )
+    statements = []
+
+    def capture(execute, sql, params, many, context):
+        statements.append(sql)
+        return execute(sql, params, many, context)
+
+    with connection.execute_wrapper(capture):
+        assert poll_binding(binding) == 0
+
+    assert not any("streams_machinetelemetrysample" in sql for sql in statements)
+
+
+def test_sequence_lookup_is_limited_to_runs_in_current_page(monkeypatch, machine, channel):
+    binding = bind_machine(machine, channel)
+    MachineTelemetrySample.objects.create(
+        tenant=machine.tenant,
+        machine=machine,
+        stream=channel.stream,
+        channel_external_id=channel.external_id,
+        schema_version="1",
+        event_id=uuid.uuid4(),
+        observed_at=timezone.now() - timedelta(days=1),
+        sequence_no=10_000,
+        run_id="unrelated-old-run",
+        values={"temperature_current_c": 600, "cycle_phase": "release"},
+    )
+    event_id = uuid.uuid4()
+    monkeypatch.setattr(
+        "apps.streams.services.request_json",
+        lambda *args, **kwargs: {
+            "schema_version": "1",
+            "next_cursor": "11",
+            "readings": [
+                {
+                    "event_id": str(event_id),
+                    "observed_at": timezone.now().isoformat(),
+                    "sequence_no": 0,
+                    "run_id": "current-run",
+                    "values": {
+                        "temperature_current_c": 599,
+                        "cycle_phase": "loading",
+                    },
+                }
+            ],
+        },
+    )
+    statements = []
+
+    def capture(execute, sql, params, many, context):
+        statements.append((sql, params))
+        return execute(sql, params, many, context)
+
+    with connection.execute_wrapper(capture):
+        assert poll_binding(binding) == 1
+
+    aggregate_queries = [
+        (sql, params)
+        for sql, params in statements
+        if "MAX(" in sql and "streams_machinetelemetrysample" in sql
+    ]
+    assert len(aggregate_queries) == 1
+    assert "current-run" in aggregate_queries[0][1]
+    assert "unrelated-old-run" not in aggregate_queries[0][1]
 
 
 def test_new_run_may_restart_its_sequence(monkeypatch, machine, channel):

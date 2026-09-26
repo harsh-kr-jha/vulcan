@@ -1,7 +1,10 @@
 from collections import defaultdict
 from datetime import timedelta
+from threading import Lock
 
-from django.db.models import F, Q, Window, prefetch_related_objects
+from django.conf import settings
+from django.core.cache import cache
+from django.db.models import F, OuterRef, Subquery, Window, prefetch_related_objects
 from django.db.models.functions import RowNumber
 from django.utils import timezone
 
@@ -18,6 +21,8 @@ STATE_PRIORITY = {
     "idle": 5,
     "no_data": 6,
 }
+
+_HISTORY_CACHE_LOCKS = tuple(Lock() for _ in range(32))
 
 
 def _related(machine, name):
@@ -205,47 +210,64 @@ def _history_bucket(observed_at, span):
     return local.replace(hour=0, minute=0, second=0, microsecond=0)
 
 
+def _history_cache_key(machine_id, start, end):
+    bucket_seconds = settings.LIVE_HISTORY_CACHE_BUCKET_SECONDS
+    return (
+        f"live-history:v2:{machine_id}:"
+        f"{int(start.timestamp()) // bucket_seconds}:"
+        f"{int(end.timestamp()) // bucket_seconds}"
+    )
+
+
 def _historical_performance(machine, start, end):
+    """Reuse slow-changing history while live state remains uncached."""
+    key = _history_cache_key(machine.id, start, end)
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
+    lock = _HISTORY_CACHE_LOCKS[hash(key) % len(_HISTORY_CACHE_LOCKS)]
+    with lock:
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+        result = _build_historical_performance(machine, start, end)
+        cache.set(key, result, settings.LIVE_HISTORY_CACHE_TTL_SECONDS)
+        return result
+
+
+def _build_historical_performance(machine, start, end):
     """Return bounded, cycle-level production and model evidence for the dashboard."""
-    cycles = list(
+    outcome_rows = MachineCycleOutcome.objects.filter(
+        machine=machine,
+        run_id=OuterRef("run_id"),
+        cycle_id=OuterRef("cycle_id"),
+    ).order_by()
+    prediction_rows = FeatureSnapshot.objects.filter(
+        cycle_id=OuterRef("pk"), model__isnull=False
+    ).order_by("-checkpoint", "-sequence_no")
+    cycles = (
         MachineCycle.objects.filter(machine=machine, started_at__gte=start, started_at__lte=end)
-        .select_related("profile")
+        .annotate(
+            outcome_label=Subquery(outcome_rows.values("effective_label")[:1]),
+            outcome_failure_mode=Subquery(outcome_rows.values("failure_mode")[:1]),
+            latest_prediction=Subquery(prediction_rows.values("predicted_label")[:1]),
+            prediction_model_metrics=Subquery(prediction_rows.values("model__metrics")[:1]),
+        )
+        .values(
+            "started_at",
+            "violations",
+            "outcome_label",
+            "outcome_failure_mode",
+            "latest_prediction",
+            "prediction_model_metrics",
+        )
         .order_by("started_at")
     )
-    cycle_keys = {(cycle.run_id, cycle.cycle_id) for cycle in cycles}
-    outcomes = {
-        (item.run_id, item.cycle_id): item
-        for item in MachineCycleOutcome.objects.filter(
-            machine=machine, created_at__gte=start, created_at__lte=end
-        )
-    }
-    # An outcome can arrive just outside the requested period, so include matches for
-    # the cycles already selected without changing which production belongs to the range.
-    if cycle_keys:
-        pair_filter = Q()
-        for run_id, cycle_id in cycle_keys:
-            pair_filter |= Q(run_id=run_id, cycle_id=cycle_id)
-        outcomes.update(
-            {
-                (item.run_id, item.cycle_id): item
-                for item in MachineCycleOutcome.objects.filter(machine=machine).filter(pair_filter)
-            }
-        )
-    cycle_ids = [cycle.id for cycle in cycles]
-    predictions = {}
-    if cycle_ids:
-        for snapshot in (
-            FeatureSnapshot.objects.filter(cycle_id__in=cycle_ids, model__isnull=False)
-            .select_related("model")
-            .order_by("cycle_id", "sequence_no")
-        ):
-            # Prefer the declared checkpoint. If it is absent, retain the latest score.
-            current = predictions.get(snapshot.cycle_id)
-            if snapshot.checkpoint or current is None or not current.checkpoint:
-                predictions[snapshot.cycle_id] = snapshot
 
     matrix = {"truePositive": 0, "trueNegative": 0, "falsePositive": 0, "falseNegative": 0}
+    cycle_count = known_outcomes = 0
     predicted_failures = actual_failures = out_of_range = labelled_predictions = correct = 0
+    baseline_value = None
     failure_modes = defaultdict(int)
     bucket_rows = defaultdict(
         lambda: {
@@ -257,19 +279,22 @@ def _historical_performance(machine, start, end):
         }
     )
     span = end - start
-    for cycle in cycles:
-        bucket = bucket_rows[_history_bucket(cycle.started_at, span)]
+    for cycle in cycles.iterator(chunk_size=2000):
+        cycle_count += 1
+        bucket = bucket_rows[_history_bucket(cycle["started_at"], span)]
         bucket["produced"] += 1
-        if any(bool(value) for value in (cycle.violations or {}).values()):
+        if any(bool(value) for value in (cycle["violations"] or {}).values()):
             out_of_range += 1
-        outcome = outcomes.get((cycle.run_id, cycle.cycle_id))
-        actual = outcome.effective_label if outcome else None
+        actual = cycle["outcome_label"]
+        known_outcomes += int(actual in {"good", "failure"})
         if actual == "failure":
             actual_failures += 1
             bucket["rejected"] += 1
-            failure_modes[outcome.failure_mode or "Unspecified"] += 1
-        prediction = predictions.get(cycle.id)
-        predicted = prediction.predicted_label if prediction else None
+            failure_modes[cycle["outcome_failure_mode"] or "Unspecified"] += 1
+        predicted = cycle["latest_prediction"]
+        metrics = cycle["prediction_model_metrics"]
+        if baseline_value is None and isinstance(metrics, dict):
+            baseline_value = metrics.get("accuracy", metrics.get("balanced_accuracy"))
         if predicted == "failure":
             predicted_failures += 1
             bucket["predictedFailures"] += 1
@@ -289,10 +314,6 @@ def _historical_performance(machine, start, end):
                 matrix["falseNegative"] += 1
 
     accuracy = (correct / labelled_predictions * 100) if labelled_predictions else None
-    model = next((item.model for item in predictions.values() if item.model_id), None)
-    baseline_value = (model.metrics or {}).get("accuracy") if model else None
-    if baseline_value is None and model:
-        baseline_value = (model.metrics or {}).get("balanced_accuracy")
     baseline = (
         float(baseline_value) * 100
         if isinstance(baseline_value, (int, float)) and baseline_value <= 1
@@ -320,12 +341,16 @@ def _historical_performance(machine, start, end):
 
     definitions = {
         parameter.key: parameter
-        for parameter in machine.parameters.filter(is_active=True, data_type="number")
+        for parameter in machine.parameters.filter(is_active=True, data_type="number").only(
+            "key", "label", "unit"
+        )
     }
     samples = list(
         MachineTelemetrySample.objects.filter(
             machine=machine, observed_at__gte=start, observed_at__lte=end
-        ).order_by("observed_at")[:6000]
+        )
+        .only("observed_at", "values")
+        .order_by("observed_at")[:6000]
     )
     stride = max(1, len(samples) // 180)
     sampled = samples[::stride]
@@ -363,18 +388,17 @@ def _historical_performance(machine, start, end):
                 }
             )
 
-    known_outcomes = sum(1 for cycle in cycles if (cycle.run_id, cycle.cycle_id) in outcomes)
     return {
         "range": {"from": start, "to": end},
         "summary": {
-            "totalTubes": len(cycles),
+            "totalTubes": cycle_count,
             "acceptedTubes": max(0, known_outcomes - actual_failures),
             "rejectedTubes": actual_failures,
             "rejectionRate": actual_failures / known_outcomes * 100 if known_outcomes else 0,
             "outsideRange": out_of_range,
             "predictedFailures": predicted_failures,
             "labelledPredictions": labelled_predictions,
-            "pendingOutcomes": max(0, len(cycles) - known_outcomes),
+            "pendingOutcomes": max(0, cycle_count - known_outcomes),
             "accuracy": accuracy,
             "baselineAccuracy": baseline,
             "accuracyDrop": accuracy_drop,

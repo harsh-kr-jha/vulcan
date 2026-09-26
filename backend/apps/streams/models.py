@@ -145,6 +145,9 @@ class MachineTelemetrySample(UUIDModel, TenantScopedModel):
                 name="streams_tel_poll_seq_idx",
             ),
             models.Index(fields=["received_at"], name="streams_tel_received_idx"),
+            models.Index(
+                fields=["machine", "observed_at"], name="streams_tel_machine_obs_idx"
+            ),
         ]
 
 

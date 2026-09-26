@@ -46,7 +46,8 @@ class MachineCycle(UUIDModel, TenantScopedModel):
 
     class Meta:
         indexes = [
-            models.Index(fields=["machine", "completed", "started_at"], name="ml_cycle_state_idx")
+            models.Index(fields=["machine", "completed", "started_at"], name="ml_cycle_state_idx"),
+            models.Index(fields=["machine", "started_at"], name="ml_cycle_machine_time_idx"),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -93,6 +94,10 @@ class FeatureSnapshot(UUIDModel, TenantScopedModel):
         indexes = [
             models.Index(fields=["cycle", "checkpoint"], name="ml_snapshot_check_idx"),
             models.Index(fields=["created_at"], name="ml_snapshot_age_idx"),
+            models.Index(
+                fields=["cycle", "-checkpoint", "-sequence_no"],
+                name="ml_snapshot_cycle_rank_idx",
+            ),
         ]
 
 

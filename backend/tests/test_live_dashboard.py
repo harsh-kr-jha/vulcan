@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 from apps.alerts.models import Alert, AlertRule
+from apps.analytics import live
 from apps.ml.models import FeatureSnapshot, MachineCycle, PredictionModel, ProductionProfile
 from apps.spatial.models import (
     FactoryLayout,
@@ -14,6 +15,7 @@ from apps.spatial.models import (
 from apps.spatial.services import update_machine_current_state
 from apps.streams.models import MachineCycleOutcome
 from apps.tenancy.models import FactoryMaster
+from django.core.cache import cache
 from django.utils import timezone
 
 pytestmark = pytest.mark.django_db
@@ -253,6 +255,19 @@ def test_live_dashboard_summarises_prediction_outcomes(api_client, tenant, facto
             failure_probability=0.8 if predicted == "failure" else 0.2,
             threshold=0.5,
         )
+        if index == 0:
+            FeatureSnapshot.objects.create(
+                tenant=tenant,
+                cycle=cycle,
+                event_id=uuid4(),
+                observed_at=cycle.started_at + timedelta(seconds=1),
+                sequence_no=2,
+                checkpoint=False,
+                model=model,
+                predicted_label="good",
+                failure_probability=0.1,
+                threshold=0.5,
+            )
         MachineCycleOutcome.objects.create(
             tenant=tenant,
             machine=machine,
@@ -280,3 +295,29 @@ def test_live_dashboard_summarises_prediction_outcomes(api_client, tenant, facto
         "falseNegative": 1,
     }
     assert history["failureModes"] == [{"label": "Weak splice", "count": 2}]
+
+
+def test_live_history_reuses_cache_within_time_bucket(monkeypatch, tenant, layout):
+    machine = SpatialMachine.objects.create(
+        tenant=tenant, layout=layout, name="Splicer", code="SP-2", position_x=1, position_y=1
+    )
+    current = timezone.now()
+    now = current.replace(minute=(current.minute // 5) * 5, second=10, microsecond=0)
+    calls = []
+
+    def build(*args):
+        calls.append(args)
+        return {"summary": {"totalTubes": 0}}
+
+    cache.clear()
+    monkeypatch.setattr(live, "_build_historical_performance", build)
+
+    first = live._historical_performance(machine, now - timedelta(days=7), now)
+    second = live._historical_performance(
+        machine,
+        now - timedelta(days=7) + timedelta(seconds=1),
+        now + timedelta(seconds=1),
+    )
+
+    assert first == second
+    assert len(calls) == 1

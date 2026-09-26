@@ -453,25 +453,36 @@ export default function ThreeFactoryView({
 
     let hitMesh: THREE.InstancedMesh | null = null;
     if (sceneData.machines.length) {
-      const statusMesh = new THREE.InstancedMesh(
-        new THREE.BoxGeometry(1, 1, 1),
-        new THREE.MeshBasicMaterial({ vertexColors: true }),
-        sceneData.machines.length,
+      // GLB machines communicate status through their model tint and issue halos.
+      // Keep the footprint strip only for lightweight block machines so imported
+      // models do not appear to sit on an artificial dark platform.
+      const statusMachines = sceneData.machines.filter(
+        (machine) => machine.representation === "block" || !machine.modelAsset,
       );
+      const statusMesh = statusMachines.length
+        ? new THREE.InstancedMesh(
+          new THREE.BoxGeometry(1, 1, 1),
+          new THREE.MeshBasicMaterial({ vertexColors: true }),
+          statusMachines.length,
+        )
+        : null;
       hitMesh = new THREE.InstancedMesh(
         new THREE.BoxGeometry(1, 1, 1),
         new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
         sceneData.machines.length,
       );
-      sceneData.machines.forEach((machine, index) => {
+      statusMachines.forEach((machine, index) => {
         const placement = placements.get(machine.id)!;
         matrix.compose(
           new THREE.Vector3(placement.x, 0.035, placement.z),
           new THREE.Quaternion(),
           new THREE.Vector3(placement.width + 0.12, 0.07, placement.depth + 0.12),
         );
-        statusMesh.setMatrixAt(index, matrix);
-        statusMesh.setColorAt(index, new THREE.Color(STATUS_COLORS[machine.status] ?? STATUS_COLORS.no_data));
+        statusMesh!.setMatrixAt(index, matrix);
+        statusMesh!.setColorAt(index, new THREE.Color(STATUS_COLORS[machine.status] ?? STATUS_COLORS.no_data));
+      });
+      sceneData.machines.forEach((machine, index) => {
+        const placement = placements.get(machine.id)!;
         matrix.compose(
           new THREE.Vector3(placement.x, Math.max(placement.height / 2, 0.5), placement.z),
           new THREE.Quaternion(),
@@ -479,13 +490,16 @@ export default function ThreeFactoryView({
         );
         hitMesh!.setMatrixAt(index, matrix);
       });
-      statusMesh.instanceMatrix.needsUpdate = true;
-      if (statusMesh.instanceColor) statusMesh.instanceColor.needsUpdate = true;
+      if (statusMesh) {
+        statusMesh.instanceMatrix.needsUpdate = true;
+        if (statusMesh.instanceColor) statusMesh.instanceColor.needsUpdate = true;
+      }
       hitMesh.instanceMatrix.needsUpdate = true;
       hitMesh.userData.machineIds = sceneData.machines.map((machine) => machine.id);
-      statusIdsRef.current = sceneData.machines.map((machine) => machine.id);
+      statusIdsRef.current = statusMachines.map((machine) => machine.id);
       statusMeshRef.current = statusMesh;
-      world.add(statusMesh, hitMesh);
+      if (statusMesh) world.add(statusMesh);
+      world.add(hitMesh);
 
       const issueTypes: MachineIssueType[] = ["out_of_range", "predicted_failure", "high_rejects"];
       issueTypes.forEach((issueType, issueIndex) => {

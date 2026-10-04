@@ -255,7 +255,8 @@ try {
   await clickSelector('button[aria-label="Hide password"]', "the hide-password control");
   await waitFor(`document.querySelector("#password")?.type === "password"`, "hidden password state");
   await clickText('#sign-in button[type="submit"]', "Sign in");
-  await waitFor(`location.pathname === "/dashboard"`, "authenticated dashboard navigation", 300);
+  await waitFor(`location.pathname === "/digital-twin"`, "authenticated Lexicon navigation", 300);
+  await navigate("/dashboard");
   await selectFarm("Musroom");
   const requiredWidgets = [
     "Harvest against plan",

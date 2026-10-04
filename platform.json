@@ -5,10 +5,8 @@
   "industry": "automotive-manufacturing",
   "modules": [
     "dashboard",
-    "projects",
     "digital-twin",
     "uploads",
-    "performance",
     "alerts",
     "settings",
     "rules",
@@ -22,12 +20,9 @@
     "inventory": "Inventory",
     "supplier": "Supplier deliveries",
     "orders": "Customer orders",
-    "projects": "Project master",
-    "project_stages": "Project stages",
     "utilities": "Steam & boiler utilities"
   },
   "navigation": {
-    "projects": "Projects",
     "digital-twin": "Lexicon™",
     "settings": "Factory setup"
   },

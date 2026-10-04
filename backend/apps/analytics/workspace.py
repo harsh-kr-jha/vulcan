@@ -1,7 +1,6 @@
 # Platform Core – Shared analytics framework.
 # Industry-specific KPIs and workflows are provided by operating template branches.
 
-import hashlib
 from collections import defaultdict
 from contextlib import suppress
 from datetime import date, timedelta
@@ -36,18 +35,6 @@ DEFAULT_TARGETS = {
 }
 
 NUMERIC_TARGETS = set(DEFAULT_TARGETS) - {"downtimeUnit"}
-
-# Automotive manufacturing project workflow stages.
-DEFAULT_PROJECT_WORKFLOW = [
-    "Order & Feasibility Review",
-    "Process Planning",
-    "Tooling & Validation",
-    "Material Readiness",
-    "Pilot Production",
-    "Quality Approval",
-    "Volume Production",
-    "Dispatch",
-]
 
 _workspace_lock_guard = Lock()
 _workspace_locks = {}
@@ -242,11 +229,11 @@ def workspace_record_rows(factory, from_date, to_date):
     """Stream only rows that can affect the selected workspace period.
 
     Inventory and process data need history up to the selected end, while
-    projects and orders have their own later date semantics. Ordinary fact
+    Orders have their own later date semantics. Ordinary fact
     datasets can be bounded at SQLite before their JSON payload reaches Python.
     """
     bounded_history_types = {"inventory", "process"}
-    unbounded_types = {"orders", "projects", "project_stages"}
+    unbounded_types = {"orders"}
     period_types = {"production", "downtime", "quality", "utilities", "supplier"}
     period = Q(dataset_type__in=period_types)
     if from_date:
@@ -277,7 +264,7 @@ def build_intelligence(factory, targets, filters):
     from_date = parse_date(filters.get("from"))
     to_date = parse_date(filters.get("to"))
     # Some datasets describe state at or beyond the selected period (for example,
-    # inventory history, project stages, and orders due after the range). Apply
+    # inventory history and orders due after the range). Apply
     # their date semantics below instead of dropping them in one global DB filter.
     production = []
     downtime = []
@@ -287,8 +274,6 @@ def build_intelligence(factory, targets, filters):
     process_history = []
     orders = []
     supplier_deliveries = []
-    project_records = []
-    project_stage_records = []
     latest_dates = {}
     for record in workspace_record_rows(factory, from_date, to_date):
         value = record["values"]
@@ -303,12 +288,6 @@ def build_intelligence(factory, targets, filters):
             )
         ):
             latest_dates[dataset_type] = operational_date
-        if dataset_type == "projects":
-            project_records.append(record)
-            continue
-        if dataset_type == "project_stages":
-            project_stage_records.append(record)
-            continue
         if dataset_type == "inventory":
             inventory_history.append(value)
             continue
@@ -341,8 +320,6 @@ def build_intelligence(factory, targets, filters):
         if supplier_scores
         else 0
     )
-    projects = build_projects(project_records, project_stage_records, filters.get("to"))
-
     planned = total(production, "planned_quantity")
     actual = total(production, "actual_quantity")
     good = total(production, "good_quantity")
@@ -421,7 +398,6 @@ def build_intelligence(factory, targets, filters):
         supplier_scores,
         rejection_rate,
     )
-    alerts = project_alerts(factory, projects, filters.get("to")) + alerts
     uploads = Upload.objects.filter(factory=factory, status="COMPLETED")
     uploaded_types = set(uploads.values_list("dataset_type", flat=True))
     upload_count = uploads.count()
@@ -495,7 +471,6 @@ def build_intelligence(factory, targets, filters):
         "steamRecovery": steam_recovery,
         "customKpiVariables": custom_variables,
         "customKpis": custom_kpis,
-        "projects": projects,
         "losses": losses,
         "dataAvailability": {
             "production": len(production),
@@ -505,8 +480,6 @@ def build_intelligence(factory, targets, filters):
             "supplier": len(supplier_deliveries),
             "orders": len(orders),
             "process": len(process_runs),
-            "projects": len(projects),
-            "project_stages": len(latest_project_values(project_stage_records, stage_record_key)),
             "utilities": len(utilities),
         },
         "dataHealth": build_data_health(latest_dates, uploaded_types, to_date),
@@ -1101,425 +1074,6 @@ def build_inventory_risks(rows, to_value, targets):
                 }
             )
     return sorted(result, key=lambda item: item["stockDays"])
-
-
-def project_record_key(values):
-    return str(values.get("project_number", "") or "").strip().casefold()
-
-
-def stage_record_key(values):
-    return (
-        project_record_key(values),
-        str(values.get("stage_code", "") or "").strip().casefold(),
-    )
-
-
-def latest_project_values(records, key_builder):
-    """Resolve re-uploaded source rows without discarding their lineage."""
-    latest = {}
-    versions = {}
-    for record in records:
-        values = dict(record["values"])
-        key = key_builder(values)
-        valid_key = all(key) if isinstance(key, tuple) else bool(key)
-        if not valid_key:
-            continue
-        uploaded_at = record["upload__created_at"]
-        version = (uploaded_at, record["source_row"])
-        if key in versions and versions[key] >= version:
-            continue
-        values["_source_uploaded_at"] = uploaded_at.isoformat()
-        values["_source_filename"] = record["upload__original_filename"]
-        latest[key] = values
-        versions[key] = version
-    return latest
-
-
-def build_projects(project_records, stage_records, selected_end):
-    project_values = latest_project_values(project_records, project_record_key)
-    stage_values = latest_project_values(stage_records, stage_record_key)
-    stages_by_project = defaultdict(list)
-    for (project_key, _), values in stage_values.items():
-        stages_by_project[project_key].append(values)
-
-    projects = []
-    end = parse_date(selected_end) or date.today()
-    for project_key, values in project_values.items():
-        project_number = str(values.get("project_number") or "Unnumbered project").strip()
-        start_date = project_date(
-            values.get("start_date") or values.get("po_received_date"), end.isoformat()
-        )
-        customer_due = project_date(
-            values.get("customer_due_date") or values.get("commitment_date"), start_date
-        )
-        commitment = project_date(values.get("commitment_date"), customer_due)
-        source_status = canonical_project_status(values.get("status"))
-        source_progress = bounded_percent(
-            values.get("progress"), 100 if source_status == "Completed" else 0
-        )
-        source_stages = sorted(
-            stages_by_project.get(project_key, []),
-            key=lambda item: (
-                number(item.get("sequence"), 999),
-                str(item.get("stage_name", "")),
-            ),
-        )
-        stages = (
-            [build_project_stage(project_number, item) for item in source_stages]
-            if source_stages
-            else default_project_stages(
-                project_number,
-                start_date,
-                commitment,
-                source_progress,
-                source_status,
-            )
-        )
-        if source_stages:
-            progress = round(sum(item["progress"] for item in stages) / max(len(stages), 1))
-            status = derived_project_status(stages, source_status)
-        else:
-            progress = round(source_progress)
-            status = source_status
-        prediction = project_delivery_prediction(stages, commitment, values.get("dispatch_date"))
-        updated_at = (
-            max(
-                [
-                    str(values.get("_source_uploaded_at") or ""),
-                    *(str(item.get("_source_uploaded_at") or "") for item in source_stages),
-                ]
-            )
-            or f"{start_date}T00:00:00"
-        )
-        team = project_team(values.get("assigned_team"), stages)
-        documents = project_documents(project_number, stages, updated_at)
-        activities = project_activities(
-            project_number,
-            stages,
-            values.get("_source_filename"),
-            updated_at,
-        )
-        projects.append(
-            {
-                "id": stable_project_id("project", project_number),
-                "projectNumber": project_number,
-                "poNumber": str(values.get("po_number") or "—"),
-                "customer": str(values.get("customer") or "Unassigned customer"),
-                "name": str(values.get("project_name") or project_number),
-                "category": str(values.get("category") or "Manufacturing project"),
-                "quantity": number(values.get("quantity")),
-                "uom": str(values.get("uom") or "units"),
-                "unit": str(values.get("factory_unit") or "Factory"),
-                "orderValue": number(values.get("order_value")),
-                "poReceivedDate": project_date(values.get("po_received_date"), start_date),
-                "startDate": start_date,
-                "customerDueDate": customer_due,
-                "commitmentDate": commitment,
-                "dispatchDate": project_date(values.get("dispatch_date"), None),
-                "priority": canonical_project_priority(values.get("priority")),
-                "status": status,
-                "progress": progress,
-                "assignedTeam": team,
-                "deliveryPrediction": prediction,
-                "stages": stages,
-                "documents": documents,
-                "activities": activities,
-                "updatedAt": updated_at,
-                "source": {
-                    "filename": str(values.get("_source_filename") or "Imported project source"),
-                    "hasStageSheet": bool(source_stages),
-                },
-            }
-        )
-    priority_rank = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}
-    return sorted(
-        projects,
-        key=lambda item: (
-            item["status"] == "Completed",
-            priority_rank[item["priority"]],
-            item["commitmentDate"],
-        ),
-    )
-
-
-def build_project_stage(project_number, values):
-    stage_code = str(values.get("stage_code") or values.get("stage_name") or "stage")
-    status = canonical_stage_status(values.get("stage_status"))
-    progress = bounded_percent(values.get("progress"), 100 if status == "Completed" else 0)
-    return {
-        "id": stable_project_id("stage", project_number, stage_code),
-        "code": stage_code,
-        "name": str(values.get("stage_name") or stage_code),
-        "sequence": int(number(values.get("sequence"), 999)),
-        "status": status,
-        "progress": round(progress),
-        "plannedStart": project_date(values.get("planned_start"), ""),
-        "actualStart": project_date(values.get("actual_start"), None),
-        "plannedCompletion": project_date(values.get("planned_completion"), ""),
-        "actualCompletion": project_date(values.get("actual_completion"), None),
-        "assignedTo": str(values.get("assigned_to") or "Unassigned"),
-        "delayDays": max(0, round(number(values.get("delay_days")))),
-        "notes": str(values.get("notes") or "No source note supplied."),
-        "attachments": split_source_list(values.get("attachments")),
-        "_source_uploaded_at": str(values.get("_source_uploaded_at") or ""),
-    }
-
-
-def default_project_stages(project_number, start_value, commitment_value, progress, status):
-    workflow = DEFAULT_PROJECT_WORKFLOW
-    if not workflow:
-        return []
-    start = parse_date(start_value) or date.today()
-    commitment = parse_date(commitment_value) or start
-    total_days = max((commitment - start).days + 1, len(workflow))
-    stage_position = progress / 100 * len(workflow)
-    stages = []
-    for index, name in enumerate(workflow):
-        stage_start = start + timedelta(
-            days=int(total_days * index / len(workflow))
-        )
-        next_start = start + timedelta(
-            days=int(total_days * (index + 1) / len(workflow))
-        )
-        completed = index < int(stage_position)
-        active = index == int(stage_position) and 0 < progress < 100
-        stage_status = "Completed" if completed else "In Progress" if active else "Not Started"
-        if active and status == "Delayed":
-            stage_status = "Delayed"
-        stage_progress = 100 if completed else round((stage_position % 1) * 100) if active else 0
-        stages.append(
-            {
-                "id": stable_project_id("stage", project_number, str(index + 1)),
-                "code": f"DEFAULT-{index + 1:02d}",
-                "name": name,
-                "sequence": index + 1,
-                "status": stage_status,
-                "progress": stage_progress,
-                "plannedStart": stage_start.isoformat(),
-                "actualStart": None,
-                "plannedCompletion": max(stage_start, next_start - timedelta(days=1)).isoformat(),
-                "actualCompletion": None,
-                "assignedTo": "Unassigned",
-                "delayDays": 0,
-                "notes": (
-                    "Derived from project-master progress. Import a Project stages sheet "
-                    "for execution detail."
-                ),
-                "attachments": [],
-                "_source_uploaded_at": "",
-            }
-        )
-    return stages
-
-
-def derived_project_status(stages, source_status):
-    if stages and all(item["status"] == "Completed" for item in stages):
-        return "Completed"
-    if source_status == "On Hold":
-        return "On Hold"
-    if any(item["status"] == "Delayed" for item in stages):
-        return "Delayed"
-    if any(item["status"] == "In Progress" or item["progress"] > 0 for item in stages):
-        return "In Progress"
-    return "Not Started"
-
-
-def project_delivery_prediction(stages, commitment_value, dispatch_value):
-    commitment = parse_date(commitment_value) or date.today()
-    dispatch = parse_date(dispatch_value)
-    candidates = []
-    delayed = False
-    actual_evidence = 0
-    for stage in stages:
-        actual = parse_date(stage.get("actualCompletion"))
-        planned = parse_date(stage.get("plannedCompletion"))
-        if actual:
-            candidates.append(actual)
-            actual_evidence += 1
-        elif planned:
-            candidates.append(planned + timedelta(days=int(number(stage.get("delayDays")))))
-        delayed = delayed or stage.get("status") == "Delayed"
-    predicted = dispatch or max(candidates, default=commitment)
-    state = "Late" if predicted > commitment else "At risk" if delayed else "On track"
-    confidence = min(98, round(55 + 40 * actual_evidence / max(len(stages), 1)))
-    if all(str(item.get("code", "")).startswith("DEFAULT-") for item in stages):
-        confidence = 35
-    return {"date": predicted.isoformat(), "confidence": confidence, "state": state}
-
-
-def project_team(raw_team, stages):
-    entries = split_source_list(raw_team)
-    members = []
-    seen = set()
-    for entry in entries:
-        name, separator, role = entry.partition("|")
-        clean_name = name.strip()
-        if not clean_name or clean_name.casefold() in seen:
-            continue
-        seen.add(clean_name.casefold())
-        members.append(team_member(clean_name, role.strip() if separator else "Project team"))
-    for stage in stages:
-        owner = str(stage.get("assignedTo") or "").strip()
-        if not owner or owner == "Unassigned" or owner.casefold() in seen:
-            continue
-        seen.add(owner.casefold())
-        members.append(team_member(owner, str(stage.get("name") or "Stage owner")))
-    return members
-
-
-def team_member(name, role):
-    initials = "".join(part[0] for part in name.split() if part)[:2].upper() or "—"
-    return {"name": name, "role": role, "initials": initials}
-
-
-def project_documents(project_number, stages, fallback_timestamp):
-    documents = []
-    seen = set()
-    for stage in stages:
-        for attachment in stage.get("attachments", []):
-            key = attachment.casefold()
-            if key in seen:
-                continue
-            seen.add(key)
-            lower = attachment.casefold()
-            category = (
-                "Image"
-                if lower.endswith((".png", ".jpg", ".jpeg", ".webp"))
-                else "Drawing"
-                if lower.endswith((".dwg", ".dxf"))
-                else "Other"
-            )
-            documents.append(
-                {
-                    "id": stable_project_id("document", project_number, attachment),
-                    "name": attachment,
-                    "category": category,
-                    "size": "Source reference",
-                    "uploadedBy": stage.get("assignedTo") or "Source sheet",
-                    "uploadedAt": date_timestamp(
-                        stage.get("actualCompletion") or stage.get("actualStart"),
-                        fallback_timestamp,
-                    ),
-                }
-            )
-    return documents
-
-
-def project_activities(project_number, stages, source_filename, imported_at):
-    activities = [
-        {
-            "id": stable_project_id("activity", project_number, str(source_filename)),
-            "type": "status",
-            "title": "Project source imported",
-            "detail": (
-                f"Latest project facts were loaded from {source_filename or 'the approved source'}."
-            ),
-            "user": "Vulcan ingestion",
-            "timestamp": imported_at,
-        }
-    ]
-    for stage in stages:
-        if stage["status"] == "Not Started" and not stage.get("actualStart"):
-            continue
-        timestamp = date_timestamp(
-            stage.get("actualCompletion") or stage.get("actualStart"), imported_at
-        )
-        activities.append(
-            {
-                "id": stable_project_id("activity", project_number, stage["id"], timestamp),
-                "type": "stage",
-                "title": f"{stage['name']} · {stage['status']}",
-                "detail": stage.get("notes") or f"Source progress is {stage['progress']}%.",
-                "user": stage.get("assignedTo") or "Source sheet",
-                "timestamp": timestamp,
-            }
-        )
-    return sorted(activities, key=lambda item: item["timestamp"], reverse=True)
-
-
-def project_alerts(factory, projects, selected_end):
-    statuses = factory.configuration.get("alertStatuses", {})
-    occurred_at = selected_end or date.today().isoformat()
-    result = []
-    for project in projects:
-        if project["status"] == "Completed" or (
-            project["status"] != "Delayed" and project["deliveryPrediction"]["state"] == "On track"
-        ):
-            continue
-        delayed = [stage for stage in project["stages"] if stage["status"] == "Delayed"]
-        key = f"project-{project['projectNumber']}"
-        item = alert(
-            key,
-            f"{project['projectNumber']} delivery needs attention",
-            f"{project['name']} is {project['progress']}% complete with "
-            f"{len(delayed)} delayed stage(s).",
-            f"{project['customer']} · Projects",
-            "critical"
-            if project["priority"] == "Critical" or project["deliveryPrediction"]["state"] == "Late"
-            else "high",
-            "Review the delayed stage owners and refresh the stage source after the recovery plan.",
-            f"Commitment {project['commitmentDate']}",
-            f"Predicted {project['deliveryPrediction']['date']}",
-            occurred_at,
-            [project["projectNumber"], *(stage["name"] for stage in delayed[:3])],
-        )
-        item["status"] = statuses.get(key, "new")
-        if item["status"] != "dismissed":
-            result.append(item)
-    return result[:5]
-
-
-def canonical_project_status(value):
-    statuses = {
-        "not started": "Not Started",
-        "in progress": "In Progress",
-        "delayed": "Delayed",
-        "completed": "Completed",
-        "on hold": "On Hold",
-    }
-    return statuses.get(str(value or "").strip().casefold(), "Not Started")
-
-
-def canonical_stage_status(value):
-    statuses = {
-        "not started": "Not Started",
-        "in progress": "In Progress",
-        "delayed": "Delayed",
-        "completed": "Completed",
-    }
-    return statuses.get(str(value or "").strip().casefold(), "Not Started")
-
-
-def canonical_project_priority(value):
-    priorities = {"critical": "Critical", "high": "High", "medium": "Medium", "low": "Low"}
-    return priorities.get(str(value or "").strip().casefold(), "Medium")
-
-
-def bounded_percent(value, fallback=0):
-    return min(100, max(0, number(value, fallback)))
-
-
-def split_source_list(value):
-    raw = str(value or "").replace("\n", ";")
-    separator = ";" if ";" in raw else ","
-    return [item.strip() for item in raw.split(separator) if item.strip()]
-
-
-def stable_project_id(prefix, *parts):
-    digest = hashlib.sha1("|".join(parts).casefold().encode(), usedforsecurity=False).hexdigest()[
-        :16
-    ]
-    return f"{prefix}-{digest}"
-
-
-def project_date(value, fallback):
-    parsed = parse_date(value)
-    return parsed.isoformat() if parsed else fallback
-
-
-def date_timestamp(value, fallback):
-    parsed = parse_date(value)
-    return f"{parsed.isoformat()}T00:00:00" if parsed else fallback
 
 
 def build_data_health(latest_dates, uploaded_types, selected_end):

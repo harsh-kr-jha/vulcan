@@ -8,13 +8,11 @@ import {
   CircleHelp,
   ClipboardList,
   Factory,
-  Gauge,
   LayoutDashboard,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
-  FolderKanban,
   Sigma,
   Settings2,
   ShieldAlert,
@@ -32,7 +30,7 @@ import { usePlatform } from "@/lib/variant";
 function Brand() {
   const variant = usePlatform();
   const BrandIcon = variant.features.mushroomAnalytics ? Sprout : Factory;
-  return <Link className="brand" href="/dashboard" aria-label={`${variant.displayName} home`}><span className="brand-mark"><BrandIcon size={18} strokeWidth={2.8} /></span><span><strong>{variant.displayName.toLocaleUpperCase("en-US")}</strong><small>{variant.descriptor}</small></span></Link>;
+  return <Link className="brand" href="/digital-twin" aria-label={`${variant.displayName} home`}><span className="brand-mark"><BrandIcon size={18} strokeWidth={2.8} /></span><span><strong>{variant.displayName.toLocaleUpperCase("en-US")}</strong><small>{variant.descriptor}</small></span></Link>;
 }
 
 function Sidebar({ open, closed, onClose, onNavigate }: { open: boolean; closed: boolean; onClose: () => void; onNavigate: () => void }) {
@@ -45,11 +43,9 @@ function Sidebar({ open, closed, onClose, onNavigate }: { open: boolean; closed:
   const siteSingular = variant.terminology.siteSingular;
   const navGroups = [
     { label: "Workspace", items: [
-      { href: "/dashboard", label: "Home", icon: LayoutDashboard, module: "dashboard" },
-      { href: "/projects", label: variant.navigation.projects, icon: FolderKanban, module: "projects" },
       { href: "/digital-twin", label: variant.navigation["digital-twin"], icon: Workflow, module: "digital-twin" },
       { href: "/data", label: "Data", icon: UploadCloud, module: "uploads" },
-      { href: "/performance", label: "Performance", icon: Gauge, module: "performance" },
+      { href: "/dashboard", label: "Performance", icon: LayoutDashboard, module: "dashboard" },
       { href: "/alerts", label: "Alerts", icon: ShieldAlert, module: "alerts" },
     ].filter((item) => variant.modules.includes(item.module)) },
     { label: "Manage", items: [

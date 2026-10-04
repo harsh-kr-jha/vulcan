@@ -8,7 +8,7 @@ import { IonVideoBackground } from "@/components/ion-video-background";
 import { ApiError, api } from "@/lib/api-client";
 import { safeNextPath } from "@/lib/auth-paths";
 
-export function IonLanding({ nextPath = "/dashboard" }: { nextPath?: string }) {
+export function IonLanding({ nextPath = "/digital-twin" }: { nextPath?: string }) {
   const router = useRouter();
   const destination = safeNextPath(nextPath);
   const [email, setEmail] = useState("");

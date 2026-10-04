@@ -1,5 +1,4 @@
 from apps.alerts.views import AlertViewSet
-from apps.analytics.views import PerformanceSummaryView
 from apps.analytics.workspace_views import (
     LiveDashboardView,
     WorkspaceActionView,
@@ -55,7 +54,6 @@ urlpatterns = [
     path("api/auth/logout/", SessionLogoutView.as_view(), name="session-logout"),
     path("api/auth/me/", MeView.as_view(), name="me"),
     path("api/auth/", include("rest_framework.urls")),
-    path("api/performance/summary/", PerformanceSummaryView.as_view(), name="performance-summary"),
     path("api/workspace/", WorkspaceView.as_view(), name="workspace"),
     path("api/dashboard/live/", LiveDashboardView.as_view(), name="live-dashboard"),
     path("api/data-management/", MachineDataManagementView.as_view(), name="data-management"),

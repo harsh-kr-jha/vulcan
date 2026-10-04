@@ -7,7 +7,6 @@ import { AppShell } from "@/components/app-shell";
 import { ApiError, api, type AuthUser } from "@/lib/api-client";
 import { safeNextPath } from "@/lib/auth-paths";
 import { FactoryProvider } from "@/lib/factory-context";
-import { ProjectProvider } from "@/lib/project-context";
 
 interface AuthContextValue {
   user: AuthUser;
@@ -69,9 +68,7 @@ function ProtectedApplication({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={value}>
       <FactoryProvider>
-        <ProjectProvider>
-          <AppShell>{children}</AppShell>
-        </ProjectProvider>
+        <AppShell>{children}</AppShell>
       </FactoryProvider>
     </AuthContext.Provider>
   );

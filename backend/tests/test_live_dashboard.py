@@ -86,6 +86,19 @@ def test_live_dashboard_defaults_to_attention_machine(api_client, tenant, factor
     assert response.data["selectedMachineId"] == str(warning.id)
     assert response.data["current"]["process"]["code"] == "SP"
     assert response.data["current"]["highlightedVariables"][0]["abnormal"] is True
+    assert all(item["currentCyclePrediction"] is None for item in response.data["machines"])
+    warning_summary = next(
+        item for item in response.data["machines"] if item["id"] == str(warning.id)
+    )
+    assert warning_summary["variables"][0] == {
+        "key": "temperature",
+        "label": "Temperature",
+        "value": 42,
+        "unit": "",
+        "semantic": "measurement",
+        "abnormal": True,
+        "order": 0,
+    }
 
 
 def test_current_state_never_moves_backwards(tenant, layout):
@@ -281,6 +294,10 @@ def test_live_dashboard_summarises_prediction_outcomes(api_client, tenant, facto
     response = api_client.get(f"/api/dashboard/live/?factory={factory.id}")
 
     assert response.status_code == 200
+    summary = response.data["machines"][0]
+    assert summary["currentCyclePrediction"]["cycleId"] == "cycle-3"
+    assert summary["currentCyclePrediction"]["label"] == "good"
+    assert summary["currentCyclePrediction"]["failureProbability"] == 0.2
     history = response.data["current"]["history"]
     assert history["summary"]["totalTubes"] == 4
     assert history["summary"]["rejectedTubes"] == 2

@@ -107,6 +107,13 @@ export interface LiveMachineSummary {
   operatingState: "running" | "inactive" | "unknown";
   inactiveSince: string | null;
   issues: LiveMachineIssue[];
+  variables?: LiveVariable[];
+  currentCyclePrediction?: {
+    cycleId: string;
+    observedAt: string;
+    label: string;
+    failureProbability: number | null;
+  } | null;
 }
 export interface LiveVariable { key: string; label: string; value: unknown; unit: string; semantic: string; abnormal: boolean; order: number }
 export interface MachineHistory {

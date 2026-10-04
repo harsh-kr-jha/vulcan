@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Factory, Layers3, Loader2, MapPinOff, Maximize2, Minimize2, Pencil, Save, Workflow, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Factory, Layers3, Loader2, MapPinOff, Maximize2, Minimize2, Pencil, Save, Truck, Workflow, X } from "lucide-react";
 import { useFactory } from "@/lib/factory-context";
 import { useFactoryBuilder } from "@/lib/factory-builder-context";
 import type {
@@ -243,6 +243,8 @@ export function FactoryTwinPage() {
   const [isImmersive, setIsImmersive] = useState(false);
   const [showStructure, setShowStructure] = useState(false);
   const [showSpatialSettings, setShowSpatialSettings] = useState(false);
+  const [inventoryExpanded, setInventoryExpanded] = useState(false);
+  const [dispatchExpanded, setDispatchExpanded] = useState(false);
   const [placementTarget, setPlacementTarget] = useState<"machine" | "zone">("machine");
   const [machinePlacement, setMachinePlacement] = useState<MachinePlacementAction | null>(null);
   const [placementError, setPlacementError] = useState("");
@@ -414,12 +416,13 @@ export function FactoryTwinPage() {
 
     async function fetchLiveMachines() {
       try {
-        const payload = await api.liveDashboard(factoryId, analyticsMachineId);
+        const detailMachineId = analyticsDetailsOpen ? analyticsMachineId : null;
+        const payload = await api.liveDashboard(factoryId, detailMachineId);
         if (!cancelled) {
           consecutiveFailures = 0;
           setLiveMachines(payload.machines);
           setLiveCurrent(
-            analyticsMachineId && payload.current?.id === analyticsMachineId
+            detailMachineId && payload.current?.id === detailMachineId
               ? payload.current
               : null,
           );
@@ -441,7 +444,7 @@ export function FactoryTwinPage() {
       cancelled = true;
       if (timer !== null) window.clearTimeout(timer);
     };
-  }, [pageMode, factoryId, analyticsMachineId]);
+  }, [pageMode, factoryId, analyticsDetailsOpen, analyticsMachineId]);
 
   // -------------------------------------------------------------------------
   // Handlers
@@ -830,17 +833,20 @@ export function FactoryTwinPage() {
         {/* Three-column layout: Inventory | Visualization | Dispatch */}
         <div className="relative flex flex-1 overflow-hidden min-h-0">
           {/* Inventory Panel (left) */}
-          <aside className="w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3">
-            <InventoryPanel readOnly />
-          </aside>
+          {inventoryExpanded && <aside className="w-72 shrink-0 overflow-y-auto border-r border-gray-200 bg-white">
+            <div className="sticky top-0 z-10 flex justify-end border-b border-gray-100 bg-white/95 px-3 py-2 backdrop-blur">
+              <button type="button" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-950" aria-label="Collapse inventory" onClick={() => setInventoryExpanded(false)}><ChevronLeft size={14} /> Collapse</button>
+            </div>
+            <div className="p-3"><InventoryPanel readOnly /></div>
+          </aside>}
 
           {/* Main visualization area */}
           <main className="flex-1 overflow-hidden min-h-0 min-w-0">
             <SpatialVisualization
+              key={builderState.layout.factoryId}
               layout={builderState.layout}
               observations={machineObservations}
               liveMachines={liveMachines}
-              liveCurrent={liveCurrent}
               selectedMachineId={analyticsDetailsOpen ? null : analyticsMachineId}
               onMachineClick={handleVisualizationMachineClick}
               onOpenDetails={handleOpenAnalyticsDetails}
@@ -848,16 +854,24 @@ export function FactoryTwinPage() {
           </main>
 
           {/* Dispatch Panel (right) */}
-          <aside className="w-72 shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-3">
-            <DispatchPanel readOnly />
-          </aside>
+          {dispatchExpanded && <aside className="w-72 shrink-0 overflow-y-auto border-l border-gray-200 bg-white">
+            <div className="sticky top-0 z-10 flex justify-start border-b border-gray-100 bg-white/95 px-3 py-2 backdrop-blur">
+              <button type="button" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-950" aria-label="Collapse dispatch" onClick={() => setDispatchExpanded(false)}>Collapse <ChevronRight size={14} /></button>
+            </div>
+            <div className="p-3"><DispatchPanel readOnly /></div>
+          </aside>}
 
-          {/* Machine Analytics Panel (slide-over, view mode) */}
+          {!inventoryExpanded && <button type="button" aria-expanded="false" onClick={() => setInventoryExpanded(true)} className="absolute left-3 top-1/2 z-20 inline-flex -translate-y-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-md backdrop-blur transition hover:bg-white hover:text-slate-950" title="Expand inventory"><Layers3 size={14} /> Inventory <ChevronRight size={14} /></button>}
+          {!dispatchExpanded && <button type="button" aria-expanded="false" onClick={() => setDispatchExpanded(true)} className="absolute right-3 top-1/2 z-20 inline-flex -translate-y-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-md backdrop-blur transition hover:bg-white hover:text-slate-950" title="Expand dispatch"><ChevronLeft size={14} /> Dispatch <Truck size={14} /></button>}
+
+          {/* Centered machine detail dialog */}
           {analyticsMachineId && analyticsDetailsOpen && (
             <MachineAnalyticsPanel
+              key={analyticsMachineId}
               machineId={analyticsMachineId}
               machines={builderState.layout.machines}
               liveMachine={liveMachines.find((machine) => machine.id === analyticsMachineId)}
+              liveCurrent={liveCurrent?.id === analyticsMachineId ? liveCurrent : null}
               onClose={handleCloseAnalytics}
             />
           )}
@@ -941,9 +955,12 @@ export function FactoryTwinPage() {
       {/* Three-column layout: Inventory | FloorCanvas | Dispatch */}
       <div className="relative flex flex-1 overflow-hidden min-h-0">
         {/* Inventory Panel (left) */}
-        <aside className="w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-3">
-          <InventoryPanel />
-        </aside>
+        {inventoryExpanded && <aside className="w-72 shrink-0 overflow-y-auto border-r border-gray-200 bg-white">
+          <div className="sticky top-0 z-10 flex justify-end border-b border-gray-100 bg-white/95 px-3 py-2 backdrop-blur">
+            <button type="button" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-950" aria-label="Collapse inventory" onClick={() => setInventoryExpanded(false)}><ChevronLeft size={14} /> Collapse</button>
+          </div>
+          <div className="p-3"><InventoryPanel /></div>
+        </aside>}
 
         {/* Main canvas area */}
         <main className="flex-1 overflow-hidden min-h-0 min-w-0">
@@ -957,9 +974,15 @@ export function FactoryTwinPage() {
         </main>
 
         {/* Dispatch Panel (right) */}
-        <aside className="w-72 shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-3">
-          <DispatchPanel />
-        </aside>
+        {dispatchExpanded && <aside className="w-72 shrink-0 overflow-y-auto border-l border-gray-200 bg-white">
+          <div className="sticky top-0 z-10 flex justify-start border-b border-gray-100 bg-white/95 px-3 py-2 backdrop-blur">
+            <button type="button" className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-950" aria-label="Collapse dispatch" onClick={() => setDispatchExpanded(false)}>Collapse <ChevronRight size={14} /></button>
+          </div>
+          <div className="p-3"><DispatchPanel /></div>
+        </aside>}
+
+        {!inventoryExpanded && <button type="button" aria-expanded="false" onClick={() => setInventoryExpanded(true)} className="absolute left-3 top-1/2 z-20 inline-flex -translate-y-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-md backdrop-blur transition hover:bg-white hover:text-slate-950" title="Expand inventory"><Layers3 size={14} /> Inventory <ChevronRight size={14} /></button>}
+        {!dispatchExpanded && <button type="button" aria-expanded="false" onClick={() => setDispatchExpanded(true)} className="absolute right-3 top-1/2 z-20 inline-flex -translate-y-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-md backdrop-blur transition hover:bg-white hover:text-slate-950" title="Expand dispatch"><ChevronLeft size={14} /> Dispatch <Truck size={14} /></button>}
       </div>
 
       {/* Builder dialog (for new factory setup) */}

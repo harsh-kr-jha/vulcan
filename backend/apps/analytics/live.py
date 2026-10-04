@@ -4,7 +4,7 @@ from threading import Lock
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import F, OuterRef, Subquery, Window, prefetch_related_objects
+from django.db.models import F, OuterRef, Subquery, Window
 from django.db.models.functions import RowNumber
 from django.utils import timezone
 
@@ -35,6 +35,16 @@ def _related(machine, name):
 def _prediction(cycle):
     if not cycle:
         return None
+    if hasattr(cycle, "latest_prediction_label"):
+        if not cycle.latest_prediction_model_id:
+            return None
+        return {
+            "modelId": str(cycle.latest_prediction_model_id),
+            "observedAt": cycle.latest_prediction_observed_at,
+            "failureProbability": cycle.latest_prediction_probability,
+            "label": cycle.latest_prediction_label,
+            "threshold": cycle.latest_prediction_threshold,
+        }
     snapshots = sorted(cycle.snapshots.all(), key=lambda item: item.sequence_no)
     snapshot = next((item for item in reversed(snapshots) if item.model_id), None)
     if not snapshot:
@@ -70,7 +80,7 @@ def _explicit_state(machine, values):
     return ""
 
 
-def machine_live_state(machine, now=None, cycle=None):
+def machine_live_state(machine, now=None, cycle=None, prediction=None):
     now = now or timezone.now()
     current = _related(machine, "current_state")
     binding = _related(machine, "stream_binding")
@@ -81,7 +91,7 @@ def machine_live_state(machine, now=None, cycle=None):
     poll_seconds = binding.channel.stream.poll_interval_seconds if binding else 10
     if now - current.observed_at > timedelta(seconds=max(3 * poll_seconds, 30)):
         return "stale"
-    prediction = _prediction(cycle)
+    prediction = prediction if prediction is not None else _prediction(cycle)
     if cycle and any(bool(value) for value in (cycle.violations or {}).values()):
         return "warning"
     if prediction and prediction["label"] == "failure":
@@ -148,7 +158,10 @@ def _identity(machine, state, current):
 
 
 def _variable_payload(machine, values, violations):
-    definitions = list(machine.parameters.filter(is_active=True).order_by("order", "key"))
+    definitions = sorted(
+        (parameter for parameter in machine.parameters.all() if parameter.is_active),
+        key=lambda parameter: (parameter.order, parameter.key),
+    )
     known, variables = set(), []
     io_keys = {
         f"input_{item.get('id')}": "input"
@@ -451,12 +464,45 @@ def build_live_dashboard(factory, requested_machine_id=None, history_from=None, 
         )
         .filter(machine_rank=1)
     )
+    latest_snapshot = FeatureSnapshot.objects.filter(
+        cycle_id=OuterRef("pk"), model__isnull=False
+    ).order_by("-sequence_no")
+    latest_cycles = latest_cycles.annotate(
+        latest_prediction_model_id=Subquery(latest_snapshot.values("model_id")[:1]),
+        latest_prediction_observed_at=Subquery(latest_snapshot.values("observed_at")[:1]),
+        latest_prediction_probability=Subquery(
+            latest_snapshot.values("failure_probability")[:1]
+        ),
+        latest_prediction_label=Subquery(latest_snapshot.values("predicted_label")[:1]),
+        latest_prediction_threshold=Subquery(latest_snapshot.values("threshold")[:1]),
+    )
     cycles = {cycle.machine_id: cycle for cycle in latest_cycles}
     summaries = []
     for machine in machines:
         cycle = cycles.get(machine.id)
+        prediction = _prediction(cycle)
+        current = _related(machine, "current_state")
+        violations = (cycle.violations or {}) if cycle else {}
+        _, variables = _variable_payload(
+            machine,
+            (current.values or {}) if current else {},
+            violations,
+        )
         summary = _identity(
-            machine, machine_live_state(machine, now, cycle), _related(machine, "current_state")
+            machine,
+            machine_live_state(machine, now, cycle, prediction),
+            current,
+        )
+        summary["variables"] = variables
+        summary["currentCyclePrediction"] = (
+            {
+                "cycleId": cycle.cycle_id,
+                "observedAt": prediction["observedAt"],
+                "label": prediction["label"],
+                "failureProbability": prediction["failureProbability"],
+            }
+            if cycle and prediction
+            else None
         )
         alert_summary = alert_map.get(str(machine.id))
         if alert_summary:
@@ -489,8 +535,6 @@ def build_live_dashboard(factory, requested_machine_id=None, history_from=None, 
         current = _related(selected, "current_state")
         binding = _related(selected, "stream_binding")
         cycle = cycles.get(selected.id)
-        if cycle:
-            prefetch_related_objects([cycle], "snapshots")
         prediction = _prediction(cycle)
         violations = (cycle.violations or {}) if cycle else {}
         values = (current.values or {}) if current else {}

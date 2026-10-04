@@ -1,18 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { normalizeFactoryScene, projectIsometric } from "@/lib/spatial-scene";
 import type { FactoryLayout } from "@/lib/spatial-types";
 import type { LiveMachineSummary } from "@/lib/factory-domain";
 import { resolveMachineVisualStatus } from "@/lib/machine-visual-status";
 import { connectorCurve, resolveConnectorConfig } from "@/lib/connector-geometry";
+import type { ScreenAnchor } from "@/lib/spatial-overlay";
 
 function points(items: Array<{ x: number; y: number }>) {
   return items.map((p) => `${p.x},${p.y}`).join(" ");
 }
 
-export function IsometricFactoryView({ layout, liveMachines, selectedMachineId, onMachineClick, showZones, showConnections }: { layout: FactoryLayout; liveMachines: LiveMachineSummary[]; selectedMachineId: string | null; onMachineClick: (id: string) => void; showZones: boolean; showConnections: boolean }) {
+export function IsometricFactoryView({ layout, liveMachines, selectedMachineId, onMachineClick, showZones, showConnections, onSelectedAnchorChange }: { layout: FactoryLayout; liveMachines: LiveMachineSummary[]; selectedMachineId: string | null; onMachineClick: (id: string) => void; showZones: boolean; showConnections: boolean; onSelectedAnchorChange?: (anchor: ScreenAnchor) => void }) {
   const [focusedMachineId, setFocusedMachineId] = useState<string | null>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const scene = useMemo(() => normalizeFactoryScene(layout, liveMachines), [layout, liveMachines]);
   const floorCorners = [projectIsometric(0, 0), projectIsometric(scene.width, 0), projectIsometric(scene.width, scene.height), projectIsometric(0, scene.height)];
   const xs = floorCorners.map((p) => p.x); const ys = floorCorners.map((p) => p.y);
@@ -20,8 +23,32 @@ export function IsometricFactoryView({ layout, liveMachines, selectedMachineId, 
   const viewWidth = Math.max(...xs) - minX + 4; const viewHeight = Math.max(...ys) - minY + 6;
   const machines = new Map(scene.machines.map((m) => [m.id, m]));
 
-  return <div className="h-full w-full overflow-hidden bg-slate-50">
-    <svg className="h-full w-full" viewBox={`${minX} ${minY} ${viewWidth} ${viewHeight}`} role="img" aria-label="Isometric factory map">
+  const updateSelectedAnchor = useCallback(() => {
+    const host = hostRef.current;
+    const svg = svgRef.current;
+    const machine = scene.machines.find((item) => item.id === selectedMachineId);
+    const matrix = svg?.getScreenCTM();
+    if (!host || !svg || !machine || !matrix || !onSelectedAnchorChange) {
+      onSelectedAnchorChange?.({ x: 0, y: 0, visible: false });
+      return;
+    }
+    const projected = projectIsometric(machine.x + machine.width / 2, machine.y + machine.depth / 2, machine.height);
+    const point = new DOMPoint(projected.x, projected.y).matrixTransform(matrix);
+    const bounds = host.getBoundingClientRect();
+    const x = point.x - bounds.left;
+    const y = point.y - bounds.top;
+    onSelectedAnchorChange({ x, y, visible: x >= 0 && y >= 0 && x <= bounds.width && y <= bounds.height });
+  }, [onSelectedAnchorChange, scene.machines, selectedMachineId]);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(updateSelectedAnchor);
+    const observer = new ResizeObserver(updateSelectedAnchor);
+    if (hostRef.current) observer.observe(hostRef.current);
+    return () => { cancelAnimationFrame(frame); observer.disconnect(); };
+  }, [updateSelectedAnchor]);
+
+  return <div ref={hostRef} className="h-full w-full overflow-hidden bg-slate-50">
+    <svg ref={svgRef} className="h-full w-full" viewBox={`${minX} ${minY} ${viewWidth} ${viewHeight}`} role="img" aria-label="Isometric factory map">
       <defs><marker id="isometric-connector-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 Z" fill="context-stroke" /></marker></defs>
       <polygon points={points(floorCorners)} fill="#f8fafc" stroke="#94a3b8" strokeWidth="0.12" />
       {showZones && scene.zones.map((zone) => {

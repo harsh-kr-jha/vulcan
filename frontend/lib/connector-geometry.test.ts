@@ -39,6 +39,16 @@ describe("connector geometry", () => {
     expect(curve.getPoint(1).toArray()).toEqual([7.5, 0.3, 2.25]);
   });
 
+  it("can anchor 3D routes at each machine's horizontal center on the ground", () => {
+    const connection: ConnectionLine = {
+      id: "c3", sourceId: source.id, targetId: target.id, type: "pipe",
+    };
+    const curve = connectorCurve(connection, source, target, { anchor: "center", elevation: 0 });
+    expect(curve.getPoint(0).toArray()).toEqual([1, 0, 2]);
+    expect(curve.getPoint(1).toArray()).toEqual([9, 0, 2]);
+    expect(curve.getPoints(20).every((point) => point.y === 0)).toBe(true);
+  });
+
   it("uses 3D meshes for physical routes and dashed lines for non-physical routes", () => {
     const pipe = buildConnectorObject({ id: "p", sourceId: "source", targetId: "target", type: "pipe" }, source, target);
     const pickup = buildConnectorObject({ id: "d", sourceId: "source", targetId: "target", type: "pickup_drop" }, source, target);

@@ -7,8 +7,13 @@ import { UploadManager } from "@/components/upload-manager";
 
 type DataInputTab = "manage" | "files" | "streams";
 
-export function DataInputManager() {
-  const [tab, setTab] = useState<DataInputTab>("manage");
+interface DataInputManagerProps {
+  initialTab?: DataInputTab;
+  focusedMachineId?: string;
+}
+
+export function DataInputManager({ initialTab = "manage", focusedMachineId }: DataInputManagerProps) {
+  const [tab, setTab] = useState<DataInputTab>(initialTab);
 
   return (
     <>
@@ -53,7 +58,7 @@ export function DataInputManager() {
       </div>
 
       {tab === "manage" ? <MachineDataManager /> : tab === "streams" ? (
-        <DataStreamsManager />
+        <DataStreamsManager focusedMachineId={focusedMachineId} />
       ) : (
         <div className="[&>.page-header]:hidden">
           <UploadManager />

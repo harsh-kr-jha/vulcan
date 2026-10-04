@@ -15,7 +15,7 @@ import {
   Square,
   Trash2,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api-client";
 import type { DataInputStream } from "@/lib/data-stream-types";
 import { useFactory } from "@/lib/factory-context";
@@ -42,7 +42,7 @@ function friendlyStreamError(message: string) {
   return message;
 }
 
-export function DataStreamsManager() {
+export function DataStreamsManager({ focusedMachineId }: { focusedMachineId?: string }) {
   const { state } = useFactory();
   const factoryId = state.activeFactoryId;
   const [streams, setStreams] = useState<DataInputStream[]>([]);
@@ -54,6 +54,8 @@ export function DataStreamsManager() {
   const [rotatedKey, setRotatedKey] = useState("");
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
+  const focusedSourceRef = useRef<HTMLDivElement | null>(null);
+  const focusedSourceRevealedRef = useRef(false);
 
   const refresh = useCallback(async () => {
     if (!factoryId) return;
@@ -86,6 +88,17 @@ export function DataStreamsManager() {
       window.clearInterval(interval);
     };
   }, [factoryId]);
+
+  useEffect(() => {
+    focusedSourceRevealedRef.current = false;
+  }, [focusedMachineId]);
+
+  useEffect(() => {
+    if (!focusedMachineId || !focusedSourceRef.current || focusedSourceRevealedRef.current) return;
+    focusedSourceRevealedRef.current = true;
+    focusedSourceRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    focusedSourceRef.current.focus({ preventScroll: true });
+  }, [focusedMachineId, streams]);
 
   async function register() {
     if (!factoryId || !name.trim() || !baseUrl.trim() || !apiKey) return;
@@ -266,7 +279,7 @@ export function DataStreamsManager() {
         {streams.map((stream) => {
           const controls = stream.capabilities?.controls ?? [];
           return (
-            <article key={stream.id} className="border-b border-gray-100 p-4 last:border-0">
+            <article key={stream.id} className={`border-b border-gray-100 p-4 last:border-0 ${stream.channels.some((channel) => channel.assigned_machine_id === focusedMachineId) ? "bg-blue-50/40" : ""}`}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex gap-3">
                   <span className="rounded-lg bg-emerald-50 p-2 text-emerald-700">
@@ -358,7 +371,9 @@ export function DataStreamsManager() {
                 {stream.channels.map((channel) => (
                   <div
                     key={channel.id}
-                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-gray-50 p-3"
+                    ref={(node) => { if (channel.assigned_machine_id === focusedMachineId) focusedSourceRef.current = node; }}
+                    tabIndex={channel.assigned_machine_id === focusedMachineId ? -1 : undefined}
+                    className={`flex flex-wrap items-center justify-between gap-3 rounded-lg p-3 outline-none transition ${channel.assigned_machine_id === focusedMachineId ? "bg-white ring-2 ring-blue-400 ring-offset-2" : "bg-gray-50"}`}
                   >
                     <div>
                       <div className="flex items-center gap-2">

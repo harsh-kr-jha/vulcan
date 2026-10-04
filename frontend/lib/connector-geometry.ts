@@ -10,6 +10,11 @@ export interface ConnectorPreset {
   visual: ConnectorVisual;
 }
 
+interface ConnectorCurveOptions {
+  anchor?: "edge" | "center";
+  elevation?: number;
+}
+
 const baseGeometry: ConnectorGeometry = {
   sourceOffsetX: 0,
   sourceOffsetY: 0,
@@ -55,18 +60,26 @@ function edgeAnchor(machine: SceneMachine, toward: THREE.Vector2) {
   return center.add(direction.multiplyScalar(scale));
 }
 
-/** Resolve edge-to-edge points entirely in canonical layout coordinates. */
-export function connectorCurve(connection: ConnectionLine, source: SceneMachine, target: SceneMachine) {
+/** Resolve connector points entirely in canonical layout coordinates. */
+export function connectorCurve(
+  connection: ConnectionLine,
+  source: SceneMachine,
+  target: SceneMachine,
+  options: ConnectorCurveOptions = {},
+) {
   const { geometry } = resolveConnectorConfig(connection);
+  const anchor = options.anchor ?? "edge";
   const sourceCenter = new THREE.Vector2(source.x + source.width / 2, source.y + source.depth / 2);
   const targetCenter = new THREE.Vector2(target.x + target.width / 2, target.y + target.depth / 2);
-  const start2 = edgeAnchor(source, targetCenter).add(new THREE.Vector2(geometry.sourceOffsetX, geometry.sourceOffsetY));
-  const end2 = edgeAnchor(target, sourceCenter).add(new THREE.Vector2(geometry.targetOffsetX, geometry.targetOffsetY));
+  const start2 = (anchor === "center" ? sourceCenter : edgeAnchor(source, targetCenter))
+    .add(new THREE.Vector2(geometry.sourceOffsetX, geometry.sourceOffsetY));
+  const end2 = (anchor === "center" ? targetCenter : edgeAnchor(target, sourceCenter))
+    .add(new THREE.Vector2(geometry.targetOffsetX, geometry.targetOffsetY));
   const midpoint = start2.clone().add(end2).multiplyScalar(0.5);
   const delta = end2.clone().sub(start2);
   const perpendicular = delta.lengthSq() > 1e-8 ? new THREE.Vector2(-delta.y, delta.x).normalize() : new THREE.Vector2();
   const control2 = midpoint.add(perpendicular.multiplyScalar(geometry.curvature));
-  const elevation = Math.max(0, geometry.elevation);
+  const elevation = Math.max(0, options.elevation ?? geometry.elevation);
   return new THREE.QuadraticBezierCurve3(
     new THREE.Vector3(start2.x, elevation, start2.y),
     new THREE.Vector3(control2.x, elevation, control2.y),
@@ -97,7 +110,7 @@ function addTube(group: THREE.Group, curve: THREE.Curve<THREE.Vector3>, radius: 
 /** Lightweight, world-anchored connector object. No camera state is used here. */
 export function buildConnectorObject(connection: ConnectionLine, source: SceneMachine, target: SceneMachine) {
   const config = resolveConnectorConfig(connection);
-  const curve = connectorCurve(connection, source, target);
+  const curve = connectorCurve(connection, source, target, { anchor: "center", elevation: 0 });
   const color = new THREE.Color(config.visual.color);
   const radius = Math.max(0.005, config.geometry.diameter / 2);
   const group = new THREE.Group();

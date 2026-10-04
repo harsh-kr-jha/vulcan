@@ -1,12 +1,11 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { BrainCircuit, ChevronDown, ClipboardPenLine, ImagePlus, PanelRightOpen, X } from "lucide-react";
-import { getCsrfToken } from "@/lib/api-client";
-import type { LiveMachineCurrent, LiveMachineSummary } from "@/lib/factory-domain";
-import type { MachineImageAsset, MachineNode, StatusVisualizationConfig } from "@/lib/spatial-types";
+import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { ChevronRight } from "lucide-react";
+import type { LiveMachineSummary } from "@/lib/factory-domain";
+import { machinePredictionPresentation, machineStatePresentation } from "@/lib/machine-card";
+import type { MachineNode } from "@/lib/spatial-types";
 import type { ScreenAnchor } from "@/lib/spatial-overlay";
-import { formatIssueDuration, resolveMachineVisualStatus } from "@/lib/machine-visual-status";
 
 export interface MachineMapPopupHandle {
   setAnchor: (anchor: ScreenAnchor) => void;
@@ -15,43 +14,20 @@ export interface MachineMapPopupHandle {
 interface Props {
   machine: MachineNode;
   liveMachine?: LiveMachineSummary;
-  current: LiveMachineCurrent | null;
-  imageAsset?: MachineImageAsset | null;
-  onImageChange: (asset: MachineImageAsset) => void;
-  onClose: () => void;
   onOpenDetails: () => void;
-  statusVisualization?: StatusVisualizationConfig;
-}
-
-function formatValue(value: unknown) {
-  if (value === null || value === undefined || value === "") return "—";
-  if (typeof value === "number") return Number.isInteger(value) ? String(value) : value.toFixed(2);
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  return String(value);
 }
 
 export const MachineMapPopup = forwardRef<MachineMapPopupHandle, Props>(function MachineMapPopup({
   machine,
   liveMachine,
-  current,
-  imageAsset,
-  onImageChange,
-  onClose,
   onOpenDetails,
-  statusVisualization,
 }, forwardedRef) {
   const layerRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLButtonElement>(null);
   const lineRef = useRef<SVGLineElement>(null);
-  const actionMenuRef = useRef<HTMLDetailsElement>(null);
   const lastAnchorRef = useRef<ScreenAnchor>({ x: 0, y: 0, visible: false });
-  const [selectedParameter, setSelectedParameter] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState("");
-
-  const variables = current?.variables ?? [];
-  const activeParameter = variables.find((item) => item.key === selectedParameter) ?? variables[0];
-  const visual = resolveMachineVisualStatus(liveMachine, statusVisualization);
+  const state = machineStatePresentation(liveMachine);
+  const prediction = machinePredictionPresentation(liveMachine?.currentCyclePrediction);
 
   const position = (anchor: ScreenAnchor) => {
     lastAnchorRef.current = anchor;
@@ -63,54 +39,25 @@ export const MachineMapPopup = forwardRef<MachineMapPopupHandle, Props>(function
       layer.style.visibility = "hidden";
       return;
     }
-    const width = layer.clientWidth;
-    const height = layer.clientHeight;
-    const cardWidth = card.offsetWidth || 304;
-    const cardHeight = card.offsetHeight || 280;
+    const cardWidth = card.offsetWidth || 256;
+    const cardHeight = card.offsetHeight || 76;
     const margin = 8;
-    const gap = 14;
+    const gap = 12;
     const above = anchor.y >= cardHeight + gap + margin;
-    const left = Math.min(
-      Math.max(anchor.x - cardWidth / 2, margin),
-      Math.max(margin, width - cardWidth - margin),
-    );
-    const preferredTop = above ? anchor.y - cardHeight - gap : anchor.y + gap;
+    const left = Math.min(Math.max(anchor.x - cardWidth / 2, margin), Math.max(margin, layer.clientWidth - cardWidth - margin));
     const top = Math.min(
-      Math.max(preferredTop, margin),
-      Math.max(margin, height - cardHeight - margin),
+      Math.max(above ? anchor.y - cardHeight - gap : anchor.y + gap, margin),
+      Math.max(margin, layer.clientHeight - cardHeight - margin),
     );
-    const connectorX = Math.min(Math.max(anchor.x, left + 14), left + cardWidth - 14);
-    const connectorY = above ? top + cardHeight : top;
     card.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0)`;
     line.setAttribute("x1", String(anchor.x));
     line.setAttribute("y1", String(anchor.y));
-    line.setAttribute("x2", String(connectorX));
-    line.setAttribute("y2", String(connectorY));
+    line.setAttribute("x2", String(Math.min(Math.max(anchor.x, left + 12), left + cardWidth - 12)));
+    line.setAttribute("y2", String(above ? top + cardHeight : top));
     layer.style.visibility = "visible";
   };
 
   useImperativeHandle(forwardedRef, () => ({ setAnchor: position }));
-
-  useEffect(() => {
-    setSelectedParameter("");
-  }, [machine.id]);
-
-  useEffect(() => {
-    const closeMenu = (event: PointerEvent) => {
-      if (!actionMenuRef.current?.contains(event.target as Node)) {
-        actionMenuRef.current?.removeAttribute("open");
-      }
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") actionMenuRef.current?.removeAttribute("open");
-    };
-    document.addEventListener("pointerdown", closeMenu);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeMenu);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, []);
 
   useEffect(() => {
     const observer = new ResizeObserver(() => position(lastAnchorRef.current));
@@ -119,99 +66,36 @@ export const MachineMapPopup = forwardRef<MachineMapPopupHandle, Props>(function
     return () => observer.disconnect();
   });
 
-  async function uploadImage(file?: File) {
-    if (!file) return;
-    setUploading(true);
-    setUploadError("");
-    try {
-      const data = new FormData();
-      data.append("file", file);
-      const response = await fetch(`/api/backend/api/spatial/machines/${machine.id}/image/`, {
-        method: "POST",
-        headers: { "X-CSRFToken": await getCsrfToken() },
-        credentials: "same-origin",
-        body: data,
-      });
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(body.file ?? body.detail ?? "Image upload failed.");
-      onImageChange({
-        id: body.id,
-        filename: body.filename,
-        contentType: body.content_type,
-        sizeBytes: body.size_bytes,
-        checksumSha256: body.checksum_sha256,
-        downloadUrl: body.download_url,
-      });
-    } catch (cause) {
-      setUploadError(cause instanceof Error ? cause.message : "Image upload failed.");
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  function runAction(value: string) {
-    actionMenuRef.current?.removeAttribute("open");
-    if (value === "details") onOpenDetails();
-    if (value === "entry") window.location.assign(`/digital-twin/entry/${machine.id}`);
-    if (value === "ml") window.location.assign(`/digital-twin/ml/${machine.id}`);
-  }
+  const predictionClass = prediction.tone === "defect"
+    ? "bg-red-100 text-red-700"
+    : prediction.tone === "good"
+      ? "bg-emerald-100 text-emerald-700"
+      : "bg-slate-100 text-slate-600";
 
   return (
     <div ref={layerRef} className="pointer-events-none absolute inset-0 z-30 overflow-hidden" style={{ visibility: "hidden" }}>
       <svg className="absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
-        <line ref={lineRef} stroke="#475569" strokeWidth="1.5" strokeDasharray="3 3" />
+        <line ref={lineRef} stroke="#94a3b8" strokeWidth="1.25" strokeDasharray="3 3" />
       </svg>
-      <div ref={cardRef} className="pointer-events-auto absolute left-0 top-0 w-[19rem] max-w-[calc(100%-1rem)] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl" role="dialog" aria-label={`Live information for ${machine.name}`}>
-        <header className="relative z-10 flex items-start justify-between gap-3 border-b border-slate-100 px-3 py-2.5">
-          <div className="min-w-0">
-            <h3 className="truncate text-sm font-semibold text-slate-950">{machine.name}</h3>
-            <div className="mt-1 flex items-center gap-2">
-              <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase text-white" style={{ backgroundColor: visual.bodyColor }}>{visual.label}</span>
-              {liveMachine?.lastObservedAt && <span className="text-[10px] text-slate-400">Live {new Date(liveMachine.lastObservedAt).toLocaleTimeString()}</span>}
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <details ref={actionMenuRef} className="group relative">
-              <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
-                Actions <ChevronDown size={13} className="transition-transform group-open:rotate-180" />
-              </summary>
-              <div className="absolute right-0 top-[calc(100%+0.35rem)] w-44 overflow-hidden rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
-                <button type="button" className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100" onClick={() => runAction("details")}><PanelRightOpen size={14} /> Full details</button>
-                <button type="button" className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100" onClick={() => runAction("entry")}><ClipboardPenLine size={14} /> Data entry</button>
-                <button type="button" className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100" onClick={() => runAction("ml")}><BrainCircuit size={14} /> ML workspace</button>
-              </div>
-            </details>
-            <button type="button" onClick={onClose} className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close machine popup"><X size={15} /></button>
-          </div>
-        </header>
-
-        <div className="max-h-[22rem] space-y-3 overflow-y-auto p-3">
-          {!!visual.segments.length && <section className="space-y-1.5" aria-label="Active operational issues">{visual.segments.map((segment) => {
-            const issue = liveMachine?.issues.find((item) => item.type === segment.type);
-            const evidence = issue?.evidence ?? {};
-            const detail = segment.type === "out_of_range"
-              ? `${Number(evidence.count ?? 0)} parameter${Number(evidence.count ?? 0) === 1 ? "" : "s"}`
-              : segment.type === "predicted_failure"
-                ? `${Math.round(Number(evidence.failureProbability ?? 0) * 100)}% probability`
-                : `${Number(evidence.rejectRate ?? 0).toFixed(1)}% rejects · target ${Number(evidence.targetRate ?? 0).toFixed(1)}%`;
-            return <div key={segment.type} className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-2 py-1.5 text-xs"><span className="flex min-w-0 items-center gap-2"><i className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: segment.color }} /><span className="truncate font-semibold text-slate-800">{segment.label}</span></span><span className="shrink-0 text-right text-[10px] text-slate-500">{detail}<br />{formatIssueDuration(segment.durationMs)}</span></div>;
-          })}{visual.stale && <p className="text-[10px] font-medium text-slate-500">Telemetry is stale; issues shown are the last known unresolved conditions.</p>}</section>}
-          {imageAsset && <div role="img" aria-label={machine.name} className="h-28 w-full rounded-lg border border-slate-100 bg-cover bg-center" style={{ backgroundImage: `url(${JSON.stringify(imageAsset.downloadUrl)})` }} />}
-          <label className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900">
-            <ImagePlus size={14} />{uploading ? "Uploading…" : imageAsset ? "Replace image" : "Attach image"}
-            <input className="hidden" type="file" accept="image/png,image/jpeg,image/webp" disabled={uploading} onChange={(event) => void uploadImage(event.target.files?.[0])} />
-          </label>
-          {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}
-
-          <section>
-            <div className="mb-1.5 flex items-center justify-between"><h4 className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Live parameters</h4><span className="text-[10px] text-slate-400">{variables.length}</span></div>
-            {variables.length ? <>
-              <div className="grid grid-cols-2 gap-1.5">{(current?.highlightedVariables ?? variables).slice(0, 4).map((item) => <div key={item.key} className={`rounded-md border px-2 py-1.5 ${item.abnormal ? "border-red-200 bg-red-50" : "border-slate-100 bg-slate-50"}`}><p className="truncate text-[10px] text-slate-500">{item.label}</p><p className="truncate text-xs font-semibold text-slate-900">{formatValue(item.value)}{item.unit ? ` ${item.unit}` : ""}</p></div>)}</div>
-              <label className="mt-2 block text-[10px] font-semibold text-slate-500">Inspect parameter<select className="mt-1 w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-800" value={activeParameter?.key ?? ""} onChange={(event) => setSelectedParameter(event.target.value)}>{variables.map((item) => <option key={item.key} value={item.key}>{item.label}: {formatValue(item.value)}{item.unit ? ` ${item.unit}` : ""}</option>)}</select></label>
-            </> : <p className="rounded-md bg-slate-50 px-2 py-3 text-center text-xs text-slate-500">No live parameters received.</p>}
-          </section>
-        </div>
-      </div>
+      <button
+        ref={cardRef}
+        type="button"
+        onClick={onOpenDetails}
+        className="pointer-events-auto absolute left-0 top-0 w-64 rounded-xl border border-slate-200 bg-white/95 px-3 py-2.5 text-left shadow-lg backdrop-blur transition hover:border-slate-300 hover:shadow-xl"
+        aria-label={`Open details for ${machine.name}`}
+      >
+        <span className="flex items-center justify-between gap-3">
+          <strong className="truncate text-sm font-semibold text-slate-950">{machine.name}</strong>
+          <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-semibold text-slate-600">Actions <ChevronRight size={13} /></span>
+        </span>
+        <span className="mt-2 flex items-center gap-2">
+          <span className="inline-flex min-w-0 items-center gap-1.5 text-[11px] font-semibold text-slate-600">
+            <i className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: state.color }} />
+            <span className="truncate">{state.label}</span>
+          </span>
+          <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold ${predictionClass}`}>{prediction.label}</span>
+        </span>
+      </button>
     </div>
   );
 });

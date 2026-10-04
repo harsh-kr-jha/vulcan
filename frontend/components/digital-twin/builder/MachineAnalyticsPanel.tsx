@@ -1,13 +1,14 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useState } from "react";
-import { X, Activity, BarChart3, ChevronDown, Clock, Maximize2 } from "lucide-react";
-import { api } from "@/lib/api-client";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { X, Activity, BarChart3, BrainCircuit, ChevronDown, Clock, ImagePlus, LayoutDashboard, Maximize2, Radio, SlidersHorizontal } from "lucide-react";
+import { api, getCsrfToken } from "@/lib/api-client";
 import type { MachineCycleHistory, MachineCycleOutcome } from "@/lib/data-stream-types";
-import type { MachineNode, MachineStatus } from "@/lib/spatial-types";
-import type { IntelligenceAlert, LiveMachineSummary } from "@/lib/factory-domain";
+import type { MachineImageAsset, MachineNode, MachineStatus } from "@/lib/spatial-types";
+import type { IntelligenceAlert, LiveMachineCurrent, LiveMachineSummary } from "@/lib/factory-domain";
+import { machinePredictionPresentation } from "@/lib/machine-card";
 import { QrCodePreview } from "./QrCodePreview";
-import { MachineMLSummary } from "@/components/machine-ml";
+import { MachineHealthyRanges, MachineML } from "@/components/machine-ml";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -18,7 +19,10 @@ export interface MachineAnalyticsPanelProps {
   machines: MachineNode[];
   onClose: () => void;
   liveMachine?: LiveMachineSummary;
+  liveCurrent?: LiveMachineCurrent | null;
 }
+
+type DetailTab = "overview" | "telemetry" | "ranges" | "ml";
 
 interface ObservationRow {
   values: Record<string, unknown>;
@@ -65,15 +69,23 @@ export function MachineAnalyticsPanel({
   machines,
   onClose,
   liveMachine,
+  liveCurrent,
 }: MachineAnalyticsPanelProps) {
   const machine = machines.find((m) => m.id === machineId);
   const [observations, setObservations] = useState<ObservationRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [showFullHistory, setShowFullHistory] = useState(false);
   const [savingOutcome, setSavingOutcome] = useState("");
   const [outcomeError, setOutcomeError] = useState("");
-  const [expanded, setExpanded] = useState(false);
   const [alerts, setAlerts] = useState<IntelligenceAlert[]>([]);
+  const [activeTab, setActiveTab] = useState<DetailTab>("overview");
+  const [rangesLoaded, setRangesLoaded] = useState(false);
+  const [imageAsset, setImageAsset] = useState<MachineImageAsset | null>(machine?.imageAsset ?? null);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState("");
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const telemetryLoadedRef = useRef(false);
 
   async function updateOutcome(
     outcome: MachineCycleOutcome,
@@ -101,6 +113,8 @@ export function MachineAnalyticsPanel({
 
   // Fetch recent observations for this machine
   useEffect(() => {
+    if (activeTab !== "telemetry" || telemetryLoadedRef.current) return;
+    telemetryLoadedRef.current = true;
     let cancelled = false;
 
     async function fetchObservations() {
@@ -137,7 +151,7 @@ export function MachineAnalyticsPanel({
 
     fetchObservations();
     return () => { cancelled = true; };
-  }, [machineId]);
+  }, [activeTab, machineId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -148,13 +162,34 @@ export function MachineAnalyticsPanel({
     return () => { cancelled = true; };
   }, [machineId]);
 
-  // Close on Escape
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    },
-    [onClose]
-  );
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    closeRef.current?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); if (showFullHistory) setShowFullHistory(false); else onClose(); return; }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])')];
+      if (!focusable.length) return;
+      const first = focusable[0]; const last = focusable.at(-1)!;
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => { document.removeEventListener("keydown", handleKeyDown); previous?.focus(); };
+  }, [onClose, showFullHistory]);
+
+  async function uploadImage(file?: File) {
+    if (!file) return;
+    setImageUploading(true); setImageError("");
+    try {
+      const data = new FormData(); data.append("file", file);
+      const response = await fetch(`/api/backend/api/spatial/machines/${machineId}/image/`, { method: "POST", headers: { "X-CSRFToken": await getCsrfToken() }, credentials: "same-origin", body: data });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.file ?? body.detail ?? "Image upload failed.");
+      setImageAsset({ id: body.id, filename: body.filename, contentType: body.content_type, sizeBytes: body.size_bytes, checksumSha256: body.checksum_sha256, downloadUrl: body.download_url });
+    } catch (cause) { setImageError(cause instanceof Error ? cause.message : "Image upload failed."); }
+    finally { setImageUploading(false); }
+  }
 
   if (!machine) {
     return null;
@@ -163,26 +198,23 @@ export function MachineAnalyticsPanel({
   const status: MachineStatus = (liveMachine?.state === "degraded" || liveMachine?.state === "stale" ? "warning" : liveMachine?.state) ?? machine.status ?? "no_data";
   const badge = STATUS_BADGE[status];
   const latestObs = observations.length > 0 ? observations[0] : null;
+  const prediction = machinePredictionPresentation(liveMachine?.currentCyclePrediction);
+  const detailedPrediction = liveCurrent?.ml.prediction;
 
   // Evaluate custom KPIs against latest observation
   const kpiValues: Array<{ name: string; unit: string; value: string }> = [];
-  if (machine.customKpis && latestObs) {
+  const latestValues = latestObs?.values ?? Object.fromEntries((liveCurrent?.variables ?? []).map((item) => [item.key, item.value]));
+  if (machine.customKpis && Object.keys(latestValues).length) {
     for (const kpi of machine.customKpis) {
-      const value = evaluateSimpleKpi(kpi.formula, latestObs.values);
+      const value = evaluateSimpleKpi(kpi.formula, latestValues);
       kpiValues.push({ name: kpi.name, unit: kpi.displayUnit, value });
     }
   }
 
   return (
-    <div
-      className={`absolute right-0 top-0 bottom-0 bg-white shadow-2xl border-l border-gray-200 z-30 flex flex-col overflow-hidden animate-in slide-in-from-right duration-200 ${expanded ? "left-0 w-full" : "w-96 max-w-[calc(100%-3rem)]"}`}
-      role="dialog"
-      aria-label={`Analytics for ${machine.name}`}
-      aria-modal="false"
-      onKeyDown={handleKeyDown}
-    >
-      {/* Header */}
-      <div className="flex items-start justify-between px-5 py-4 border-b border-gray-200 bg-gradient-to-r from-slate-50 to-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-3 backdrop-blur-[1px] sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <div ref={dialogRef} className="flex h-[min(760px,88vh)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl" role="dialog" aria-modal="true" aria-label={`Details for ${machine.name}`}>
+      <div className="flex items-start justify-between border-b border-gray-200 bg-white px-5 py-4">
         <div className="flex-1 min-w-0">
           <h2 className="text-base font-semibold text-gray-900 truncate">
             {machine.name}
@@ -193,28 +225,48 @@ export function MachineAnalyticsPanel({
             >
               {badge.label}
             </span>
-            <span className="text-xs text-gray-400">
-              Position ({machine.position.x}, {machine.position.y})
-              {machine.size && (machine.size.width > 1 || machine.size.height > 1)
-                ? ` \u00b7 ${machine.size.width}\u00d7${machine.size.height}`
-                : ""}
-            </span>
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${prediction.tone === "defect" ? "bg-red-100 text-red-700" : prediction.tone === "good" ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>{prediction.label}</span>
           </div>
         </div>
-        <div className="ml-3 flex items-center gap-2"><button type="button" className="button button-secondary" onClick={() => setExpanded((value) => !value)}><Maximize2 size={13} />{expanded ? "Inspector" : "Open details"}</button><button
+        <div className="ml-3 flex items-center gap-2"><a className="button button-secondary inline-flex" href={`/data?tab=streams&machine=${encodeURIComponent(machine.id)}`}>Data entry</a><button
+          ref={closeRef}
           onClick={onClose}
           className="p-1.5 rounded-md hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Close analytics panel"
+          aria-label="Close machine details"
         >
           <X size={18} />
         </button></div>
       </div>
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+      <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+        <nav className="flex shrink-0 gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50 p-2 sm:w-48 sm:flex-col sm:border-b-0 sm:border-r" aria-label="Machine detail sections">
+          {([["overview", LayoutDashboard, "Overview"], ["telemetry", Radio, "Telemetry"], ["ranges", SlidersHorizontal, "Healthy ranges"], ["ml", BrainCircuit, "Machine Learning"]] as const).map(([tab, Icon, label]) => <button key={tab} type="button" onClick={() => { setActiveTab(tab); if (tab === "ranges") setRangesLoaded(true); }} className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold transition ${activeTab === tab ? "bg-white text-slate-950 shadow-sm ring-1 ring-slate-200" : "text-slate-600 hover:bg-white/70"}`}><Icon size={16} />{label}</button>)}
+        </nav>
+        <div className="min-w-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
+        {activeTab === "overview" && <>
+          <section className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Current state</p><p className="mt-1 text-sm font-semibold text-slate-900">{badge.label}</p></div>
+            <div className={`rounded-xl border p-3 ${prediction.tone === "defect" ? "border-red-200 bg-red-50" : prediction.tone === "good" ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-slate-50"}`}><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Current cycle prediction</p><p className="mt-1 text-sm font-semibold text-slate-900">{prediction.label}{detailedPrediction?.failureProbability != null ? ` · ${(detailedPrediction.failureProbability * 100).toFixed(1)}% risk` : ""}</p></div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Production</p><p className="mt-1 truncate text-sm font-semibold text-slate-900">{liveMachine?.process?.name ?? "Not assigned"}</p><p className="text-xs text-slate-500">{liveMachine?.line?.name ?? "No line"}</p></div>
+          </section>
+          {liveCurrent?.activity.cycleId && <section className="rounded-xl border border-slate-200 p-3"><h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Current cycle</h3><p className="mt-1 text-sm text-slate-800">{liveCurrent.activity.cycleNumber != null ? `Cycle #${liveCurrent.activity.cycleNumber}` : liveCurrent.activity.cycleId} · <span className="capitalize">{liveCurrent.activity.phase || "In progress"}</span></p></section>}
         {!!liveMachine?.attentionReasons.length && <section className="rounded-xl border border-amber-200 bg-amber-50 p-3"><h3 className="text-xs font-semibold uppercase tracking-wide text-amber-900">Needs attention</h3>{liveMachine.attentionReasons.map((reason) => <p key={reason} className="mt-1 text-sm text-amber-800">{reason}</p>)}</section>}
         {alerts.length > 0 && <section><h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Active alerts ({alerts.length})</h3><div className="space-y-2">{alerts.map((alert) => <article key={alert.id} className="rounded-xl border border-red-100 bg-red-50/60 p-3"><div className="flex items-center justify-between gap-3"><strong className="text-sm text-slate-900">{alert.title}</strong><span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase text-red-700">{alert.severity}</span></div><p className="mt-1 text-xs text-slate-600">{alert.description}</p><p className="mt-2 text-xs font-medium text-slate-800">{alert.observed} · threshold {alert.threshold}</p></article>)}</div></section>}
-        <MachineMLSummary machineId={machineId} />
+          {imageAsset && <div role="img" aria-label={machine.name} className="h-36 w-full rounded-xl border border-slate-200 bg-cover bg-center" style={{ backgroundImage: `url(${JSON.stringify(imageAsset.downloadUrl)})` }} />}
+          <label className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900"><ImagePlus size={14} />{imageUploading ? "Uploading…" : imageAsset ? "Replace machine image" : "Attach machine image"}<input className="hidden" type="file" accept="image/png,image/jpeg,image/webp" disabled={imageUploading} onChange={(event) => void uploadImage(event.target.files?.[0])} /></label>
+          {imageError && <p className="text-xs text-red-600">{imageError}</p>}
+        </>}
+        {activeTab === "ml" && <>
+          <section className={`rounded-2xl border p-5 ${prediction.tone === "defect" ? "border-red-200 bg-red-50" : prediction.tone === "good" ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-slate-50"}`}><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Current cycle prediction</p><div className="mt-2 flex flex-wrap items-end justify-between gap-3"><strong className="text-3xl text-slate-950">{prediction.label}</strong>{detailedPrediction?.failureProbability != null && <span className="text-sm font-semibold text-slate-700">{(detailedPrediction.failureProbability * 100).toFixed(1)}% defect risk</span>}</div>{detailedPrediction && <p className="mt-2 text-xs text-slate-500">Threshold {detailedPrediction.threshold == null ? "—" : `${(detailedPrediction.threshold * 100).toFixed(1)}%`} · predicted {new Date(detailedPrediction.observedAt).toLocaleString()}</p>}</section>
+          <MachineML machineId={machineId} embedded />
+        </>}
+        {rangesLoaded && <div className={activeTab === "ranges" ? "block" : "hidden"}><MachineHealthyRanges machineId={machineId} /></div>}
+        {activeTab === "telemetry" && <>
+        <section className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Telemetry source</p><p className="mt-1 text-sm font-semibold text-slate-900">{liveCurrent?.stream?.name ?? (liveCurrent?.source === "manual" ? "Manual observation" : "No stream connected")}</p>{liveCurrent?.stream && <p className="text-xs text-slate-500">{liveCurrent.stream.channel} · {liveCurrent.stream.status}</p>}</div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3"><p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Latest reading</p><p className="mt-1 text-sm font-semibold text-slate-900">{liveCurrent?.observedAt ? new Date(liveCurrent.observedAt).toLocaleString() : "No readings received"}</p></div>
+        </section>
+        {!!liveCurrent?.variables.length && <section><h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Live parameters</h3><div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">{liveCurrent.variables.map((item) => <div key={item.key} className={`rounded-lg border px-3 py-2 ${item.abnormal ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"}`}><p className="truncate text-xs text-slate-500">{item.label}</p><p className="mt-0.5 truncate text-sm font-semibold text-slate-900">{item.value == null || item.value === "" ? "—" : String(item.value)}{item.unit ? ` ${item.unit}` : ""}</p></div>)}</div></section>}
         {/* Parameters with last 3 history entries */}
         {machine.parameters.length > 0 && (
           <section>
@@ -338,9 +390,10 @@ export function MachineAnalyticsPanel({
             </p>
           </section>
         )}
+        </>}
 
         {/* Custom KPIs */}
-        {kpiValues.length > 0 && (
+        {activeTab === "overview" && kpiValues.length > 0 && (
           <section>
             <div className="flex items-center gap-1.5 mb-2">
               <Activity size={14} className="text-gray-400" />
@@ -365,7 +418,7 @@ export function MachineAnalyticsPanel({
         )}
 
         {/* Machine QR Code – Download & Print */}
-        <section>
+        {activeTab === "overview" && <section>
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
             Machine QR Code
           </h3>
@@ -373,8 +426,9 @@ export function MachineAnalyticsPanel({
             machineId={machine.id}
             machineName={machine.name}
           />
-        </section>
+        </section>}
 
+      </div>
       </div>
 
       {/* Full History Sheet (overlay) */}
@@ -387,6 +441,7 @@ export function MachineAnalyticsPanel({
           onClose={() => setShowFullHistory(false)}
         />
       )}
+      </div>
     </div>
   );
 }
